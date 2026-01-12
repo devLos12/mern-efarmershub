@@ -1,0 +1,37 @@
+*{
+  margin: 0;
+  padding: 0;
+  font-family: Arial, Helvetica, sans-serif;
+  box-sizing: border-box;
+  scrollbar-width: none;
+
+}
+
+.bg-beige {
+  background-color: #F5F5DC ;
+}
+
+.bg-green {
+  background-color: #4CAF50;
+}
+
+.text-green{
+  color: #4CAF50;
+}
+
+.bg{
+  background-color: rgba(0, 0, 0, 0.071);
+
+}
+.bg-darken {
+  background-color: rgba(0, 0, 0, 0.237);
+
+}
+
+.bg-hover:hover{
+  background-color: rgba(0, 0, 0, 0.071);
+}
+
+.pointer{
+  cursor: pointer;
+}
