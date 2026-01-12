@@ -24,12 +24,14 @@ const CookieSetUp = (res, account, role) => {
     res.cookie("accessToken", accessToken, {
         httpOnly: true,
         secure: false,
+        sameSite: 'lax',
         path: "/",
     });
 
     res.cookie("refreshToken", refreshToken, {
         httpOnly: true,
         secure: false,
+        sameSite: 'lax',
         path: "/",
     });
 }
