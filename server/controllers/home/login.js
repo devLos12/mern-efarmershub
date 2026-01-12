@@ -21,17 +21,18 @@ const CookieSetUp = (res, account, role) => {
         { expiresIn: process.env.JWT_REFRESH_EXPIRES }
     );
 
+        
     res.cookie("accessToken", accessToken, {
         httpOnly: true,
-        secure: false,
-        sameSite: 'lax',
+        secure: true,
+        sameSite: 'none',
         path: "/",
     });
 
     res.cookie("refreshToken", refreshToken, {
         httpOnly: true,
-        secure: false,
-        sameSite: 'lax',
+        secure: true,
+        sameSite: 'none',
         path: "/",
     });
 }
