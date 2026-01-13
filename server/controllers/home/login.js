@@ -6,8 +6,6 @@ import Seller from "../../models/seller.js";
 import ActivityLog from "../../models/activityLogs.js";
 
 
-
-
 const CookieSetUp = (res, account, role) => {
     const accessToken = jwt.sign(
         { id: account._id, role },
@@ -21,21 +19,25 @@ const CookieSetUp = (res, account, role) => {
         { expiresIn: process.env.JWT_REFRESH_EXPIRES }
     );
 
+    const cookieOptions = {
+        httpOnly: true,
+        secure: true,
+        sameSite: 'none',
+        path: "/",
+        maxAge: 24 * 60 * 60 * 1000  // 1 day in milliseconds
+    };
         
-    res.cookie("accessToken", accessToken, {
-        httpOnly: true,
-        secure: true,
-        sameSite: 'none',
-        path: "/",
-    });
-
+    res.cookie("accessToken", accessToken, cookieOptions);
+    
     res.cookie("refreshToken", refreshToken, {
-        httpOnly: true,
-        secure: true,
-        sameSite: 'none',
-        path: "/",
+        ...cookieOptions,
+        maxAge: 7 * 24 * 60 * 60 * 1000  // 7 days for refresh token
     });
 }
+
+
+
+
 
 const login = async (req, res) => {
     try {
