@@ -1,4 +1,5 @@
-import nodemailer from "nodemailer";
+import { Resend } from 'resend';
+// import nodemailer from "nodemailer";
 import crypto from "crypto";
 import User from "../../models/user.js";
 import Seller from "../../models/seller.js";
@@ -8,9 +9,41 @@ import bcrypt from "bcrypt";
 
 const verificationCodes = new Map();
 
+// Initialize Resend
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 
 
+// Resend version - ACTIVE
+const sendVerificationEmail = async (email, code) => {
+    try {
+        const { data, error } = await resend.emails.send({
+            from: 'Password Reset <onboarding@resend.dev>',
+            to: ['carlosloyola095@gmail.com'],
+            subject: 'Password Reset Verification Code',
+            html: `
+                <h2>Password Reset Request</h2>
+                <p>Your verification code is:</p>
+                <h1 style="color: #28a745; font-size: 32px;">${code}</h1>
+                <p>This code will expire in 5 minutes.</p>
+                <p>If you didn't request this, please ignore this email.</p>
+            `
+        });
+
+        if (error) {
+            console.error('Resend error:', error);
+            return { success: false };
+        }
+
+        return { success: true };
+    } catch (error) {
+        console.error('Send email error:', error);
+        return { success: false };
+    }
+};
+
+// Nodemailer version - COMMENTED OUT
+/*
 const sendVerificationEmail = async (email, code) => {
     try {
         const transporter = nodemailer.createTransport({
@@ -40,10 +73,7 @@ const sendVerificationEmail = async (email, code) => {
         return { success: false };
     }
 };
-
-
-
-
+*/
 
 export const forgotPassword = async (req, res) => {
     try {
@@ -98,10 +128,6 @@ export const forgotPassword = async (req, res) => {
     }
 };
 
-
-
-
-
 export const verifyCode = async (req, res) => {
     try {
         const { email, verifyCode } = req.body;
@@ -126,10 +152,6 @@ export const verifyCode = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
-
-
-
-
 
 export const changePassword = async (req, res) => {
     try {
