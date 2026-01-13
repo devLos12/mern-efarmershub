@@ -20,9 +20,11 @@ const startServer = async () => {
     const port = process.env.PORT || 3000;
 
     const corsOption = {
-      origin: true,
+      origin: 'https://mern-efarmershub.vercel.app',
       credentials: true,
     }
+
+
 
     app.set('trust proxy', true);
     app.use(cors(corsOption));
@@ -44,10 +46,9 @@ const startServer = async () => {
     });
   
     
-
     const io = new Server(server, {
       cors: {
-        origin: true,
+        origin: 'https://mern-efarmershub.vercel.app',
         methods: ["GET", "POST", "DELETE"],
         credentials: true
       }
