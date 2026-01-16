@@ -82,21 +82,28 @@ const AllProductCards = () => {
         return () => clearTimeout(timeout);
     }, [pendingCartItems]);
 
-    // Extract unique product types and categories
-    const { productTypes, categories } = useMemo(() => {
+    // Fixed categories list
+    const categories = ["all", "grains", "root crops", "fruits", "fruit vegetables", "leafy vegetables", "legumes"];
+
+    // Extract product types based on selected category
+    const productTypes = useMemo(() => {
         const types = new Set();
-        const cats = new Set();
         
         products.forEach(p => {
-            if (p.productType) types.add(p.productType);
-            if (p.category) cats.add(p.category);
+            // If "all" category is selected, show all product types
+            // Otherwise, only show product types that belong to the selected category
+            if (selectedCategory === "all" || p.category === selectedCategory) {
+                if (p.productType) types.add(p.productType);
+            }
         });
         
-        return {
-            productTypes: ["all", ...Array.from(types).sort()],
-            categories: ["all", ...Array.from(cats).sort()]
-        };
-    }, [products]);
+        return ["all", ...Array.from(types).sort()];
+    }, [products, selectedCategory]);
+
+    // Reset product type to "all" when category changes
+    useEffect(() => {
+        setSelectedProductType("all");
+    }, [selectedCategory]);
 
     // Filter products based on search, product type, and category
     const filteredProducts = useMemo(() => {
@@ -168,10 +175,9 @@ const AllProductCards = () => {
                             value={selectedCategory}
                             onChange={(e) => setSelectedCategory(e.target.value)}
                         >
-                            <option value="all">all category</option>
-                            {categories.filter(cat => cat !== "all").map(category => (
+                            {categories.map(category => (
                                 <option key={category} value={category} className="text-capitalize">
-                                    {category}
+                                    {category === "all" ? "all category" : category}
                                 </option>
                             ))}
                         </select>

@@ -1,10 +1,14 @@
 import jwt from "jsonwebtoken";
 
+
+
 const authMiddleware = (req, res, next) =>{
 
     if(!req.cookies.accessToken || !req.cookies.refreshToken){
         return res.status(401).json({ message : "No Token Provided. Unauthorized Detected!"});
     }
+
+    
 
     try{
         const token = req.cookies.accessToken;
@@ -12,10 +16,11 @@ const authMiddleware = (req, res, next) =>{
         req.account = decoded;
         next();
 
+
         
     }catch(error){
         if(error.name === "TokenExpiredError"){
-            
+
             try{
                 const refreshToken = req.cookies.refreshToken;
                 const decodedRefresh = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
@@ -40,7 +45,7 @@ const authMiddleware = (req, res, next) =>{
                 return res.status(403).json({ message : "Invalid RefreshToken. Please try again."});
             }
         }
-        return res.status(403).json({ message: "Invalid AccesToken. Please try again." });
+        return res.status(403).json({ message: "Invalid AccesToken. Please try again.", error: error.message });
     }
 }
 

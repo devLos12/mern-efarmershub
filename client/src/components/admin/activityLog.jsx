@@ -198,7 +198,19 @@ const ActivityLog = () => {
         setCurrentPage(1);
     }, [statusFilter, adminTypeFilter, searchQuery]);
 
-    if (loading) return <p></p>;
+
+
+
+    if (loading) return (
+        <div className="d-flex align-items-center justify-content-center vh-100">
+            <div className="text-center">
+                <div className="spinner-border text-success" role="status">     
+                    <span className="visually-hidden">Loading...</span>
+                </div>
+                <p className="small text-muted mt-2">Loading activity logs...</p>
+            </div>
+        </div>
+    );
 
     return (
         <>

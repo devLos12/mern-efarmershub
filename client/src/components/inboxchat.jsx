@@ -98,10 +98,7 @@ const InboxChat = () =>{
                             </div>
                         </div>
                     </div>
-                    <div className="col-12 mt-2 " style={{ 
-                        maxHeight: role === "user" ? "calc(100vh - 200px)" : "calc(100vh - 250px)", 
-                        overflowY: "auto" 
-                    }}>
+                    <div className="col-12 mt-2 ">
                     
                     {inboxList.length > 0 ? (
                         inboxList.map((data, i) => {

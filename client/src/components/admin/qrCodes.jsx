@@ -1,4 +1,9 @@
 import React, { useState, useEffect } from "react";
+import Model from "../modal";
+
+
+
+
 
 const QrCodes = () => {
     const [gcashQr, setGcashQr] = useState(null);
@@ -11,6 +16,33 @@ const QrCodes = () => {
     const [showErrorModal, setShowErrorModal] = useState(false);
     const [modalMessage, setModalMessage] = useState("");
     const [isModalVisible, setIsModalVisible] = useState(false);
+
+
+
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [deleteType, setDeleteType] = useState(null); // 'gcash' or 'maya'
+
+
+
+
+    // Function para mag-open ng delete confirmation
+    const confirmDelete = (type) => {
+        setDeleteType(type);
+        setShowDeleteModal(true);
+    };
+
+    // Function para sa "No" button
+    const handleDeleteNo = () => {
+        setShowDeleteModal(false);
+        setDeleteType(null);
+    };
+
+    // Function para sa "Yes" button
+    const handleDeleteYes = () => {
+        setShowDeleteModal(false);
+        removeImage(deleteType);
+    };
+
 
     useEffect(() => {
         fetchQrCodes();
@@ -146,12 +178,12 @@ const QrCodes = () => {
 
     if (fetchLoading) {
         return (
-            <div className="min-vh-100 d-flex align-items-center justify-content-center bg-light">
+            <div className="d-flex align-items-center justify-content-center vh-100">
                 <div className="text-center">
-                    <div className="spinner-border text-success mb-3" style={{ width: '3rem', height: '3rem' }} role="status">
+                    <div className="spinner-border text-success" role="status">     
                         <span className="visually-hidden">Loading...</span>
                     </div>
-                    <p className="text-muted fw-medium">Loading QR Codes...</p>
+                    <p className="small text-muted mt-2">Loading qr codes...</p>
                 </div>
             </div>
         );
@@ -159,6 +191,17 @@ const QrCodes = () => {
 
     return (
         <>
+            {showDeleteModal && (
+                <div className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center" style={{zIndex: 10000 }}>
+                    <Model 
+                        textModal={`Do you want to remove this ${deleteType === 'gcash' ? 'GCash' : 'Maya'} QR code?`}
+                        handleClickNo={handleDeleteNo}
+                        handleClickYes={handleDeleteYes}
+                    />
+                </div>
+            )}
+
+
             {/* Success Modal with Animation */}
             {showSuccessModal && (
                 <div
@@ -282,7 +325,7 @@ const QrCodes = () => {
                                                 />
                                             </div>
                                             <button
-                                                onClick={() => removeImage('gcash')}
+                                                onClick={() => confirmDelete('gcash')}
                                                 className="btn btn-sm text-danger w-100 d-flex align-items-center justify-content-center gap-2"
                                                 style={{ border: 'none', background: 'transparent' }}
                                             >
@@ -340,7 +383,7 @@ const QrCodes = () => {
                                                 />
                                             </div>
                                             <button
-                                                onClick={() => removeImage('maya')}
+                                                onClick={() => confirmDelete('maya')}
                                                 className="btn btn-sm text-danger w-100 d-flex align-items-center justify-content-center gap-2"
                                                 style={{ border: 'none', background: 'transparent' }}
                                             >

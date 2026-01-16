@@ -3,14 +3,12 @@ import Admin from "../../models/admin.js";
 
 
 
+
 const Logout = async (req, res) => {
     try {
-        // Kunin yung admin info from auth middleware
-        // (Assuming may middleware ka na nag-attach ng admin sa req)
-        const { id } = req.account; // or req.user, depende sa middleware mo
+        const { id } = req.account;
         
         const admin = await Admin.findOne({_id: id});
-
 
         // Get client info
         const ipAddress = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || 
@@ -31,16 +29,43 @@ const Logout = async (req, res) => {
             });
         }
 
-        // Clear cookies
-        res.clearCookie("accessToken", { path: "/" });
-        res.clearCookie("refreshToken", { path: "/" });
+        // Check if local or production (same logic from CookieSetUp)
+        const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',').map(o => o.trim()) || [];
+        const isLocal = allowedOrigins.some(origin => 
+            origin.includes('localhost') || origin.startsWith('http://')
+        );
+
+        // Cookie options - dapat same sa CookieSetUp
+        const cookieOptions = {
+            httpOnly: true,
+            secure: !isLocal,
+            sameSite: isLocal ? 'lax' : 'none',
+            path: "/"
+        };
+
+        // Clear cookies with proper options
+        res.clearCookie("accessToken", cookieOptions);
+        res.clearCookie("refreshToken", cookieOptions);
 
         res.status(200).json({ message: "Successfully Logout from admin" });
 
     } catch (error) {
         // Kahit may error sa logging, i-proceed pa rin yung logout
-        res.clearCookie("accessToken", { path: "/" });
-        res.clearCookie("refreshToken", { path: "/" });
+        const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',').map(o => o.trim()) || [];
+        const isLocal = allowedOrigins.some(origin => 
+            origin.includes('localhost') || origin.startsWith('http://')
+        );
+
+        const cookieOptions = {
+            httpOnly: true,
+            secure: !isLocal,
+            sameSite: isLocal ? 'lax' : 'none',
+            path: "/"
+        };
+
+        res.clearCookie("accessToken", cookieOptions);
+        res.clearCookie("refreshToken", cookieOptions);
+        
         res.status(200).json({ message: "Successfully Logout from admin" });
     }
 };

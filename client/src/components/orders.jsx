@@ -577,68 +577,83 @@ const Orders = () => {
                 </div>
             </div>
 
-            <div className="d-flex justify-content-between align-items-center px-3 bg-white rounded border shadow-sm py-2">
-                <div className="text-muted small">
-                    Showing {indexOfFirstItem + 1} to {Math.min(indexOfLastItem, filteredOrders.length)} of {filteredOrders.length} orders
+            <div className="row g-0 bg-white rounded border shadow-sm">
+                {/* Left Column - Showing info */}
+                <div className="col-12 col-lg-4 p-3 d-flex align-items-center justify-content-center justify-content-lg-start">
+                    <div className="text-muted small">
+                        Showing {indexOfFirstItem + 1} to {Math.min(indexOfLastItem, filteredOrders.length)} of {filteredOrders.length} orders
+                    </div>
                 </div>
                 
-                <div className="d-flex gap-2 align-items-center ">
-                    <button 
-                        className="btn btn-sm btn-outline-danger d-flex align-items-center gap-1"
-                        onClick={handleDownloadPDF}
-                        title="Download as PDF"
-                    >
-                        <i className="fa fa-file-pdf small"></i>
-                        <span className="small d-none d-md-flex">PDF</span>
-                    </button>
+                {/* Right Column - Actions and Pagination */}
+                <div className="col-12 col-lg-8 p-3">
+                    <div className="d-flex gap-2 align-items-center flex-wrap justify-content-center justify-content-lg-end">
+                        {/* PDF Download Button */}
+                        <button 
+                            className="btn btn-sm btn-outline-danger d-flex align-items-center gap-1"
+                            onClick={handleDownloadPDF}
+                            title="Download as PDF"
+                        >
+                            <i className="fa fa-file-pdf small"></i>
+                            <span className="small d-none d-sm-block">PDF</span>
+                        </button>
 
-                    {/* Print Button */}
-                    <button 
-                        className="btn btn-sm btn-outline-dark d-flex align-items-center gap-1"
-                        onClick={handlePrint}
-                        title="Print Orders"
-                    >
-                        <i className="fa fa-print small"></i>
-                        <span className="small d-none d-md-flex">Print</span>
-                    </button>
+                        {/* Print Button */}
+                        <button 
+                            className="btn btn-sm btn-outline-dark d-flex align-items-center gap-1"
+                            onClick={handlePrint}
+                            title="Print Orders"
+                        >
+                            <i className="fa fa-print small"></i>
+                            <span className="small d-none d-sm-block">Print</span>
+                        </button>
 
+                        {/* Divider (hidden on mobile) */}
+                        <div className="d-none d-md-block border-start" style={{height: "30px"}}></div>
 
-                    <button 
-                        className="btn btn-sm btn-outline-success d-flex align-items-center"
-                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                        disabled={currentPage === 1}>
-                        <i className="fa fa-chevron-left"></i>
-                        <span className="ms-2 small d-none d-md-flex">Previous</span>
-                    </button>
-                    
-                    <div className="d-flex gap-1">
-                        {[...Array(totalPages)].map((_, index) => {
-                            const pageNumber = index + 1;
-                            if (pageNumber === 1 || pageNumber === totalPages || 
-                                (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1)) {
-                                return (
-                                    <button
-                                        key={pageNumber}
-                                        className={`btn btn-sm ${currentPage === pageNumber ? 'btn-success' : 'btn-outline-success'}`}
-                                        onClick={() => setCurrentPage(pageNumber)}
-                                        style={{ minWidth: "35px" }}>
-                                        {pageNumber}
-                                    </button>
-                                );
-                            } else if (pageNumber === currentPage - 2 || pageNumber === currentPage + 2) {
-                                return <span key={pageNumber} className="px-2">...</span>;
-                            }
-                            return null;
-                        })}
+                        {/* Previous Button */}
+                        <button 
+                            className="btn btn-sm btn-outline-success d-flex align-items-center"
+                            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                            disabled={currentPage === 1}
+                        >
+                            <i className="fa fa-chevron-left"></i>
+                            <span className="ms-2 small d-none d-lg-block">Previous</span>
+                        </button>
+                        
+                        {/* Page Numbers */}
+                        <div className="d-flex gap-1 flex-wrap justify-content-center">
+                            {[...Array(totalPages)].map((_, index) => {
+                                const pageNumber = index + 1;
+                                if (pageNumber === 1 || pageNumber === totalPages || 
+                                    (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1)) {
+                                    return (
+                                        <button
+                                            key={pageNumber}
+                                            className={`btn btn-sm ${currentPage === pageNumber ? 'btn-success' : 'btn-outline-success'}`}
+                                            onClick={() => setCurrentPage(pageNumber)}
+                                            style={{ minWidth: "35px" }}
+                                        >
+                                            {pageNumber}
+                                        </button>
+                                    );
+                                } else if (pageNumber === currentPage - 2 || pageNumber === currentPage + 2) {
+                                    return <span key={pageNumber} className="px-2 d-flex align-items-center">...</span>;
+                                }
+                                return null;
+                            })}
+                        </div>
+                        
+                        {/* Next Button */}
+                        <button 
+                            className="btn btn-sm btn-outline-success d-flex align-items-center"
+                            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                            disabled={currentPage === totalPages}
+                        >
+                            <span className="me-2 small d-none d-lg-block">Next</span>
+                            <i className="fa fa-chevron-right"></i>
+                        </button>
                     </div>
-                    
-                    <button 
-                        className="btn btn-sm btn-outline-success d-flex align-items-center"
-                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                        disabled={currentPage === totalPages}>
-                        <span className="me-2 small d-none d-md-flex">Next</span>
-                        <i className="fa fa-chevron-right "></i>
-                    </button>
                 </div>
             </div>
             </>

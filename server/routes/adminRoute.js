@@ -58,9 +58,16 @@ adminRouter.get('/getNotification', authMiddleware, getNotification);
 adminRouter.patch(`/updateStatusDelivery`, authMiddleware, statusOrder);
 adminRouter.patch('/cancelStatusDelivery', authMiddleware,  cancelOrderFile.single('image'), cancelOrder);
 adminRouter.get('/availableRider', authMiddleware, getRiders);
+
 adminRouter.get("/totaluser", authMiddleware, TotalUser);
+
+
 adminRouter.get("/totalsales", authMiddleware, TotalSales);
+
+
 adminRouter.get("/totalorders", authMiddleware, TotalOrders);
+
+
 adminRouter.patch("/updateStatusApprove/:id", authMiddleware, statusApprove);
 adminRouter.post("/adminSendMessage", sendImage.array("images"), authMiddleware, sendMessage);
 adminRouter.get("/getAdminMessages/:id", authMiddleware, getMessages);

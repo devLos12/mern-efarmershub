@@ -27,6 +27,15 @@ const Messages = () => {
 
 
 
+    // Ilagay mo to sa taas kasama ng ibang useState
+    const [viewImage, setViewImage] = useState(null); // current image na nakikita
+    const [allImages, setAllImages] = useState([]); // lahat ng images sa message
+    const [currentImageIndex, setCurrentImageIndex] = useState(0); // index ng current image
+
+
+
+
+
     useEffect(() => {
         if (!location.state) {
             navigate(`/${role}/inbox`);
@@ -299,12 +308,60 @@ const Messages = () => {
 
 
 
+
+
+    
+    // Handler para mag-open ng image viewer
+    const openImageViewer = (imageUrl, allImagesInMessage, index) => {
+        setViewImage(imageUrl);
+        setAllImages(allImagesInMessage);
+        setCurrentImageIndex(index);
+    };
+
+    // Handler para sa close
+    const closeImageViewer = () => {
+        setViewImage(null);
+        setAllImages([]);
+        setCurrentImageIndex(0);
+    };
+
+    // Handler para sa next image
+    const nextImage = () => {
+        if (currentImageIndex < allImages.length - 1) {
+            setCurrentImageIndex(currentImageIndex + 1);
+            setViewImage(allImages[currentImageIndex + 1]);
+        }
+    };
+
+    // Handler para sa previous image
+    const prevImage = () => {
+        if (currentImageIndex > 0) {
+            setCurrentImageIndex(currentImageIndex - 1);
+            setViewImage(allImages[currentImageIndex - 1]);
+        }
+    };
+
+
+
     const colors = ["#007bff", "#28a745", "#ffc107", "#dc3545", "#6f42c1", "#20c997"];
     const randomColor = useMemo(() => colors[Math.floor(Math.random() * colors.length)], []);
+
+
+
+
+
+
+
+
 
     if(loading) return <p></p>
 
     
+
+
+
+
+
     return (
         <div className={role === "user" ? "bg d-flex" : "px-md-2 d-flex "} 
         style={{ height : role === "user" ? height: height-69}}>
@@ -393,6 +450,7 @@ const Messages = () => {
                                                 msg={msg}
                                                 hasText={hasText}
                                                 location={location}
+                                                onImageClick={openImageViewer} 
                                             />
                                         )}
 
@@ -553,6 +611,17 @@ const Messages = () => {
                     </div>
                 </div>
             </div>
+
+
+            {/* Image Viewer Modal - ilagay mo to bago mag-close ng main div */}
+            <ImageViewerModal 
+                image={viewImage}
+                images={allImages}
+                currentIndex={currentImageIndex}
+                onClose={closeImageViewer}
+                onNext={nextImage}
+                onPrev={prevImage}
+            />
         </div>
     );
 };
@@ -563,11 +632,86 @@ export default Messages;
 
 
 
+const ImageViewerModal = ({ image, images, currentIndex, onClose, onNext, onPrev }) => {
+    if (!image) return null;
+
+    return (
+        <div 
+            className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
+            style={{
+                backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                zIndex: 9999
+            }}
+            onClick={onClose}
+        >
+            {/* Close Button */}
+            <button 
+                className="btn btn-light  position-absolute top-0 end-0 m-3 rounded-circle d-flex align-items-center justify-content-center"
+                style={{ width: "40px", height: "40px", zIndex: 10000 }}
+                onClick={onClose}
+            >
+                <i className="bx bx-x fs-2"></i>
+            </button>
+
+            {/* Image Counter */}
+            {images.length > 1 && (
+                <div 
+                    className="position-absolute top-0 start-50 translate-middle-x mt-3 bg-dark text-white px-3 py-1 rounded"
+                    style={{ zIndex: 10000 }}
+                >
+                    {currentIndex + 1} / {images.length}
+                </div>
+            )}
+
+            {/* Previous Button */}
+            {images.length > 1 && currentIndex > 0 && (
+                <button 
+                    className="btn btn-light position-absolute start-0 ms-3 rounded-circle"
+                    style={{ width: "50px", height: "50px", zIndex: 10000 }}
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onPrev();
+                    }}
+                >
+                    <i className="bx bx-chevron-left fs-3"></i>
+                </button>
+            )}
+
+            {/* Image */}
+            <img 
+                src={image}
+                alt="Full view"
+                className="img-fluid"
+                style={{ 
+                    maxHeight: '90vh', 
+                    maxWidth: '90vw',
+                    objectFit: 'contain'
+                }}
+                onClick={(e) => e.stopPropagation()}
+            />
+
+            {/* Next Button */}
+            {images.length > 1 && currentIndex < images.length - 1 && (
+                <button 
+                    className="btn btn-light position-absolute end-0 me-3 rounded-circle"
+                    style={{ width: "50px", height: "50px", zIndex: 10000 }}
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onNext();
+                    }}
+                >
+                    <i className="bx bx-chevron-right fs-3"></i>
+                </button>
+            )}
+        </div>
+    );
+};
 
 
 
 
-const ImageLayout = ({ location, hasText, msg }) => {
+
+const ImageLayout = ({ location, hasText, msg, onImageClick }) => {
     
     const isSender = msg.senderId === location.state?.senderId;
     const imageCount = msg.imageFiles?.length || 0;
@@ -584,6 +728,11 @@ const ImageLayout = ({ location, hasText, msg }) => {
     const timestampClasses = `small mt-1 opacity-75 ${
         isSender ? "text-end" : "text-start"
     }`;
+
+    // Prepare all images URLs for the viewer
+    const allImageUrls = msg.imageFiles?.map(filename => 
+        `${import.meta.env.VITE_API_URL}/api/uploads/${filename}`
+    ) || [];
 
     return (
         <div className={containerClasses}>
@@ -604,15 +753,19 @@ const ImageLayout = ({ location, hasText, msg }) => {
                         if (isSingleImage) colSize = "col-6";
                         if (isLastOddImage) colSize = "col-12";
 
+                        const imageUrl = `${import.meta.env.VITE_API_URL}/api/uploads/${filename}`;
+
                         return (
                             <div key={index} className={colSize}>
                                 <img
-                                    src={`${import.meta.env.VITE_API_URL}/api/uploads/${filename}`}
+                                    src={imageUrl}
                                     alt={filename}
                                     className="img-fluid w-100 rounded border shadow-sm"
                                     style={{
                                         objectFit: "cover",
+                                        cursor: "pointer"  // dagdag to para halata na clickable
                                     }}
+                                    onClick={() => onImageClick(imageUrl, allImageUrls, index)}  // dagdag to
                                 />
                             </div>
                         );

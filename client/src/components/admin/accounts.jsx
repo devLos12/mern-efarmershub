@@ -251,13 +251,25 @@ const Accounts =()=>{
         setId({account : id});
     }
 
-    if(loading) return <p></p>  
-
     const Height = () =>{
         if(height < 574) return height ;
         return height-152;
     }
 
+
+    if(loading) return (
+        <div className="d-flex align-items-center justify-content-center" style={{height: Height()}}>
+            <div className="text-center">
+                <div className="spinner-border text-success mb-2" role="status">
+                    <span className="visually-hidden">Loading...</span>
+                </div>
+                <p className="small text-muted mb-0">Loading accounts...</p>
+            </div>
+        </div>
+    )
+
+
+    
     return(
         <>
         <div className="p-2">
@@ -313,7 +325,7 @@ const Accounts =()=>{
                             <p className="m-0 small fw-bold d-none d-md-flex">rider</p>
                         </div>
 
-                        <div 
+                        {/* <div 
                         className={`text-capitalize rounded p-2 px-3 d-flex align-items-center transition-all ${
                             location.state?.source === "admin" 
                             ? "bg-success text-white shadow-sm" 
@@ -327,7 +339,7 @@ const Accounts =()=>{
                         }}>
                             <i className="fa fa-user-shield me-2 small"></i>
                             <p className="m-0 small fw-bold d-none d-md-flex">admin</p>
-                        </div>
+                        </div> */}
                         </div>
                         
                         <button 
@@ -396,11 +408,11 @@ const Accounts =()=>{
              
             </div>
 
-            {/* Table */}
+            {/* Table with Horizontal Scroll */}
             { filteredAccounts.length > 0 ? (
                 <>
-                <div className="mt-2 bg-white rounded shadow-sm border border-success border-opacity-25 position-relative overflow-hidden"  
-                style={{overflowY:"auto"}}>
+                <div className="mt-2 bg-white rounded shadow-sm border border-success border-opacity-25 position-relative"  
+                style={{overflowX: "auto", overflowY: "hidden"}}>
                     {isRefreshing && (
                         <div className="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center bg-white bg-opacity-75" 
                             style={{ zIndex: 10 }}>
@@ -413,20 +425,20 @@ const Accounts =()=>{
                         </div>
                     )}
                     
-                    <table className="w-100">
+                    <table className="w-100" style={{minWidth: "800px"}}>
                     <thead className="position-sticky top-0 z-1 bg-white">
                         <tr>
                             {location.state?.source === "admin" ? (
                                 // Admin table headers
                                 ["Account ID", "Email", "Contact Number", "Admin Type", "Created At", "Action"].map((data, i)=> (
-                                    <th className={`text-capitalize p-3 text-success small fw-bold
+                                    <th className={`text-capitalize p-3 text-success small fw-bold text-nowrap
                                     ${i < 5 ? "text-start" : "text-center"}`} 
                                     key={i} >{data}</th>
                                 ))
                             ) : location.state?.source === "user" ? (
                                 // Buyer table headers (no verification)
                                 ["Account ID", "Buyer Name", "Email", "Created At", "Message", "Action"].map((data, i)=> (
-                                    <th className={`text-capitalize p-3 text-success small fw-bold
+                                    <th className={`text-capitalize p-3 text-success small fw-bold text-nowrap
                                     ${i < 4 ? "text-start" : "text-center"}`} 
                                     key={i} >{data}</th>
                                 ))
@@ -436,7 +448,7 @@ const Accounts =()=>{
                                     `${location.state?.source === "seller" ? "Farmer" : "Rider"} Name`, 
                                     "Email", "Created At", "Message","Action"
                                 ].map((data, i)=> (
-                                    <th className={`text-capitalize p-3 text-success small fw-bold
+                                    <th className={`text-capitalize p-3 text-success small fw-bold text-nowrap
                                     ${i < 5 ? "text-start" : "text-center"}`} 
                                     key={i} >{data}</th>
                                 ))
@@ -457,21 +469,21 @@ const Accounts =()=>{
                                 {isAdmin ? (
                                     // Admin row layout
                                     <>
-                                        <td className="small text-start ps-3 p-3 fw-bold" style={{color: "#2d3748"}}>
+                                        <td className="small text-start ps-3 p-3 fw-bold text-nowrap" style={{color: "#2d3748"}}>
                                             {data.accountId || "N/A"}
                                         </td>
-                                        <td className="small text-start ps-3 text-lowercase p-3" style={{color: "#2d3748"}}>
+                                        <td className="small text-start ps-3 text-lowercase p-3 text-nowrap" style={{color: "#2d3748"}}>
                                             {data.email}
                                         </td>
-                                        <td className="small text-start ps-3 p-3" style={{color: "#2d3748"}}>
+                                        <td className="small text-start ps-3 p-3 text-nowrap" style={{color: "#2d3748"}}>
                                             {data.contact || "N/A"}
                                         </td>
-                                        <td className="small text-start ps-3 p-3" style={{color: "#2d3748"}}>
+                                        <td className="small text-start ps-3 p-3 text-nowrap" style={{color: "#2d3748"}}>
                                             <span className={`badge ${data.adminType === 'main' ? 'bg-success' : 'bg-secondary'}`}>
                                                 {data.adminType ? data.adminType.toUpperCase() : "SUB"}
                                             </span>
                                         </td>
-                                        <td className="small text-start ps-3 p-3" style={{color: "#2d3748"}}>
+                                        <td className="small text-start ps-3 p-3 text-nowrap" style={{color: "#2d3748"}}>
                                             {data.createdAt ? formatDate(data.createdAt) : "N/A"}
                                         </td>
                                         <td className="p-3 position-relative">
@@ -544,25 +556,25 @@ const Accounts =()=>{
                                     // Other roles row layout
                                     <>
                                         {needsVerification && !isBuyer && !isAdmin && (
-                                            <td className="small text-start ps-3 p-3" style={{color: "#2d3748"}}>
+                                            <td className="small text-start ps-3 p-3 text-nowrap" style={{color: "#2d3748"}}>
                                                 {getVerificationBadge(data.verification || 'pending')}
                                             </td>
                                         )}
-                                        <td className="small text-start ps-3 p-3 fw-bold" style={{color: "#2d3748"}}>
+                                        <td className="small text-start ps-3 p-3 fw-bold text-nowrap" style={{color: "#2d3748"}}>
                                             {data.accountId || "N/A"}
                                         </td>
-                                        <td className="small text-start ps-3 text-capitalize p-3" style={{color: "#2d3748"}}>
+                                        <td className="small text-start ps-3 text-capitalize p-3 text-nowrap" style={{color: "#2d3748"}}>
                                             {`${data.firstname} ${data.lastname}`}
                                         </td>
-                                        <td className="small text-start ps-3 text-lowercase p-3" style={{color: "#2d3748"}}>
+                                        <td className="small text-start ps-3 text-lowercase p-3 text-nowrap" style={{color: "#2d3748"}}>
                                             {data.email}
                                         </td>
-                                        <td className="small text-start ps-3 p-3" style={{color: "#2d3748"}}>
+                                        <td className="small text-start ps-3 p-3 text-nowrap" style={{color: "#2d3748"}}>
                                             {data.createdAt ? formatDate(data.createdAt) : "N/A"}
                                         </td>
                                         <td className="py-3 text-center">
                                            <button 
-                                           className="text-capitalize px-3 py-1 bg-primary shadow-sm border-0  text-white small"
+                                           className="text-capitalize px-3 py-1 bg-primary shadow-sm border-0  text-white small text-nowrap"
                                             style={{
                                                 outline : "none", 
                                                 borderRadius: "20px",
@@ -646,49 +658,53 @@ const Accounts =()=>{
                     </table>
                 </div>
 
-                {/* Pagination Controls */}
-                <div className="d-flex justify-content-between align-items-center border-top p-3 bg-white rounded-bottom shadow-sm">
-                    <div className="text-muted small">
-                        Showing {indexOfFirstItem + 1} to {Math.min(indexOfLastItem, filteredAccounts.length)} of {filteredAccounts.length} accounts
+                {/* Responsive Pagination Controls using Bootstrap Grid */}
+                <div className="row g-0 border-top bg-white rounded-bottom shadow-sm">
+                    <div className="col-12 col-lg-6 p-3 ">
+                        <div className="text-muted small text-center text-lg-start  ">
+                            Showing {indexOfFirstItem + 1} to {Math.min(indexOfLastItem, filteredAccounts.length)} of {filteredAccounts.length} accounts
+                        </div>
                     </div>
                     
-                    <div className="d-flex gap-2 align-items-center">
-                        <button 
-                            className="btn btn-sm btn-outline-success d-flex align-items-center"
-                            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                            disabled={currentPage === 1}>
-                            <i className="fa fa-chevron-left"></i>
-                            <span className="ms-2 small d-none d-lg-block">Previous</span>
-                        </button>
-                        
-                        <div className="d-flex gap-1">
-                            {[...Array(totalPages)].map((_, index) => {
-                                const pageNumber = index + 1;
-                                if (pageNumber === 1 || pageNumber === totalPages || 
-                                    (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1)) {
-                                    return (
-                                        <button
-                                            key={pageNumber}
-                                            className={`btn btn-sm ${currentPage === pageNumber ? 'btn-success' : 'btn-outline-success'}`}
-                                            onClick={() => setCurrentPage(pageNumber)}
-                                            style={{ minWidth: "35px" }}>
-                                            {pageNumber}
-                                        </button>
-                                    );
-                                } else if (pageNumber === currentPage - 2 || pageNumber === currentPage + 2) {
-                                    return <span key={pageNumber} className="px-2">...</span>;
-                                }
-                                return null;
-                            })}
+                    <div className="col-12 col-lg-6 p-3 d-flex justify-content-lg-end justify-content-center">
+                        <div className="d-flex gap-2 align-items-center flex-wrap justify-content-center">
+                            <button 
+                                className="btn btn-sm btn-outline-success d-flex align-items-center"
+                                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                                disabled={currentPage === 1}>
+                                <i className="fa fa-chevron-left"></i>
+                                <span className="ms-2 small d-none d-lg-block">Previous</span>
+                            </button>
+                            
+                            <div className="d-flex gap-1 flex-wrap justify-content-center">
+                                {[...Array(totalPages)].map((_, index) => {
+                                    const pageNumber = index + 1;
+                                    if (pageNumber === 1 || pageNumber === totalPages || 
+                                        (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1)) {
+                                        return (
+                                            <button
+                                                key={pageNumber}
+                                                className={`btn btn-sm ${currentPage === pageNumber ? 'btn-success' : 'btn-outline-success'}`}
+                                                onClick={() => setCurrentPage(pageNumber)}
+                                                style={{ minWidth: "35px" }}>
+                                                {pageNumber}
+                                            </button>
+                                        );
+                                    } else if (pageNumber === currentPage - 2 || pageNumber === currentPage + 2) {
+                                        return <span key={pageNumber} className="px-2 d-flex align-items-center">...</span>;
+                                    }
+                                    return null;
+                                })}
+                            </div>
+                            
+                            <button 
+                                className="btn btn-sm btn-outline-success d-flex align-items-center"
+                                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                                disabled={currentPage === totalPages}>
+                                <span className="me-2 small d-none d-lg-block">Next</span>
+                                <i className="fa fa-chevron-right"></i>
+                            </button>
                         </div>
-                        
-                        <button 
-                            className="btn btn-sm btn-outline-success d-flex align-items-center"
-                            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                            disabled={currentPage === totalPages}>
-                            <span className="me-2 small d-none d-lg-block">Next</span>
-                            <i className="fa fa-chevron-right"></i>
-                        </button>
                     </div>
                 </div>
                 </>

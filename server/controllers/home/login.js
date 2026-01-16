@@ -6,6 +6,8 @@ import Seller from "../../models/seller.js";
 import ActivityLog from "../../models/activityLogs.js";
 
 
+
+
 const CookieSetUp = (res, account, role) => {
     const accessToken = jwt.sign(
         { id: account._id, role },
@@ -19,22 +21,25 @@ const CookieSetUp = (res, account, role) => {
         { expiresIn: process.env.JWT_REFRESH_EXPIRES }
     );
 
+    // Check if running on localhost/local network
+    const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',').map(o => o.trim()) || [];
+    const isLocal = allowedOrigins.some(origin => 
+        origin.includes('localhost') || origin.startsWith('http://')
+    );
+
     const cookieOptions = {
         httpOnly: true,
-        secure: true,
-        sameSite: 'none',
+        secure: !isLocal,  // false for local, true for production
+        sameSite: isLocal ? 'lax' : 'none',
         path: "/",
-        maxAge: 24 * 60 * 60 * 1000  // 1 day in milliseconds
     };
         
     res.cookie("accessToken", accessToken, cookieOptions);
     
     res.cookie("refreshToken", refreshToken, {
         ...cookieOptions,
-        maxAge: 7 * 24 * 60 * 60 * 1000  // 7 days for refresh token
     });
 }
-
 
 
 

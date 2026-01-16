@@ -16,12 +16,12 @@ const AddAccount = ({ isOpen, onClose, onSuccess }) => {
 
 
     const userTypes = [
-        {
-            role: "admin",
-            title: "Sub Admin",
-            description: "Manage platform and users",
-            icon: "👤"
-        },
+        // {
+        //     role: "admin",
+        //     title: "Sub Admin",
+        //     description: "Manage platform and users",
+        //     icon: "👤"
+        // },
         {
             role: "seller",
             title: "Farmer",
