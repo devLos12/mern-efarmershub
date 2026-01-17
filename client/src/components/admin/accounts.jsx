@@ -140,27 +140,7 @@ const Accounts =()=>{
     }, [openMenuId]);
 
 
-
-    // Reset to page 1 when filters change
-    useEffect(() => {
-        setCurrentPage(1);
-    }, [verificationFilter, debouncedSearch, location.state?.source]);
-
-
-    useEffect(()=>{
-
-        const loadInitialAccounts = async () => {
-            setIsRefreshing(true);
-
-            setVerificationFilter('all');
-            await fetchAccounts();
-            setTimeout(() => {
-                setLoading(false);
-                setIsRefreshing(false);
-            }, 1500);
-        };
-        loadInitialAccounts();
-    }, [location.state?.source]); 
+  
 
 
     
@@ -224,9 +204,11 @@ const Accounts =()=>{
             if(location.state?.source === "user"){
                 setAccountsData(data.user.reverse());
             }
+            
             if(location.state?.source === "seller"){
                 setAccountsData(data.seller.reverse());
             }
+          
             if(location.state?.source === "rider"){
                 setAccountsData(data.rider.reverse());
             }
@@ -240,11 +222,10 @@ const Accounts =()=>{
     };
 
 
-  
-
 
     const handleRefresh = async () => {
         setIsRefreshing(true);
+
         try {
             await fetchAccounts();
             await new Promise(resolve => setTimeout(resolve, 500));
@@ -265,6 +246,29 @@ const Accounts =()=>{
         if(height < 574) return height ;
         return height-152;
     }
+
+
+      // Reset to page 1 when filters change
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [verificationFilter, debouncedSearch, location.state?.source]);
+
+
+    useEffect(()=>{
+        const loadInitialAccounts = async () => {
+            setVerificationFilter('all');
+            setIsRefreshing(true);
+            await fetchAccounts();
+
+
+            setTimeout(() => {
+                setLoading(false);
+                setIsRefreshing(false);
+
+            }, 500);
+        };
+        loadInitialAccounts();
+    }, [location.state?.source]); 
 
 
     if(loading) return (
@@ -311,9 +315,9 @@ const Accounts =()=>{
                         }`}
                         style={{cursor : "pointer", transition: "all 0.2s ease"}}
                         onClick={()=> {
-                            navigate("/admin/accounts", {
-                                state : { source : "seller"}
-                            })
+                                navigate("/admin/accounts", {
+                                    state : { source : "seller"}
+                                })
                         }}>
                             <i className="fa fa-store me-2 small"></i>
                             <p className="m-0 small fw-bold d-none d-md-flex">farmer</p>
@@ -438,21 +442,25 @@ const Accounts =()=>{
                     <table className="w-100" style={{minWidth: "800px"}}>
                     <thead className="position-sticky top-0 z-1 bg-white">
                         <tr>
-                            {location.state?.source === "admin" ? (
+                            {location.state?.source === "admin" && (
                                 // Admin table headers
                                 ["Account ID", "Email", "Contact Number", "Admin Type", "Created At", "Action"].map((data, i)=> (
                                     <th className={`text-capitalize p-3 text-success small fw-bold text-nowrap
                                     ${i < 5 ? "text-start" : "text-center"}`} 
                                     key={i} >{data}</th>
                                 ))
-                            ) : location.state?.source === "user" ? (
+                            )}
+                            
+                            {location.state?.source === "user" && (
                                 // Buyer table headers (no verification)
                                 ["Account ID", "Buyer Name", "Email", "Created At", "Message", "Action"].map((data, i)=> (
                                     <th className={`text-capitalize p-3 text-success small fw-bold text-nowrap
                                     ${i < 4 ? "text-start" : "text-center"}`} 
                                     key={i} >{data}</th>
                                 ))
-                            ) : (
+                            )}
+                            
+                            {location.state?.source === "seller"  && (
                                 // Seller/Rider table headers (with verification)
                                 ["Verification Status", "Account ID", 
                                     `${location.state?.source === "seller" ? "Farmer" : "Rider"} Name`, 
