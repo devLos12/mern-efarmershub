@@ -3,10 +3,108 @@ import Seller from "../../models/seller.js";
 import Rider from "../../models/rider.js";
 import Product from "../../models/products.js";
 import Admin from "../../models/admin.js";
+import { Resend } from 'resend';
+
+
+
+// ============================================
+// RESEND EMAIL CONFIGURATION
+// ============================================
+const createResendClient = () => {
+    try {
+        // Validate API key
+        if (!process.env.RESEND_API_KEY) {
+            console.warn('Resend API key not configured. Email notifications will be disabled.');
+            return null;
+        }
+        const resend = new Resend(process.env.RESEND_API_KEY);
+        
+        return resend;
+    } catch (error) {
+        console.error('Failed to create Resend client:', error.message);
+        return null;
+    }
+};
+
+const resend = createResendClient();
+
+// Email sending function using Resend
+const sendApprovalEmail = async (email, name, accountType) => {
+    // Check if Resend client is available
+    if (!resend) {
+        console.warn('Resend client not configured. Skipping email notification.');
+        return { success: false, error: 'Email service not configured' };
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email || !emailRegex.test(email)) {
+        console.error('Invalid email address:', email);
+        return { success: false, error: 'Invalid email address' };
+    }
+
+    try {
+        const { data, error } = await resend.emails.send({
+            from: 'E-Farmers Hub <onboarding@resend.dev>', // Change to your verified domain
+            to: [email],
+            subject: `Account Approved - ${accountType === 'seller' ? 'Farmer' : 'Rider'} Account Verification`,
+            html: `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                    <div style="background-color: #28a745; padding: 20px; text-align: center; border-radius: 10px 10px 0 0;">
+                        <h1 style="color: white; margin: 0;">Account Approved! ✓</h1>
+                    </div>
+                    
+                    <div style="background-color: #f8f9fa; padding: 30px; border-radius: 0 0 10px 10px;">
+                        <h2 style="color: #333;">Hello ${name},</h2>
+                        
+                        <p style="font-size: 16px; color: #555; line-height: 1.6;">
+                            Great news! Your ${accountType === 'seller' ? 'farmer' : 'rider'} account has been successfully verified and approved.
+                        </p>
+                        
+                        <div style="background-color: white; padding: 20px; border-left: 4px solid #28a745; margin: 20px 0;">
+                            <p style="margin: 0; color: #333;">
+                                <strong>Account Status:</strong> <span style="color: #28a745;">✓ Verified</span><br>
+                                <strong>Account Type:</strong> ${accountType === 'seller' ? 'Farmer' : 'Rider'}<br>
+                                <strong>Email:</strong> ${email}
+                            </p>
+                        </div>
+                        
+                        <p style="font-size: 16px; color: #555; line-height: 1.6;">
+                            You can now access all features available for ${accountType === 'seller' ? 'farmers' : 'riders'}. 
+                            Log in to your account to get started!
+                        </p>
+                        
+                        <hr style="border: none; border-top: 1px solid #ddd; margin: 20px 0;">
+                        
+                        <p style="font-size: 12px; color: #999; text-align: center;">
+                            This is an automated message, please do not reply to this email.
+                        </p>
+                    </div>
+                </div>
+            `
+        });
+
+        if (error) {
+            console.error('Error sending approval email:', error);
+            return { success: false, error: error.message };
+        }
+
+        console.log('Approval email sent successfully to:', email);
+        console.log('Message ID:', data.id);
+        return { success: true, messageId: data.id };
+
+    } catch (error) {
+        console.error('Error sending approval email:', error.message);
+        return { success: false, error: error.message };
+    }
+};
+
+
+// ============================================
+// COMMENTED OUT - NODEMAILER CONFIGURATION
+// ============================================
+/*
 import nodemailer from "nodemailer";
-
-
-
 
 // Email configuration with better error handling
 const createTransporter = () => {
@@ -29,7 +127,6 @@ const createTransporter = () => {
             // secure: process.env.SMTP_SECURE === 'true', // true for 465, false for other ports
         });
 
-
         
         // Verify transporter configuration
         transporter.verify((error, success) => {
@@ -48,6 +145,8 @@ const createTransporter = () => {
 };
 
 const transporter = createTransporter();
+
+
 
 // Email sending function with comprehensive error handling
 const sendApprovalEmail = async (email, name, accountType) => {
@@ -97,17 +196,6 @@ const sendApprovalEmail = async (email, name, accountType) => {
                         Log in to your account to get started!
                     </p>
                     
-                    // <div style="text-align: center; margin: 30px 0;">
-                    //     <a href="${process.env.FRONTEND_URL}" 
-                    //        style="background-color: #28a745; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">
-                    //         Login to Your Account
-                    //     </a>
-                    // </div>
-                    
-                    // <p style="font-size: 14px; color: #777; margin-top: 30px;">
-                    //     If you have any questions, feel free to contact our support team.
-                    // </p>
-                    
                     <hr style="border: none; border-top: 1px solid #ddd; margin: 20px 0;">
                     
                     <p style="font-size: 12px; color: #999; text-align: center;">
@@ -117,6 +205,7 @@ const sendApprovalEmail = async (email, name, accountType) => {
             </div>
         `
     };
+
 
     try {
         const info = await transporter.sendMail(mailOptions);
@@ -138,6 +227,12 @@ const sendApprovalEmail = async (email, name, accountType) => {
         return { success: false, error: error.message };
     }
 };
+*/
+
+
+// ============================================
+// CONTROLLER FUNCTIONS
+// ============================================
 
 export const getAccounts = async(req, res)=>{
     try{

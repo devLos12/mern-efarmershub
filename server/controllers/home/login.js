@@ -43,7 +43,6 @@ const CookieSetUp = (res, account, role) => {
 
 
 
-
 const login = async (req, res) => {
     try {
         const { email, password } = req.body;

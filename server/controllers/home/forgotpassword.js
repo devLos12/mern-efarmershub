@@ -18,8 +18,8 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 const sendVerificationEmail = async (email, code) => {
     try {
         const { data, error } = await resend.emails.send({
-            from: 'Password Reset <onboarding@resend.dev>',
-            to: ['carlosloyola095@gmail.com'],
+            from: 'E-Farmers Hub <security@efarmershub.com>',  // ✅ GAMITIN MO TO!
+            to: [email],  // ✅ Gawing dynamic, hindi hardcoded
             subject: 'Password Reset Verification Code',
             html: `
                 <h2>Password Reset Request</h2>
@@ -41,6 +41,9 @@ const sendVerificationEmail = async (email, code) => {
         return { success: false };
     }
 };
+
+
+
 
 // Nodemailer version - COMMENTED OUT
 /*
