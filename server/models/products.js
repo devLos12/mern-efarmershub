@@ -56,6 +56,8 @@ const productSchema  = new mongoose.Schema({
 
 
     createdAt : { type: Date, default : Date.now},
+
+    cloudinaryId: String,
 })
 
 const Product = mongoose.model('Product', productSchema);

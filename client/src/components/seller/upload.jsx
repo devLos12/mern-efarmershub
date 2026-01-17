@@ -518,7 +518,7 @@ const Upload = () => {
                                                 <img 
                                                     src={
                                                         isUpdate 
-                                                            ? imgPreview || `${import.meta.env.VITE_API_URL}/api/Uploads/${formData?.image}`
+                                                            ? imgPreview || (formData?.image)
                                                             : imgPreview
                                                     } 
                                                     alt={imgPreview}

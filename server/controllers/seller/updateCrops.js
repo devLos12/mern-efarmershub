@@ -1,27 +1,53 @@
 import multer from "multer";
 import Product from "../../models/products.js";
+import cloudinary from "../../config/cloudinary.js";
 
-
-
+import fs from "fs"; // Para delete local file
 
 const storage = multer.diskStorage({
     destination: "./uploads",
     filename: (req, file, cb) => {
-        const uniqueName = `${Date.now()} - ${file.originalname}`;
+        const uniqueName = `${Date.now()}-${file.originalname}`;
         cb(null, uniqueName)
     }
 })
 
 export const update = multer({ storage: storage });
 
-
 export const updateCrops = async(req, res) => {
     try {
         const { id, name, price, stocks, category, productType, disc, image, kg, lifeSpan } = req.body;
-        const imageFile = req.file ? req.file.filename : null;
+        
+        let imageFile = image; // Default: keep old image
+        let newCloudinaryId = null;
+
+        
+        
+        // If new image uploaded
+        if (req.file) {
+            // Get current product to delete old image
+            const currentProduct = await Product.findById(id);
+            
+            // Delete old image from Cloudinary
+            if (currentProduct.cloudinaryId) {
+                await cloudinary.uploader.destroy(currentProduct.cloudinaryId);
+            }
+
+            // Upload new image to Cloudinary
+            const result = await cloudinary.uploader.upload(req.file.path, {
+                folder: 'products',
+                secure: true
+            });
+
+            imageFile = result.secure_url; // New Cloudinary URL
+            newCloudinaryId = result.public_id;
+
+            // Delete local file
+            fs.unlinkSync(req.file.path);
+        }
 
         // Check if another product with same name exists (excluding current product)
-        const { sellerId } = req.account || req.body; // adjust based on your auth setup
+        const { id: sellerId } = req.account; // From authMiddleware
         const existingProduct = await Product.findOne({ 
             name, 
             'seller.id': sellerId,
@@ -34,18 +60,26 @@ export const updateCrops = async(req, res) => {
             )
         }
 
-        const updateProduct = await Product.findByIdAndUpdate(id,
-            { 
-                name, 
-                price, 
-                stocks, 
-                kg, 
-                lifeSpan, 
-                category, 
-                productType,
-                disc, 
-                imageFile: imageFile ?? image 
-            },
+        const updateData = { 
+            name, 
+            price, 
+            stocks, 
+            kg, 
+            lifeSpan, 
+            category, 
+            productType,
+            disc, 
+            imageFile
+        };
+
+        // Only update cloudinaryId if new image was uploaded
+        if (newCloudinaryId) {
+            updateData.cloudinaryId = newCloudinaryId;
+        }
+
+        const updateProduct = await Product.findByIdAndUpdate(
+            id,
+            updateData,
             { new: true }
         )
 

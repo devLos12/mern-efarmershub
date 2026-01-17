@@ -7,7 +7,6 @@ import { useNavigate } from "react-router-dom";
 
 
 
-
 const ProductCard = ({ products })=>{
     const { role } = useContext(appContext);
     const admin = useContext(adminContext);
@@ -22,8 +21,6 @@ const ProductCard = ({ products })=>{
     const width = useBreakpoint();
     const navigate = useNavigate();
 
-
-    
     const updateProduct = (data) => {
         if(role === "seller") {
             setSellerUpload({ isShow: true, data: data });
@@ -31,7 +28,6 @@ const ProductCard = ({ products })=>{
             setEditProduct({ isShow: true,  data: data })
         }
     }
-
 
     const deleteProduct = (id) =>{
         if(role === "admin"){
@@ -71,10 +67,10 @@ const ProductCard = ({ products })=>{
     return (
         <div className={`row g-0`}>
             {products.map((data, i) => (
-                <div key={i} className="col-6 col-sm-4 col-md-4 col-lg-4 col-xl-3 col-xxl-3">
+                <div key={i} className="col-6  col-sm-4 col-md-4 col-lg-4 col-xl-3 col-xxl-3">
                     <div className="bg-white border rounded g-0 p-1 p-md-2 p-lg-3  me-1 mb-1">
                         <div className="12">
-                            <img src={`${import.meta.env.VITE_API_URL}/api/uploads/${data.imageFile}`} alt={data.imageFile} className="img-fluid rounded " style={{cursor:"pointer"}} 
+                            <img src={data.imageFile} alt={data.imageFile} className="img-fluid rounded " style={{cursor:"pointer"}} 
                             
                             onClick={()=>{
                                 

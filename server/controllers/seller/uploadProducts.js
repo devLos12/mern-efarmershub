@@ -1,11 +1,17 @@
 import multer from "multer";
 import Product from "../../models/products.js";
 import Seller from "../../models/seller.js";
+import cloudinary from "../../config/cloudinary.js";
+import fs from "fs"; // Para i-delete yung local file after upload
 
+
+
+
+// Temporary storage lang - ideleted natin after upload to Cloudinary
 const storage = multer.diskStorage({
     destination: "./uploads",
     filename: (req, file, cb) => {
-        cb(null, file.originalname)
+        cb(null, Date.now() + "-" + file.originalname) // Unique filename
     }
 })
 
@@ -18,14 +24,15 @@ export const uploadProducts = async(req, res) => {
         const seller = await Seller.findOne({ _id: id });
 
         const { name, price, category, productType, stocks, kg, lifeSpan, disc } = req.body;
-        const imageFile = req.file.filename;
 
-        const existingProduct = await Product.findOne({ imageFile });
+        // Upload to Cloudinary
+        const result = await cloudinary.uploader.upload(req.file.path, {
+            folder: 'products',
+            secure: true
+        });
 
-        if (existingProduct) {
-            return res.status(400).json(
-                { message: "Duplicate image detected! Use another image or file." });
-        }
+        // Delete local file after upload
+        fs.unlinkSync(req.file.path);
 
         const existingNameProduct = await Product.findOne({ 
             name, 
@@ -44,9 +51,9 @@ export const uploadProducts = async(req, res) => {
         let newProdId = "PID0001";
 
         if (lastProduct && lastProduct.prodId) {
-            const lastNumber = parseInt(lastProduct.prodId.replace("PID", "")); // PID0001 -> 1
+            const lastNumber = parseInt(lastProduct.prodId.replace("PID", "")); 
             const nextNumber = lastNumber + 1;
-            newProdId = "PID" + nextNumber.toString().padStart(4, "0"); // PID0002
+            newProdId = "PID" + nextNumber.toString().padStart(4, "0");
         }
         
         const newProduct = new Product({
@@ -60,7 +67,8 @@ export const uploadProducts = async(req, res) => {
             kg, 
             lifeSpan, 
             disc, 
-            imageFile,
+            imageFile: result.secure_url, // Cloudinary URL
+            cloudinaryId: result.public_id, // Para sa pag-delete later
             seller: {
                 imageFile: seller.imageFile,
                 id: seller._id, 
@@ -70,8 +78,6 @@ export const uploadProducts = async(req, res) => {
         });
         
         await newProduct.save();
-
-        // Emit socket event to admin - message only
      
         io.emit('product:uploaded', { message: `New product "${name}" uploaded by ${seller.firstname} ${seller.lastname}` });
         res.status(201).json({ message: "Uploaded Successfully" });
