@@ -93,13 +93,7 @@ const Accounts =()=>{
     const currentItems = filteredAccounts.slice(indexOfFirstItem, indexOfLastItem);
     const totalPages = Math.ceil(filteredAccounts.length / itemsPerPage);
 
-    // Reset to page 1 when filters change
-    useEffect(() => {
-        setCurrentPage(1);
-    }, [verificationFilter, debouncedSearch, location.state?.source]);
-
-
-
+ 
 
     const getVerificationBadge = (status) => {
         const badges = {
@@ -118,13 +112,10 @@ const Accounts =()=>{
         );
     };
 
-    useEffect(() => {
-        setVerificationFilter('all');
-    }, [location.state?.source]);
 
     const showVerificationFilter = location.state?.source === "seller" || location.state?.source === "rider";
 
-
+    
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (!openMenuId) return;
@@ -149,6 +140,28 @@ const Accounts =()=>{
     }, [openMenuId]);
 
 
+
+    // Reset to page 1 when filters change
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [verificationFilter, debouncedSearch, location.state?.source]);
+
+
+    useEffect(()=>{
+        setLoading(true);
+
+        const loadInitialAccounts = async () => {
+            setVerificationFilter('all');
+            await fetchAccounts();
+            setTimeout(() => {
+                setLoading(false);
+            }, 200);
+        };
+        loadInitialAccounts();
+    }, [location.state?.source]); 
+
+
+    
     const handleChat = async(e) =>{
 
         try{        
@@ -184,6 +197,7 @@ const Accounts =()=>{
             console.log("Error: ", err.message);
         }
     }
+
 
     const handleViewProfile = (id) => {
         navigate(`/admin/profile`, { 
@@ -223,15 +237,9 @@ const Accounts =()=>{
         }
     };
 
-    useEffect(()=>{
-        const loadInitialAccounts = async () => {
-            await fetchAccounts();
-            setTimeout(() => {
-                setLoading(false);
-            }, 500);
-        };
-        loadInitialAccounts();
-    }, [location.state?.source]); 
+
+  
+
 
     const handleRefresh = async () => {
         setIsRefreshing(true);
@@ -555,11 +563,12 @@ const Accounts =()=>{
                                 ) : (
                                     // Other roles row layout
                                     <>
-                                        {needsVerification && !isBuyer && !isAdmin && (
+                                        {needsVerification && !isBuyer && !isAdmin &&  (
                                             <td className="small text-start ps-3 p-3 text-nowrap" style={{color: "#2d3748"}}>
-                                                {getVerificationBadge(data.verification || 'pending')}
+                                                {getVerificationBadge(data.verification || "pending")}
                                             </td>
                                         )}
+
                                         <td className="small text-start ps-3 p-3 fw-bold text-nowrap" style={{color: "#2d3748"}}>
                                             {data.accountId || "N/A"}
                                         </td>
