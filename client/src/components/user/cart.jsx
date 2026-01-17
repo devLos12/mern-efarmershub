@@ -194,7 +194,9 @@ const Cart = () => {
                             style={{background: "#F5F5DC"}}>
                                 <div className="row ">
                                     <div className="col-5 rounded  align-items-center">
-                                        <img src={`${import.meta.env.VITE_API_URL}/api/Uploads/${data.imageFile}`} alt={data.imageFile} className="img-fluid rounded"/>
+                                        <img src={data.imageFile.startsWith("http") 
+                                            ? data.imageFile 
+                                            : `${import.meta.env.VITE_API_URL}/api/Uploads/${data.imageFile}`} alt={data.imageFile} className="img-fluid rounded"/> 
                                     </div>
                                     <div className="col-6 g-0 d-flex flex-column justify-content-between ">
                                         <div>
