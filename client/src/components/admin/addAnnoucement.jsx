@@ -372,9 +372,7 @@ const AddAnnouncement = () => {
                                                     <img 
                                                         src={
                                                             isUpdate 
-                                                            ? imagePreview || formData.imageFile.startsWith('http')
-                                                                ? formData.imageFile
-                                                                : `${import.meta.env.VITE_API_URL}/uploads/announcement/${formData.imageFile}`  
+                                                            ? imagePreview || formData.imageFile
                                                             : imagePreview
                                                         } 
                                                         alt={imagePreview}

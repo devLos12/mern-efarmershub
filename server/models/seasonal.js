@@ -31,6 +31,11 @@ const seasonalAnnouncementSchema = new mongoose.Schema({
 
 
     createdAt: { type: Date, default: Date.now },
+
+    cloudinaryId: { 
+        type: String,
+        required: false
+    }   
 })  
 
 const SeasonalAnnouncement = new mongoose.model("seasonalannoucement", seasonalAnnouncementSchema);

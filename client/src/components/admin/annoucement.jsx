@@ -157,9 +157,7 @@ const Announcement = () => {
                                                     style={{ height: "60px" , width: "100px"}}
                                                 >
                                                     <img 
-                                                    src={data.imagePreview || data.imageFile.startsWith('http')
-                                                        ? data.imageFile
-                                                        : `${import.meta.env.VITE_API_URL}/uploads/announcement/${data.imageFile}`} 
+                                                    src={data.imagePreview || data.imageFile}
                                                     alt={data.imagePreview || data.imageFile}
                                                     className="w-100 h-100"
                                                     style={{objectFit: "cover"}}

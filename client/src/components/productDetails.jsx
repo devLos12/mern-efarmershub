@@ -266,9 +266,7 @@ const ProductDetails = () =>{
                             ? "col-12 col-md-6 col-lg-6 col-xl-6 " 
                             : "col-12 col-md-6 col-lg-6 col-xl-5 col-xxl-5 "}>
                             <img 
-                            src={ productDetails.imageFile.startsWith("http") 
-                                ? productDetails.imageFile 
-                                : `${import.meta.env.VITE_API_URL}/api/uploads/${productDetails.imageFile}`}    
+                            src={productDetails.imageFile} 
                             alt={productDetails.imageFile}  
                             className={"img-fluid rounded-5"} />
                         </div>

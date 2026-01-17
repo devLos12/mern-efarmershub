@@ -12,6 +12,8 @@ const storage = multer.diskStorage({
 
 export const uploadAnnouncement = multer({ storage: storage });
 
+
+
 export const addAnnouncement = async (req, res) => {
     try {
         const { name, title, description, startDate, endDate } = req.body;

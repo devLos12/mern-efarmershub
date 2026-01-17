@@ -246,7 +246,7 @@ const AllProductCards = () => {
                                 <div className="col-12 text-center bg-white rounded mt-2">
                                     <img 
                                         src={
-                                            data.imageFile.startsWith("http") 
+                                            data.imageFile?.startsWith("http") 
                                             ? data.imageFile 
                                             : `${import.meta.env.VITE_API_URL}/api/uploads/${data.imageFile}`}      
                                         alt={data.imageFile} 
