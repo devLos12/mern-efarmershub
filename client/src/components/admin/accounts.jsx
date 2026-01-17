@@ -254,13 +254,15 @@ const Accounts =()=>{
     }, [verificationFilter, debouncedSearch, location.state?.source]);
 
 
+
+
     useEffect(()=>{
+
         const loadInitialAccounts = async () => {
             setVerificationFilter('all');
-            setIsRefreshing(true);
+            setIsRefreshing(true)
+
             await fetchAccounts();
-
-
             setTimeout(() => {
                 setLoading(false);
                 setIsRefreshing(false);
@@ -428,7 +430,7 @@ const Accounts =()=>{
                 <div className="mt-2 bg-white rounded shadow-sm border border-success border-opacity-25 position-relative"  
                 style={{overflowX: "auto", overflowY: "hidden"}}>
                     {isRefreshing && (
-                        <div className="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center bg-white bg-opacity-75" 
+                        <div className="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center bg-white bg-opacity-100" 
                             style={{ zIndex: 10 }}>
                             <div className="text-center">
                                 <div className="spinner-border text-success mb-2" role="status">
@@ -460,7 +462,7 @@ const Accounts =()=>{
                                 ))
                             )}
                             
-                            {location.state?.source === "seller"  && (
+                            {location.state?.source === "seller"  &&  (
                                 // Seller/Rider table headers (with verification)
                                 ["Verification Status", "Account ID", 
                                     `${location.state?.source === "seller" ? "Farmer" : "Rider"} Name`, 
