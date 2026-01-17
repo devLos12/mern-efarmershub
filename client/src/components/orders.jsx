@@ -433,7 +433,7 @@ const Orders = () => {
             <>
             <div className="rounded border shadow-sm mt-1 bg-white position-relative overflow-hidden">
                 {isRefreshing && (
-                    <div className="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center bg-white bg-opacity-75" 
+                    <div className="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center bg-white bg-opacity-100" 
                         style={{ zIndex: 10 }}>
                         <div className="text-center">
                             <div className="spinner-border text-success mb-2" role="status">
