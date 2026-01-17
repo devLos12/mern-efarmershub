@@ -148,14 +148,16 @@ const Accounts =()=>{
 
 
     useEffect(()=>{
-        setLoading(true);
 
         const loadInitialAccounts = async () => {
+            setIsRefreshing(true);
+
             setVerificationFilter('all');
             await fetchAccounts();
             setTimeout(() => {
                 setLoading(false);
-            }, 200);
+                setIsRefreshing(false);
+            }, 1500);
         };
         loadInitialAccounts();
     }, [location.state?.source]); 
