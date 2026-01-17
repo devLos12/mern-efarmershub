@@ -2,6 +2,9 @@ import React, { useContext, useEffect, useState, useRef } from "react";
 import { adminContext } from "../../context/adminContext";
 import { useBreakpointHeight } from "../breakpoint";
 
+
+
+
 const Announcement = () => {
     const { addAnnouncement, setAddAnnouncement, setText, setAnnouncementModal } = useContext(adminContext);
     const [announcement, setAnnouncement] = useState([]);
@@ -154,7 +157,9 @@ const Announcement = () => {
                                                     style={{ height: "60px" , width: "100px"}}
                                                 >
                                                     <img 
-                                                    src={data.imagePreview || `${import.meta.env.VITE_API_URL}/api/Uploads/${data.imageFile}`} 
+                                                    src={data.imagePreview || data.imageFile.startsWith('http')
+                                                        ? data.imageFile
+                                                        : `${import.meta.env.VITE_API_URL}/uploads/announcement/${data.imageFile}`} 
                                                     alt={data.imagePreview || data.imageFile}
                                                     className="w-100 h-100"
                                                     style={{objectFit: "cover"}}

@@ -158,7 +158,9 @@ const SeasonAnnouncement = () => {
                       style={{overflow: "hidden"}}
                       >
                         <img
-                          src={`${import.meta.env.VITE_API_URL}/api/Uploads/${item.imageFile}` || "/fallback.jpg"}
+                          src={ item.imageFile.startsWith('http')
+                            ? item.imageFile
+                            : `${import.meta.env.VITE_API_URL}/api/Uploads/${item.imageFile}` || "/fallback.jpg"} 
                           alt={item.title}
                           className="w-100 "
                           style={{
