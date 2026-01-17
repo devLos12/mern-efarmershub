@@ -377,9 +377,9 @@ const Upload = () => {
                                         >
                                             <option value="" hidden>select category</option>
                                             {[
-                                                'fruit', 
-                                                'vegetable', 
-                                                'fertilizer', 
+                                                'fruits',
+                                                'fruit vegetables', 
+                                                'leafy vegetables', 
                                                 'root crops', 
                                                 'grains', 
                                                 'legumes'

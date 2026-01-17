@@ -360,7 +360,6 @@ const Transactions = () => {
 
 
     const openPayoutModal = (transaction) => {
-        console.log(transaction);
         setSelectedTransaction(transaction);
         setShowPayoutModal(true);
 
@@ -436,7 +435,6 @@ const Transactions = () => {
             setIsRefreshing(false);
         }
     };
-
 
 
 
@@ -563,6 +561,10 @@ const Transactions = () => {
         return height-152;
     }
     
+    // Add this calculation where you need it (e.g., in the modal body)
+    const taxPercentage = selectedTransaction?.totalAmount > 0 
+        ? ((selectedTransaction?.taxAmount / selectedTransaction?.totalAmount) * 100).toFixed(2)
+        : 0;
 
     return (
 
@@ -733,14 +735,17 @@ const Transactions = () => {
                                 </span>
                             </div>
                             <div className="d-flex justify-content-between mb-2">
-                                <span className="text-muted">Tax Amount:</span>
-                                <span className="text-danger">
-                                    - ₱{(selectedTransaction?.taxAmount ?? 0).toLocaleString('en-PH', {
-                                        minimumFractionDigits: 2,
-                                        maximumFractionDigits: 2
-                                    })}
-                                </span>
-                            </div>  
+                            <span className="text-muted">Tax Amount:</span>
+                                <div className="text-end">
+                                    <span className="text-danger d-block">
+                                        - ₱{(selectedTransaction?.taxAmount ?? 0).toLocaleString('en-PH', {
+                                            minimumFractionDigits: 2,
+                                            maximumFractionDigits: 2
+                                        })}
+                                    </span>
+                                    <span className="small text-muted">({taxPercentage}%)</span>
+                                </div>
+                            </div>
                             <hr className="my-2" />
                             <div className="d-flex justify-content-between">
                                 <span className="fw-bold">Net Amount:</span>
@@ -1131,7 +1136,11 @@ const Transactions = () => {
                                     <th key={i}
                                     className={`text-capitalize p-3 text-success ${i === 8 && "text-center"} ${i === 7 && "text-center"}  }
                                     ${i === 0 && "text-center "} small`}
-                                    >{data}</th>
+                                    >
+                                        {data}
+                                        {i === 4 && (<span className="small ms-2">(5.0%)</span>)
+                                        }
+                                    </th>
                                 ))}
 
 
