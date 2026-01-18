@@ -4,14 +4,10 @@ import Rider from "../../models/rider.js";
 import Admin from "../../models/admin.js";
 import User from "../../models/user.js";
 import multer from "multer";
+import { v2 as cloudinary } from "cloudinary";
 
-const storage = multer.diskStorage({
-    destination: "./uploads",
-    filename: (req, file, cb) => {
-        cb(null, file.originalname)
-    }
-});
-
+// ✅ CHANGE: Use memoryStorage instead of diskStorage
+const storage = multer.memoryStorage();
 export const addAccountFile = multer({ storage: storage });
 
 const addAccount = async (req, res) => {
@@ -186,16 +182,34 @@ const addAccount = async (req, res) => {
         if (role.toLowerCase() === "rider") {
             const accountId = await generateUniqueAccountId(Rider);
 
-            let imagePlateNumberPath = null;
-            let licenseImagePath = null;
+            let imagePlateNumberUrl = null;
+            let licenseImageUrl = null;
             
-            if (req.files) {
-                if (req.files.plateImage && req.files.plateImage[0]) {
-                    imagePlateNumberPath = req.files.plateImage[0].filename;
+            // ✅ CHANGE: Upload to Cloudinary instead of saving locally
+            try {
+                if (req.files && req.files.plateImage && req.files.plateImage[0]) {
+                    const plateBuffer = req.files.plateImage[0].buffer;
+                    const base64Plate = plateBuffer.toString('base64');
+                    const dataURIPlate = `data:${req.files.plateImage[0].mimetype};base64,${base64Plate}`;
+                    
+                    const plateResult = await cloudinary.uploader.upload(dataURIPlate, {
+                        folder: "rider-documents/plate-images"
+                    });
+                    imagePlateNumberUrl = plateResult.secure_url;
                 }
-                if (req.files.licenseImage && req.files.licenseImage[0]) {
-                    licenseImagePath = req.files.licenseImage[0].filename;
+
+                if (req.files && req.files.licenseImage && req.files.licenseImage[0]) {
+                    const licenseBuffer = req.files.licenseImage[0].buffer;
+                    const base64License = licenseBuffer.toString('base64');
+                    const dataURILicense = `data:${req.files.licenseImage[0].mimetype};base64,${base64License}`;
+                    
+                    const licenseResult = await cloudinary.uploader.upload(dataURILicense, {
+                        folder: "rider-documents/license-images"
+                    });
+                    licenseImageUrl = licenseResult.secure_url;
                 }
+            } catch (uploadError) {
+                return res.status(400).json({ message: "Failed to upload images to Cloudinary!" });
             }
 
             const newRider = new Rider({
@@ -217,8 +231,8 @@ const addAccount = async (req, res) => {
                     zipCode: zipCode || ''
                 },
                 plateNumber: plateNumber,
-                imagePlateNumber: imagePlateNumberPath,
-                licenseImage: licenseImagePath,
+                imagePlateNumber: imagePlateNumberUrl,
+                licenseImage: licenseImageUrl,
                 verification: "verified"
             });
 

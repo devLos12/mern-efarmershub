@@ -2,25 +2,18 @@
 import Order from "../../models/order.js";
 import Product from "../../models/products.js";
 import multer from "multer";
+import { v2 as cloudinary } from "cloudinary";
 
+const storage = multer.memoryStorage();
 
-const storage  = multer.diskStorage({
-    destination : "./uploads",
-    filename :  (req, file, cb) =>{
-        cb(null, file.originalname)
-    }
-});
+export const uploadRefundFile = multer({ storage: storage });
 
-export const uploadRefundFile = multer({ storage : storage});
-
-
-// Update yung multer config
 export const replacementImagesUpload = multer({ 
     storage: storage,
     limits: { 
-        files: 20, // Allow up to 20 images total
+        files: 20,
     }
-}).any(); // ✅ Use .any() to accept dynamic field names
+}).any();
 
 
 
@@ -96,8 +89,22 @@ export const cancelOrder = async (req, res) => {
         // Calculate refund amount (kung eligible)
         const refundAmount = isRefundEligible ? order.totalPrice : 0;
         
-        // Get QR code filename if uploaded
-        const qrCodeFile = req.file ? req.file.filename : null;
+        // Upload QR code to Cloudinary instead of saving locally
+        let qrCodeUrl = null;
+        
+        if (req.file) {
+            try {
+                const base64QR = req.file.buffer.toString('base64');
+                const dataURIQR = `data:${req.file.mimetype};base64,${base64QR}`;
+                
+                const qrResult = await cloudinary.uploader.upload(dataURIQR, {
+                    folder: 'refund-qrcodes'
+                });
+                qrCodeUrl = qrResult.secure_url;
+            } catch (uploadError) {
+                return res.status(400).json({ message: "Failed to upload QR code to Cloudinary!" });
+            }
+        }
 
         // Update cancellation details
         order.cancellation = {
@@ -111,7 +118,7 @@ export const cancelOrder = async (req, res) => {
                 method: isRefundEligible ? refundMethod : undefined,
                 accountName: isRefundEligible ? accountName.trim() : undefined,
                 accountNumber: isRefundEligible ? accountNumber : undefined,
-                qrCode: qrCodeFile || undefined,
+                qrCode: qrCodeUrl || undefined, // Store Cloudinary URL
                 status: isRefundEligible ? "pending" : "not_applicable",
                 processedAt: null,
                 processedBy: null,
@@ -186,8 +193,6 @@ export const cancelOrder = async (req, res) => {
         });
     }
 };
-
-
 
 
 
@@ -303,19 +308,34 @@ export const requestReplacement = async (req, res) => {
                 continue;
             }
 
-            // Get images for this specific item from uploaded files
-            const itemImages = req.files ? 
-                req.files
-                    .filter(file => file.fieldname === `replacement_images_${itemId}`)
-                    .map(file => file.filename) 
-                : [];
+            // ✅ CHANGE: Upload replacement images to Cloudinary
+            const itemImages = [];
+            
+            if (req.files) {
+                const fieldsForItem = req.files.filter(file => file.fieldname === `replacement_images_${itemId}`);
+                
+                for (const file of fieldsForItem) {
+                    try {
+                        const base64Image = file.buffer.toString('base64');
+                        const dataURIImage = `data:${file.mimetype};base64,${base64Image}`;
+                        
+                        const imageResult = await cloudinary.uploader.upload(dataURIImage, {
+                            folder: `replacement-images/${orderId}/${itemId}`
+                        });
+                        itemImages.push(imageResult.secure_url); // ✅ Store Cloudinary URL
+                    } catch (uploadError) {
+                        errors.push(`${orderItem.prodName}: Failed to upload image to Cloudinary`);
+                        continue;
+                    }
+                }
+            }
                 
             // Update item with replacement request
             orderItem.replacement = {
                 isRequested: true,
                 reason: reason.trim(),
                 description: description?.trim() || "",
-                images: itemImages,
+                images: itemImages, // ✅ Store Cloudinary URLs
                 requestedAt: new Date(),
                 status: "pending"
             };
@@ -336,7 +356,7 @@ export const requestReplacement = async (req, res) => {
             });
         }
 
-        // Update main order status to indicate replacement request
+        // Update main order status
         order.statusDelivery = "replacement requested";
 
         // Add to main statusHistory
@@ -356,11 +376,8 @@ export const requestReplacement = async (req, res) => {
             })
         });
         
-
-        // Save the order
         await order.save();
 
-        // Prepare response
         const response = {
             success: true,
             message: `Replacement request submitted successfully.`,
@@ -371,7 +388,6 @@ export const requestReplacement = async (req, res) => {
             }
         };
 
-        // Include errors if any items failed
         if (errors.length > 0) {
             response.partialSuccess = true;
             response.errors = errors;

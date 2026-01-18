@@ -6,7 +6,7 @@ import Seller from "../../models/seller.js";
 import SellerPaymentTransaction from "../../models/sellerPaymentTrans.js";
 import Rider from "../../models/rider.js";
 import RiderPayout from "../../models/riderPayout.js";
-
+import { v2 as cloudinary } from "cloudinary";
 
 
 
@@ -186,20 +186,8 @@ const createOrUpdateRiderPayout = async(riderId, orderId) => {
     }
 }
 
-
-
-
-
-
-const storage = multer.diskStorage({
-    destination : "./uploads/rider",
-    filename :  (req, file, cb) =>{
-        const uniqueName = `${Date.now()} - ${file.originalname}`;
-        cb(null, uniqueName);
-    }
-})
-
-export const imageProof = multer({storage: storage});
+const storage = multer.memoryStorage();
+export const imageProof = multer({ storage: storage });
 
 
 const updateStatusDelivery = async (req, res) => {
@@ -207,9 +195,37 @@ const updateStatusDelivery = async (req, res) => {
         const riderId = req.account.id;
         const { id, newStatus } = req.body;
         
-        // Get both images if they exist
-        const imageFile = req.files?.image ? req.files.image[0].filename : null;
-        const paymentReceiptFile = req.files?.paymentReceipt ? req.files.paymentReceipt[0].filename : null;
+        // ✅ Upload images to Cloudinary instead of saving locally
+        let imageFileUrl = null;
+        let paymentReceiptFileUrl = null;
+
+        try {
+            // Upload delivery proof image
+            if (req.files?.image && req.files.image[0]) {
+                const imageBuffer = req.files.image[0].buffer;
+                const base64Image = imageBuffer.toString('base64');
+                const dataURIImage = `data:${req.files.image[0].mimetype};base64,${base64Image}`;
+                
+                const imageResult = await cloudinary.uploader.upload(dataURIImage, {
+                    folder: "rider-deliveries/proof-images"
+                });
+                imageFileUrl = imageResult.secure_url;
+            }
+
+            // Upload payment receipt image
+            if (req.files?.paymentReceipt && req.files.paymentReceipt[0]) {
+                const receiptBuffer = req.files.paymentReceipt[0].buffer;
+                const base64Receipt = receiptBuffer.toString('base64');
+                const dataURIReceipt = `data:${req.files.paymentReceipt[0].mimetype};base64,${base64Receipt}`;
+                
+                const receiptResult = await cloudinary.uploader.upload(dataURIReceipt, {
+                    folder: "rider-deliveries/payment-receipts"
+                });
+                paymentReceiptFileUrl = receiptResult.secure_url;
+            }
+        } catch (uploadError) {
+            return res.status(400).json({ message: "Failed to upload images to Cloudinary!" });
+        }
 
         const order = await Order.findOne({_id : id})  
 
@@ -232,7 +248,7 @@ const updateStatusDelivery = async (req, res) => {
                 status: newStatus,
                 description: `your order is successfully ${newStatus}`,
                 location: "unknwon",
-                imageFile: imageFile,
+                imageFile: imageFileUrl, // ✅ Store Cloudinary URL
             })
 
             // Check kung replacement delivery ba ito
@@ -244,7 +260,7 @@ const updateStatusDelivery = async (req, res) => {
             if (!isReplacementDelivery && order.paymentStatus === "pending") {
                 order.paymentStatus = "paid";
                 await createOrUpdatePayout(order.orderItems, order._id);
-                await createTransaction(order, paymentReceiptFile);
+                await createTransaction(order, paymentReceiptFileUrl); // ✅ Pass Cloudinary URL
             }
 
                         

@@ -9,7 +9,7 @@ import AdminPaymentTransaction from "../../models/adminPaymentTrans.js";
 import SellerPaymentTransaction from "../../models/sellerPaymentTrans.js";
 import Notification from "../../models/notification.js";
 import DamageLog from "../../models/damageLog.js";
-
+import { v2 as cloudinary } from "cloudinary";
 
 
 
@@ -363,14 +363,7 @@ export const statusOrder = async(req, res) => {
 
 
 
-
-const storage = multer.diskStorage({
-    destination: "./uploads",
-    filename: (req, file, cb) => {
-        cb(null, file.originalname)
-    }
-});
-
+const storage = multer.memoryStorage();
 
 export const cancelOrderFile = multer({ storage: storage });
 
@@ -378,7 +371,6 @@ export const cancelOrderFile = multer({ storage: storage });
 export const cancelOrder = async (req, res) => {
     try {
         const { orderId, reason, newStatus } = req.body;
-        const proofImage = req.file ? req.file.filename : null;
         const adminId = req.account.id;
 
         // Validate required fields
@@ -394,6 +386,23 @@ export const cancelOrder = async (req, res) => {
 
         const orderIdShort = order.orderId || orderId.toString().slice(-8);
 
+        // ✅ CHANGE: Upload proof image to Cloudinary instead of saving locally
+        let proofImageUrl = null;
+        
+        if (req.file) {
+            try {
+                const base64Proof = req.file.buffer.toString('base64');
+                const dataURIProof = `data:${req.file.mimetype};base64,${base64Proof}`;
+                
+                const proofResult = await cloudinary.uploader.upload(dataURIProof, {
+                    folder: 'order-cancellations/proofs'
+                });
+                proofImageUrl = proofResult.secure_url;
+            } catch (uploadError) {
+                return res.status(400).json({ message: "Failed to upload proof image to Cloudinary!" });
+            }
+        }
+
         // Update order status to cancelled
         order.statusDelivery = newStatus;
         
@@ -402,7 +411,7 @@ export const cancelOrder = async (req, res) => {
             status: newStatus,
             description: `Order cancelled by admin. Reason: ${reason}`,
             location: "Admin Office",
-            imageFile: proofImage,
+            imageFile: proofImageUrl, // ✅ Store Cloudinary URL instead of filename
             timestamp: formatTime()
         });
 
@@ -422,7 +431,7 @@ export const cancelOrder = async (req, res) => {
         await order.save();
 
         // Log activity (success only)
-        const proofText = proofImage ? ' with proof attached' : '';
+        const proofText = proofImageUrl ? ' with proof attached' : '';
         await createActivityLog(
             adminId,
             'CANCEL ORDER',

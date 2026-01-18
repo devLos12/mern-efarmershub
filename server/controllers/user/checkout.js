@@ -110,14 +110,7 @@ const createOrUpdatePayout = async(items, newOrder) => {
 
 
 // Temporary storage - deleted after Cloudinary upload
-const storage = multer.diskStorage({
-    destination: "./uploads",
-    filename: (req, file, cb) => {
-        const uniqueName = `${Date.now()}-${file.originalname}`;
-        cb(null, uniqueName);
-    }
-});
-
+const storage = multer.memoryStorage();
 
 export const upload = multer({ storage: storage });
 
@@ -135,16 +128,21 @@ export const checkOut = async(req, res) => {
         let imageFile = null;
         let cloudinaryId = null;
 
-        // Upload proof of payment to Cloudinary if image exists
+        // ✅ CHANGE: Upload proof of payment to Cloudinary using memoryStorage buffer
         if (req.file) {
-            const result = await cloudinary.uploader.upload(req.file.path, {
-                folder: 'proof-of-payment',
-                secure: true
-            });
-            imageFile = result.secure_url;
-            cloudinaryId = result.public_id;
-            // Delete local file after upload
-            fs.unlinkSync(req.file.path);
+            try {
+                const base64Proof = req.file.buffer.toString('base64');
+                const dataURIProof = `data:${req.file.mimetype};base64,${base64Proof}`;
+                
+                const result = await cloudinary.uploader.upload(dataURIProof, {
+                    folder: 'proof-of-payment',
+                    secure: true
+                });
+                imageFile = result.secure_url;
+                cloudinaryId = result.public_id;
+            } catch (uploadError) {
+                return res.status(400).json({ message: "Failed to upload proof of payment to Cloudinary!" });
+            }
         }
         
         // Generate date for reference number
@@ -228,9 +226,9 @@ export const checkOut = async(req, res) => {
                 paymentType: payment,
                 paymentStatus: "paid",
                 proofOfPayment: {
-                    image: imageFile,
+                    image: imageFile, // ✅ Store Cloudinary URL
                     textMessage: text ?? "",
-                    cloudinaryId: cloudinaryId
+                    cloudinaryId: cloudinaryId // ✅ Store Cloudinary public_id
                 },
                 refNo: refNo
             })
@@ -244,10 +242,6 @@ export const checkOut = async(req, res) => {
         }
 
     } catch(err) {
-        // Cleanup uploaded file on error
-        if (req.file && fs.existsSync(req.file.path)) {
-            fs.unlinkSync(req.file.path);
-        }
         res.status(500).json({ message: err.message});
     }
 }

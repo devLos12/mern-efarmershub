@@ -2,6 +2,7 @@ import React, {useState, useContext, useEffect, useRef} from "react";
 import { userContext } from "../../context/userContext";
 import { Form, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useBreakpointHeight } from "../breakpoint";
+import imageCompression from 'browser-image-compression';
 
 
 const Reviews = () => {
@@ -15,6 +16,7 @@ const Reviews = () => {
     const [form, setForm] = useState({});
     const fileUploadRef = useRef(null);
     const [isDisabled, setIsDisabled] = useState(true);
+    const [isCompressing, setIsCompressing] = useState(false);
     const navigate = useNavigate();
 
 
@@ -65,7 +67,6 @@ const Reviews = () => {
       }))
     }
 
-
     
     const handleFileRemove = ()=> {
       setImgPreview(null);
@@ -78,27 +79,44 @@ const Reviews = () => {
     }
 
 
-    const handleFile = (e)=>{
-      setUploadText(false);
+    const handleFile = async (e) => {
+        const { name } = e.target;
+        const file = e.target.files[0];
+        if (!file) return;
 
-      const { name }   = e.target;
+        setUploadText(false);
+        setIsCompressing(true);
 
-      setForm((prev) => ({
-        ...prev, [name] : e.target.files[0]
-      }))
-      
+        try {
+          const options = {
+            maxSizeMB: 0.75,
+            maxWidthOrHeight: 1920,
+            useWebWorker: true
+          };
 
-      const file = e.target.files[0];
-      if(file) {
-        const reader = new FileReader();
+          const compressedFile = await imageCompression(file, options);
+          
+          // Set compressed file to form
+          setForm({
+            ...form,
+            [name]: compressedFile
+          });
 
-        reader.onload = (e) => {
-          setImgPreview(e.target.result);
-        } 
-        reader.readAsDataURL(file);
-      }
-    }
+          // Preview using compressed file
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            setImgPreview(e.target.result);
+          };
+          reader.readAsDataURL(compressedFile);
 
+        } catch (error) {
+          console.error('Error compressing image:', error);
+          alert('Failed to compress image');
+          handleFileRemove();
+        } finally {
+          setIsCompressing(false);
+        }
+    };
 
 
     useEffect(()=> {
@@ -122,7 +140,7 @@ const Reviews = () => {
             <div className="row justify-content-center mt-3 mb-5">
               <div className="col-12 col-md-6 col-lg-5 col-xl-4 ">
                 <div className="d-flex flex-column justify-content-between h-100 p-3 bg-beige">
-                  <img src={`${import.meta.env.VITE_API_URL}/api/uploads/${data.imageFile}`} 
+                  <img src={data.imageFile} 
                   alt={data.imageFile} className="img-fluid rounded shadow-sm border"/>
                   <div className="mt-3">
                     <p className="m-0 text-capitalize fw-bold fs-4">{data.prodName}</p>
@@ -172,6 +190,12 @@ const Reviews = () => {
                             </div>
                           )}
 
+                          {isCompressing && (
+                            <div className="text-center py-2">
+                              <small className="text-muted">Compressing image...</small>
+                            </div>
+                          )}
+
                           <textarea  className="border-0 bg-transparent p-1 w-75 " 
                             onChange={handleComment}
                             placeholder="Leave a review" 
@@ -196,6 +220,7 @@ const Reviews = () => {
                           onChange={handleFile}
                           id="inputFile" 
                           name="image"
+                          accept="image/*"
                           />
 
                         </div>
@@ -225,4 +250,3 @@ const Reviews = () => {
 }
 
 export default Reviews;
-

@@ -355,10 +355,6 @@ const Messages = () => {
         return () => resizeObserver.disconnect();
     }, [chat, images, input]);
 
-
-
-
-
     
     // Handler para mag-open ng image viewer
     const openImageViewer = (imageUrl, allImagesInMessage, index) => {

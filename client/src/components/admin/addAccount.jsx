@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import imageCompression from "browser-image-compression";
 
 const AddAccount = ({ isOpen, onClose, onSuccess }) => {
     const [step, setStep] = useState(1);
@@ -13,15 +14,11 @@ const AddAccount = ({ isOpen, onClose, onSuccess }) => {
     const [errorMessage, setErrorMessage] = useState("");
     const [plateImagePreview, setPlateImagePreview] = useState(null);
     const [licenseImagePreview, setLicenseImagePreview] = useState(null);
-
+    const [isCompressing, setIsCompressing] = useState(false);
+    // ✅ STEP 1: Add state for tracking account creation
+    const [isCreatingAccount, setIsCreatingAccount] = useState(false);
 
     const userTypes = [
-        // {
-        //     role: "admin",
-        //     title: "Sub Admin",
-        //     description: "Manage platform and users",
-        //     icon: "👤"
-        // },
         {
             role: "seller",
             title: "Farmer",
@@ -54,32 +51,44 @@ const AddAccount = ({ isOpen, onClose, onSuccess }) => {
         }
     };
 
-
-    const handlePlateImageChange = (e) => {
+    // ✅ COMPRESS IMAGE BEFORE SAVING
+    const handlePlateImageChange = async (e) => {
         const file = e.target.files[0];
-        if (file) {
-            // Validate file type
-            const validTypes = ['image/jpeg', 'image/jpg', 'image/png'];
-            if (!validTypes.includes(file.type)) {
-                alert('Please upload a valid image (JPEG, JPG, or PNG)');
-                return;
-            }
+        if (!file) return;
 
+        const validTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+        if (!validTypes.includes(file.type)) {
+            alert('Please upload a valid image (JPEG, JPG, or PNG)');
+            return;
+        }
 
+        setIsCompressing(true);
+        try {
+            const options = {
+                maxSizeMB: 0.5,
+                maxWidthOrHeight: 1920,
+                useWebWorker: true
+            };
+
+            const compressedFile = await imageCompression(file, options);
+            
             setFormData({
                 ...formData,
-                plateImage: file
+                plateImage: compressedFile
             });
 
-            // Create preview
             const reader = new FileReader();
             reader.onloadend = () => {
                 setPlateImagePreview(reader.result);
             };
-            reader.readAsDataURL(file);
+            reader.readAsDataURL(compressedFile);
+        } catch (error) {
+            console.error("Error compressing image:", error);
+            alert('Failed to compress image');
+        } finally {
+            setIsCompressing(false);
         }
     };
-
 
     const removePlateImage = () => {
         setPlateImagePreview(null);
@@ -87,32 +96,46 @@ const AddAccount = ({ isOpen, onClose, onSuccess }) => {
             ...formData,
             plateImage: null
         });
-        // Reset file input
         const fileInput = document.getElementById('plateImage');
         if (fileInput) fileInput.value = '';
     };
 
-
-
-    const handleLicenseImageChange = (e) => {
+    // ✅ COMPRESS IMAGE BEFORE SAVING
+    const handleLicenseImageChange = async (e) => {
         const file = e.target.files[0];
-        if (file) {
-            const validTypes = ['image/jpeg', 'image/jpg', 'image/png'];
-            if (!validTypes.includes(file.type)) {
-                alert('Please upload a valid image (JPEG, JPG, or PNG)');
-                return;
-            }
+        if (!file) return;
 
+        const validTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+        if (!validTypes.includes(file.type)) {
+            alert('Please upload a valid image (JPEG, JPG, or PNG)');
+            return;
+        }
+
+        setIsCompressing(true);
+        try {
+            const options = {
+                maxSizeMB: 0.5,
+                maxWidthOrHeight: 1920,
+                useWebWorker: true
+            };
+
+            const compressedFile = await imageCompression(file, options);
+            
             setFormData({
                 ...formData,
-                licenseImage: file
+                licenseImage: compressedFile
             });
 
             const reader = new FileReader();
             reader.onloadend = () => {
                 setLicenseImagePreview(reader.result);
             };
-            reader.readAsDataURL(file);
+            reader.readAsDataURL(compressedFile);
+        } catch (error) {
+            console.error("Error compressing image:", error);
+            alert('Failed to compress image');
+        } finally {
+            setIsCompressing(false);
         }
     };
 
@@ -126,17 +149,13 @@ const AddAccount = ({ isOpen, onClose, onSuccess }) => {
         if (fileInput) fileInput.value = '';
     };
 
-
-
     const handleContactChange = (e) => {
         let value = e.target.value.replace(/\D/g, '');
         
-        // Remove leading 0 if present
         if (value.startsWith('0')) {
             value = value.substring(1);
         }
         
-        // Limit to 10 digits
         if (value.length <= 10) {
             setFormData({
                 ...formData,
@@ -148,12 +167,10 @@ const AddAccount = ({ isOpen, onClose, onSuccess }) => {
     const handleWalletNumberChange = (e) => {
         let value = e.target.value.replace(/\D/g, '');
         
-        // Remove leading 0 if present
         if (value.startsWith('0')) {
             value = value.substring(1);
         }
         
-        // Limit to 10 digits
         if (value.length <= 10) {
             setFormData({
                 ...formData,
@@ -183,6 +200,7 @@ const AddAccount = ({ isOpen, onClose, onSuccess }) => {
         return "";
     };
 
+    // ✅ STEP 2: Update handleForm to include loading state
     const handleForm = async (e) => {
         e.preventDefault();
 
@@ -197,8 +215,6 @@ const AddAccount = ({ isOpen, onClose, onSuccess }) => {
             return;
         }
 
-
-          // Validate rider-specific fields
         if (selectedRole === "rider") {
             if (!formData.plateNumber || formData.plateNumber.trim() === "") {
                 setErrorMessage("Please enter your plate number");
@@ -216,14 +232,14 @@ const AddAccount = ({ isOpen, onClose, onSuccess }) => {
                 setShowErrorModal(true);
                 return;
             }
-
-
         }
 
+        // ✅ SET LOADING STATE
+        setIsCreatingAccount(true);
+
         try {
-            // Prepare data with formatted contact numbers (add 0 prefix)
             const dataToSend = new FormData();
-    
+
             Object.keys(formData).forEach(key => {
                 if (key === 'plateImage') {
                     if (formData[key]) {
@@ -255,6 +271,9 @@ const AddAccount = ({ isOpen, onClose, onSuccess }) => {
             setErrorMessage(error.message);
             setShowErrorModal(true);
             console.log("Failed to add account: ", error.message);
+        } finally {
+            // ✅ STOP LOADING STATE
+            setIsCreatingAccount(false);
         }
     };
     
@@ -293,9 +312,6 @@ const AddAccount = ({ isOpen, onClose, onSuccess }) => {
     const isAdmin = selectedRole === "admin";
     const needsEWallet = selectedRole === "seller" || selectedRole === "rider";
     const isRider = selectedRole.toLowerCase() === "rider";
-
-
-    
 
     if (!isOpen) return null;
 
@@ -404,559 +420,424 @@ const AddAccount = ({ isOpen, onClose, onSuccess }) => {
                                 </div>
 
                                 <div>
-                                    {/* Admin Form - Email, Contact and Password */}
-                                    {isAdmin ? (
-                                        <>
-                                            <div className="mt-3">
-                                                <label className="text-capitalize small" 
-                                                    htmlFor="adminType">Admin Type:
+                                    {/* Seller and Rider Form */}
+                                    <div className="row mt-3">
+                                        {[
+                                            { label: 'First name', name: 'firstname', type: 'text', holder: 'Enter first name' },
+                                            { label: 'Last name', name: 'lastname', type: 'text',  holder: 'Enter last name' }
+                                        ].map((data, i) => (
+                                            <div key={i} className="col">
+                                                <label className="text-capitalize small"
+                                                    htmlFor={data.name}>
+                                                    {data.label}:
                                                 </label>
-                                                <input
-                                                    className="form-control mt-2 opacity-75 text-capitalize"
-                                                    style={{fontSize: "14px"}}
-                                                    type="text"
-                                                    name="adminType"
-                                                    id="adminType"
-                                                    value="sub"
-                                                    readOnly
-                                                    disabled
-                                                />
-                                                <small className="text-muted d-block mt-1" style={{fontSize: "12px"}}>
-                                                    Sub admin accounts can be created with limited permissions
-                                                </small>
-                                            </div>
-
-                                            <div className="mt-3">
-                                                <label className="text-capitalize small" 
-                                                    htmlFor="email">Email:
-                                                </label>
+                                                
                                                 <input
                                                     className="mt-2 form-control small"
                                                     style={{fontSize: "14px"}}
-                                                    type="email"
-                                                    name="email"
-                                                    id="email"
-                                                    placeholder="Enter Email"
+                                                    type={data.type}
+                                                    name={data.name}
+                                                    id={data.name}
+                                                    placeholder={data.holder}
                                                     onChange={handleChange}
                                                     required
                                                 />
                                             </div>
+                                        ))}
+                                    </div>
 
-                                            <div className="mt-3">
-                                                <label className="text-capitalize small" 
-                                                    htmlFor="contact">contact no:
-                                                </label>
-                                                <div className="input-group mt-2">
-                                                    <span className="input-group-text small" style={{fontSize: "14px"}}>+63</span>
+                                    {/* Address Section - for sellers and riders */}
+                                    {needsEWallet && (
+                                        <>
+                                            <div className="d-flex align-items-center gap-2 opacity-75 mt-4 p-3 rounded" 
+                                                style={{ backgroundColor: "#e8f5e9" }}>
+                                                <i className="fa fa-map-marker-alt" style={{ color: "#4CAF50" }}></i>
+                                                <p className="m-0 small fw-semibold" style={{ color: "#2e7d32" }}>
+                                                    Address Information Required
+                                                </p>
+                                            </div>
+                                            
+                                            <div className="row mt-3">
+                                                <div className="col-md-6">
+                                                    <label className="text-capitalize small" htmlFor="province">
+                                                        Province:
+                                                    </label>
                                                     <input
-                                                        className="form-control small"
+                                                        className="mt-2 form-control small"
                                                         style={{fontSize: "14px"}}
                                                         type="text"
-                                                        name="contact"
-                                                        id="contact"
-                                                        placeholder="9XXXXXXXXX"
-                                                        value={formData.contact || ''}
-                                                        onChange={handleContactChange}
-                                                        maxLength="10"
-                                                        required
-                                                    />
-                                                </div>
-                                                <small className="text-muted d-block mt-1" style={{fontSize: "12px"}}>
-                                                    Enter 10-digit mobile number starting with 9 (0 will be added automatically)
-                                                </small>
-                                            </div>
-
-                                            <div className="mt-3">
-                                                <label className="text-capitalize small" 
-                                                    htmlFor="password">Create Password:
-                                                </label>
-                                                <div className="position-relative">
-                                                    <input
-                                                        className="mt-2 form-control small"
-                                                        style={{fontSize: "14px", paddingRight: "40px"}}
-                                                        type={showPassword ? "text" : "password"}
-                                                        name="password"
-                                                        id="password"
-                                                        placeholder="Enter Password"
+                                                        name="province"
+                                                        id="province"
+                                                        placeholder="Enter Province"
                                                         onChange={handleChange}
                                                         required
                                                     />
-                                                    <i 
-                                                        className={`fa ${showPassword ? 'fa-eye-slash' : 'fa-eye'} position-absolute`}
-                                                        style={{
-                                                            right: "12px",
-                                                            top: "50%",
-                                                            transform: "translateY(-50%)",
-                                                            cursor: "pointer",
-                                                            color: "#6c757d"
-                                                        }}
-                                                        onClick={() => setShowPassword(!showPassword)}
-                                                    ></i>
                                                 </div>
-                                                <small className="text-muted d-block mt-1" style={{fontSize: "12px"}}>
-                                                    *Use 8 or more characters with a mix of uppercase, lowercase & numbers
-                                                </small>
-                                            </div>
-
-                                            <div className="mt-3">
-                                                <label className="text-capitalize small" 
-                                                    htmlFor="confirmPassword">Confirm Password:
-                                                </label>
-                                                <div className="position-relative">
+                                                <div className="col-md-6">
+                                                    <label className="text-capitalize small" htmlFor="city">
+                                                        City/Municipality:
+                                                    </label>
                                                     <input
                                                         className="mt-2 form-control small"
-                                                        style={{fontSize: "14px", paddingRight: "40px"}}
-                                                        type={showConfirmPassword ? "text" : "password"}
-                                                        name="confirmPassword"
-                                                        id="confirmPassword"
-                                                        placeholder="Re-enter Password"
-                                                        value={confirmPassword}
-                                                        onChange={(e) => {
-                                                            setConfirmPassword(e.target.value);
-                                                            setPasswordError("");
-                                                        }}
+                                                        style={{fontSize: "14px"}}
+                                                        type="text"
+                                                        name="city"
+                                                        id="city"
+                                                        placeholder="Enter City"
+                                                        onChange={handleChange}
                                                         required
                                                     />
-                                                    <i 
-                                                        className={`fa ${showConfirmPassword ? 'fa-eye-slash' : 'fa-eye'} position-absolute`}
-                                                        style={{
-                                                            right: "12px",
-                                                            top: "50%",
-                                                            transform: "translateY(-50%)",
-                                                            cursor: "pointer",
-                                                            color: "#6c757d"
-                                                        }}
-                                                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                                    ></i>
                                                 </div>
-                                                {passwordError && (
-                                                    <small className="text-danger d-block mt-1">{passwordError}</small>
-                                                )}
                                             </div>
-                                        </>
-                                    ) : (
-                                        <>
-                                            {/* Seller and Rider Form */}
-                                            <div className="row mt-3">
-                                                {[
-                                                    { label: 'First name', name: 'firstname', type: 'text', holder: 'Enter first name' },
-                                                    { label: 'Last name', name: 'lastname', type: 'text',  holder: 'Enter last name' }
-                                                ].map((data, i) => (
-                                                    <div key={i} className="col">
-                                                        <label className="text-capitalize small"
-                                                            htmlFor={data.name}>
-                                                            {data.label}:
-                                                        </label>
-                                                        
-                                                        <input
-                                                            className="mt-2 form-control small"
-                                                            style={{fontSize: "14px"}}
-                                                            type={data.type}
-                                                            name={data.name}
-                                                            id={data.name}
-                                                            placeholder={data.holder}
-                                                            onChange={handleChange}
-                                                            required
-                                                        />
-                                                    </div>
-                                                ))}
-                                            </div>
-
-
-                                            {/* Address Section - for sellers and riders */}
-                                            {needsEWallet && (
-                                                <>
-                                                    <div className="d-flex align-items-center gap-2 opacity-75 mt-4 p-3 rounded" 
-                                                        style={{ backgroundColor: "#e8f5e9" }}>
-                                                        <i className="fa fa-map-marker-alt" style={{ color: "#4CAF50" }}></i>
-                                                        <p className="m-0 small fw-semibold" style={{ color: "#2e7d32" }}>
-                                                            Address Information Required
-                                                        </p>
-                                                    </div>
-                                                    
-                                                    <div className="row mt-3">
-                                                        <div className="col-md-6">
-                                                            <label className="text-capitalize small" htmlFor="province">
-                                                                Province:
-                                                            </label>
-                                                            <input
-                                                                className="mt-2 form-control small"
-                                                                style={{fontSize: "14px"}}
-                                                                type="text"
-                                                                name="province"
-                                                                id="province"
-                                                                placeholder="Enter Province"
-                                                                onChange={handleChange}
-                                                                required
-
-                                                            />
-                                                        </div>
-                                                        <div className="col-md-6">
-                                                            <label className="text-capitalize small" htmlFor="city">
-                                                                City/Municipality:
-                                                            </label>
-                                                            <input
-                                                                className="mt-2 form-control small"
-                                                                style={{fontSize: "14px"}}
-                                                                type="text"
-                                                                name="city"
-                                                                id="city"
-                                                                placeholder="Enter City"
-                                                                onChange={handleChange}
-                                                                required
-
-                                                            />
-                                                        </div>
-                                                    </div>
-                                                    
-                                                    <div className="row mt-3">
-                                                        <div className="col-md-8">
-                                                            <label className="text-capitalize small" htmlFor="barangay">
-                                                                Barangay:
-                                                            </label>
-                                                            <input
-                                                                className="mt-2 form-control small"
-                                                                style={{fontSize: "14px"}}
-                                                                type="text"
-                                                                name="barangay"
-                                                                id="barangay"
-                                                                placeholder="Enter Barangay"
-                                                                onChange={handleChange}
-                                                                required
-
-                                                            />
-                                                        </div>
-                                                        <div className="col-md-4">
-                                                            <label className="text-capitalize small" htmlFor="zipCode">
-                                                                Zip Code:
-                                                            </label>
-                                                            <input
-                                                                className="mt-2 form-control small"
-                                                                style={{fontSize: "14px"}}
-                                                                type="text"
-                                                                name="zipCode"
-                                                                id="zipCode"
-                                                                placeholder="e.g., 1100"
-                                                                maxLength="4"
-                                                                onChange={handleChange}
-                                                                required
-                                                            />
-                                                        </div>
-                                                    </div>
-                                                    
-                                                    <div className="mt-3">
-                                                        <label className="text-capitalize small" htmlFor="detailAddress">
-                                                            Detailed Address:
-                                                        </label>
-                                                        <textarea
-                                                            className="mt-2 form-control small"
-                                                            style={{fontSize: "14px"}}
-                                                            name="detailAddress"
-                                                            id="detailAddress"
-                                                            rows="3"
-                                                            placeholder="House/Unit No., Street, Subdivision, etc."
-                                                            onChange={handleChange}
-                                                            required
-
-                                                        />
-                                                        <small className="text-muted d-block mt-1" style={{fontSize: "12px"}}>
-                                                            Provide complete address details for deliveries
-                                                        </small>
-                                                    </div>
-                                                </>
-                                            )}
-
-
-                                            {isRider && (
-                                                <>
-                                                    <div className="d-flex align-items-center gap-2 opacity-75 mt-4 p-3 rounded" 
-                                                        style={{ backgroundColor: "#e8f5e9" }}>
-                                                        <i className="fa fa-motorcycle" style={{ color: "#4CAF50" }}></i>
-                                                        <p className="m-0 small fw-semibold" style={{ color: "#2e7d32" }}>
-                                                            Vehicle Information Required
-                                                        </p>
-                                                    </div>
-
-                                                    <div className="mt-3">
-                                                        <label className="text-capitalize small" 
-                                                            htmlFor="plateNumber">Plate Number:
-                                                        </label>
-                                                        <input
-                                                            className="mt-2 form-control small text-uppercase"
-                                                            style={{fontSize: "14px"}}
-                                                            type="text"
-                                                            name="plateNumber"
-                                                            id="plateNumber"
-                                                            placeholder="e.g., ABC 1234"
-                                                            onChange={handleChange}
-                                                            required
-                                                        />
-                                                        <small className="text-muted d-block mt-1" style={{fontSize: "12px"}}>
-                                                            Enter your motorcycle/vehicle plate number
-                                                        </small>
-                                                    </div>
-
-                                                    <div className="mt-3">
-                                                        <label className="text-capitalize small" 
-                                                            htmlFor="plateImage">vehicle with plate number photo::
-                                                        </label>
-                                                        
-                                                        {!plateImagePreview ? (
-                                                            <div className="mt-2">
-                                                                <label 
-                                                                    htmlFor="plateImage"
-                                                                    className="d-flex flex-column align-items-center justify-content-center border-2 rounded p-4"
-                                                                    style={{
-                                                                        cursor: "pointer",
-                                                                        borderStyle: "dashed",
-                                                                        borderColor: "#4CAF50",
-                                                                        backgroundColor: "#f9f9f9",
-                                                                        minHeight: "150px"
-                                                                    }}
-                                                                >
-                                                                    <i className="fa fa-camera mb-2" style={{ fontSize: "2.5rem", color: "#4CAF50" }}></i>
-                                                                    <p className="mb-1 fw-semibold" style={{ fontSize: "14px" }}>Upload Plate Number Photo</p>
-                                                                    <p className="text-muted small mb-0" style={{ fontSize: "12px" }}>
-                                                                        Click to select image (JPEG, PNG, max 5MB)
-                                                                    </p>
-                                                                </label>
-                                                                <input
-                                                                    type="file"
-                                                                    id="plateImage"
-                                                                    name="plateImage"
-                                                                    accept="image/jpeg,image/jpg,image/png"
-                                                                    onChange={handlePlateImageChange}
-                                                                    style={{ display: "none" }}
-                                                                    required
-                                                                />
-                                                            </div>
-                                                        ) : (
-                                                            <div className="mt-2 position-relative">
-                                                                <img 
-                                                                    src={plateImagePreview} 
-                                                                    alt="Plate preview" 
-                                                                    className="w-100 rounded"
-                                                                    style={{ maxHeight: "250px", objectFit: "cover" }}
-                                                                />
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={removePlateImage}
-                                                                    className="btn btn-danger btn-sm position-absolute"
-                                                                    style={{ top: "10px", right: "10px" }}
-                                                                >
-                                                                    <i className="fa fa-times"></i> Remove
-                                                                </button>
-                                                            </div>
-                                                        )}
-                                                        <small className="text-muted d-block mt-1" style={{fontSize: "12px"}}>
-                                                            Clear photo of your vehicle with plate number for verification
-                                                        </small>
-                                                    </div>
-
-
-
-                                                    <div className="mt-3">
-                                                        <label className="text-capitalize small" htmlFor="licenseImage">
-                                                            Driver's License Photo:
-                                                        </label>
-                                                        
-                                                        {!licenseImagePreview ? (
-                                                            <div className="mt-2">
-                                                                <label 
-                                                                    htmlFor="licenseImage"
-                                                                    className="d-flex flex-column align-items-center justify-content-center border-2 rounded p-4"
-                                                                    style={{
-                                                                        cursor: "pointer",
-                                                                        borderStyle: "dashed",
-                                                                        borderColor: "#4CAF50",
-                                                                        backgroundColor: "#f9f9f9",
-                                                                        minHeight: "150px"
-                                                                    }}
-                                                                >
-                                                                    <i className="fa fa-id-card mb-2" style={{ fontSize: "2.5rem", color: "#4CAF50" }}></i>
-                                                                    <p className="mb-1 fw-semibold" style={{ fontSize: "14px" }}>Upload Driver's License</p>
-                                                                    <p className="text-muted small mb-0" style={{ fontSize: "12px" }}>
-                                                                        Click to select image (JPEG, PNG, max 5MB)
-                                                                    </p>
-                                                                </label>
-                                                                <input
-                                                                    type="file"
-                                                                    id="licenseImage"
-                                                                    name="licenseImage"
-                                                                    accept="image/jpeg,image/jpg,image/png"
-                                                                    onChange={handleLicenseImageChange}
-                                                                    style={{ display: "none" }}
-                                                                    required
-                                                                />
-                                                            </div>
-                                                        ) : (
-                                                            <div className="mt-2 position-relative">
-                                                                <img 
-                                                                    src={licenseImagePreview} 
-                                                                    alt="License preview" 
-                                                                    className="w-100 rounded"
-                                                                    style={{ maxHeight: "250px", objectFit: "cover" }}
-                                                                />
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={removeLicenseImage}
-                                                                    className="btn btn-danger btn-sm position-absolute"
-                                                                    style={{ top: "10px", right: "10px" }}
-                                                                >
-                                                                    <i className="fa fa-times"></i> Remove
-                                                                </button>
-                                                            </div>
-                                                        )}
-                                                        <small className="text-muted d-block mt-1" style={{fontSize: "12px"}}>
-                                                            Clear photo of your valid driver's license for verification
-                                                        </small>
-                                                    </div>
-                                                </>
-                                            )}
-                                        
                                             
-                                            {needsEWallet && (
-                                                <div className="d-flex align-items-center gap-2 opacity-75 mt-4">
-                                                    <i className="fa fa-info-circle small"></i>
-                                                    <p className="m-0 text-capitalize small">
-                                                        please provide a verified g-cash or maya account for receiving payments.
-                                                    </p>
-                                                </div>
-                                            )}
-
-                                            <div className="row mt-2">
-                                                <div className="col">
-                                                    <label className="text-capitalize small" 
-                                                        htmlFor="wallet_type">e-wallet type:
+                                            <div className="row mt-3">
+                                                <div className="col-md-8">
+                                                    <label className="text-capitalize small" htmlFor="barangay">
+                                                        Barangay:
                                                     </label>
-
-                                                    <select className="form-select mt-2 opacity-75 text-capitalize"
-                                                    style={{fontSize: "14px"}}
-                                                    name="wallet_type" 
-                                                    id="wallet_type"
-                                                    onChange={handleChange}
-                                                    required>
-                                                        <option value="">select wallet</option>
-                                                        {["g-cash", "maya"].map((data, i) => (
-                                                            <option key={i} value={data}>{data}</option>
-                                                        ))}
-                                                    </select>
+                                                    <input
+                                                        className="mt-2 form-control small"
+                                                        style={{fontSize: "14px"}}
+                                                        type="text"
+                                                        name="barangay"
+                                                        id="barangay"
+                                                        placeholder="Enter Barangay"
+                                                        onChange={handleChange}
+                                                        required
+                                                    />
                                                 </div>
-
-                                                <div className="col">
-                                                    <label className="text-capitalize small" 
-                                                        htmlFor="wallet_number">e-wallet number:
+                                                <div className="col-md-4">
+                                                    <label className="text-capitalize small" htmlFor="zipCode">
+                                                        Zip Code:
                                                     </label>
-                                                    <div className="input-group mt-2">
-                                                        <span className="input-group-text small" style={{fontSize: "14px"}}>+63</span>
-                                                        <input
-                                                            className="form-control small"
-                                                            style={{fontSize: "14px"}}
-                                                            type="text"
-                                                            name="wallet_number"
-                                                            id="wallet_number"
-                                                            placeholder="9XXXXXXXXX"
-                                                            value={formData.wallet_number || ''}
-                                                            onChange={handleWalletNumberChange}
-                                                            maxLength="10"
-                                                            required
-                                                        />
-                                                    </div>
-                                                    <small className="text-muted d-block mt-1" style={{fontSize: "12px"}}>
-                                                        Enter 10-digit mobile number starting with 9 (0 will be added automatically)
-                                                    </small>
+                                                    <input
+                                                        className="mt-2 form-control small"
+                                                        style={{fontSize: "14px"}}
+                                                        type="text"
+                                                        name="zipCode"
+                                                        id="zipCode"
+                                                        placeholder="e.g., 1100"
+                                                        maxLength="4"
+                                                        onChange={handleChange}
+                                                        required
+                                                    />
                                                 </div>
                                             </div>
-
+                                            
                                             <div className="mt-3">
-                                                <label className="text-capitalize small" 
-                                                    htmlFor="email">Email:
+                                                <label className="text-capitalize small" htmlFor="detailAddress">
+                                                    Detailed Address:
                                                 </label>
-                                                <input
+                                                <textarea
                                                     className="mt-2 form-control small"
                                                     style={{fontSize: "14px"}}
-                                                    type="email"
-                                                    name="email"
-                                                    id="email"
-                                                    placeholder="Enter Email"
+                                                    name="detailAddress"
+                                                    id="detailAddress"
+                                                    rows="3"
+                                                    placeholder="House/Unit No., Street, Subdivision, etc."
                                                     onChange={handleChange}
                                                     required
                                                 />
-                                                <small className="d-flex mt-1 text-muted text-capitalize" 
-                                                style={{fontSize: "12px"}}>
-                                                    *prefered gmail account.
-                                                </small>
-                                            </div>
-
-                                            <div className="mt-3">
-                                                <label className="text-capitalize small" 
-                                                    htmlFor="password">Create Password:
-                                                </label>
-                                                <div className="position-relative">
-                                                    <input
-                                                        className="mt-2 form-control small"
-                                                        style={{fontSize: "14px", paddingRight: "40px"}}
-                                                        type={showPassword ? "text" : "password"}
-                                                        name="password"
-                                                        id="password"
-                                                        placeholder="Enter Password"
-                                                        onChange={handleChange}
-                                                        required
-                                                    />
-                                                    <i 
-                                                        className={`fa ${showPassword ? 'fa-eye-slash' : 'fa-eye'} position-absolute`}
-                                                        style={{
-                                                            right: "12px",
-                                                            top: "50%",
-                                                            transform: "translateY(-50%)",
-                                                            cursor: "pointer",
-                                                            color: "#6c757d"
-                                                        }}
-                                                        onClick={() => setShowPassword(!showPassword)}
-                                                    ></i>
-                                                </div>
                                                 <small className="text-muted d-block mt-1" style={{fontSize: "12px"}}>
-                                                    *Use 8 or more characters with a mix of uppercase, lowercase & numbers
+                                                    Provide complete address details for deliveries
                                                 </small>
-                                            </div>
-
-                                            <div className="mt-3">
-                                                <label className="text-capitalize small" 
-                                                    htmlFor="confirmPassword">Confirm Password:
-                                                </label>
-                                                <div className="position-relative">
-                                                    <input
-                                                        className="mt-2 form-control small"
-                                                        style={{fontSize: "14px", paddingRight: "40px"}}
-                                                        type={showConfirmPassword ? "text" : "password"}
-                                                        name="confirmPassword"
-                                                        id="confirmPassword"
-                                                        placeholder="Re-enter Password"
-                                                        value={confirmPassword}
-                                                        onChange={(e) => {
-                                                            setConfirmPassword(e.target.value);
-                                                            setPasswordError("");
-                                                        }}
-                                                        required
-                                                    />
-                                                    <i 
-                                                        className={`fa ${showConfirmPassword ? 'fa-eye-slash' : 'fa-eye'} position-absolute`}
-                                                        style={{
-                                                            right: "12px",
-                                                            top: "50%",
-                                                            transform: "translateY(-50%)",
-                                                            cursor: "pointer",
-                                                            color: "#6c757d"
-                                                        }}
-                                                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                                    ></i>
-                                                </div>
-                                                {passwordError && (
-                                                    <small className="text-danger d-block mt-1">{passwordError}</small>
-                                                )}
                                             </div>
                                         </>
                                     )}
+
+                                    {isRider && (
+                                        <>
+                                            <div className="d-flex align-items-center gap-2 opacity-75 mt-4 p-3 rounded" 
+                                                style={{ backgroundColor: "#e8f5e9" }}>
+                                                <i className="fa fa-motorcycle" style={{ color: "#4CAF50" }}></i>
+                                                <p className="m-0 small fw-semibold" style={{ color: "#2e7d32" }}>
+                                                    Vehicle Information Required
+                                                </p>
+                                            </div>
+
+                                            <div className="mt-3">
+                                                <label className="text-capitalize small" 
+                                                    htmlFor="plateNumber">Plate Number:
+                                                </label>
+                                                <input
+                                                    className="mt-2 form-control small text-uppercase"
+                                                    style={{fontSize: "14px"}}
+                                                    type="text"
+                                                    name="plateNumber"
+                                                    id="plateNumber"
+                                                    placeholder="e.g., ABC 1234"
+                                                    onChange={handleChange}
+                                                    required
+                                                />
+                                                <small className="text-muted d-block mt-1" style={{fontSize: "12px"}}>
+                                                    Enter your motorcycle/vehicle plate number
+                                                </small>
+                                            </div>
+
+                                            <div className="mt-3">
+                                                <label className="text-capitalize small" 
+                                                    htmlFor="plateImage">vehicle with plate number photo:
+                                                </label>
+                                                
+                                                {!plateImagePreview ? (
+                                                    <div className="mt-2">
+                                                        <label 
+                                                            htmlFor="plateImage"
+                                                            className="d-flex flex-column align-items-center justify-content-center border-2 rounded p-4"
+                                                            style={{
+                                                                cursor: "pointer",
+                                                                borderStyle: "dashed",
+                                                                borderColor: "#4CAF50",
+                                                                backgroundColor: "#f9f9f9",
+                                                                minHeight: "150px"
+                                                            }}
+                                                        >
+                                                            <i className="fa fa-camera mb-2" style={{ fontSize: "2.5rem", color: "#4CAF50" }}></i>
+                                                            <p className="mb-1 fw-semibold" style={{ fontSize: "14px" }}>
+                                                                {isCompressing ? 'Compressing...' : 'Upload Plate Number Photo'}
+                                                            </p>
+                                                            <p className="text-muted small mb-0" style={{ fontSize: "12px" }}>
+                                                                Click to select image (JPEG, PNG, max 5MB)
+                                                            </p>
+                                                        </label>
+                                                        <input
+                                                            type="file"
+                                                            id="plateImage"
+                                                            name="plateImage"
+                                                            accept="image/jpeg,image/jpg,image/png"
+                                                            onChange={handlePlateImageChange}
+                                                            style={{ display: "none" }}
+                                                            disabled={isCompressing}
+                                                            required
+                                                        />
+                                                    </div>
+                                                ) : (
+                                                    <div className="mt-2 position-relative">
+                                                        <img 
+                                                            src={plateImagePreview} 
+                                                            alt="Plate preview" 
+                                                            className="w-100 rounded"
+                                                            style={{ maxHeight: "250px", objectFit: "cover" }}
+                                                        />
+                                                        <button
+                                                            type="button"
+                                                            onClick={removePlateImage}
+                                                            className="btn btn-danger btn-sm position-absolute"
+                                                            style={{ top: "10px", right: "10px" }}
+                                                            disabled={isCompressing}
+                                                        >
+                                                            <i className="fa fa-times"></i> Remove
+                                                        </button>
+                                                    </div>
+                                                )}
+                                                <small className="text-muted d-block mt-1" style={{fontSize: "12px"}}>
+                                                    Clear photo of your vehicle with plate number for verification
+                                                </small>
+                                            </div>
+
+                                            <div className="mt-3">
+                                                <label className="text-capitalize small" htmlFor="licenseImage">
+                                                    Driver's License Photo:
+                                                </label>
+                                                
+                                                {!licenseImagePreview ? (
+                                                    <div className="mt-2">
+                                                        <label 
+                                                            htmlFor="licenseImage"
+                                                            className="d-flex flex-column align-items-center justify-content-center border-2 rounded p-4"
+                                                            style={{
+                                                                cursor: "pointer",
+                                                                borderStyle: "dashed",
+                                                                borderColor: "#4CAF50",
+                                                                backgroundColor: "#f9f9f9",
+                                                                minHeight: "150px"
+                                                            }}
+                                                        >
+                                                            <i className="fa fa-id-card mb-2" style={{ fontSize: "2.5rem", color: "#4CAF50" }}></i>
+                                                            <p className="mb-1 fw-semibold" style={{ fontSize: "14px" }}>
+                                                                {isCompressing ? 'Compressing...' : "Upload Driver's License"}
+                                                            </p>
+                                                            <p className="text-muted small mb-0" style={{ fontSize: "12px" }}>
+                                                                Click to select image (JPEG, PNG, max 5MB)
+                                                            </p>
+                                                        </label>
+                                                        <input
+                                                            type="file"
+                                                            id="licenseImage"
+                                                            name="licenseImage"
+                                                            accept="image/jpeg,image/jpg,image/png"
+                                                            onChange={handleLicenseImageChange}
+                                                            style={{ display: "none" }}
+                                                            disabled={isCompressing}
+                                                            required
+                                                        />
+                                                    </div>
+                                                ) : (
+                                                    <div className="mt-2 position-relative">
+                                                        <img 
+                                                            src={licenseImagePreview} 
+                                                            alt="License preview" 
+                                                            className="w-100 rounded"
+                                                            style={{ maxHeight: "250px", objectFit: "cover" }}
+                                                        />
+                                                        <button
+                                                            type="button"
+                                                            onClick={removeLicenseImage}
+                                                            className="btn btn-danger btn-sm position-absolute"
+                                                            style={{ top: "10px", right: "10px" }}
+                                                            disabled={isCompressing}
+                                                        >
+                                                            <i className="fa fa-times"></i> Remove
+                                                        </button>
+                                                    </div>
+                                                )}
+                                                <small className="text-muted d-block mt-1" style={{fontSize: "12px"}}>
+                                                    Clear photo of your valid driver's license for verification
+                                                </small>
+                                            </div>
+                                        </>
+                                    )}
+                                
+                                    {needsEWallet && (
+                                        <div className="d-flex align-items-center gap-2 opacity-75 mt-4">
+                                            <i className="fa fa-info-circle small"></i>
+                                            <p className="m-0 text-capitalize small">
+                                                please provide a verified g-cash or maya account for receiving payments.
+                                            </p>
+                                        </div>
+                                    )}
+
+                                    <div className="row mt-2">
+                                        <div className="col">
+                                            <label className="text-capitalize small" 
+                                                htmlFor="wallet_type">e-wallet type:
+                                            </label>
+
+                                            <select className="form-select mt-2 opacity-75 text-capitalize"
+                                            style={{fontSize: "14px"}}
+                                            name="wallet_type" 
+                                            id="wallet_type"
+                                            onChange={handleChange}
+                                            required>
+                                                <option value="">select wallet</option>
+                                                {["g-cash", "maya"].map((data, i) => (
+                                                    <option key={i} value={data}>{data}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+
+                                        <div className="col">
+                                            <label className="text-capitalize small" 
+                                                htmlFor="wallet_number">e-wallet number:
+                                            </label>
+                                            <div className="input-group mt-2">
+                                                <span className="input-group-text small" style={{fontSize: "14px"}}>+63</span>
+                                                <input
+                                                    className="form-control small"
+                                                    style={{fontSize: "14px"}}
+                                                    type="text"
+                                                    name="wallet_number"
+                                                    id="wallet_number"
+                                                    placeholder="9XXXXXXXXX"
+                                                    value={formData.wallet_number || ''}
+                                                    onChange={handleWalletNumberChange}
+                                                    maxLength="10"
+                                                    required
+                                                />
+                                            </div>
+                                            <small className="text-muted d-block mt-1" style={{fontSize: "12px"}}>
+                                                Enter 10-digit mobile number starting with 9 (0 will be added automatically)
+                                            </small>
+                                        </div>
+                                    </div>
+
+                                    <div className="mt-3">
+                                        <label className="text-capitalize small" 
+                                            htmlFor="email">Email:
+                                        </label>
+                                        <input
+                                            className="mt-2 form-control small"
+                                            style={{fontSize: "14px"}}
+                                            type="email"
+                                            name="email"
+                                            id="email"
+                                            placeholder="Enter Email"
+                                            onChange={handleChange}
+                                            required
+                                        />
+                                        <small className="d-flex mt-1 text-muted text-capitalize" 
+                                        style={{fontSize: "12px"}}>
+                                            *prefered gmail account.
+                                        </small>
+                                    </div>
+
+                                    <div className="mt-3">
+                                        <label className="text-capitalize small" 
+                                            htmlFor="password">Create Password:
+                                        </label>
+                                        <div className="position-relative">
+                                            <input
+                                                className="mt-2 form-control small"
+                                                style={{fontSize: "14px", paddingRight: "40px"}}
+                                                type={showPassword ? "text" : "password"}
+                                                name="password"
+                                                id="password"
+                                                placeholder="Enter Password"
+                                                onChange={handleChange}
+                                                required
+                                            />
+                                            <i 
+                                                className={`fa ${showPassword ? 'fa-eye-slash' : 'fa-eye'} position-absolute`}
+                                                style={{
+                                                    right: "12px",
+                                                    top: "50%",
+                                                    transform: "translateY(-50%)",
+                                                    cursor: "pointer",
+                                                    color: "#6c757d"
+                                                }}
+                                                onClick={() => setShowPassword(!showPassword)}
+                                            ></i>
+                                        </div>
+                                        <small className="text-muted d-block mt-1" style={{fontSize: "12px"}}>
+                                            *Use 8 or more characters with a mix of uppercase, lowercase & numbers
+                                        </small>
+                                    </div>
+
+                                    <div className="mt-3">
+                                        <label className="text-capitalize small" 
+                                            htmlFor="confirmPassword">Confirm Password:
+                                        </label>
+                                        <div className="position-relative">
+                                            <input
+                                                className="mt-2 form-control small"
+                                                style={{fontSize: "14px", paddingRight: "40px"}}
+                                                type={showConfirmPassword ? "text" : "password"}
+                                                name="confirmPassword"
+                                                id="confirmPassword"
+                                                placeholder="Re-enter Password"
+                                                value={confirmPassword}
+                                                onChange={(e) => {
+                                                    setConfirmPassword(e.target.value);
+                                                    setPasswordError("");
+                                                }}
+                                                required
+                                            />
+                                            <i 
+                                                className={`fa ${showConfirmPassword ? 'fa-eye-slash' : 'fa-eye'} position-absolute`}
+                                                style={{
+                                                    right: "12px",
+                                                    top: "50%",
+                                                    transform: "translateY(-50%)",
+                                                    cursor: "pointer",
+                                                    color: "#6c757d"
+                                                }}
+                                                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                            ></i>
+                                        </div>
+                                        {passwordError && (
+                                            <small className="text-danger d-block mt-1">{passwordError}</small>
+                                        )}
+                                    </div>
 
                                     <div className="mt-3 p-3 rounded" style={{ backgroundColor: "#f5f5f5" }}>
                                         <div>
@@ -967,18 +848,33 @@ const AddAccount = ({ isOpen, onClose, onSuccess }) => {
                                         </div>
                                     </div>
 
+                                    {/* ✅ STEP 3: Update the Create Account button with spinner */}
                                     <div className="mt-4">
                                         <button
                                             onClick={handleForm}
                                             className="p-2 shadow-sm text-light rounded w-100 border-0 text-capitalize"
                                             style={{
                                                 outline: "none",
-                                                cursor: "pointer",
-                                                background: "#4CAF50",
-                                                fontWeight: "500"
+                                                cursor: isCreatingAccount ? "not-allowed" : "pointer",
+                                                background: isCreatingAccount ? "#81c784" : "#4CAF50",
+                                                fontWeight: "500",
+                                                opacity: isCreatingAccount ? 0.8 : 1,
+                                                transition: "all 0.3s ease"
                                             }}
+                                            disabled={isCompressing || isCreatingAccount}
                                         >
-                                            create account
+                                            {isCreatingAccount ? (
+                                                <>
+                                                    <span 
+                                                        className="spinner-border spinner-border-sm me-2" 
+                                                        role="status" 
+                                                        aria-hidden="true"
+                                                    ></span>
+                                                    processing...
+                                                </>
+                                            ) : (
+                                                'create account'
+                                            )}
                                         </button>
                                     </div>
                                 </div>

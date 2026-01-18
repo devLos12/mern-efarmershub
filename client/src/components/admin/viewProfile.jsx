@@ -229,7 +229,7 @@ const ViewProfile = () => {
                             </div>
                             <div className="modal-body text-center p-0">
                                 <img 
-                                    src={`${import.meta.env.VITE_API_URL}/api/uploads/${profile.imagePlateNumber}`} 
+                                    src={profile.imagePlateNumber}
                                     alt="Plate Number" 
                                     className="img-fluid rounded"
                                     style={{ maxHeight: "80vh", width: "auto" }}
@@ -263,7 +263,7 @@ const ViewProfile = () => {
                             </div>
                             <div className="modal-body text-center p-0">
                                 <img 
-                                    src={`${import.meta.env.VITE_API_URL}/api/uploads/${profile.licenseImage}`} 
+                                    src={profile.licenseImage}
                                     alt="Driver's License" 
                                     className="img-fluid rounded"
                                     style={{ maxHeight: "80vh", width: "auto" }}
@@ -627,7 +627,7 @@ const ViewProfile = () => {
                                         }}
                                     >
                                         <img
-                                            src={`${import.meta.env.VITE_API_URL}/api/uploads/${profile.imagePlateNumber}`}
+                                            src={profile.imagePlateNumber}
                                             alt="Plate Number"
                                             className="h-100 w-100"
                                             style={{ objectFit: "cover" }}
@@ -637,7 +637,7 @@ const ViewProfile = () => {
                                         <p className="m-0 fw-bold text-truncate"
                                             style={{fontSize: "0.75rem"}}
                                         >
-                                            {profile.imagePlateNumber}
+                                            {profile.imagePlateNumber?.split('/').pop() || 'plate_image.jpg'}
                                         </p>
                                         <p className="m-0 text-muted" style={{fontSize: "0.65rem"}}>Image</p>
                                     </div>
@@ -672,7 +672,7 @@ const ViewProfile = () => {
                                         }}
                                     >
                                         <img
-                                            src={`${import.meta.env.VITE_API_URL}/api/uploads/${profile.licenseImage}`}
+                                            src={profile.licenseImage}
                                             alt="Driver's License"
                                             className="h-100 w-100"
                                             style={{ objectFit: "cover" }}
@@ -682,7 +682,7 @@ const ViewProfile = () => {
                                         <p className="m-0 fw-bold text-truncate"
                                             style={{fontSize: "0.75rem"}}
                                         >
-                                            {profile.licenseImage}
+                                            {profile.licenseImage?.split('/').pop() || 'license_image.jpg'}
                                         </p>
                                         <p className="m-0 text-muted" style={{fontSize: "0.65rem"}}>Image</p>
                                     </div>

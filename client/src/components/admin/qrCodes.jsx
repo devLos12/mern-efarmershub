@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import Model from "../modal";
-
-
+import imageCompression from 'browser-image-compression';
 
 
 
@@ -21,7 +20,6 @@ const QrCodes = () => {
 
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [deleteType, setDeleteType] = useState(null); // 'gcash' or 'maya'
-
 
 
 

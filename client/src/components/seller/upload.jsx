@@ -234,6 +234,7 @@ const Upload = () => {
             if (!res.ok) throw new Error(data.message);
             setTrigger((prev) => !prev);
             showNotification(data.message, "success");
+            
         } catch (error) {
             showNotification(error.message, "error");
             console.error("Error: ", error.message);
@@ -244,10 +245,6 @@ const Upload = () => {
     };
 
 
-
-    useEffect(() =>{
-        console.log(formData);
-    },[formData])
 
     return (
         <>

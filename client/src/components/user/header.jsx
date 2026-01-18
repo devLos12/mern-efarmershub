@@ -229,7 +229,7 @@ const Header = () => {
                         style={{ width: "30px", height: "30px", overflow: "hidden", cursor: "pointer" }}
                         onClick={profile}>
                             <img
-                                src={`${import.meta.env.VITE_API_URL}/api/Uploads/${userData?.imageFile}`}
+                                src={userData?.imageFile}
                                 alt={userData?.profile}
                                 className="h-100 w-100"
                                 style={{ objectFit: "cover" }}

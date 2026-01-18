@@ -4,8 +4,8 @@ import { adminContext } from "../context/adminContext";
 import { sellerContext } from "../context/sellerContext";
 import { userContext } from "../context/userContext";
 import { useBreakpoint, useBreakpointHeight } from "./breakpoint";
-
 import philippineLocations from "../data/philippinesAddress.json";
+import imageCompression from 'browser-image-compression';
 
 
 const UpadateProfile = () => {
@@ -21,6 +21,7 @@ const UpadateProfile = () => {
     const [imgPreview, setImgPreview] = useState(null);
     const [isChanged, setIsChanged] = useState(false);
     const [originalData, setOriginalData] = useState({});
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     // Location dropdown states
     const [availableCities, setAvailableCities] = useState([]);
@@ -226,6 +227,7 @@ const UpadateProfile = () => {
         
         try {
 
+            setIsSubmitting(true);
             const res = await fetch(`${import.meta.env.VITE_API_URL}/api/${endPoint}`, {
                 method: "PATCH",
                 body: sendData,
@@ -240,26 +242,42 @@ const UpadateProfile = () => {
 
         } catch (error) {
             console.log("Error: ", error.message);
+        } finally {
+            setIsSubmitting(false);
         }
     }
     
     
-    const handleFile = (e) =>{
-        const {name} = e.target;
-
-        setFormData((prev) => ({
-            ...prev, 
-            [name]: e.target.files[0]
-        }));
-        
+    const handleFile = async (e) => {
+        const { name } = e.target;
         const file = e.target.files[0];
 
-        if(file){
-            const reader = new FileReader();
-            reader.onload = (e) =>{
-                setImgPreview(e.target.result);
+        if (file) {
+            try {
+                // Compress image before using
+                const options = {
+                    maxSizeMB: 1,
+                    maxWidthOrHeight: 1920,
+                    useWebWorker: true
+                };
+
+                const compressedFile = await imageCompression(file, options);
+
+                setFormData((prev) => ({
+                    ...prev,
+                    [name]: compressedFile
+                }));
+
+                // Show preview
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    setImgPreview(e.target.result);
+                };
+                reader.readAsDataURL(compressedFile);
+            } catch (error) {
+                console.error("Image compression error:", error);
+                alert("Failed to compress image");
             }
-            reader.readAsDataURL(file);
         }
     }
 
@@ -320,9 +338,9 @@ const UpadateProfile = () => {
                                             <div className="border border-white rounded-circle shadow" 
                                             style={{ width: "100px", height: "100px", overflow: "hidden",  }}
                                             >
-                                                <img src={`${import.meta.env.VITE_API_URL}/api/Uploads/${formData?.image}`}
+                                                <img src={formData?.image}
                                                     alt={formData?.image} 
-                                                    className="h-100 w-100"
+                                                    className="h-100 w-100 "
                                                     style={{objectFit: "cover"}}
                                                 />
                                             </div>
@@ -572,11 +590,31 @@ const UpadateProfile = () => {
                                 </div>
 
                                 <div className="d-flex justify-content-end mt-3 gap-3 mb-2">
-                                    <button type="button" className="btn btn-dark px-4" 
-                                    onClick={()=> setOpenUpdateProfile(false)}>cancel</button>
-                                    <button type="submit" className="btn btn-primary px-4" 
-                                    disabled={!isChanged}
-                                   >save</button>
+                                    <button 
+                                        type="button" 
+                                        className="btn btn-dark px-4" 
+                                        onClick={()=> setOpenUpdateProfile(false)}
+                                    >
+                                        cancel
+                                    </button>
+                                    <button 
+                                        type="submit" 
+                                        className={`btn px-4 ${!isChanged || isSubmitting ? "btn-secondary opacity-50" : "btn-primary"}`}
+                                        disabled={!isChanged || isSubmitting}
+                                    >
+                                        {isSubmitting ? (
+                                            <>
+                                                <span 
+                                                    className="spinner-border spinner-border-sm me-2" 
+                                                    role="status" 
+                                                    aria-hidden="true"
+                                                ></span>
+                                                processing...
+                                            </>
+                                        ) : (
+                                            'save'
+                                        )}
+                                    </button>
                                 </div>
                             </form>
                         </div>

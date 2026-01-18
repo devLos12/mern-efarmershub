@@ -2,6 +2,7 @@ import Order from "../../models/order.js";
 import Admin from "../../models/admin.js";
 import ActivityLog from "../../models/activityLogs.js";
 import multer from "multer";
+import { v2 as cloudinary } from "cloudinary";
 
 // Helper function to create activity log
 const createActivityLog = async (adminId, action, description, req) => {
@@ -31,19 +32,14 @@ const createActivityLog = async (adminId, action, description, req) => {
     }
 };
 
-const storage = multer.diskStorage({
-    destination: "./uploads",
-    filename: (req, file, cb) => {
-        cb(null, file.originalname)
-    }
-});
+
+const storage = multer.memoryStorage();
 
 export const uploadRefundFile = multer({ storage: storage });
 
 export const updateRefund = async (req, res) => {
     try {
         const { orderId, refundStatus } = req.body;
-        const refundReceipt = req.file?.filename || "";
         const adminId = req.account.id;
 
         // Validate required fields
@@ -62,6 +58,23 @@ export const updateRefund = async (req, res) => {
         // Check if order has cancellation and refund
         if (!order.cancellation?.isCancelled || !order.cancellation?.refund?.isEligible) {
             return res.status(400).json({ message: "This order is not eligible for refund" });
+        }
+
+        // ✅ CHANGE: Upload refund receipt to Cloudinary
+        let refundReceiptUrl = null;
+        
+        if (req.file) {
+            try {
+                const base64Receipt = req.file.buffer.toString('base64');
+                const dataURIReceipt = `data:${req.file.mimetype};base64,${base64Receipt}`;
+                
+                const receiptResult = await cloudinary.uploader.upload(dataURIReceipt, {
+                    folder: 'refund-receipts'
+                });
+                refundReceiptUrl = receiptResult.secure_url;
+            } catch (uploadError) {
+                return res.status(400).json({ message: "Failed to upload refund receipt to Cloudinary!" });
+            }
         }
 
         // Update refund status
@@ -88,12 +101,11 @@ export const updateRefund = async (req, res) => {
                 activityDesc = `Started processing refund for order #${orderIdShort}`;
                 break;
             case "completed": {
-
                 statusLabel = "refund completed";
                 statusDescription = "Refund has been successfully completed. here's your refund receipt below.";
                 order.statusDelivery = "refund completed";
                 activityAction = "COMPLETE REFUND";
-                const receiptText = refundReceipt ? " with receipt attached" : "";
+                const receiptText = refundReceiptUrl ? " with receipt attached" : "";
                 activityDesc = `Completed refund for order #${orderIdShort}${receiptText}`;
                 break;
             }
@@ -106,12 +118,12 @@ export const updateRefund = async (req, res) => {
                 break;
         }
 
-        // Add to status history
+        // Add to status history with Cloudinary URL
         const newStatusEntry = {
             status: statusLabel,
             description: statusDescription,
             location: "Admin Office",
-            imageFile: refundReceipt
+            imageFile: refundReceiptUrl // ✅ Store Cloudinary URL instead of filename
         };
             
         order.statusHistory.push(newStatusEntry);
@@ -137,12 +149,13 @@ export const updateRefund = async (req, res) => {
     }
 }
 
+// Reject refund file upload configuration
 export const rejectRefundFile = multer({ storage: storage });
 
+// Reject refund handler
 export const rejectRefund = async (req, res) => {
     try {
         const { orderId, reason, refundStatus } = req.body;
-        const proofImage = req.file ? req.file.filename : null;
         const adminId = req.account.id;
 
         // Validate required fields
@@ -163,6 +176,23 @@ export const rejectRefund = async (req, res) => {
             return res.status(400).json({ message: "No refund request found for this order" });
         }
 
+        // ✅ CHANGE: Upload proof image to Cloudinary
+        let proofImageUrl = null;
+        
+        if (req.file) {
+            try {
+                const base64Proof = req.file.buffer.toString('base64');
+                const dataURIProof = `data:${req.file.mimetype};base64,${base64Proof}`;
+                
+                const proofResult = await cloudinary.uploader.upload(dataURIProof, {
+                    folder: 'refund-rejections/proofs'
+                });
+                proofImageUrl = proofResult.secure_url;
+            } catch (uploadError) {
+                return res.status(400).json({ message: "Failed to upload proof image to Cloudinary!" });
+            }
+        }
+
         // Update refund status to rejected
         order.cancellation.refund.status = "rejected";
         order.cancellation.refund.rejectedAt = new Date();
@@ -170,18 +200,18 @@ export const rejectRefund = async (req, res) => {
         // Update main order status
         order.statusDelivery = refundStatus;
         
-        // Add to status history
+        // Add to status history with Cloudinary URL
         order.statusHistory.push({
             status: refundStatus,
             description: `Refund request rejected by admin. Reason: ${reason}`,
             location: "Admin Office",
-            imageFile: proofImage
+            imageFile: proofImageUrl // ✅ Store Cloudinary URL instead of filename
         });
 
         await order.save();
 
         // Log activity
-        const proofText = proofImage ? " with proof attached" : "";
+        const proofText = proofImageUrl ? " with proof attached" : "";
         await createActivityLog(
             adminId,
             "REJECT REFUND WITH REASON",

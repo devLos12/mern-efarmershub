@@ -111,10 +111,7 @@ const ItemCards = ({ products }) => {
                     <div className="p-1 p-md-2 z-1" 
                     >
                         <div className="col-12 text-center bg-white rounded mt-2">
-                            <img src={ 
-                                data.imageFile.startsWith("http")
-                                ? data.imageFile
-                                : `${import.meta.env.VITE_API_URL}/api/Uploads/${data.imageFile}`}
+                            <img src={data.imageFile}
                             alt={data.imageFile} 
                             className="img-fluid rounded shadow-sm"
                                 style={{cursor : "pointer"}} 

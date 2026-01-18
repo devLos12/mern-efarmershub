@@ -8,7 +8,7 @@ import { adminContext } from "../context/adminContext";
 import { sellerContext } from "../context/sellerContext";
 import html2pdf from 'html2pdf.js';
 import DamageLog from "./admin/damageLog";
-
+import imageCompression from 'browser-image-compression';
 
 
 
@@ -64,6 +64,8 @@ const Transactions = () => {
     const fileUploadRef = useRef({});
     const printRef = useRef();
 
+
+    const [isProcessingPayout, setIsProcessingPayout] = useState(false);
 
 
 
@@ -317,30 +319,51 @@ const Transactions = () => {
         }
     }
 
-    const handleFile = (e, id) => {
+        
+    const handleFile = async (e, id) => {
         const { name } = e.target;
         const file = e.target.files[0];
 
-        setImageFile((prev) => ({
-            ...prev, 
-            
-            [id] : {
-                [ name ] : file,
-                preview: file?.name    
-            }
+        if (!file) return;
 
-        }))
+        try {
+            const options = {
+                maxSizeMB: 0.5,            // 500KB max
+                maxWidthOrHeight: 1920,
+                useWebWorker: true
+            };
+            // Compress the image
+            const compressedFile = await imageCompression(file, options);
+            console.log(`Original: ${(file.size / 1024).toFixed(2)}KB`);
+            console.log(`Compressed: ${(compressedFile.size / 1024).toFixed(2)}KB`);
 
-        if(file){
-            const reader = new FileReader();
-            reader.onload = (e) =>{
-                setImagePrev((prev) => ({
-                    ...prev, [id]: e.target.result
-                }));
+            // Set compressed file
+            setImageFile((prev) => ({
+                ...prev, 
+                [id] : {
+                    [name] : compressedFile,
+                    preview: compressedFile?.name    
+                }
+            }));
+
+            // Create preview
+            if (compressedFile) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    setImagePrev((prev) => ({
+                        ...prev, 
+                        [id]: e.target.result
+                    }));
+                };
+                reader.readAsDataURL(compressedFile);
             }
-            reader.readAsDataURL(file);
+        } catch (error) {
+            console.error("Error compressing image:", error);
+            alert('Failed to compress image');
         }
     }
+
+
 
     // Function to open modal with image
     const openImageModal = (imageSrc, title) => {
@@ -382,6 +405,11 @@ const Transactions = () => {
             return;
         }
 
+        // ✅ Prevent double submission
+        if (isProcessingPayout) return;
+
+        setIsProcessingPayout(true);
+
         setTransactions((items) => 
             items.map((item) => item._id === id ? ({...item, status: "paid",}) : item)
         )
@@ -400,7 +428,6 @@ const Transactions = () => {
             const data = await res.json();
             if(!res.ok) throw new Error(data.message);
 
-
             setImageFile(prev => {
                 const newFiles = { ...prev };
                 delete newFiles[id];
@@ -412,14 +439,21 @@ const Transactions = () => {
                 fileUploadRef.current[id].value = null;
             }
 
+            closePayoutModal();
             setRefresh(prev => !prev);
 
+
+            
             setModalMessage(data.message || "Payout completed successfully!");
             setShowSuccessModal(true);
+
+
         } catch (error) {
             console.log("Error: ", error.message);
             setModalMessage(error.message || "Failed to process payout");
             setShowErrorModal(true);
+        } finally {
+            setIsProcessingPayout(false);
         }
     }
 
@@ -573,7 +607,7 @@ const Transactions = () => {
         {showSuccessModal && (
             <div
                 className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
-                style={{ backgroundColor: "rgba(0,0,0,0.5)", zIndex: 10000 }}
+                style={{ backgroundColor: "rgba(0,0,0,0.5)", zIndex: 10002 }}
             >
                 <div
                     className="bg-white rounded shadow p-4 text-center"
@@ -600,7 +634,7 @@ const Transactions = () => {
         {showErrorModal && (
             <div
                 className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
-                style={{ backgroundColor: "rgba(0,0,0,0.5)", zIndex: 10000 }}
+                style={{ backgroundColor: "rgba(0,0,0,0.5)", zIndex: 10002 }}
                 onClick={() => setShowErrorModal(false)}
             >
                 <div
@@ -639,7 +673,7 @@ const Transactions = () => {
         {showPayoutModal && selectedTransaction && (
             <div
                 className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
-                style={{ backgroundColor: "rgba(0,0,0,0.5)", zIndex: 10000 }}
+                style={{ backgroundColor: "rgba(0,0,0,0.5)", zIndex: 10001 }}
                 onClick={closePayoutModal}
             >
                 <div
@@ -894,19 +928,28 @@ const Transactions = () => {
                                 <button
                                     className="btn btn-secondary btn-sm"
                                     onClick={closePayoutModal}
+                                    disabled={isProcessingPayout}
                                 >
                                     Cancel
                                 </button>
                                 <button
-                                    className="btn btn-success btn-sm"
+                                    className="btn btn-success btn-sm d-flex align-items-center gap-2"
                                     onClick={() => {
                                         handlePayout(selectedTransaction._id);
-                                        closePayoutModal();
                                     }}
-                                    disabled={!imageFile[selectedTransaction._id]?.preview}
+                                    disabled={!imageFile[selectedTransaction._id]?.preview || isProcessingPayout}
                                 >
-                                    <i className="fa fa-check me-2"></i>
-                                    Process Payout
+                                    {isProcessingPayout ? (
+                                        <>
+                                            <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                            <span>Processing...</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <i className="fa fa-check "></i>
+                                            <span>Process Payout</span>
+                                        </>
+                                    )}
                                 </button>
                             </div>
                         ) : (
@@ -914,6 +957,7 @@ const Transactions = () => {
                                 <button
                                     className="btn btn-secondary btn-sm"
                                     onClick={closePayoutModal}
+                                    disabled={isProcessingPayout}
                                 >
                                     Close
                                 </button>
@@ -935,7 +979,7 @@ const Transactions = () => {
                     left: 0,
                     width: '100%',
                     height: '100%',
-                    zIndex: 19999,
+                    zIndex: 2220000,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center'
@@ -1155,9 +1199,6 @@ const Transactions = () => {
                                 ))}
 
 
-
-
-
                                 {/* for seller table head*/}
                                 {role === "seller" && source === "payout" 
                                 && ["#", "sellers name",  "total orders", "gross amount", "tax amount", "e-wallet", "status", "date payout", 
@@ -1167,13 +1208,6 @@ const Transactions = () => {
                                     className={`text-capitalize p-3 text-success ${i === 8 && "text-center"} ${i === 0 && "text-center"} small`}
                                     >{data}</th>
                                 ))}
-
-
-
-
-
-
-
 
                                 {source === "payment" && role === "admin" 
                                 && ["reference id", "account name", "total amount", "payment method", "status","date paid", 'payment receipt', "type of transaction", ]
@@ -1196,7 +1230,6 @@ const Transactions = () => {
                                 ))}
 
 
-
                                 {isSelect && (
                                     <th className="p-3">
                                         <div className="d-flex flex-column align-items-center ">
@@ -1211,7 +1244,6 @@ const Transactions = () => {
                                     </th>
                                 )}
                             </tr>
-
 
                         </thead>
                         <tbody>
@@ -1263,8 +1295,9 @@ const Transactions = () => {
                                                         ) : i === 8 ? (
                                                             <div className="d-flex align-items-center justify-content-center">
                                                                 <button 
-                                                                    className={`btn btn-sm ${info.data.transaction.status === 'paid' ? 'btn-outline-success' : 'btn-success'}`}
+                                                                    className={`btn btn-sm d-flex align-items-center justify-content-center ${info.data.transaction.status === 'paid' ? 'btn-outline-success' : 'btn-success'}`}
                                                                     onClick={() => openPayoutModal(info.data.transaction)}
+                                                                    style={{width:"120px"}}
                                                                 >
                                                                     <i className={`fa ${info.data.transaction.status === 'paid' ? 'fa-eye' : 'fa-edit'} me-1`}></i>
                                                                     {info.data.transaction.status === 'paid' ? 'View Details' : 'Process'}

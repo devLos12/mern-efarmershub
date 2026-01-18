@@ -424,8 +424,8 @@ const AddAnnouncement = () => {
                                                                 if (typeof formData.imageFile === 'string' && formData.imageFile.startsWith("https")) {
                                                                     return formData.imageFile;
                                                                 }
-                                                                // Otherwise it's a local filename
-                                                                return `${import.meta.env.VITE_API_URL}/api/Uploads/${formData.imageFile}`;
+                                                                // Otherwise it's a local filename - use Cloudinary URL format
+                                                                return formData.imageFile; // Direct Cloudinary URL na
                                                             }
                                                             
                                                             // Fallback

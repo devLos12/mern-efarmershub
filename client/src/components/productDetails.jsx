@@ -480,9 +480,9 @@ const ProductDetails = () =>{
                                             
                                             <div>
                                                 {data.user.imageFile ? (
-                                                    <div className="border shadow rounded-circle border-white" 
+                                                    <div className="border shadow rounded-circle border-white " 
                                                     style={{width:"50px", height:"50px", overflow: "hidden"}}>
-                                                        <img src={`${import.meta.env.VITE_API_URL}/api/Uploads/${data.user.imageFile}`}
+                                                        <img src={data.user.imageFile}
                                                         alt={data.user.imageFile} 
                                                         className="h-100 w-100"
                                                         style={{ objectFit: "cover" }}
@@ -518,7 +518,8 @@ const ProductDetails = () =>{
 
                                                     <div className="col">
                                                         {productDetails?.reviews?.imageFile ? (
-                                                            <img src={`${import.meta.env.VITE_API_URL}/api/uploads/${data.imageFile}`} alt={productDetails.imageFile} 
+                                                            <img src={data.imageFile}
+                                                                 alt={productDetails.imageFile} 
                                                             className="img-fluid rounded shadow-sm border " 
                                                             />
 
@@ -547,7 +548,7 @@ const ProductDetails = () =>{
                                     {productDetails.seller.imageFile ? (
                                         <div className="border border-white shadow rounded-circle"
                                         style={{height: "50px", width: "50px", overflow: "hidden"}}>
-                                            <img src={`${import.meta.env.VITE_API_URL}/api/Uploads/${productDetails.seller.imageFile}`} 
+                                            <img src={productDetails.seller.imageFile} 
                                             alt={productDetails.seller.imageFile} 
                                             className="h-100 w-100"
                                             style={{objectFit: "cover"}} />

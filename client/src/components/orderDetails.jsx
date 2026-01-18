@@ -1021,10 +1021,7 @@ const OrderDetails = () => {
             <ViewModal 
                 isOpen={viewProofModal}
                 onClose={() => setViewProofModal(false)}
-                imageSrc={
-                    orderData.proofOfPayment.image.startsWith("https")
-                    ? orderData.proofOfPayment.image
-                    : `${import.meta.env.VITE_API_URL}/api/uploads/${orderData.proofOfPayment.image}`}
+                imageSrc={orderData.proofOfPayment.image}
                 title="Proof of Payment"
             />
 
@@ -1154,7 +1151,7 @@ const OrderDetails = () => {
                 <ViewModal 
                     isOpen={viewQRModal}
                     onClose={() => setViewQRModal(false)}
-                    imageSrc={`${import.meta.env.VITE_API_URL}/api/uploads/${orderData.cancellation.refund.qrCode}`}
+                    imageSrc={orderData.cancellation.refund.qrCode}
                     title="Refund QR Code"
                 />
             )}

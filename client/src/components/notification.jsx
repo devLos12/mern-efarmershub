@@ -184,7 +184,7 @@ const Notification = () => {
                                         <div className="rounded border shadow-sm" 
                                         style={{width: "55px", height: "55px" , overflow: "hidden"}}
                                         >
-                                            <img src={`${import.meta.env.VITE_API_URL}/api/Uploads/${data.meta.imageFile}`} 
+                                            <img src={data.meta.imageFile} 
                                             alt={data.meta.imageFile}
                                             className="w-100 h-100"
                                             style={{objectFit: "cover"}}

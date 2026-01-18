@@ -5,8 +5,8 @@ import { adminContext } from "../context/adminContext";
 import { sellerContext } from "../context/sellerContext";
 import { userContext } from "../context/userContext";
 import philippineLocations from "../data/philippinesAddress.json";
-import img from "../assets/images/home_bg.png"; // Make sure you have this image
-
+import img from "../assets/images/home_bg.png";
+import imageCompression from 'browser-image-compression';
 
 
 
@@ -21,6 +21,7 @@ const EditProfile = () => {
     const [imgPreview, setImgPreview] = useState(null);
     const [isChanged, setIsChanged] = useState(false);
     const [originalData, setOriginalData] = useState({});
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     // Location dropdown states
     const [availableCities, setAvailableCities] = useState([]);
@@ -223,6 +224,8 @@ const EditProfile = () => {
     const handleSubmit = async(e) => {
         e.preventDefault();
 
+        setIsSubmitting(true);
+
         const sendData = new FormData();
         sendData.append('image', formData.image);
         sendData.append('firstname', formData.firstname);
@@ -260,6 +263,8 @@ const EditProfile = () => {
         } catch (error) {
             showNotification(error.message, "error");
             console.log("Error: ", error.message);
+        } finally {
+            setIsSubmitting(false);
         }
     }
 
@@ -361,7 +366,7 @@ const EditProfile = () => {
                                                 {formData?.image ? (
                                                     <div className="border border-white rounded-circle shadow" 
                                                         style={{ width: "100px", height: "100px", overflow: "hidden" }}>
-                                                        <img src={`${import.meta.env.VITE_API_URL}/api/Uploads/${formData?.image}`}
+                                                        <img src={formData?.image}
                                                             alt="Profile" 
                                                             className="h-100 w-100"
                                                             style={{objectFit: "cover"}}
@@ -631,8 +636,8 @@ const EditProfile = () => {
                                         className={`text-capitalize  px-3 py-2 rounded w-100 text-light border-0 small
                                             ${!isChanged ? "bg-dark opacity-50" : "bg-dark"}
                                         `}
-                                        disabled={!isChanged}>
-                                        update profile
+                                        disabled={!isChanged || isSubmitting}>
+                                        {isSubmitting ? "updating..." : "update profile"}
                                     </button>
                                 </div>
                             </div>

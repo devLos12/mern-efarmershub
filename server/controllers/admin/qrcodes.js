@@ -1,15 +1,9 @@
 import QrCode from "../../models/qrCodes.js";
 import multer from "multer";
 import cloudinary from "../../config/cloudinary.js";
-import fs from "fs";
 
-const storage = multer.diskStorage({
-    destination: "./uploads",
-    filename: (req, file, cb) => {
-        const uniqueName = `${Date.now()}-${file.originalname}`;
-        cb(null, uniqueName);
-    }
-});
+// ✅ CHANGE: Use memoryStorage instead of diskStorage
+const storage = multer.memoryStorage();
 
 export const upload = multer({ storage: storage });
 
@@ -19,81 +13,81 @@ export const qrCodeFiles = upload.fields([
 ]);
 
 export const updateQr = async (req, res) => {
-    const uploadedFiles = [];
-    
     try {
         const gcash = req.files?.gcashQr?.[0];
         const maya = req.files?.mayaQr?.[0];
 
         // Update or create GCash QR
         if (gcash) {
-            uploadedFiles.push(gcash.path);
-            
             // Get existing QR code to delete old Cloudinary image
             const existingGcash = await QrCode.findOne({ paymentMethod: 'gcash' });
             const oldCloudinaryId = existingGcash?.cloudinaryId;
 
-            // Upload to Cloudinary
-            const gcashResult = await cloudinary.uploader.upload(gcash.path, {
-                folder: 'qr-codes/gcash',
-                secure: true
-            });
+            // ✅ CHANGE: Convert buffer to base64 for Cloudinary
+            try {
+                const base64Gcash = gcash.buffer.toString('base64');
+                const dataURIGcash = `data:${gcash.mimetype};base64,${base64Gcash}`;
 
-            // Update or create in database
-            await QrCode.findOneAndUpdate(
-                { paymentMethod: 'gcash' },
-                { 
-                    imageUrl: gcashResult.secure_url,
-                    cloudinaryId: gcashResult.public_id
-                },
-                { upsert: true, new: true }
-            );
+                const gcashResult = await cloudinary.uploader.upload(dataURIGcash, {
+                    folder: 'qr-codes/gcash',
+                    secure: true
+                });
 
-            // Delete local file
-            fs.unlinkSync(gcash.path);
-            uploadedFiles.splice(uploadedFiles.indexOf(gcash.path), 1);
-
-            // Delete old Cloudinary image (non-blocking)
-            if (oldCloudinaryId) {
-                cloudinary.uploader.destroy(oldCloudinaryId).catch(err => 
-                    console.error('Failed to delete old GCash QR from Cloudinary:', err)
+                // Update or create in database
+                await QrCode.findOneAndUpdate(
+                    { paymentMethod: 'gcash' },
+                    { 
+                        imageUrl: gcashResult.secure_url,
+                        cloudinaryId: gcashResult.public_id
+                    },
+                    { upsert: true, new: true }
                 );
+
+                // Delete old Cloudinary image (non-blocking)
+                if (oldCloudinaryId) {
+                    cloudinary.uploader.destroy(oldCloudinaryId).catch(err => 
+                        console.error('Failed to delete old GCash QR from Cloudinary:', err)
+                    );
+                }
+            } catch (uploadError) {
+                return res.status(400).json({ message: "Failed to upload GCash QR to Cloudinary!" });
             }
         }
 
         // Update or create Maya QR
         if (maya) {
-            uploadedFiles.push(maya.path);
-            
             // Get existing QR code to delete old Cloudinary image
             const existingMaya = await QrCode.findOne({ paymentMethod: 'maya' });
             const oldCloudinaryId = existingMaya?.cloudinaryId;
 
-            // Upload to Cloudinary
-            const mayaResult = await cloudinary.uploader.upload(maya.path, {
-                folder: 'qr-codes/maya',
-                secure: true
-            });
+            // ✅ CHANGE: Convert buffer to base64 for Cloudinary
+            try {
+                const base64Maya = maya.buffer.toString('base64');
+                const dataURIMaya = `data:${maya.mimetype};base64,${base64Maya}`;
 
-            // Update or create in database
-            await QrCode.findOneAndUpdate(
-                { paymentMethod: 'maya' },
-                { 
-                    imageUrl: mayaResult.secure_url,
-                    cloudinaryId: mayaResult.public_id
-                },
-                { upsert: true, new: true }
-            );
+                const mayaResult = await cloudinary.uploader.upload(dataURIMaya, {
+                    folder: 'qr-codes/maya',
+                    secure: true
+                });
 
-            // Delete local file
-            fs.unlinkSync(maya.path);
-            uploadedFiles.splice(uploadedFiles.indexOf(maya.path), 1);
-
-            // Delete old Cloudinary image (non-blocking)
-            if (oldCloudinaryId) {
-                cloudinary.uploader.destroy(oldCloudinaryId).catch(err => 
-                    console.error('Failed to delete old Maya QR from Cloudinary:', err)
+                // Update or create in database
+                await QrCode.findOneAndUpdate(
+                    { paymentMethod: 'maya' },
+                    { 
+                        imageUrl: mayaResult.secure_url,
+                        cloudinaryId: mayaResult.public_id
+                    },
+                    { upsert: true, new: true }
                 );
+
+                // Delete old Cloudinary image (non-blocking)
+                if (oldCloudinaryId) {
+                    cloudinary.uploader.destroy(oldCloudinaryId).catch(err => 
+                        console.error('Failed to delete old Maya QR from Cloudinary:', err)
+                    );
+                }
+            } catch (uploadError) {
+                return res.status(400).json({ message: "Failed to upload Maya QR to Cloudinary!" });
             }
         }
 
@@ -103,13 +97,6 @@ export const updateQr = async (req, res) => {
         });
 
     } catch (error) {
-        // Cleanup any uploaded files on error
-        uploadedFiles.forEach(filePath => {
-            if (fs.existsSync(filePath)) {
-                fs.unlinkSync(filePath);
-            }
-        });
-
         return res.status(500).json({ message: error.message });
     }
 };
