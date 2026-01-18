@@ -421,14 +421,13 @@ const Accounts =()=>{
                         </p>
                 </div>
 
-             
             </div>
 
             {/* Table with Horizontal Scroll */}
             { filteredAccounts.length > 0 ? (
                 <>
                 <div className="mt-2 bg-white rounded shadow-sm border border-success border-opacity-25 position-relative"  
-                style={{overflowX: "auto", overflowY: "hidden"}}>
+                style={{ overflowY: "auto", height: filteredAccounts.length <= 4 ? Height() : "auto" }}>
                     {isRefreshing && (
                         <div className="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center bg-white bg-opacity-100" 
                             style={{ zIndex: 10 }}>

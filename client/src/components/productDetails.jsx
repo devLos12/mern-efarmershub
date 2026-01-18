@@ -294,9 +294,6 @@ const ProductDetails = () =>{
                                         </div>
                                     </div>
 
-
-
-
                                     <div className="mt-3 d-flex flex-column gap-1">
                                         <div className="d-flex align-items-center justify-content-between">
                                             <p className="m-0 text-capitalize text-muted

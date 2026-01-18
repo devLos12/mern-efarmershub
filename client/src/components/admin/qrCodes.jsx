@@ -173,7 +173,8 @@ const QrCodes = () => {
     const getImageSrc = (preview) => {
         if (!preview) return null;
         if (preview.startsWith('data:')) return preview;
-        return `${import.meta.env.VITE_API_URL}/api/uploads/${preview}`;
+
+        return preview;
     };
 
     if (fetchLoading) {

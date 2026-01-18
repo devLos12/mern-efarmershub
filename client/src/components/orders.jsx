@@ -444,8 +444,9 @@ const Orders = () => {
                     </div>
                 )}
                 
+                                
                 {/* Added overflow wrapper */}
-                <div ref={printRef} style={{ overflowX: "auto" }}>
+                <div ref={printRef} style={{ overflowY: "auto" }}>
                     <table className="w-100" >
                     <thead className="bg-white border-bottom shadow-sm"> 
                         <tr>

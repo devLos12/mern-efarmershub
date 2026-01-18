@@ -3,13 +3,16 @@ import Product from "../../models/products.js";
 import cloudinary from "../../config/cloudinary.js";
 import fs from "fs";
 
+
+
 const storage = multer.diskStorage({
     destination: "./uploads",
     filename: (req, file, cb) => {
         const uniqueName = `${Date.now()}-${file.originalname}`;
         cb(null, uniqueName)
     }
-})
+});
+
 
 export const update = multer({ storage: storage });
 
@@ -38,6 +41,7 @@ export const updateCrops = async(req, res) => {
         let imageFile = image;
         let newCloudinaryId = null;
         let oldCloudinaryId = null;
+
 
         // If new image uploaded
         if (req.file) {

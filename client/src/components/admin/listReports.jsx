@@ -713,7 +713,7 @@ const ListReports = () => {
                                             <td className="small">
                                                 <div className="d-flex align-items-center gap-2">
                                                     <img
-                                                        src={`${import.meta.env.VITE_API_URL}/api/Uploads/${product.imageFile}`}
+                                                        src={product.imageFile}
                                                         alt={product.name}
                                                         className="rounded"
                                                         style={{ width: "40px", height: "40px", objectFit: "cover" }}
