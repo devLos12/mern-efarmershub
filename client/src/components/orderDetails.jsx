@@ -2589,7 +2589,7 @@ const OrderDetails = () => {
                                                             Additional Notes:
                                                         </p>
                                                         <p className="m-0 small" style={{fontSize: "12px"}}>
-                                                            {orderData.proofOfPayment.textMessage}
+                                                            {orderData?.proofOfPayment?.textMessage ?? ""}
                                                         </p>
                                                     </div>
                                                 )}

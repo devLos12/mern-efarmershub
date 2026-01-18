@@ -769,7 +769,7 @@ const Transactions = () => {
                                     className="border rounded p-3 d-flex align-items-center gap-3"
                                     style={{ cursor: "pointer" }}
                                     onClick={() => openImageModal(
-                                        `${import.meta.env.VITE_API_URL}/api/Uploads/${selectedTransaction.imageFile}`,
+                                        selectedTransaction.imageFile,
                                         selectedTransaction.imageFile
                                     )}
                                 >
@@ -783,7 +783,7 @@ const Transactions = () => {
                                         }}
                                     >
                                         <img
-                                            src={`${import.meta.env.VITE_API_URL}/api/Uploads/${selectedTransaction.imageFile}`}
+                                            src={selectedTransaction.imageFile}
                                             alt="Receipt"
                                             className="img-fluid"
                                             style={{ 
@@ -1438,11 +1438,7 @@ const Transactions = () => {
                                                                     maxWidth: "120px",
                                                                     cursor: "pointer"
                                                                 }}
-                                                                onClick={() => openImageModal(
-                                                                    info.data.includes(" - ") ?
-                                                                    `${import.meta.env.VITE_API_URL}/api/Uploads/rider/${info?.data}`
-                                                                    :`${import.meta.env.VITE_API_URL}/api/Uploads/${info?.data}`
-                                                                )}
+                                                                onClick={() => openImageModal(info.data)}
                                                                 >
                                                                     <div className="d-flex align-items-center gap-2">
                                                                         <div className="border shadow-sm rounded" 
@@ -1454,11 +1450,7 @@ const Transactions = () => {
                                                                         }}
                                                                         >
                                                                             <img
-                                                                            src={
-                                                                                info.data.includes(" - ") ?
-                                                                                `${import.meta.env.VITE_API_URL}/api/Uploads/rider/${info?.data}`
-                                                                                :`${import.meta.env.VITE_API_URL}/api/Uploads/${info?.data}`
-                                                                            }
+                                                                            src={info.data}
                                                                             alt={info?.data}
                                                                             className="h-100 w-100"
                                                                             style={{ objectFit: "cover" }}
@@ -1467,7 +1459,7 @@ const Transactions = () => {
                                                                         <div className="flex-grow-1" style={{minWidth: 0}}>
                                                                             <p className="m-0 fw-bold text-truncate"
                                                                             style={{fontSize: "0.75rem"}}
-                                                                            >{info?.data}
+                                                                            >{info?.data.split('/').pop()}
                                                                             </p>
                                                                             <p className="m-0 text-muted" style={{fontSize: "0.65rem"}}>Image</p>
                                                                         </div>

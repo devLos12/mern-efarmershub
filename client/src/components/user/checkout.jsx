@@ -15,7 +15,8 @@ const Checkout = () =>{
         email: '',
         contact: '',
     });
-    const [loading, setLoading] = useState(true);    
+    const [loading, setLoading] = useState(true);
+    const [submitting, setSubmitting] = useState(false); // New state for form submission    
     const navigate = useNavigate();
     const location = useLocation();
     const [isComplete, setIsComplete] = useState(false);
@@ -78,7 +79,7 @@ const Checkout = () =>{
 
     useLayoutEffect(()=>{
 
-        if( checkoutForm.orderMethod && checkoutForm.payment && checkoutForm.image && checkoutForm.text ){
+        if( checkoutForm.orderMethod && checkoutForm.payment && checkoutForm.image ){
             setEnableSubmit(true);
         }else{
             setEnableSubmit(false);
@@ -148,6 +149,8 @@ const Checkout = () =>{
     const handleForm = async(e)=>{
         e.preventDefault();
 
+        setSubmitting(true); // Start loading
+
         const sendData = new FormData();
         sendData.append("source", location?.state.source);
         sendData.append("billingAddress", JSON.stringify(checkoutForm.billingAddress));
@@ -172,6 +175,7 @@ const Checkout = () =>{
             showNotification(data.message, "success");
             
         }catch(err){
+            setSubmitting(false); // Stop loading on error
             showNotification(err.message, "error");
             console.log("Error: ", err.message);
         }
@@ -269,9 +273,7 @@ const Checkout = () =>{
 
                                             <p className="m-0 text-capitalize text-center px-2 py-1 mt-2 rounded bg-dark text-light small"
                                             style={{fontSize:"12px", cursor:"pointer"}}
-                                            onClick={() => {
-                                                navigate("/user/address")
-                                            }}
+                                            onClick={() => navigate("/user/address")}
                                             >change</p>
                                         </div>
 
@@ -410,11 +412,21 @@ const Checkout = () =>{
                                     </div>
                                 </div>
 
-                                <button className={`p-2 mt-3 w-100 rounded border-0 bg-dark text-capitalize text-light 
-                                ${!enableSubmit || !isComplete ? "opacity-75" : "opacity-100"}`} 
-                                disabled={!enableSubmit || !isComplete}
-                                >{!isComplete ? "complete address"
-                                : enableSubmit ? "place order "  : "complete payment"}</button>
+                                <button 
+                                    type="submit"
+                                    className={`p-2 mt-3 w-100 rounded border-0 bg-dark text-capitalize text-light 
+                                    ${!enableSubmit || !isComplete || submitting ? "opacity-75" : "opacity-100"}`} 
+                                    disabled={!enableSubmit || !isComplete || submitting}
+                                >
+                                    {submitting ? (
+                                        <>
+                                            <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                            Processing...
+                                        </>
+                                    ) : (
+                                        !isComplete ? "complete address" : enableSubmit ? "place order" : "complete payment"
+                                    )}
+                                </button>
                             </div>
                         </form>
                     </div>
@@ -451,6 +463,14 @@ const Checkout = () =>{
                     <p className="small text-muted mb-0">{modalMessage}</p>
                 </div>
             </div>
+        )}
+
+        {/* Transparent Overlay to prevent clicks while processing */}
+        {submitting && (
+            <div
+                className="position-fixed top-0 start-0 w-100 h-100"
+                style={{ zIndex: 9999, cursor: "not-allowed" }}
+            />
         )}
        
         </>                        

@@ -1,4 +1,3 @@
-
 import React, {useContext, useEffect, useMemo,  useState } from "react";
 import { MyContext } from "../../context/contextApi";
 
@@ -8,7 +7,6 @@ const PlaceOrderForm = ({setOrderForm, orders, userId})=>{
 
 
 
-    
     useEffect(()=> {
         console.log("this is orders: ",orders);
     },[])
@@ -24,18 +22,14 @@ const PlaceOrderForm = ({setOrderForm, orders, userId})=>{
         return orders.reduce((sum, data) => sum + data.prodPrice * data.quantity, 0);
     },[orders]);
 
-
     
 
     const handleForm = async(e) =>{
         e.preventDefault();
 
+        setLoading(true); // Set loading to true when form is submitted
         
         const orderForm = { userId, orderItems, ...form,  totalPrice }
-
-        if(form.payment === "online payment"){
-            setLoading(true);
-        }
 
         try{
             const res = await fetch(`${import.meta.env.VITE_API_URL}/api/submitOrder`,{
@@ -46,6 +40,7 @@ const PlaceOrderForm = ({setOrderForm, orders, userId})=>{
                 body : JSON.stringify(orderForm)
             });
             if(!res.ok){
+                setLoading(false);
                 throw new Error("response is not ok!")
             }
             const data = await res.json();
@@ -62,7 +57,8 @@ const PlaceOrderForm = ({setOrderForm, orders, userId})=>{
             placeOrderAndclearCart(userId);
             window.location.reload();
         }catch(error){
-            console.log(error.message)
+            console.log(error.message);
+            setLoading(false); // Reset loading on error
         }
     }
 
@@ -138,7 +134,8 @@ const PlaceOrderForm = ({setOrderForm, orders, userId})=>{
                                                 name="payment"
                                                 value={form.payment}
                                                 onChange={handleChange}
-                                                style={{outline:"none"}}>
+                                                style={{outline:"none"}}
+                                                disabled={loading}>
                                                     {["cash on delivery", "online payment"].map((data, i)=>(
                                                         <option key={i} value={data}>{data}</option>
                                                     ))}
@@ -160,6 +157,7 @@ const PlaceOrderForm = ({setOrderForm, orders, userId})=>{
                                                         type={data.type}
                                                         value={form[data.name] || ""}
                                                         onChange={handleChange}
+                                                        disabled={loading}
                                                         required/> 
                                                         <label className="opacity-75 text-capitalize" style={{fontSize:"14px"}}
                                                         htmlFor={data.for}>{data.label}:</label>
@@ -180,6 +178,7 @@ const PlaceOrderForm = ({setOrderForm, orders, userId})=>{
                                                         name={data.name}
                                                         onChange={handleChange}
                                                         value={form[data.name] || ""}
+                                                        disabled={loading}
                                                         required
                                                         />
                                                         <p className="m-0 opacity-75 text-capitalize" 
@@ -191,16 +190,29 @@ const PlaceOrderForm = ({setOrderForm, orders, userId})=>{
                                     </div>
                                     <div className="row mt-4">
                                         <div className="col-12 text-end">
-                                            <button className="w-25 border-0 rounded bg-danger text-white  py-2 "
-                                            onClick={()=> setOrderForm(false)}>Cancel</button>
+                                            <button 
+                                                type="button"
+                                                className="w-25 border-0 rounded bg-danger text-white  py-2 "
+                                                onClick={()=> setOrderForm(false)}
+                                                disabled={loading}>
+                                                Cancel
+                                            </button>
                                             
                                             <button
+                                                type="submit"
                                                 className={`w-50 ms-2 border-0 rounded bg-dark text-white py-2 text-capitalize
                                                 ${loading ? "opacity-75" : ""}`}
                                                 disabled={loading}
                                             >
-                                                {form.payment.toLowerCase() === "online payment" 
-                                                ? "proceed payment" : "checkout"}
+                                                {loading ? (
+                                                    <>
+                                                        <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                                        Processing...
+                                                    </>
+                                                ) : (
+                                                    form.payment.toLowerCase() === "online payment" 
+                                                    ? "Proceed Payment" : "Checkout"
+                                                )}
                                             </button>
                                         </div>
                                     </div>

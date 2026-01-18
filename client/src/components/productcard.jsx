@@ -220,4 +220,4 @@ const ProductButton = ({role, data, FontSize, updateStatus, deleteProduct, updat
             </div>
         )
     }
-}
+}   

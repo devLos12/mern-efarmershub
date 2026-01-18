@@ -115,6 +115,8 @@ const Upload = () => {
         }
     }, [isUpdate, dataPreFill]);
 
+
+
     useLayoutEffect(() => {
         if (formData?.name && formData?.price && formData?.category && formData?.productType && formData?.stocks && formData?.kg && formData?.disc && formData?.image) {
             setIsFilled(false);
@@ -123,6 +125,7 @@ const Upload = () => {
         }
     }, [formData]);
 
+    
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData({
@@ -207,9 +210,8 @@ const Upload = () => {
             const data = await res.json();
             
             if (!res.ok) throw new Error(data.message);
-
-            showNotification(data.message, "success");
             setTrigger((prev) => !prev);
+            showNotification(data.message, "success");
         } catch (error) {
             showNotification(error.message, "error");
             console.error("Error: ", error.message);
@@ -218,6 +220,12 @@ const Upload = () => {
             setIsUploading(false);
         }
     };
+
+
+
+    useEffect(() =>{
+        console.log(formData);
+    },[formData])
 
     return (
         <>
@@ -506,7 +514,7 @@ const Upload = () => {
                                                 <img 
                                                     src={
                                                         isUpdate 
-                                                            ? imgPreview || (formData?.imageFile.startsWith("https") ? formData?.imageFile : `${import.meta.env.VITE_API_URL}/api/Uploads/${formData?.imageFile}`)
+                                                            ? imgPreview || formData.image
                                                             : imgPreview
                                                     } 
                                                     alt={imgPreview}

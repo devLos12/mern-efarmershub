@@ -229,7 +229,7 @@ export const checkOut = async(req, res) => {
                 paymentStatus: "paid",
                 proofOfPayment: {
                     image: imageFile,
-                    textMessage: text,
+                    textMessage: text ?? "",
                     cloudinaryId: cloudinaryId
                 },
                 refNo: refNo

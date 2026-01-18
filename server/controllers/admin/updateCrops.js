@@ -3,20 +3,10 @@ import Product from "../../models/products.js";
 import ActivityLog from "../../models/activityLogs.js";
 import Admin from "../../models/admin.js";
 import cloudinary from "../../config/cloudinary.js";
-import fs from "fs";
 
 
-
-
-const storage = multer.diskStorage({
-    destination: "./uploads",
-    filename: (req, file, cb) => {
-        const uniqueName = `${Date.now()}-${file.originalname}`;
-        cb(null, uniqueName)
-    }
-})
-
-
+// Memory storage - direct to Cloudinary
+const storage = multer.memoryStorage();
 export const update = multer({ storage: storage });
 
 export const updateCrops = async (req, res) => {
@@ -31,10 +21,6 @@ export const updateCrops = async (req, res) => {
         const oldProduct = await Product.findById(id);
         
         if (!oldProduct) {
-            // Cleanup uploaded file if product not found
-            if (req.file && fs.existsSync(req.file.path)) {
-                fs.unlinkSync(req.file.path);
-            }
             return res.status(404).json({ message: "Product not found" });
         }
 
@@ -43,26 +29,21 @@ export const updateCrops = async (req, res) => {
         let oldCloudinaryId = oldProduct.cloudinaryId;
         let imageUpdated = false;
 
-        // Handle Cloudinary upload if may bagong image
+        
+        // Handle Cloudinary upload if may bagong image - using base64
         if (req.file) {
             try {
-                // Upload to Cloudinary
-                const result = await cloudinary.uploader.upload(req.file.path, {
-                    folder: 'products',
-                    secure: true
+                const base64 = req.file.buffer.toString('base64');
+                const dataURI = `data:${req.file.mimetype};base64,${base64}`;
+                
+                const result = await cloudinary.uploader.upload(dataURI, {
+                    folder: 'products'
                 });
 
                 imageFile = result.secure_url;
                 newCloudinaryId = result.public_id;
                 imageUpdated = true;
-
-                // Delete local file immediately
-                fs.unlinkSync(req.file.path);
             } catch (uploadError) {
-                // Cleanup local file on upload error
-                if (fs.existsSync(req.file.path)) {
-                    fs.unlinkSync(req.file.path);
-                }
                 throw new Error(`Image upload failed: ${uploadError.message}`);
             }
         }
@@ -186,11 +167,6 @@ export const updateCrops = async (req, res) => {
         res.status(200).json({ message: `Product successfully updated.` });
 
     } catch (error) {
-        // Cleanup uploaded file on error
-        if (req.file && fs.existsSync(req.file.path)) {
-            fs.unlinkSync(req.file.path);
-        }
-
         // Log error for admin
         if (req.account?.role === "admin") {
             try {
@@ -215,4 +191,4 @@ export const updateCrops = async (req, res) => {
 
         res.status(500).json({ message: error.message });
     }
-}
+};

@@ -2,19 +2,10 @@ import multer from "multer";
 import Product from "../../models/products.js";
 import Seller from "../../models/seller.js";
 import cloudinary from "../../config/cloudinary.js";
-import fs from "fs"; // Para i-delete yung local file after upload
 
 
-
-
-// Temporary storage lang - ideleted natin after upload to Cloudinary
-const storage = multer.diskStorage({
-    destination: "./uploads",
-    filename: (req, file, cb) => {
-        cb(null, Date.now() + "-" + file.originalname) // Unique filename
-    }
-})
-
+// Memory storage - direct to Cloudinary (no local file)
+const storage = multer.memoryStorage();
 export const upload = multer({ storage: storage });
 
 export const uploadProducts = async(req, res) => {
@@ -25,15 +16,7 @@ export const uploadProducts = async(req, res) => {
 
         const { name, price, category, productType, stocks, kg, lifeSpan, disc } = req.body;
 
-        // Upload to Cloudinary
-        const result = await cloudinary.uploader.upload(req.file.path, {
-            folder: 'products',
-            secure: true
-        });
-
-        // Delete local file after upload
-        fs.unlinkSync(req.file.path);
-
+        // Check duplicate name FIRST (before upload)
         const existingNameProduct = await Product.findOne({ 
             name, 
             'seller.id': id 
@@ -42,8 +25,16 @@ export const uploadProducts = async(req, res) => {
         if (existingNameProduct) {
             return res.status(400).json(
                 { message: "You already have a product with this name!" }
-            )
+            );
         }
+
+        // Direct upload to Cloudinary using base64
+        const base64 = req.file.buffer.toString('base64');
+        const dataURI = `data:${req.file.mimetype};base64,${base64}`;
+        
+        const result = await cloudinary.uploader.upload(dataURI, {
+            folder: 'products'
+        });
         
         // Generate sequential product ID
         const lastProduct = await Product.findOne().sort({ createdAt: -1 });
@@ -85,4 +76,4 @@ export const uploadProducts = async(req, res) => {
         console.log(error.message);
         res.status(500).json({ message: "Server error occurred" });
     }
-}
+};

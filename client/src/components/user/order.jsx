@@ -194,8 +194,8 @@ const Order = () => {
                                                 <div key={i} className="row position-relative mt-4">
                                                     <div className="col-5">
                                                         <img
-                                                            src={`${import.meta.env.VITE_API_URL}/api/uploads/${item.imageFile}`}
-                                                            alt={data.imageFile}
+                                                            src={item.imageFile}
+                                                            alt={item.imageFile}
                                                             className="rounded img-fluid shadow-sm border"
                                                         />
                                                     </div>

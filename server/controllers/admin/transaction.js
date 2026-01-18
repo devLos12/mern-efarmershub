@@ -3,6 +3,7 @@ import AdminPaymentTransaction from "../../models/adminPaymentTrans.js";
 import multer from "multer";
 import SellerPaymentTransaction from "../../models/sellerPaymentTrans.js";
 import RiderPayout from "../../models/riderPayout.js";
+import { v2 as cloudinary } from "cloudinary";
 
 
 
@@ -43,7 +44,6 @@ export const transaction = async (req, res) => {
         res.status(500).json({ message: error.message});
     }
 }
-
 
 
 
@@ -126,22 +126,27 @@ export const deletePayment = async(req, res) => {
 }
 
 
-const storage  = multer.diskStorage({
-    destination : "./uploads",
-    filename :  (req, file, cb) =>{
-        const uniqueName = file.originalname;
-        cb(null, uniqueName)
-    }
-})
-
-
-export const payout = multer({ storage : storage});
+// Change to memory storage for Cloudinary upload
+const storage = multer.memoryStorage();
+export const payout = multer({ storage: storage });
 
 
 export const updatePayout = async (req, res) => {
     try {
         const { id } = req.body;
-        const imageFile = req.file?.filename ?? null;
+        let imageFile = null;
+
+        // Upload to Cloudinary if file exists
+        if (req.file) {
+            const base64 = req.file.buffer.toString('base64');
+            const dataURI = `data:${req.file.mimetype};base64,${base64}`;
+            
+            const result = await cloudinary.uploader.upload(dataURI, {
+                folder: "payout-receipts"
+            });
+            
+            imageFile = result.secure_url;
+        }
 
         // UPDATE BOTH SELLER & RIDER PAYOUT (one of them will match)
         await PayoutTransaction.findByIdAndUpdate(id, {
@@ -205,7 +210,7 @@ export const updatePayout = async (req, res) => {
             });
         }
 
-        res.status(200).json({ message: `Payout reciept successfully sent.` });
+        res.status(200).json({ message: `Payout receipt successfully sent.` });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }

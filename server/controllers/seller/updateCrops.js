@@ -1,19 +1,10 @@
 import multer from "multer";
 import Product from "../../models/products.js";
 import cloudinary from "../../config/cloudinary.js";
-import fs from "fs";
 
 
-
-const storage = multer.diskStorage({
-    destination: "./uploads",
-    filename: (req, file, cb) => {
-        const uniqueName = `${Date.now()}-${file.originalname}`;
-        cb(null, uniqueName)
-    }
-});
-
-
+// Use memory storage - direct to Cloudinary (no local file)
+const storage = multer.memoryStorage();
 export const update = multer({ storage: storage });
 
 export const updateCrops = async(req, res) => {
@@ -21,7 +12,7 @@ export const updateCrops = async(req, res) => {
         const { id, name, price, stocks, category, productType, disc, image, kg, lifeSpan } = req.body;
         const { id: sellerId } = req.account;
         
-        // Check duplicate name FIRST (before expensive operations)
+        // Check duplicate name FIRST
         const existingProduct = await Product.findOne({ 
             name, 
             'seller.id': sellerId,
@@ -29,37 +20,31 @@ export const updateCrops = async(req, res) => {
         });
 
         if (existingProduct) {
-            // Delete uploaded file if validation fails
-            if (req.file) {
-                fs.unlinkSync(req.file.path);
-            }
             return res.status(400).json(
                 { message: "You already have another product with this name!" }
-            )
+            );
         }
 
         let imageFile = image;
         let newCloudinaryId = null;
         let oldCloudinaryId = null;
 
-
-        // If new image uploaded
+        // If new image uploaded - direct to Cloudinary using base64
         if (req.file) {
-            // Get current product - SELECT only needed fields
+            // Get current product to get old cloudinaryId
             const currentProduct = await Product.findById(id).select('cloudinaryId');
             oldCloudinaryId = currentProduct?.cloudinaryId;
 
-            // Upload new image to Cloudinary
-            const result = await cloudinary.uploader.upload(req.file.path, {
-                folder: 'products',
-                secure: true
+            // Convert buffer to base64 and upload to Cloudinary
+            const base64 = req.file.buffer.toString('base64');
+            const dataURI = `data:${req.file.mimetype};base64,${base64}`;
+            
+            const result = await cloudinary.uploader.upload(dataURI, {
+                folder: 'products'
             });
 
             imageFile = result.secure_url;
             newCloudinaryId = result.public_id;
-
-            // Delete local file immediately
-            fs.unlinkSync(req.file.path);
         }
 
         const updateData = { 
@@ -78,7 +63,7 @@ export const updateCrops = async(req, res) => {
             updateData.cloudinaryId = newCloudinaryId;
         }
 
-        // Update totalStocks in same query if needed
+        // Update totalStocks if needed
         if (stocks > 0) {
             const currentProduct = await Product.findById(id).select('totalStocks');
             if (stocks > currentProduct.totalStocks) {
@@ -90,10 +75,10 @@ export const updateCrops = async(req, res) => {
             id,
             updateData,
             { new: true }
-        )
+        );
         
         if (!updateProduct) {
-            return res.status(404).json({ message: "Product not found" })
+            return res.status(404).json({ message: "Product not found" });
         }
 
         // Delete old Cloudinary image AFTER successful update (non-blocking)
@@ -106,10 +91,6 @@ export const updateCrops = async(req, res) => {
         io.emit('product:updated');
         res.status(200).json({ message: `Product successfully updated!` });
     } catch (error) {
-        // Cleanup uploaded file on error
-        if (req.file && fs.existsSync(req.file.path)) {
-            fs.unlinkSync(req.file.path);
-        }
         res.status(500).json({ message: error.message });
     }
-}
+};

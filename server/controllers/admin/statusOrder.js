@@ -132,7 +132,6 @@ const createTransaction = async(items, payment, userId, firstname, lastname, ema
 
 
 
-
 const createOrUpdatePayout = async(items, order)=>{
     const SELLER_TAX_RATE = process.env.SELLER_TAX_RATE; // 5% tax (adjust mo if needed)
 
@@ -184,6 +183,9 @@ const createOrUpdatePayout = async(items, order)=>{
         }
     }
 }
+
+
+
 
 
 
@@ -281,11 +283,12 @@ export const statusOrder = async(req, res) => {
 
 
                     // Send SMS with all products in one message
-                    // await sendSMS(sellerContact, order.orderId, seller.firstname, productList, totalAmount);
+                    await sendSMS(sellerContact, order.orderId, seller.firstname, productList, totalAmount);
                 }
             }
-
             await order.save();
+            
+
 
             // Log activity
             // const actionDesc = newStatus === "confirm" 
@@ -360,14 +363,13 @@ export const statusOrder = async(req, res) => {
 
 
 
+
 const storage = multer.diskStorage({
     destination: "./uploads",
     filename: (req, file, cb) => {
         cb(null, file.originalname)
     }
 });
-
-
 
 
 export const cancelOrderFile = multer({ storage: storage });
@@ -435,10 +437,6 @@ export const cancelOrder = async (req, res) => {
         return res.status(500).json({ message: error.message });
     }
 };
-
-
-
-
 
 
 
@@ -536,7 +534,6 @@ export const reviewReplacement = async (req, res) => {
             if (!item.replacement || !item.replacement.isRequested) {
                 continue;
             }
-
 
 
             // Update replacement status
