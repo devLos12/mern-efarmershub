@@ -1,18 +1,11 @@
 import SeasonalAnnouncement from "../../models/seasonal.js";
 import multer from "multer";
 import cloudinary from "../../config/cloudinary.js";
-import fs from "fs";
 
-const storage = multer.diskStorage({
-    destination: "./uploads",
-    filename: (req, file, cb) => {
-        cb(null, `${Date.now()}-${file.originalname}`)
-    }
-})
+// Changed to memory storage
+const storage = multer.memoryStorage();
 
 export const uploadAnnouncement = multer({ storage: storage });
-
-
 
 export const addAnnouncement = async (req, res) => {
     try {
@@ -22,16 +15,17 @@ export const addAnnouncement = async (req, res) => {
 
         // Upload to Cloudinary if image exists
         if (req.file) {
-            const result = await cloudinary.uploader.upload(req.file.path, {
+            // Convert buffer to base64 data URI
+            const base64 = req.file.buffer.toString('base64');
+            const dataURI = `data:${req.file.mimetype};base64,${base64}`;
+            
+            const result = await cloudinary.uploader.upload(dataURI, {
                 folder: 'announcements',
                 secure: true
             });
 
             imageFile = result.secure_url;
             cloudinaryId = result.public_id;
-
-            // Delete local file
-            fs.unlinkSync(req.file.path);
         }
 
         await SeasonalAnnouncement.create({
@@ -46,10 +40,6 @@ export const addAnnouncement = async (req, res) => {
 
         res.status(200).json({ message: "Announcement added successfully." });
     } catch (error) {
-        // Cleanup on error
-        if (req.file && fs.existsSync(req.file.path)) {
-            fs.unlinkSync(req.file.path);
-        }
         res.status(500).json({ message: error.message });
     }
 }
@@ -82,17 +72,17 @@ export const editAnnouncement = async (req, res) => {
             const currentAnnouncement = await SeasonalAnnouncement.findById(id).select('cloudinaryId');
             oldCloudinaryId = currentAnnouncement?.cloudinaryId;
 
-            // Upload new image
-            const result = await cloudinary.uploader.upload(req.file.path, {
+            // Convert buffer to base64 data URI
+            const base64 = req.file.buffer.toString('base64');
+            const dataURI = `data:${req.file.mimetype};base64,${base64}`;
+            
+            const result = await cloudinary.uploader.upload(dataURI, {
                 folder: 'announcements',
                 secure: true
             });
 
             imageFile = result.secure_url;
             newCloudinaryId = result.public_id;
-
-            // Delete local file
-            fs.unlinkSync(req.file.path);
         }
 
         const updateData = {
@@ -119,10 +109,6 @@ export const editAnnouncement = async (req, res) => {
 
         res.status(200).json({ message: "Successfully updated." });
     } catch (error) {
-        // Cleanup on error
-        if (req.file && fs.existsSync(req.file.path)) {
-            fs.unlinkSync(req.file.path);
-        }
         res.status(500).json({ message: error.message });
     }
 }

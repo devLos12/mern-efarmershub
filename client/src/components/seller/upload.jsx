@@ -3,6 +3,10 @@ import { useBreakpoint, useBreakpointHeight } from "../../components/breakpoint.
 import { sellerContext } from "../../context/sellerContext.jsx";
 import { appContext } from "../../context/appContext.jsx";
 import { adminContext } from "../../context/adminContext.jsx";
+import imageCompression from "browser-image-compression";
+
+
+
 
 const Upload = () => {  
     const { role } = useContext(appContext);
@@ -134,23 +138,41 @@ const Upload = () => {
         });
     };
 
-    const handleFile = (e) => {
+    const handleFile = async (e) => {
         const { name } = e.target;
         const file = e.target.files[0];
+        if (!file) return;
 
-        setFormData({
-            ...formData,
-            [name]: file
-        });
+        try {
+            const options = {
+                maxSizeMB: 0.75,
+                maxWidthOrHeight: 1920,
+                useWebWorker: true
+            };
 
-        if (file) {
+            const compressedFile = await imageCompression(file, options);
+            
+            // Set compressed file to formData
+            setFormData({
+                ...formData,
+                [name]: compressedFile
+            });
+
+            // Preview using compressed file
             const reader = new FileReader();
             reader.onload = (e) => {
                 setImgPreview(e.target.result);
             };
-            reader.readAsDataURL(file);
+            reader.readAsDataURL(compressedFile); // ✅ Use compressed file
+
+        } catch (error) {
+            console.error("Error compressing image:", error);
+            alert('Failed to compress image');
         }
     };
+
+
+
 
     const handleFileRemove = () => {
         if (isUpdate) {

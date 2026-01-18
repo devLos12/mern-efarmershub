@@ -1,6 +1,9 @@
 import React, { useContext, useRef, useState, useEffect } from "react";
 import { adminContext } from "../../context/adminContext";
 import { useBreakpointHeight } from "../breakpoint";
+import imageCompression from 'browser-image-compression';
+
+
 
 const AddAnnouncement = () => {
     const { addAnnouncement, setAddAnnouncement } = useContext(adminContext);
@@ -76,23 +79,50 @@ const AddAnnouncement = () => {
         }));
     };
 
-    const handleFileChange = (e) => {
+
+
+
+
+    const handleFileChange = async (e) => {
         const file = e.target.files[0];
-        setFormData(prev => ({
-            ...prev,
-            imageFile: file
-        }));
-        
-        const reader = new FileReader();
-        reader.onloadend = () => {
-            setFormData((prev) => ({
+        if (!file) return;
+
+        try {   
+            // Compression options
+            const options = {
+                maxSizeMB: 0.5,              // max 1MB
+                maxWidthOrHeight: 1920,    // max dimension
+                useWebWorker: true         // faster
+            };
+            // Compress the image
+            const compressedFile = await imageCompression(file, options);
+            
+            // Update form data with compressed file
+            setFormData(prev => ({
                 ...prev,
-                imagePreview: reader.result 
-            }))
-            setImagePreview(reader.result);
-        };
-        reader.readAsDataURL(file);
+                imageFile: compressedFile
+            }));
+            
+            // Create preview
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setFormData((prev) => ({
+                    ...prev,
+                    imagePreview: reader.result 
+                }))
+                setImagePreview(reader.result);
+            };
+            reader.readAsDataURL(compressedFile); // Use compressed file for preview
+            
+        } catch (error) {
+            console.error('Compression error:', error);
+            alert('Failed to compress image. Please try again.');
+        }
     };
+
+
+
+
 
     const handleFileRemove = () => {
         if(isUpdate){

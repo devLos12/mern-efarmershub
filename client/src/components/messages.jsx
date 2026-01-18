@@ -139,34 +139,58 @@ const Messages = () => {
 
 
 
-    const handleFile = (e) =>{
+
+
+    const handleFile = async (e) => {
         const files = Array.from(e.target.files);
+        if (files.length === 0) return;
 
-        if(files.length === 0) return;
+        try {
+            const options = {
+                maxSizeMB: 0.3,            // 500KB for chat images
+                maxWidthOrHeight: 1920,
+                useWebWorker: true
+            };
 
-        files.forEach((file, index) => {
-            if(file){
+            // Compress all images
+            const compressedFiles = await Promise.all(
+                files.map(async (file) => {
+                    console.log(`Original: ${(file.size / 1024).toFixed(2)}KB`);
+                    const compressed = await imageCompression(file, options);
+                    console.log(`Compressed: ${(compressed.size / 1024).toFixed(2)}KB`);
+                    return compressed;
+                })
+            );
+
+            // Create previews with compressed files
+            compressedFiles.forEach((file, index) => {
                 const reader = new FileReader();
                 reader.onload = (e) => {
                     const newImage = {
-                        id : Date.now()  + index,
-                        file : file,
-                        preview : e.target.result,
-                        name : file.name
-                    }
-
+                        id: Date.now() + index,
+                        file: file,  // ✅ compressed file
+                        preview: e.target.result,
+                        name: file.name
+                    };
                     setImages(prev => [...prev, newImage]);
-                }
+                };
                 reader.readAsDataURL(file);
-            }
-        })
+            });
 
-        setMessage((prev) => ({
-            ...prev,
-            images : files
-        }))
+            // Set compressed files to message state
+            setMessage((prev) => ({
+                ...prev,
+                images: compressedFiles  // ✅ compressed files
+            }));
 
-    }
+        } catch (error) {
+            console.error("Error compressing images:", error);
+            alert('Failed to compress images');
+        }
+    };
+
+
+    
 
 
 
@@ -731,7 +755,9 @@ const ImageLayout = ({ location, hasText, msg, onImageClick }) => {
 
     // Prepare all images URLs for the viewer
     const allImageUrls = msg.imageFiles?.map(filename => 
-        `${import.meta.env.VITE_API_URL}/api/uploads/${filename}`
+        filename.startsWith('https') 
+            ? filename 
+            : `${import.meta.env.VITE_API_URL}/api/uploads/${filename}`
     ) || [];
 
     return (
@@ -753,7 +779,9 @@ const ImageLayout = ({ location, hasText, msg, onImageClick }) => {
                         if (isSingleImage) colSize = "col-6";
                         if (isLastOddImage) colSize = "col-12";
 
-                        const imageUrl = `${import.meta.env.VITE_API_URL}/api/uploads/${filename}`;
+                        const imageUrl = filename.startsWith('https') 
+                        ? filename  // Cloudinary URL na
+                        : `${import.meta.env.VITE_API_URL}/api/uploads/${filename}`; // fallback for old images
 
                         return (
                             <div key={index} className={colSize}>

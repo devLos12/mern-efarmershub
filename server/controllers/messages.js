@@ -3,22 +3,12 @@ import Chat from "../models/chat.js";
 import Messages from "../models/messages.js";
 import Admin from "../models/admin.js";
 import multer from "multer";
+import { v2 as cloudinary } from "cloudinary";
 
+// Changed to memory storage
+const storage = multer.memoryStorage();
 
-
-
-const storage = multer.diskStorage({
-    destination : "./uploads",
-    filename :  (req, file, cb) =>{
-        const uniqueName = `${Date.now()} - ${file.originalname}`;
-        cb(null, uniqueName);
-    }
-})
-
-
-export const sendImage = multer({ storage : storage});
-
-
+export const sendImage = multer({ storage: storage });
 
 export const sendMessage = async (req, res) => {
     try {
@@ -26,27 +16,39 @@ export const sendMessage = async (req, res) => {
         const { receiverId, receiverRole, textMessage } = req.body;
         const files = req.files;
         
-        const imageFiles = files ? files.map(file => file.filename) : [];
+        let imageFiles = [];
+
+        // Upload images to Cloudinary if files exist
+        if (files && files.length > 0) {
+            const uploadPromises = files.map(async (file) => {
+                const base64 = file.buffer.toString('base64');
+                const dataURI = `data:${file.mimetype};base64,${base64}`;
+                
+                const result = await cloudinary.uploader.upload(dataURI, {
+                    folder: 'chat-images',
+                    secure: true
+                });
+                
+                return result.secure_url;
+            });
+
+            imageFiles = await Promise.all(uploadPromises);
+        }
 
         const senderRoleCap = role.charAt(0).toUpperCase() + role.slice(1);
         const receiverRoleCap = receiverRole.charAt(0).toUpperCase() + receiverRole.slice(1);
-        
-
-
 
         let chat = await Chat.findOne({
             "participants.accountId": { $all: [id, receiverId] },
-            "participants.role"     : { $all: [senderRoleCap, receiverRoleCap] },
+            "participants.role": { $all: [senderRoleCap, receiverRoleCap] },
         });
 
-        if(!chat) return res.status(404).json({ message : "Chat not found."});
-
+        if (!chat) return res.status(404).json({ message: "Chat not found." });
 
         let lastMessage = "";
         if (textMessage && textMessage.trim()) {
-            lastMessage = textMessage;  // Priority sa text
+            lastMessage = textMessage;
         } else if (imageFiles.length > 0) {
-            // Kung images lang
             if (imageFiles.length === 1) {
                 lastMessage = "📷 sent photo";
             } else {
@@ -54,16 +56,14 @@ export const sendMessage = async (req, res) => {
             }
         }
 
-
         chat.lastMessage = lastMessage;
         chat.lastSender = id;
         
         chat.unreadCount[receiverRole] = (chat.unreadCount[receiverRole] || 0) + 1;
-        chat.isEmpty = false
+        chat.isEmpty = false;
         
         chat.markModified("unreadCount");
         await chat.save();
-
 
         const newMessage = new Messages({
             chatId: chat._id,
@@ -76,31 +76,29 @@ export const sendMessage = async (req, res) => {
 
         await newMessage.save();
 
-        io.emit("newChatInbox", { message : "new chat inbox "});
-        io.emit("newMessageSent", { message: "new message sent"});
+        io.emit("newChatInbox", { message: "new chat inbox" });
+        io.emit("newMessageSent", { message: "new message sent" });
         
         res.status(200).json({ 
-            chatId : chat._id,
-            senderId : id,
-            textMessage : textMessage || "",
+            chatId: chat._id,
+            senderId: id,
+            textMessage: textMessage || "",
             imageFiles: imageFiles,
-            time : newMessage.createdAt,
+            time: newMessage.createdAt,
         });
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
 };
 
-
-export const getMessages = async(req, res) => {
+export const getMessages = async (req, res) => {
     try {
         const chatId = req.params.id;
-        const { id } = req.account; // current user id
+        const { id } = req.account;
 
-        // Check kung existing pa yung chat
         const chatExists = await Chat.findById(chatId);
         if (!chatExists) {
-            return res.status(401).json({ message : "This chat no longer exists." });
+            return res.status(401).json({ message: "This chat no longer exists." });
         }
 
         const deleted = chatExists.deletedBy.find(
@@ -109,46 +107,42 @@ export const getMessages = async(req, res) => {
         
         const query = {
             chatId, 
-            ...(deleted && { createdAt : { $gt : deleted.deletedAt } })
+            ...(deleted && { createdAt: { $gt: deleted.deletedAt } })
         };
 
         const messages = await Messages.find(query);
 
         if (messages.length === 0) {
-            return res.status(404).json({ message : "hi there, do you have concen?"});
+            return res.status(404).json({ message: "hi there, do you have concen?" });
         }
 
         res.status(200).json(messages);
-    } catch(err) {
-        res.status(500).json({ message : err.message});
+    } catch (err) {
+        res.status(500).json({ message: err.message });
     }
 };
 
-
-export const getChatId = async(req, res) => {
-
-    try{
-        const {id, role} = req.account;
+export const getChatId = async (req, res) => {
+    try {
+        const { id, role } = req.account;
         let { receiverId, receiverRole } = req.body;
 
         let adminEmail; 
 
-        if(receiverId === "unknown" && receiverRole === "admin"){
-            const admin = await Admin.findOne({ adminType: { $in: [ "main"]} });
-            if(!admin) return res.status(404).json({ message : "admin not found."});
+        if (receiverId === "unknown" && receiverRole === "admin") {
+            const admin = await Admin.findOne({ adminType: { $in: ["main"] } });
+            if (!admin) return res.status(404).json({ message: "admin not found." });
 
-            receiverId = admin._id
-            adminEmail = admin.email
+            receiverId = admin._id;
+            adminEmail = admin.email;
         }
-        
 
         const senderRoleCap = role.charAt(0).toUpperCase() + role.slice(1);
         const receiverRoleCap = receiverRole.charAt(0).toUpperCase() + receiverRole.slice(1);
 
-
         let chat = await Chat.findOne({
             "participants.accountId": { $all: [id, receiverId] },
-            "participants.role"     : { $all: [senderRoleCap, receiverRoleCap] }
+            "participants.role": { $all: [senderRoleCap, receiverRoleCap] }
         });
 
         if (!chat) {
@@ -163,18 +157,14 @@ export const getChatId = async(req, res) => {
         await chat.save();
 
         const resdata = {
-            chatId : chat._id, 
-            senderId : id, 
+            chatId: chat._id, 
+            senderId: id, 
             receiverId,
-            email : adminEmail
-        }
+            email: adminEmail
+        };
 
         res.status(200).json(resdata);
-    }catch(err){
-        res.status(500).json({ message : err.message});
+    } catch (err) {
+        res.status(500).json({ message: err.message });
     }
 }
-
-
-
-
