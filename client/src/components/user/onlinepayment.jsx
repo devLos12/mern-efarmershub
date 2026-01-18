@@ -89,8 +89,8 @@ const OnlinePayment = () => {
             
             if (data.success) {
                 const { gcashQr, mayaQr } = data.data;
-                if (gcashQr) setGcashQr(`${import.meta.env.VITE_API_URL}/api/uploads/${gcashQr}`);
-                if (mayaQr) setMayaQr(`${import.meta.env.VITE_API_URL}/api/uploads/${mayaQr}`);
+                if (gcashQr) setGcashQr(gcashQr.startsWith("https") ? gcashQr : `${import.meta.env.VITE_API_URL}/api/uploads/${gcashQr}`);
+                if (mayaQr) setMayaQr(mayaQr.startsWith("https") ? mayaQr : `${import.meta.env.VITE_API_URL}/api/uploads/${mayaQr}`);
             }
         } catch (error) {
             console.error('Failed to fetch QR codes:', error);

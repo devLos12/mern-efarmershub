@@ -156,14 +156,13 @@ export const deleteQrCode = async (req, res) => {
             },
             { new: true }
         );
-
+        
         // Delete from Cloudinary (non-blocking)
         if (cloudinaryId) {
             cloudinary.uploader.destroy(cloudinaryId).catch(err => 
                 console.error(`Failed to delete ${type} QR from Cloudinary:`, err)
             );
         }
-
         return res.status(200).json({ 
             success: true,
             message: `${type} QR code deleted successfully` 

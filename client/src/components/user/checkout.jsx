@@ -140,6 +140,11 @@ const Checkout = () =>{
         setShowModal(true);
     };
 
+    useEffect(() => {
+        console.log("Checkout Form Data: ", checkoutForm.items);
+    }, [checkoutForm]);
+
+
     const handleForm = async(e)=>{
         e.preventDefault();
 
@@ -227,7 +232,10 @@ const Checkout = () =>{
                         {checkoutForm.items.map((data, i)=>(
                             <div key={i} className="row g-0 p-2 rounded bg-beige shadow-sm border mt-2">
                                 <div className="col-5 col-md-4 ">
-                                    <img src={`${import.meta.env.VITE_API_URL}/api/Uploads/${data.imageFile}`} alt={data.imageFile} className="img-fluid rounded shadow-sm border"/>
+                                    <img src={
+                                        data.imageFile.startsWith("http")
+                                        ? data.imageFile
+                                        : `${import.meta.env.VITE_API_URL}/api/Uploads/${data.imageFile}`} alt={data.imageFile} className="img-fluid rounded shadow-sm border"/>
                                 </div>
 
                                 <div className="col ms-3">

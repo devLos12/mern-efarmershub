@@ -20,6 +20,7 @@ const ItemCards = ({ products }) => {
     
     const addToCart = async(pid, prodId, prodName, prodDisc, prodPrice, imageFile, seller)=> {
 
+        
         setCartBadge((prev) => ({
             ...prev,
             number : prev.number + 1,
@@ -61,7 +62,7 @@ const ItemCards = ({ products }) => {
         
         setPendingCartItems((prev) => [
             ...prev, 
-            {prodId, prodName, prodDisc, prodPrice, imageFile, seller}
+            {pid, prodId, prodName, prodDisc, prodPrice, imageFile, seller}
         ])
 
         
@@ -111,9 +112,9 @@ const ItemCards = ({ products }) => {
                     >
                         <div className="col-12 text-center bg-white rounded mt-2">
                             <img src={ 
-                                data.imageFile.startsWith("http") 
-                                ? data.imageFile 
-                                : `${import.meta.env.VITE_API_URL}/api/uploads/${data.imageFile}`}  
+                                data.imageFile.startsWith("http")
+                                ? data.imageFile
+                                : `${import.meta.env.VITE_API_URL}/api/Uploads/${data.imageFile}`}
                             alt={data.imageFile} 
                             className="img-fluid rounded shadow-sm"
                                 style={{cursor : "pointer"}} 

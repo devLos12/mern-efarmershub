@@ -21,6 +21,7 @@ const AddAnnouncement = () => {
     const [showErrorModal, setShowErrorModal] = useState(false);
     const [modalMessage, setModalMessage] = useState("");
     const [isModalVisible, setIsModalVisible] = useState(false);
+    const [isUploading, setIsUploading] = useState(false); // ✅ NEW: Loading state
     const height = useBreakpointHeight();
     const handleRefFile = useRef();
 
@@ -111,6 +112,9 @@ const AddAnnouncement = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         
+        // ✅ Start loading
+        setIsUploading(true);
+
         const submitData = new FormData();
         
         if(formData?._id) {
@@ -151,6 +155,9 @@ const AddAnnouncement = () => {
             console.error("Error:", error.message);
             setModalMessage('An error occurred. Please try again.');
             setShowErrorModal(true);
+        } finally {
+            // ✅ Stop loading
+            setIsUploading(false);
         }
     };
 
@@ -233,6 +240,7 @@ const AddAnnouncement = () => {
                                 className="btn btn-link position-absolute top-0 end-0 p-3 text-decoration-none"
                                 style={{ cursor: "pointer", zIndex: 1 }}
                                 onClick={() => setAddAnnouncement((prev) => ({...prev, isShow: false }))}
+                                disabled={isUploading}
                             >
                                 <i className="bx bx-x fs-3 text-dark"></i>
                             </button>
@@ -263,6 +271,7 @@ const AddAnnouncement = () => {
                                             value={formData.cropName}
                                             onChange={handleChange}
                                             placeholder="e.g., Rice, Corn, Vegetables"
+                                            disabled={isUploading}
                                             required
                                         />
                                     </div>
@@ -280,6 +289,7 @@ const AddAnnouncement = () => {
                                             value={formData.title}
                                             onChange={handleChange}
                                             placeholder="Enter announcement title"
+                                            disabled={isUploading}
                                             required
                                         />
                                     </div>
@@ -300,6 +310,7 @@ const AddAnnouncement = () => {
                                             onChange={handleChange}
                                             rows="4"
                                             placeholder="Enter announcement description"
+                                            disabled={isUploading}
                                             required
                                         />
                                     </div>
@@ -317,6 +328,7 @@ const AddAnnouncement = () => {
                                                 name="startDate"
                                                 value={formData.startDate ? formData?.startDate.split('T')[0] : ""}
                                                 onChange={handleChange}
+                                                disabled={isUploading}
                                                 required
                                             />
                                         </div>
@@ -333,6 +345,7 @@ const AddAnnouncement = () => {
                                                 value={formData.endDate ? formData?.endDate.split('T')[0] : ""}
                                                 onChange={handleChange}
                                                 min={formData.startDate}
+                                                disabled={isUploading}
                                                 required
                                             />
                                         </div>
@@ -353,13 +366,14 @@ const AddAnnouncement = () => {
                                                 accept="image/*"
                                                 onChange={handleFileChange}
                                                 ref={handleRefFile}
+                                                disabled={isUploading}
                                             />
                                         </div>
                                         
                                         {(isUpdate || imagePreview) && (
                                             <div className="mt-3">
                                                 <div className="position-relative d-inline-block py-2 pe-2">
-                                                    {imagePreview && (
+                                                    {imagePreview && !isUploading && (
                                                         <i className="bx bx-x text-dark fs-5 position-absolute top-0 end-0 bg-white d-flex align-items-center justify-content-center rounded-circle shadow"
                                                             style={{ 
                                                                 cursor: "pointer",
@@ -370,11 +384,24 @@ const AddAnnouncement = () => {
                                                         ></i>
                                                     )}
                                                     <img 
-                                                        src={
-                                                            isUpdate 
-                                                            ? imagePreview || formData.imageFile
-                                                            : imagePreview
-                                                        } 
+                                                        src={(() => {
+                                                            // If there's a new preview, use it
+                                                            if (imagePreview) return imagePreview;
+                                                            
+                                                            // For update mode with existing image
+                                                            if (isUpdate && formData.imageFile) {
+                                                                // Check if it's a Cloudinary URL (starts with https)
+                                                                if (typeof formData.imageFile === 'string' && formData.imageFile.startsWith("https")) {
+                                                                    return formData.imageFile;
+                                                                }
+                                                                // Otherwise it's a local filename
+                                                                return `${import.meta.env.VITE_API_URL}/api/Uploads/${formData.imageFile}`;
+                                                            }
+                                                            
+                                                            // Fallback
+                                                            return imagePreview || "";
+                                                        })()}
+                                                                                                
                                                         alt={imagePreview}
                                                         className="img-fluid rounded border border-success border-opacity-25 shadow-sm"
                                                         style={{ 
@@ -393,6 +420,7 @@ const AddAnnouncement = () => {
                                         type="button"
                                         className="btn btn-outline-secondary px-4 text-capitalize"
                                         onClick={() => setAddAnnouncement((prev) => ({...prev, isShow: false }))}
+                                        disabled={isUploading}
                                     >
                                         <i className="bx bx-x-circle me-1"></i>
                                         cancel
@@ -401,9 +429,19 @@ const AddAnnouncement = () => {
                                         type="button"
                                         className="btn btn-success px-4 text-capitalize"
                                         onClick={handleSubmit}
+                                        disabled={isUploading}
                                     >
-                                        <i className="bx bx-check-circle me-1"></i>
-                                        {isUpdate ? "save" : "create"}
+                                        {isUploading ? (
+                                            <>
+                                                <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                                {isUpdate ? "updating..." : "uploading..."}
+                                            </>
+                                        ) : (
+                                            <>
+                                                <i className="bx bx-check-circle me-1"></i>
+                                                {isUpdate ? "save" : "create"}
+                                            </>
+                                        )}
                                     </button>
                                 </div>
                             </div>

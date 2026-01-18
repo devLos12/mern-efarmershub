@@ -18,9 +18,8 @@ const Upload = () => {
     const [modalMessage, setModalMessage] = useState("");
     const [modalType, setModalType] = useState("success");
     const [isModalVisible, setIsModalVisible] = useState(false);
+    const [isUploading, setIsUploading] = useState(false); // ✅ NEW: Loading state
     const fileUploadRef = useRef(null);
-
-
 
     const height = useBreakpointHeight();
     const [isFilled, setIsFilled] = useState(true);
@@ -29,8 +28,6 @@ const Upload = () => {
 
     const dataPreFill = role === "seller" ? sellerUpload : editProduct;
     const isUpdate = Object.keys(dataPreFill?.data ?? {}).length > 0;
-
-
 
     useEffect(() => {
         if (isUpdate) {
@@ -43,9 +40,7 @@ const Upload = () => {
                 lifeSpan: dataPreFill?.data?.lifeSpan || "",
                 disc: dataPreFill?.data?.disc || "",
                 image: dataPreFill?.data?.imageFile || null,
-                // Sa update mode:
                 productType: dataPreFill?.data?.productType || "",
-
             };
 
             const currentData = {
@@ -58,13 +53,11 @@ const Upload = () => {
                 disc: formData?.disc || "",
                 image: formData?.image || null,
                 productType: dataPreFill?.data?.productType || "",
-
             };
 
             setIsChanged(JSON.stringify(originalData) !== JSON.stringify(currentData));
         }
     }, [formData, isUpdate, dataPreFill]);
-
 
     useEffect(() => {
         if (showModal) {
@@ -88,9 +81,6 @@ const Upload = () => {
         }
     }, [showModal, modalType, role, setSellerUpload, setEditProduct]);
 
-
-
-
     useLayoutEffect(() => {
         if (isUpdate) {
             setFormData({
@@ -104,7 +94,6 @@ const Upload = () => {
                 disc: dataPreFill?.data?.disc || "",
                 image: dataPreFill?.data?.imageFile || null,
                 productType: dataPreFill?.data?.productType || "",
-                
             });
 
             if (dataPreFill?.data?.imageFile) {
@@ -120,7 +109,6 @@ const Upload = () => {
                 lifeSpan: "",
                 disc: "",
                 image: null,
-                // Sa non-update mode:
                 productType: "",
             });
             setImgPreview(null);
@@ -177,13 +165,11 @@ const Upload = () => {
         }
     };
 
-
     const showNotification = (message, type = "success") => {
         setModalMessage(message);
         setModalType(type);
         setShowModal(true);
     };
-
 
     const handleForm = async (e) => {
         e.preventDefault();
@@ -192,6 +178,9 @@ const Upload = () => {
             showNotification("Please fill out all required fields.", "error");
             return;
         }
+
+        // ✅ Start loading
+        setIsUploading(true);
 
         const sendData = new FormData();
         sendData.append("id", formData.id);
@@ -216,6 +205,7 @@ const Upload = () => {
                 credentials: "include"
             });
             const data = await res.json();
+            
             if (!res.ok) throw new Error(data.message);
 
             showNotification(data.message, "success");
@@ -223,10 +213,11 @@ const Upload = () => {
         } catch (error) {
             showNotification(error.message, "error");
             console.error("Error: ", error.message);
+        } finally {
+            // ✅ Stop loading
+            setIsUploading(false);
         }
     };
-
-
 
     return (
         <>
@@ -261,12 +252,9 @@ const Upload = () => {
             </div>
         )}
 
-
-
         <div className="container-fluid position-fixed top-0 start-0 end-0 vh-100 bg-darken"
             style={{ zIndex: 99 }}
         >
-
             <div className="row justify-content-center mt-4">
                 <div className="col-12 col-md-8 col-lg-6">
                     <div className="card shadow-lg border-0 position-relative"
@@ -281,6 +269,7 @@ const Upload = () => {
                                     ? setSellerUpload({ isShow: false })
                                     : setEditProduct({ isShow: false });    
                             }}
+                            disabled={isUploading}
                         >
                             <i className="bx bx-x fs-3 text-dark"></i>
                         </button>
@@ -294,60 +283,54 @@ const Upload = () => {
                         
                         <form onSubmit={handleForm}>
                             {/* Form Content */}
-                            <div className="card-body px-4 "
+                            <div className="card-body px-4"
                                 style={{
                                     overflowY: "auto",
                                     maxHeight: height - 190,
                                 }}
                             >
-
                                 {/* Category and Product Type */}
                                 <div className="row mb-4">
-                                  
                                     <div className="col-md-6">
-                                        {/* Product Name */}
-                                            <label className="form-label text-capitalize fw-semibold text-success small">
-                                                <i className="bx bx-package me-1"></i>
-                                                product name <span className="text-muted fw-normal">(variety name)</span>
-                                            </label>
-                                            <input 
-                                                type="text"  
-                                                className="form-control border-success border-opacity-25"
-                                                style={{ backgroundColor: '#ffffff' }}
-                                                name="name"
-                                                value={formData.name || ""}
-                                                onChange={handleChange}
-                                                placeholder="e.g., Lakatan, Red Tomato, Saba"
-                                                required
-                                            />
+                                        <label className="form-label text-capitalize fw-semibold text-success small">
+                                            <i className="bx bx-package me-1"></i>
+                                            product name <span className="text-muted fw-normal">(variety name)</span>
+                                        </label>
+                                        <input 
+                                            type="text"  
+                                            className="form-control border-success border-opacity-25"
+                                            style={{ backgroundColor: '#ffffff' }}
+                                            name="name"
+                                            value={formData.name || ""}
+                                            onChange={handleChange}
+                                            placeholder="e.g., Lakatan, Red Tomato, Saba"
+                                            disabled={isUploading}
+                                            required
+                                        />
                                     </div>
-                                      <div className="col-md-6 mb-3 mb-md-0">
-                                        {/* Price */}
-                                            <label className="form-label text-capitalize fw-semibold text-success small">
-                                                <i className="bx bx-money me-1"></i>
-                                                price
-                                            </label>
-                                            <input 
-                                                type="text"  
-                                                className="form-control border-success border-opacity-25"
-                                                style={{ backgroundColor: '#ffffff' }}
-                                                name="price"
-                                                value={formData.price || ""}
-                                                onChange={handleChange}
-                                                placeholder="Enter price"
-                                                required
-                                            />
+                                    <div className="col-md-6 mb-3 mb-md-0">
+                                        <label className="form-label text-capitalize fw-semibold text-success small">
+                                            <i className="bx bx-money me-1"></i>
+                                            price
+                                        </label>
+                                        <input 
+                                            type="text"  
+                                            className="form-control border-success border-opacity-25"
+                                            style={{ backgroundColor: '#ffffff' }}
+                                            name="price"
+                                            value={formData.price || ""}
+                                            onChange={handleChange}
+                                            placeholder="Enter price"
+                                            disabled={isUploading}
+                                            required
+                                        />
                                     </div>
                                 </div>
-                             
-
-                               
 
                                 {/* Category and Product Type */}
                                 <div className="row mb-4">
-                                  
                                     <div className="col-md-6">
-                                       <label className="form-label text-capitalize fw-semibold text-success small">
+                                        <label className="form-label text-capitalize fw-semibold text-success small">
                                             <i className="bx bx-shape-circle me-1"></i>
                                             product type <span className="text-muted fw-normal">(generic name)</span>
                                         </label>
@@ -359,10 +342,11 @@ const Upload = () => {
                                             value={formData.productType || ""}
                                             onChange={handleChange}
                                             placeholder="e.g., Banana, Tomato, Potato"
+                                            disabled={isUploading}
                                             required
                                         />
                                     </div>
-                                      <div className="col-md-6 mb-3 mb-md-0">
+                                    <div className="col-md-6 mb-3 mb-md-0">
                                         <label className="form-label text-capitalize fw-semibold text-success small">
                                             <i className="bx bx-category me-1"></i>
                                             category
@@ -373,6 +357,7 @@ const Upload = () => {
                                             name="category"
                                             value={formData.category || ""}
                                             onChange={handleChange}
+                                            disabled={isUploading}
                                             required
                                         >
                                             <option value="" hidden>select category</option>
@@ -384,8 +369,7 @@ const Upload = () => {
                                                 'grains', 
                                                 'legumes'
                                             ].map((data, i) => (
-                                                <option key={i} value={data
-                                                }>{data}</option>
+                                                <option key={i} value={data}>{data}</option>
                                             ))}
                                         </select>
                                     </div>
@@ -408,6 +392,7 @@ const Upload = () => {
                                             placeholder="Enter number of bundles"
                                             min="1"
                                             max="999"
+                                            disabled={isUploading}
                                             required
                                         />
                                     </div>
@@ -422,6 +407,7 @@ const Upload = () => {
                                             name="kg"
                                             value={formData.kg || ""}
                                             onChange={handleChange}
+                                            disabled={isUploading}
                                             required
                                         >
                                             <option value="" hidden>select kg per bundle</option>
@@ -440,7 +426,6 @@ const Upload = () => {
                                     </div>
                                 </div>
 
-                                
                                 {/* Life Span */}
                                 <div className="mb-4">
                                     <label className="form-label text-capitalize fw-semibold text-success small">
@@ -453,6 +438,7 @@ const Upload = () => {
                                         name="lifeSpan"
                                         value={formData.lifeSpan || ""}
                                         onChange={handleChange}
+                                        disabled={isUploading}
                                     >
                                         <option value="" hidden>select life span</option>
                                         {Array.from({ length: 14 }, (_, i) => (
@@ -478,6 +464,7 @@ const Upload = () => {
                                         onChange={handleChange}
                                         rows="4"
                                         placeholder="Enter product description"
+                                        disabled={isUploading}
                                         required
                                     />
                                 </div>
@@ -498,6 +485,7 @@ const Upload = () => {
                                             accept="image/*"
                                             onChange={handleFile}
                                             ref={fileUploadRef}
+                                            disabled={isUploading}
                                         />
                                     </div>
                                     
@@ -505,7 +493,7 @@ const Upload = () => {
                                     {(isUpdate || imgPreview) && (
                                         <div className="mt-3">
                                             <div className="position-relative d-inline-block py-2 pe-2">
-                                                {imgPreview && (
+                                                {imgPreview && !isUploading && (
                                                     <i className="bx bx-x text-dark fs-5 position-absolute top-0 end-0 bg-white d-flex align-items-center justify-content-center rounded-circle shadow"
                                                         style={{ 
                                                             cursor: "pointer",
@@ -518,7 +506,7 @@ const Upload = () => {
                                                 <img 
                                                     src={
                                                         isUpdate 
-                                                            ? imgPreview || (formData?.image)
+                                                            ? imgPreview || (formData?.imageFile.startsWith("https") ? formData?.imageFile : `${import.meta.env.VITE_API_URL}/api/Uploads/${formData?.imageFile}`)
                                                             : imgPreview
                                                     } 
                                                     alt={imgPreview}
@@ -544,6 +532,7 @@ const Upload = () => {
                                             ? setSellerUpload({ isShow: false })
                                             : setEditProduct({ isShow: false });
                                     }}
+                                    disabled={isUploading}
                                 >
                                     <i className="bx bx-x-circle me-1"></i>
                                     cancel
@@ -551,10 +540,19 @@ const Upload = () => {
                                 <button
                                     type="submit"
                                     className="btn btn-success px-4 text-capitalize"
-                                    disabled={isUpdate ? (!isChanged || isFilled) : isFilled}
+                                    disabled={isUploading || (isUpdate ? (!isChanged || isFilled) : isFilled)}
                                 >
-                                    <i className="bx bx-check-circle me-1"></i>
-                                    {isUpdate ? "save" : "add product"}
+                                    {isUploading ? (
+                                        <>
+                                            <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                            {isUpdate ? "updating..." : "uploading..."}
+                                        </>
+                                    ) : (
+                                        <>
+                                            <i className="bx bx-check-circle me-1"></i>
+                                            {isUpdate ? "save" : "add product"}
+                                        </>
+                                    )}
                                 </button>
                             </div>
                         </form>
@@ -562,7 +560,6 @@ const Upload = () => {
                 </div>
             </div>
         </div>
-
         </>
     );
 };

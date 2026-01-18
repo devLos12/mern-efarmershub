@@ -42,6 +42,9 @@ const Announcement = () => {
         };
     }, [openMenuId]);
 
+
+
+
     useEffect(() => {
         fetch(`${import.meta.env.VITE_API_URL}/api/getAnnouncement`, {
             method: "GET",
@@ -157,7 +160,7 @@ const Announcement = () => {
                                                     style={{ height: "60px" , width: "100px"}}
                                                 >
                                                     <img 
-                                                    src={data.imagePreview || data.imageFile}
+                                                    src={data.imagePreview || data.imageFile.startsWith("https") ? data.imageFile : `${import.meta.env.VITE_API_URL}/api/Uploads/${data.imageFile}`}  
                                                     alt={data.imagePreview || data.imageFile}
                                                     className="w-100 h-100"
                                                     style={{objectFit: "cover"}}

@@ -5,6 +5,9 @@ import Admin from "../../models/admin.js";
 import cloudinary from "../../config/cloudinary.js";
 import fs from "fs";
 
+
+
+
 const storage = multer.diskStorage({
     destination: "./uploads",
     filename: (req, file, cb) => {
@@ -12,6 +15,7 @@ const storage = multer.diskStorage({
         cb(null, uniqueName)
     }
 })
+
 
 export const update = multer({ storage: storage });
 

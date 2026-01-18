@@ -1021,7 +1021,10 @@ const OrderDetails = () => {
             <ViewModal 
                 isOpen={viewProofModal}
                 onClose={() => setViewProofModal(false)}
-                imageSrc={`${import.meta.env.VITE_API_URL}/api/uploads/${orderData.proofOfPayment.image}`}
+                imageSrc={
+                    orderData.proofOfPayment.image.startsWith("https")
+                    ? orderData.proofOfPayment.image
+                    : `${import.meta.env.VITE_API_URL}/api/uploads/${orderData.proofOfPayment.image}`}
                 title="Proof of Payment"
             />
 
@@ -1200,7 +1203,8 @@ const OrderDetails = () => {
                                                         <div className={`border rounded p-3 ${isSelected ? 'bg-warning bg-opacity-10 border-warning' : 'bg-light'}`}>
                                                             <div className="d-flex align-items-start gap-3">
                                                                 <img 
-                                                                    src={`${import.meta.env.VITE_API_URL}/api/Uploads/${item.imageFile}`}
+                                                                    src={
+                                                                        `${import.meta.env.VITE_API_URL}/api/Uploads/${item.imageFile}`}
                                                                     alt={item.prodName}
                                                                     className="rounded border"
                                                                     style={{width: "80px", height: "80px", objectFit: "cover"}}
@@ -2489,7 +2493,11 @@ const OrderDetails = () => {
                                             <div className="row g-0 mt-2 mt-md-4 rounded bg-beige p-2 shadow-sm border">
                                                 <div className={`col-5 col-sm-4 col-md-5 col-lg-5 col-xl-4 col-xxl-5`}>
                                                     <div className="d-flex flex-column justify-content-between h-100 ">
-                                                        <img src={`${import.meta.env.VITE_API_URL}/api/Uploads/${item.imageFile}`} alt={item.imageFile} className="img-fluid rounded border shadow-sm " />
+                                                        <img src={
+                                                            item.imageFile.startsWith("http") 
+                                                            ? item.imageFile 
+                                                            : `${import.meta.env.VITE_API_URL}/api/Uploads/${item.imageFile}`} 
+                                                        alt={item.imageFile} className="img-fluid rounded border shadow-sm " />
 
                                                         {role === "user" && orderData?.statusDelivery.toLowerCase() === "delivered" && (
                                                             <button 
@@ -2545,7 +2553,10 @@ const OrderDetails = () => {
                                                     onClick={() => setViewProofModal(true)}
                                                 >
                                                     <img 
-                                                        src={`${import.meta.env.VITE_API_URL}/api/uploads/${orderData.proofOfPayment.image}`} 
+                                                        src={
+                                                            orderData.proofOfPayment.image.startsWith("http")
+                                                            ? orderData.proofOfPayment.image
+                                                            : `${import.meta.env.VITE_API_URL}/api/uploads/${orderData.proofOfPayment.image}`} 
                                                         alt={orderData.proofOfPayment.image} 
                                                         className="img-fluid rounded border shadow-sm w-100"
                                                         style={{maxHeight: "200px", objectFit: "cover"}}

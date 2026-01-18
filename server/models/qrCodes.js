@@ -10,6 +10,10 @@ const qrCodeSchema = new mongoose.Schema({
     imageUrl: {
         type: String,
         default: null
+    },
+    cloudinaryId: {
+        type: String,
+        default: null
     }
 }, {
     timestamps: true

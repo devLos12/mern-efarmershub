@@ -6,11 +6,12 @@ import Seller from "../../models/seller.js";
 import PayoutTransaction from "../../models/payoutTransaction.js";
 import AdminPaymentTransaction from "../../models/adminPaymentTrans.js";
 import SellerPaymentTransaction from "../../models/sellerPaymentTrans.js";
+import cloudinary from "../../config/cloudinary.js";
+import fs from "fs";
 
 
 
-const createNotification = async(id, role, orderId) =>{
-
+const createNotification = async(id, role, orderId) => {
     await Notification.create({
         sender : {
             id : id,
@@ -30,7 +31,6 @@ const createNotification = async(id, role, orderId) =>{
 
 
 const createTransaction = async(items, payment, userId, firstname, lastname, email, totalPrice, refNo) => {
-
     for (const item of items){
         const sellerId = item.seller.id;
         const amount = item.prodPrice * item.quantity;
@@ -50,7 +50,6 @@ const createTransaction = async(items, payment, userId, firstname, lastname, ema
             },
             refNo: refNo
         })
-
     }
 
     await AdminPaymentTransaction.create({
@@ -71,8 +70,7 @@ const createTransaction = async(items, payment, userId, firstname, lastname, ema
 
 
 
-const createOrUpdatePayout = async(items, newOrder)=>{
-
+const createOrUpdatePayout = async(items, newOrder) => {
     for (const item of items) {
         const sellerId = item.seller.id;
         const amount = item.prodPrice * item.quantity;
@@ -87,14 +85,11 @@ const createOrUpdatePayout = async(items, newOrder)=>{
             })
             payout.totalAmount += amount;
             await payout.save();
-
         } else {
-            
             const seller = await Seller.findOne({_id: sellerId});
 
-
             if(!seller){
-                return res.status(404).json({ message: "seller not found. product must be have an active seller."})
+                throw new Error("seller not found. product must be have an active seller.");
             }
 
             await PayoutTransaction.create({
@@ -111,26 +106,24 @@ const createOrUpdatePayout = async(items, newOrder)=>{
             });
         }
     }
-
 }
 
 
-
-const storage  = multer.diskStorage({
-    destination : "./uploads",
-    filename :  (req, file, cb) =>{
-        cb(null, file.originalname)
+// Temporary storage - deleted after Cloudinary upload
+const storage = multer.diskStorage({
+    destination: "./uploads",
+    filename: (req, file, cb) => {
+        const uniqueName = `${Date.now()}-${file.originalname}`;
+        cb(null, uniqueName);
     }
 });
 
 
-export const upload = multer({ storage : storage});
+export const upload = multer({ storage: storage });
 
 
-export const checkOut = async(req, res) =>{
-
-    try{
-
+export const checkOut = async(req, res) => {
+    try {
         const userId = req.account.id;
         const {source, orderMethod, payment, text, totalPrice, shippingFee, finalTotal} = req.body;
         const billingAddress = JSON.parse(req.body.billingAddress);
@@ -139,7 +132,20 @@ export const checkOut = async(req, res) =>{
         const {firstname, lastname, contact, email, province, city, barangay, detailAddress, zipCode} = 
         billingAddress;
 
-        const imageFile = req.file ? req.file.filename : null;
+        let imageFile = null;
+        let cloudinaryId = null;
+
+        // Upload proof of payment to Cloudinary if image exists
+        if (req.file) {
+            const result = await cloudinary.uploader.upload(req.file.path, {
+                folder: 'proof-of-payment',
+                secure: true
+            });
+            imageFile = result.secure_url;
+            cloudinaryId = result.public_id;
+            // Delete local file after upload
+            fs.unlinkSync(req.file.path);
+        }
         
         // Generate date for reference number
         const date = new Date().toISOString().split("T")[0].replace(/-/g, ""); // 20251211
@@ -176,58 +182,72 @@ export const checkOut = async(req, res) =>{
             newOrderId = "OID" + nextNumber.toString().padStart(4, "0"); // OID0002
         }
         
+        
         if(orderMethod === "delivery" && payment === "cash on delivery" ){
-
-            const newOrder =  new Order({
+            const newOrder = new Order({
                 orderId: newOrderId,
-                userId, orderItems : items, 
-                firstname, lastname, email, contact, 
-                address : `${province}, ${city}, ${barangay}, ${detailAddress}, ${zipCode}`,
+                userId, 
+                orderItems: items, 
+                firstname, 
+                lastname, 
+                email, 
+                contact, 
+                address: `${province}, ${city}, ${barangay}, ${detailAddress}, ${zipCode}`,
                 totalPrice: finalTotal, 
                 orderMethod,
-                paymentType : payment,
-                paymentStatus : "pending",
-                proofOfPayment : {
-                    image : "pending",
-                    textMessage  : "n/a"
+                paymentType: payment,
+                paymentStatus: "pending",
+                proofOfPayment: {
+                    image: "pending",
+                    textMessage: "n/a",
+                    cloudinaryId: null
                 },
                 refNo: refNo
             })
 
             await newOrder.save();
             await createNotification(userId, "user", newOrder._id);
-            io.emit("user notif", { message : "new notif"});
+            io.emit("user notif", { message: "new notif"});
             io.emit('new order');
 
-            return res.status(200).json({ message : "placed order succesfully!"});
+            return res.status(200).json({ message: "placed order succesfully!"});
         }
 
         if(payment === "gcash" || payment === "maya"){
             const newOrder = new Order({
                 orderId: newOrderId,
-                userId, orderItems : items, 
-                firstname, lastname, email, contact, 
-                address : `${province}, ${city}, ${barangay}, ${detailAddress}, ${zipCode}`,
+                userId, 
+                orderItems: items, 
+                firstname, 
+                lastname, 
+                email, 
+                contact, 
+                address: `${province}, ${city}, ${barangay}, ${detailAddress}, ${zipCode}`,
                 totalPrice: finalTotal, 
                 orderMethod,
-                paymentType : payment,
-                paymentStatus : "paid",
-                proofOfPayment : {
-                    image : imageFile,
-                    textMessage : text
+                paymentType: payment,
+                paymentStatus: "paid",
+                proofOfPayment: {
+                    image: imageFile,
+                    textMessage: text,
+                    cloudinaryId: cloudinaryId
                 },
                 refNo: refNo
             })
 
             await newOrder.save();
             await createNotification(userId, "user", newOrder._id);
-            io.emit("user notif", { message : "new notif"});
+            io.emit("user notif", { message: "new notif"});
             io.emit('new order');
 
-            return res.status(200).json({ message : "placed order succesfully!"});
+            return res.status(200).json({ message: "placed order succesfully!"});
         }
 
-    }catch(err){
-        res.status(500).json({ message : err.message});
+    } catch(err) {
+        // Cleanup uploaded file on error
+        if (req.file && fs.existsSync(req.file.path)) {
+            fs.unlinkSync(req.file.path);
+        }
+        res.status(500).json({ message: err.message});
     }
 }

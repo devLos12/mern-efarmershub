@@ -177,8 +177,8 @@ const TrackOrder = () => {
                                                 data.status === "refund completed" || 
                                                 data.status === "cancelled" ||
                                                 data.status === "refund rejected"
-                                                ? `${import.meta.env.VITE_API_URL}/api/uploads/${data.imageFile}`
-                                                : `${import.meta.env.VITE_API_URL}/api/uploads/rider/${data.imageFile}`
+                                                ? (data.imageFile.startsWith("https") ? data.imageFile : `${import.meta.env.VITE_API_URL}/api/uploads/${data.imageFile}`)
+                                                : (data.imageFile.startsWith("https") ? data.imageFile : `${import.meta.env.VITE_API_URL}/api/uploads/rider/${data.imageFile}`)
                                             } 
                                             alt={data.imageFile} 
                                             className="img-fluid rounded shadow" />

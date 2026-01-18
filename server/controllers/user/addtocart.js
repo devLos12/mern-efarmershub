@@ -15,20 +15,22 @@ const addItemsToCart = async(req, res) =>{
         for(let i = 0; i < items.length; i++){
             const item = items[i];
             
+
             let cart = await Cart.findOne({ userId : id}); 
+
 
             await Product.updateOne(
                 { _id: item.prodId},
                 { $inc: { stocks : - 1 } }
             );
 
-
             if(!cart){
                 cart = new Cart({
                     userId : id, 
                     items : [{
                         seller: item.seller,
-                        prodId: item.prodId , 
+                        prodId: item.prodId ,
+                        pid: item.pid, 
                         prodName: item.prodName, 
                         prodDisc: item.prodDisc, 
                         prodPrice: item.prodPrice, 
@@ -43,6 +45,7 @@ const addItemsToCart = async(req, res) =>{
                     cart.items.push({ 
                         seller: item.seller,
                         prodId: item.prodId, 
+                        pid: item.pid, 
                         prodName: item.prodName, 
                         prodDisc: item.prodDisc, 
                         prodPrice: item.prodPrice, 

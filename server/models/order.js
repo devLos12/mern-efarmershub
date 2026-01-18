@@ -71,7 +71,9 @@ const orderSchema = new mongoose.Schema({
     paymentStatus : {type : String, required : true},
     proofOfPayment : {
         image : { type : String, default : "pending"},
-        textMessage : { type : String, default : ""}
+        textMessage : { type : String, default : ""},
+        cloudinaryId: { type: String }, 
+
     },
 
     orderMethod: {

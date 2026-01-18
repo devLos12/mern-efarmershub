@@ -310,7 +310,6 @@ const Admin = ({setAdminAuth})=>{
         {announcementModal?.isShow && <Modal textModal={text}
             handleClickYes={()=> {
 
-
                 const id = announcementModal?.id;
 
                 fetch(`${import.meta.env.VITE_API_URL}/api/deleteAnnouncement/${id}`,{
