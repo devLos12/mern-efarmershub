@@ -4,9 +4,7 @@ import { appContext } from "../context/appContext";
 import { useBreakpoint, useBreakpointHeight } from "./breakpoint";
 import { io } from "socket.io-client";
 import img from "../assets/images/about.png";
-
-
-
+import imageCompression from 'browser-image-compression';
 
 const Messages = () => {
     const { role} = useContext(appContext);
@@ -25,16 +23,13 @@ const Messages = () => {
     const height = useBreakpointHeight();
     const width = useBreakpoint();
 
-
-
     // Ilagay mo to sa taas kasama ng ibang useState
     const [viewImage, setViewImage] = useState(null); // current image na nakikita
     const [allImages, setAllImages] = useState([]); // lahat ng images sa message
     const [currentImageIndex, setCurrentImageIndex] = useState(0); // index ng current image
 
-
-
-
+    // Step 1: Add loading state
+    const [isSending, setIsSending] = useState(false);
 
     useEffect(() => {
         if (!location.state) {
@@ -195,32 +190,56 @@ const Messages = () => {
 
 
     const sendMessage = async () => {
-
         const hasText = message?.message?.trim();
         const hasImages = message?.images?.length > 0;
         if (!hasText && !hasImages) return;
+        if (isSending) return; // Prevent double send
 
+        // ✅ OPTIMISTIC UPDATE - Update UI immediately
+        const tempMessage = {
+            senderId: location.state?.senderId,
+            text: message?.message || "",
+            imageFiles: images.map(img => img.preview), // Use preview URLs temporarily
+            createdAt: new Date().toISOString(),
+            _temp: true // flag para malaman na temporary
+        };
 
-        console.log(location.state?.credentials.role);
+        // ✅ Add to chat immediately
+        setChat(prev => [...prev, tempMessage]);
 
-        const sendMessage = new FormData();
-        sendMessage.append("receiverId", location.state?.credentials.id);
-        sendMessage.append("receiverRole", location.state?.credentials.role.toLowerCase());
-        sendMessage.append("textMessage", message?.message || "");
+        // ✅ Clear input immediately
+        setMessage({ message: "" });
+        setImages([]);
+        
+        if (textArea.current) {
+            textArea.current.style.height = "auto";
+            textArea.current.scrollTop = 0;
+        }
 
-          // Append each image file individually
+        // Clear file input
+        if (fileUplaodRef.current) {
+            fileUplaodRef.current.value = null;
+        }
+
+        setIsSending(true);
+
+        // Prepare FormData
+        const sendMessageData = new FormData();
+        sendMessageData.append("receiverId", location.state?.credentials.id);
+        sendMessageData.append("receiverRole", location.state?.credentials.role.toLowerCase());
+        sendMessageData.append("textMessage", tempMessage.text);
+
         if (message.images && message.images.length > 0) {
             message.images.forEach((file) => {
-                sendMessage.append("images", file); // Append each file
+                sendMessageData.append("images", file);
             });
         }
 
-        
         let endPoint;
-        if(role === "admin") {
+        if (role === "admin") {
             endPoint = "adminSendMessage";
         } else if (role === "seller") {
-            endPoint = "sellerSendMessage"
+            endPoint = "sellerSendMessage";
         } else {
             endPoint = "userSendMessage";
         }
@@ -228,32 +247,38 @@ const Messages = () => {
         try {
             const res = await fetch(`${import.meta.env.VITE_API_URL}/api/${endPoint}`, {
                 method: "POST",
-                body: sendMessage,
+                body: sendMessageData,
                 credentials: "include"
             });
 
             const data = await res.json();
             if (!res.ok) throw new Error(data.message);
 
-            // add to UI chat temporarily
-            setChat(prev => [
-                ...prev, {
-                senderId: data.senderId,
-                text: data.textMessage,
-                imageFiles : data.imageFiles,
-                createdAt : data.time
-            }]);
+            // ✅ Replace temporary message with real one
+            setChat(prev => 
+                prev.map(msg => 
+                    msg._temp ? {
+                        senderId: data.senderId,
+                        text: data.textMessage,
+                        imageFiles: data.imageFiles, // Real Cloudinary URLs
+                        createdAt: data.time
+                    } : msg
+                )
+            );
 
-            setMessage({message : ""});
-            setImages([]);
-             // RESET textarea height & scroll position
-            if (textArea.current) {
-                textArea.current.style.height = "auto";
-                textArea.current.scrollTop = 0;
-            }
-            
         } catch (err) {
             console.log("Error", err.message);
+            
+            // ✅ Remove temp message if failed
+            setChat(prev => prev.filter(msg => !msg._temp));
+            
+            // ✅ Restore message
+            setMessage({ message: tempMessage.text });
+            // Restore images kung may preview pa
+            
+            alert("Failed to send message. Please try again.");
+        } finally {
+            setIsSending(false);
         }
     };
 
@@ -498,9 +523,12 @@ const Messages = () => {
 
                                         {isSender && lastMessage && (
                                             <p className="text-end m-0 fw-bold opacity-75" style={{fontSize:"10px"}}>
-                                                {msg.readBy?.includes(location.state?.credentials.id) 
-                                                    ? "seen" 
-                                                    : "sent"}
+                                                {msg._temp 
+                                                    ? "sending..." 
+                                                    : msg.readBy?.includes(location.state?.credentials.id) 
+                                                        ? "seen" 
+                                                        : "sent"
+                                                }
                                             </p>
                                         )}
                                     </div>
@@ -652,10 +680,6 @@ const Messages = () => {
 
 export default Messages;
 
-
-
-
-
 const ImageViewerModal = ({ image, images, currentIndex, onClose, onNext, onPrev }) => {
     if (!image) return null;
 
@@ -731,10 +755,6 @@ const ImageViewerModal = ({ image, images, currentIndex, onClose, onNext, onPrev
     );
 };
 
-
-
-
-
 const ImageLayout = ({ location, hasText, msg, onImageClick }) => {
     
     const isSender = msg.senderId === location.state?.senderId;
@@ -753,12 +773,19 @@ const ImageLayout = ({ location, hasText, msg, onImageClick }) => {
         isSender ? "text-end" : "text-start"
     }`;
 
-    // Prepare all images URLs for the viewer
-    const allImageUrls = msg.imageFiles?.map(filename => 
-        filename.startsWith('https') 
-            ? filename 
-            : `${import.meta.env.VITE_API_URL}/api/uploads/${filename}`
-    ) || [];
+    // Step 3: Update ImageLayout - handle preview URLs
+    const allImageUrls = msg.imageFiles?.map(filename => {
+        // Check if it's a preview URL (blob or data URI)
+        if (filename.startsWith('blob:') || filename.startsWith('data:')) {
+            return filename; // Use preview directly
+        }
+        // Check if Cloudinary URL
+        if (filename.startsWith('https')) {
+            return filename;
+        }
+        // Fallback for old local images
+        return `${import.meta.env.VITE_API_URL}/api/uploads/${filename}`;
+    }) || [];
 
     return (
         <div className={containerClasses}>
@@ -779,9 +806,16 @@ const ImageLayout = ({ location, hasText, msg, onImageClick }) => {
                         if (isSingleImage) colSize = "col-6";
                         if (isLastOddImage) colSize = "col-12";
 
-                        const imageUrl = filename.startsWith('https') 
-                        ? filename  // Cloudinary URL na
-                        : `${import.meta.env.VITE_API_URL}/api/uploads/${filename}`; // fallback for old images
+                        // Same for imageUrl
+                        const imageUrl = (() => {
+                            if (filename.startsWith('blob:') || filename.startsWith('data:')) {
+                                return filename;
+                            }
+                            if (filename.startsWith('https')) {
+                                return filename;
+                            }
+                            return `${import.meta.env.VITE_API_URL}/api/uploads/${filename}`;
+                        })();
 
                         return (
                             <div key={index} className={colSize}>
