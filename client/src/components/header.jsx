@@ -23,7 +23,7 @@ const Header = ()=> {
     const [isMenu, setMenu] = useState(false);
     const width = useBreakpoint();  
     const navigate = useNavigate();
-    const { inboxBadge} = useContext(appContext);    
+    const { inboxBadge, setInboxBadge } = useContext(appContext);    
 
 
 
@@ -212,17 +212,27 @@ const Header = ()=> {
                                 {label: 'Inventory',    link: '/admin/inventory',     source : undefined},
                                 {label: 'Inbox',        link: '/admin/inbox',         source : undefined},
                                 {label: "Announcement", link: '/admin/announcement',   source : undefined},
-                                {label: "payment",      link: "/admin/payment", source: "payment"},
-                                {label: "payout",       link: "/admin/payout/seller", source: "payout/seller"},
+                                {label: "payment",      link: "/admin/payment",        source: "payment"},
+                                {label: "payout",       link: "/admin/payout/seller",   source: "payout/seller"},
+                                {label: "activity logs", link: '/admin/activity-logs',   source: undefined}
+
                             ]
                         : []
                         ).map((data, i) => (
-                            <div key={i} className="" 
+                            <div key={i} className="d-flex align-items-center gap-2" 
                             style={{cursor : "pointer"}}
                             onClick={()=> {
 
                                 if(role === "admin"){
                                     setMenu(false)
+                                    
+                                    if(data.label.toLowerCase() === "inbox"){
+                                        setInboxBadge((prev) => ({
+                                            ...prev,
+                                            show: false
+                                        }))
+                                    }
+                                    
                                     navigate(data.link , { state : { source : data.source}});  
                                 } else { 
                                     
@@ -256,12 +266,29 @@ const Header = ()=> {
                                         .catch((err) => console.log("Error:", err.message))
                                     } else {
                                         setMenu(false)
+                                        
+                                        if(data.label.toLowerCase() === "inbox"){
+                                            setInboxBadge((prev) => ({
+                                                ...prev,
+                                                show: false
+                                            }))
+                                        }
+                                        
                                         navigate(data.link , { state : { source : data.source}});  
                                     }
                                 }
                             
                                 }}>
-                                <p className="m-0 text-green text-capitalize ">{data.label}</p>
+
+                                <p className="m-0 text-green text-capitalize">{data.label}</p>
+                                
+                                {data.label.toLowerCase() === "inbox" && inboxBadge.show && (
+                                    <p className="m-0 d-flex justify-content-center align-items-center fw-normal text-white"
+                                        style={{fontSize : "9px",
+                                        width:"17px", height:"17px", borderRadius:"50%", background:"red"}}
+                                        >{inboxBadge.number}
+                                    </p>
+                                )}
                             </div>
                         ))}
                         <div className="m-0">
