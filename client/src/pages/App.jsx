@@ -29,7 +29,6 @@ const  App = ()=> {
   const [isAdminAuth, setAdminAuth] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  
     
   useEffect(()=>{
     fetch(`${import.meta.env.VITE_API_URL}/api/urlAuthentication`, {

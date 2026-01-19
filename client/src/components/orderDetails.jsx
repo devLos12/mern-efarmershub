@@ -1200,8 +1200,7 @@ const OrderDetails = () => {
                                                         <div className={`border rounded p-3 ${isSelected ? 'bg-warning bg-opacity-10 border-warning' : 'bg-light'}`}>
                                                             <div className="d-flex align-items-start gap-3">
                                                                 <img 
-                                                                    src={
-                                                                        `${import.meta.env.VITE_API_URL}/api/Uploads/${item.imageFile}`}
+                                                                    src={item.imageFile}
                                                                     alt={item.prodName}
                                                                     className="rounded border"
                                                                     style={{width: "80px", height: "80px", objectFit: "cover"}}
@@ -1285,7 +1284,7 @@ const OrderDetails = () => {
                                                                     {replacementData[itemId]?.images?.length > 0 && (
                                                                         <div className="d-flex gap-2 flex-wrap mt-2">
                                                                             {replacementData[itemId].images.map((img, imgIdx) => (
-                                                                                <div key={imgIdx} className="position-relative">
+                                                                                <div key={imgIdx} className="position-relative p-1">
                                                                                     <img
                                                                                         src={URL.createObjectURL(img)}
                                                                                         alt={`Preview ${imgIdx + 1}`}
@@ -1294,8 +1293,8 @@ const OrderDetails = () => {
                                                                                     />
                                                                                     <button
                                                                                         type="button"
-                                                                                        className="btn btn-danger btn-sm position-absolute top-0 end-0 rounded-circle"
-                                                                                        style={{width: "20px", height: "20px", padding: "0", fontSize: "8px"}}
+                                                                                        className="btn btn-danger btn-sm position-absolute top-0 end-0  rounded-circle"
+                                                                                        style={{width: "16px", height: "16px", padding: "0", fontSize: "8px"}}
                                                                                         onClick={() => handleRemoveReplacementImage(itemId, imgIdx)}
                                                                                     >
                                                                                         <i className="fa fa-times"></i>
@@ -1381,7 +1380,7 @@ const OrderDetails = () => {
                                                                         {/* Product Image */}
                                                                         <div className="col-3 ">
                                                                             <img 
-                                                                                src={`${import.meta.env.VITE_API_URL}/api/Uploads/${item.imageFile}`}
+                                                                                src={item.imageFile}
                                                                                 alt={item.prodName}
                                                                                 className="rounded border img-fluid"
                                                                                 style={{objectFit: "cover"}}
@@ -1467,6 +1466,7 @@ const OrderDetails = () => {
                                                                             </span>
                                                                         </div>
                                                                     </div>
+
                                                                     
                                                                     {/* Image Previews */}
                                                                     {item.replacement?.images?.length > 0 && (
@@ -1479,11 +1479,11 @@ const OrderDetails = () => {
                                                                                 {item.replacement.images.map((imgFilename, imgIdx) => (
                                                                                     <img
                                                                                         key={imgIdx}
-                                                                                        src={`${import.meta.env.VITE_API_URL}/api/Uploads/${imgFilename}`}
+                                                                                        src={imgFilename}
                                                                                         alt={`Evidence ${imgIdx + 1}`}
                                                                                         className="rounded border shadow-sm"
                                                                                         style={{width: "80px", height: "80px", objectFit: "cover", cursor: "pointer"}}
-                                                                                        onClick={() => window.open(`${import.meta.env.VITE_API_URL}/api/Uploads/${imgFilename}`, '_blank')}
+                                                                                        onClick={() => window.open(imgFilename, '_blank')}
                                                                                     />
                                                                                 ))}
                                                                             </div>
@@ -1525,9 +1525,9 @@ const OrderDetails = () => {
                                                                                             }}
                                                                                         >
                                                                                             <option value="">Select who is at fault...</option>
-                                                                                            <option value="seller">Seller</option>
+                                                                                            {/* <option value="seller">Seller</option> */}
                                                                                             <option value="rider">Rider</option>
-                                                                                            <option value="none">None (Unreasonable Request)</option>
+                                                                                            {/* <option value="none">None (Unreasonable Request)</option> */}
                                                                                         </select>
                                                                                         <small className="text-muted d-block mt-1">
                                                                                             <i className="fa fa-info-circle me-1"></i>
