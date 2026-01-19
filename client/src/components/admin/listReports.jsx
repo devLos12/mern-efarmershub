@@ -24,6 +24,7 @@ const ListReports = () => {
 
 
 
+
     useEffect(() => {
         const loadData = async () => {
             setIsRefreshing(true);
@@ -116,6 +117,9 @@ const ListReports = () => {
     });
 
     const uniqueProductTypes = [...new Set(listProducts.map(p => p.productType))];
+    const unuqueProductCategories = [...new Set(listProducts.map(p => p.category))];
+
+
 
     const indexOfLastItem = currentPage * itemsPerPage;
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
@@ -582,7 +586,7 @@ const ListReports = () => {
                                 <option key={i} value={type}>{type}</option>
                             ))}
                         </select>
-                    </div>
+                    </div>  
 
                     <div className="col-6 col-lg-3">
                         <select
@@ -591,9 +595,9 @@ const ListReports = () => {
                             onChange={(e) => setCategoryFilter(e.target.value)}
                         >
                             <option value="all">All Categories</option>
-                            <option value="fruit">Fruit</option>
-                            <option value="vegetable">Vegetable</option>
-                            <option value="fertilizer">Fertilizer</option>
+                            {unuqueProductCategories.map((category, i) => (
+                                <option key={i} value={category}>{category}</option>
+                            ))}
                         </select>
                     </div>
                 </div>

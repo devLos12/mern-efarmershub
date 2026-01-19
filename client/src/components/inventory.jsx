@@ -32,6 +32,8 @@ const Inventory = () => {
     // Get current view from location state (products or list-report)
     const currentView = location.state?.view || "products";
     
+    // Get unique categories from products
+    const uniqueCategories = [...new Set(products.map(p => p.category?.toLowerCase()).filter(Boolean))];
 
     useEffect(() => {
         if (role === "admin" && !location?.state?.source && !location?.state?.view) {
@@ -133,13 +135,11 @@ const Inventory = () => {
             filteredProducts = products;
         }
 
-        // Filter by category
-        if (categoryFilter === "vegetables") {
-            filteredProducts = filteredProducts.filter((p) => p.category?.toLowerCase() === "vegetable");
-        } else if (categoryFilter === "fruits") {
-            filteredProducts = filteredProducts.filter((p) => p.category?.toLowerCase() === "fruit");
-        } else if (categoryFilter === "fertilizers") {
-            filteredProducts = filteredProducts.filter((p) => p.category?.toLowerCase() === "fertilizer");
+        // Filter by category - dynamic matching
+        if (categoryFilter !== "all") {
+            filteredProducts = filteredProducts.filter((p) => 
+                p.category?.toLowerCase() === categoryFilter.toLowerCase()
+            );
         }
 
         // Filter by stock status
@@ -171,14 +171,12 @@ const Inventory = () => {
             filteredProducts = products;
         }
 
-        // Filter by category
-        if (categoryFilter === "vegetables") {
-            filteredProducts = filteredProducts.filter((p) => p.category?.toLowerCase() === "vegetable");
-        } else if (categoryFilter === "fruits") {
-            filteredProducts = filteredProducts.filter((p) => p.category?.toLowerCase() === "fruit");
-        } else if (categoryFilter === "fertilizers") {
-            filteredProducts = filteredProducts.filter((p) => p.category?.toLowerCase() === "fertilizer");
-        } 
+        // Filter by category - dynamic matching
+        if (categoryFilter !== "all") {
+            filteredProducts = filteredProducts.filter((p) => 
+                p.category?.toLowerCase() === categoryFilter.toLowerCase()
+            );
+        }
         
         // Filter by stock status
         if (stockStatus === "available") {
@@ -340,9 +338,11 @@ const Inventory = () => {
                                     onChange={(e) => setCategoryFilter(e.target.value)}
                                 >
                                     <option value="all">All category</option>
-                                    <option value="vegetables">vegetables</option>
-                                    <option value="fruits">fruits</option>
-                                    <option value="fertilizers">fertilizers</option>
+                                    {uniqueCategories.map((category, index) => (
+                                        <option key={index} value={category}>
+                                            {category}
+                                        </option>
+                                    ))}
                                 </select>
                             </div>
 

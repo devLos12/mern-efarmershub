@@ -6,7 +6,7 @@ import Notification from "../models/notification.js";
 
 const startSchedule = () => {
 
-    cron.schedule("0 0 * * *", async () => {
+    cron.schedule("0 * * * *", async () => {
 
         const now = new Date();
 
