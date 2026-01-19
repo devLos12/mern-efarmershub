@@ -1,6 +1,13 @@
 import multer from "multer";
 import User from "../../models/user.js";
+import Product from "../../models/products.js";
+
+
+// ✅ Import Product model
 import { v2 as cloudinary } from "cloudinary";
+
+
+
 
 const storage = multer.memoryStorage();
 
@@ -12,8 +19,7 @@ export const UpdateProfile = async (req, res) => {
         const { id } = req.account;
         const {image, firstname, lastname, email, contact, province, city, barangay, zipCode, detailAddress} = req.body;
         
-        // ✅ CHANGE: Upload image to Cloudinary instead of saving locally
-        let imageFileUrl = image; // Keep existing image by default
+        let imageFileUrl = image;
 
         const updateProfile = await User.findOne({_id: id});
         if(!updateProfile) {
@@ -29,17 +35,15 @@ export const UpdateProfile = async (req, res) => {
                 const uploadResult = await cloudinary.uploader.upload(dataURI, {
                     folder: "user-profiles"
                 });
-                imageFileUrl = uploadResult.secure_url; // ✅ Store Cloudinary URL
+                imageFileUrl = uploadResult.secure_url;
             } catch (uploadError) {
                 return res.status(400).json({ message: "Failed to upload image to Cloudinary!" });
             }
         } else if (image === "undefined" || image === "") {
-            // If no new image and user wants to remove it
             imageFileUrl = null;
         }
 
         if(image === "undefined"){
-
             await User.findByIdAndUpdate(id, 
                 {
                     firstname, lastname, email, 
@@ -53,12 +57,10 @@ export const UpdateProfile = async (req, res) => {
                     }
                 },{ new: true }
             )   
-
         } else {
-            
             await User.findByIdAndUpdate(id, 
                 {
-                    imageFile: imageFileUrl, // ✅ Store Cloudinary URL instead of filename
+                    imageFile: imageFileUrl,
                     firstname, lastname, email, 
                     $set: {
                         'billingAddress.contact': contact,
@@ -71,9 +73,14 @@ export const UpdateProfile = async (req, res) => {
                 },{ new: true }
             )   
 
+            // ✅ UPDATE: I-update din yung user.imageFile sa lahat ng reviews ng user
+            await Product.updateMany(
+                { "reviews.user.id": id },
+                { $set: { "reviews.$[elem].user.imageFile": imageFileUrl } },
+                { arrayFilters: [{ "elem.user.id": id }] }
+            );
         }
 
-        
         res.status(200).json({ message: "successfully updated."});
     } catch (error) {
         res.status(500).json({ message: error.message});

@@ -476,7 +476,7 @@ const ProductDetails = () =>{
                             {productDetails?.reviews.length > 0 ? (
                                 <div className="mt-4">
                                     {productDetails?.reviews.map((data, i) => (
-                                        <div key={i} className="d-flex gap-3">
+                                        <div key={i} className="d-flex gap-3 mt-3">
                                             
                                             <div>
                                                 {data.user.imageFile ? (
@@ -497,32 +497,36 @@ const ProductDetails = () =>{
                                             </div>
 
                                             <div className="w-100">
-                                                <div className="d-flex justify-content-between">
+                                                <div className="d-flex justify-content-between ">
                                                     <div>
                                                         <p className="m-0 text-capitalize fw-bold">{data.user.name}</p>
-                                                        <p className="m-0 text-capitalize fs-4" 
-                                                        style={{color : "gold", WebkitTextStroke : "0"}}>
-                                                        {"★".repeat(data.rate)}
-                                                        <span style={{color : "transparent", WebkitTextStroke : "0.5px gray"}}>
-                                                            {"★".repeat(5 - data.rate)}
-                                                        </span>
-                                                        </p>
+                                                        
+                                                      
                                                     </div>
                                                     <p className="m-0 opacity-75" style={{fontSize:"14px"}}>{timeAgo(data.createdAt)}</p>
                                                 </div>
 
                                                 <div className="row g-0">
                                                     <div className="col-9 col-md-9 col-lg-9 col-xl-9 col-xxl-10">
-                                                    <p className="m-0 text-capitalize me-2">{data.comment}</p>
+
+                                                        <p className="m-0 text-capitalize fs-4" 
+                                                            style={{color : "gold", WebkitTextStroke : "0"}}>
+                                                            {"★".repeat(data.rate)}
+                                                            <span style={{color : "transparent", WebkitTextStroke : "0.5px gray"}}>
+                                                                {"★".repeat(5 - data.rate)}
+                                                            </span>
+                                                        </p>
+
+                                                        <p className="m-0 text-capitalize me-2 small text-muted">{data.comment}</p>
                                                     </div>
 
-                                                    <div className="col">
-                                                        {productDetails?.reviews?.imageFile ? (
+                                                    <div className="col ">
+                                                        {data.imageFile ? (
+                                                                
                                                             <img src={data.imageFile}
-                                                                 alt={productDetails.imageFile} 
-                                                            className="img-fluid rounded shadow-sm border " 
+                                                                 alt={data.imageFile} 
+                                                            className="img-fluid rounded shadow-sm border border-white" 
                                                             />
-
                                                         ):(
                                                             <p className="m-0 small  text-muted text-end text-capitalize">{''}</p>
                                                         )}

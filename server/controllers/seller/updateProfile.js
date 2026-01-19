@@ -1,4 +1,5 @@
 import Seller from "../../models/seller.js";
+import Product from "../../models/products.js";
 import multer from "multer";
 import { v2 as cloudinary } from "cloudinary";
 
@@ -65,6 +66,14 @@ export const UpdateProfile = async(req, res) => {
             }, 
             { new: true }
         );
+
+        // ✅ UPDATE: I-update din yung seller.imageFile sa lahat ng products ng seller
+        if (imageFileUrl && image !== "undefined") {
+            await Product.updateMany(
+                { "seller.id": id },
+                { $set: { "seller.imageFile": imageFileUrl } }
+            );
+        }
 
         res.status(200).json({ message: "successfully updated." });
     } catch (error) {

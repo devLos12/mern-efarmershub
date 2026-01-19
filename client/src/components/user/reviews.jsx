@@ -17,12 +17,18 @@ const Reviews = () => {
     const fileUploadRef = useRef(null);
     const [isDisabled, setIsDisabled] = useState(true);
     const [isCompressing, setIsCompressing] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [showModal, setShowModal] = useState(false);
+    const [modalMessage, setModalMessage] = useState("");
+    const [modalType, setModalType] = useState("success");
+    const [isModalVisible, setIsModalVisible] = useState(false);
     const navigate = useNavigate();
 
 
 
     const submitReview = async(e) => {
       e.preventDefault();
+      setIsSubmitting(true);
 
       const user = {
         id : userData._id,
@@ -31,8 +37,6 @@ const Reviews = () => {
 
       const sendData = new FormData();
       sendData.append("prodId", data?.prodId);
-      // sendData.append("userId", user.id);
-      // sendData.append("name", user.name);
       sendData.append("rate", rating);
       sendData.append("comment", form?.comment || null);
       sendData.append("image", form?.image || null);
@@ -49,14 +53,38 @@ const Reviews = () => {
         const data = await res.json();
         if(!res.ok) throw new Error(data.message);
 
-        alert(data.message);
-        navigate(-1, {replace : true});                
+        showNotification(data.message, "success");
+                     
       }catch(err){
         console.log("Error: ", err.message);
-
+        showNotification(err.message || "Failed to submit review", "error");
+        setIsSubmitting(false);
       }
     }
 
+    const showNotification = (message, type = "success") => {
+        setModalMessage(message);
+        setModalType(type);
+        setShowModal(true);
+    };
+
+    useEffect(() => {
+        if (showModal) {
+            setTimeout(() => setIsModalVisible(true), 10);
+            
+            const timer = setTimeout(() => {
+                setIsModalVisible(false);
+                setTimeout(() => {
+                    setShowModal(false);
+                    if (modalType === "success") {
+                        navigate(-1, {replace : true});
+                    }
+                }, 300);
+            }, 2000);
+            
+            return () => clearTimeout(timer);
+        }
+    }, [showModal, modalType, navigate]);
 
     const handleComment = (e) => {
       const { name, value } = e.target
@@ -66,7 +94,6 @@ const Reviews = () => {
         [name] : value
       }))
     }
-
     
     const handleFileRemove = ()=> {
       setImgPreview(null);
@@ -158,15 +185,17 @@ const Reviews = () => {
                           {[1, 2, 3, 4, 5].map((value) => (
                             <p className="m-0 "
                               key={value}
-                              onClick={() => setRating(value)}
-                              onMouseEnter={() => setHover(value)}
+                              onClick={() => !isSubmitting && setRating(value)}
+                              onMouseEnter={() => !isSubmitting && setHover(value)}
                               onMouseLeave={() => setHover(0)}
                               style={{
                                 fontSize:"45px",
                                 color: value <= (rating || hover) ? "gold" : "transparent",
-                                cursor: "pointer",
+                                cursor: isSubmitting ? "not-allowed" : "pointer",
                                 WebkitTextStroke: value <= (rating || hover) ? "0" : "1px gray",
-                                transition: "color 0.2s"}}
+                                transition: "color 0.2s",
+                                opacity: isSubmitting ? 0.5 : 1
+                              }}
                             >★</p>
                           ))}
                         </div>
@@ -181,17 +210,27 @@ const Reviews = () => {
                             <div className="col-3 col-md-3 col-lg-3 col-xl-2 p-1 position-relative">
 
                               <div className="bx bx-x shadow rounded-circle position-absolute top-0 end-0 bg-white" 
-                              style={{cursor : "pointer"}}
-                              onClick={handleFileRemove}></div>
+                              style={{
+                                cursor : isSubmitting ? "not-allowed" : "pointer",
+                                opacity: isSubmitting ? 0.5 : 1
+                              }}
+                              onClick={!isSubmitting ? handleFileRemove : undefined}></div>
                               <img src={imgPreview} alt={imgPreview}
                               className=" rounded img-fluid mb-2 shadow-sm border " 
-                              style={{maxHeight:"70px", objectFit : "auto"}}
+                              style={{
+                                maxHeight:"70px", 
+                                objectFit : "auto",
+                                opacity: isSubmitting ? 0.7 : 1
+                              }}
                               />
                             </div>
                           )}
 
                           {isCompressing && (
                             <div className="text-center py-2">
+                              <div className="spinner-border spinner-border-sm text-success me-2" role="status">
+                                <span className="visually-hidden">Loading...</span>
+                              </div>
                               <small className="text-muted">Compressing image...</small>
                             </div>
                           )}
@@ -200,10 +239,15 @@ const Reviews = () => {
                             onChange={handleComment}
                             placeholder="Leave a review" 
                             name="comment"
-                            style={{outline:"none", resize : "none"}}>
+                            disabled={isSubmitting}
+                            style={{
+                              outline:"none", 
+                              resize : "none",
+                              opacity: isSubmitting ? 0.6 : 1
+                            }}>
                           </textarea>
 
-                          {uploadText && (
+                          {uploadText && !isSubmitting && (
                             <label className="d-flex m-1 rounded bg-white shadow-sm border position-absolute bottom-0 end-0 p-1 bg" 
                             htmlFor="inputFile" 
                             style={{cursor: "pointer"}}>
@@ -221,6 +265,7 @@ const Reviews = () => {
                           id="inputFile" 
                           name="image"
                           accept="image/*"
+                          disabled={isSubmitting}
                           />
 
                         </div>
@@ -231,20 +276,74 @@ const Reviews = () => {
                   <div className="row mt-2 mt-md-0">
                     <div className="col-5 col-md-5 col-lg-4">
                       <button className="text-capitalize p-2 mt-4 mt-md-0 w-100 bg-white text-dark border rounded shadow-sm"
-                      onClick={()=> navigate(-1)}>skip</button>
+                      onClick={()=> navigate(-1)}
+                      disabled={isSubmitting}
+                      style={{
+                        opacity: isSubmitting ? 0.5 : 1,
+                        cursor: isSubmitting ? 'not-allowed' : 'pointer'
+                      }}>skip</button>
                     </div>
                     <div className="col ">
-                      <button className={`text-capitalize p-2 mt-4 mt-md-0 w-100 bg-dark text-white border-0 rounded shado ${!isDisabled ? "opacity-75" : "opacity-100"}`}
-                      disabled = {!isDisabled}
-                      onClick={submitReview}>{
-                        !isDisabled ? "compelete review" : "rate now"
-                      }</button>
+                      <button className={`text-capitalize p-2 mt-4 mt-md-0 w-100 bg-dark text-white border-0 rounded shadow d-flex align-items-center justify-content-center gap-2 ${!isDisabled ? "opacity-75" : "opacity-100"}`}
+                      disabled = {!isDisabled || isSubmitting}
+                      onClick={submitReview}
+                      style={{
+                        cursor: (!isDisabled || isSubmitting) ? 'not-allowed' : 'pointer'
+                      }}>
+                        {isSubmitting ? (
+                          <>
+                            <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                            <span>Submitting...</span>
+                          </>
+                        ) : (
+                          <span>{!isDisabled ? "complete review" : "rate now"}</span>
+                        )}
+                      </button>
                     </div>
                   </div>
                 </div>
               </div>
           </div>
         </div>
+
+        {/* Success/Error Modal - Same as Checkout */}
+        {showModal && (
+            <div
+                className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
+                style={{ backgroundColor: "rgba(0,0,0,0.5)", zIndex: 10000 }}
+            >
+                <div
+                    className="bg-white rounded shadow p-4 text-center"
+                    style={{
+                        maxWidth: "400px",
+                        width: "90%",
+                        transform: isModalVisible ? "scale(1)" : "scale(0.7)",
+                        opacity: isModalVisible ? 1 : 0,
+                        transition: "all 0.3s ease-in-out"
+                    }}
+                >
+                    <div className="mb-3">
+                        {modalType === "success" ? (
+                            <i className="bx bx-check-circle text-success" style={{ fontSize: "60px" }}></i>
+                        ) : (
+                            <i className="bx bx-error-circle text-danger" style={{ fontSize: "60px" }}></i>
+                        )}
+                    </div>
+                    <h5 className={`fw-bold text-capitalize mb-2 ${modalType === "success" ? "text-success" : "text-danger"}`}>
+                        {modalType === "success" ? "success!" : "error!"}
+                    </h5>
+                    <p className="small text-muted mb-0">{modalMessage}</p>
+                </div>
+            </div>
+        )}
+
+        {/* Transparent Overlay to prevent clicks while processing */}
+        {isSubmitting && (
+            <div
+                className="position-fixed top-0 start-0 w-100 h-100"
+                style={{ zIndex: 9999, cursor: "not-allowed" }}
+            />
+        )}
       </div>
     )
 }

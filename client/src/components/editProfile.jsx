@@ -210,14 +210,12 @@ const EditProfile = () => {
     };
 
 
-
-
-
     const showNotification = (message, type = "success") => {
         setModalMessage(message);
         setModalType(type);
         setShowModal(true);
     };
+
 
 
 
@@ -267,9 +265,6 @@ const EditProfile = () => {
             setIsSubmitting(false);
         }
     }
-
-
-
 
 
 
@@ -633,11 +628,18 @@ const EditProfile = () => {
                                 <div className="col-6 px-2">
                                     <button 
                                         type="submit"
-                                        className={`text-capitalize  px-3 py-2 rounded w-100 text-light border-0 small
-                                            ${!isChanged ? "bg-dark opacity-50" : "bg-dark"}
+                                        className={`text-capitalize px-3 py-2 rounded w-100 text-light border-0 small d-flex align-items-center justify-content-center gap-2
+                                            ${(!isChanged || isSubmitting) ? "bg-dark opacity-50" : "bg-dark"}
                                         `}
                                         disabled={!isChanged || isSubmitting}>
-                                        {isSubmitting ? "updating..." : "update profile"}
+                                        {isSubmitting ? (
+                                            <>
+                                                <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                                <span>updating...</span>
+                                            </>
+                                        ) : (
+                                            "update profile"
+                                        )}
                                     </button>
                                 </div>
                             </div>
@@ -648,6 +650,11 @@ const EditProfile = () => {
                     </div>
                 </div>
             </div>
+
+
+
+
+
 
             {/* Success/Error Modal with Animation */}
             {showModal && (

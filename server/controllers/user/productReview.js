@@ -14,6 +14,7 @@ export const productReview = async (req, res) => {
 
     const { prodId, rate, comment } = req.body;
 
+
     // ✅ CHANGE: Upload review image to Cloudinary instead of saving locally
     let imageFileUrl = null;
 
@@ -67,8 +68,11 @@ export const productReview = async (req, res) => {
     product.averageRating = totalRatings / product.reviews.length;
     await product.save();
 
-    //find order and orderItem key to update as reviewed.
 
+
+    
+
+    //find order and orderItem key to update as reviewed.
     const order = await Order.findOne({
       userId,
       orderItems: {
@@ -81,8 +85,10 @@ export const productReview = async (req, res) => {
 
     const item = order.orderItems.find((item) => item.prodId.toString() === prodId);
 
-    item.isReviewed = true;
-    await order.save();
+    if (item) {
+      item.isReviewed = true;
+      await order.save();        
+    }
 
     res.status(200).json({ message: "Review sent successfully. " });
   } catch (error) {

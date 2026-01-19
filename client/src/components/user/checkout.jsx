@@ -93,7 +93,6 @@ const Checkout = () =>{
     },[checkoutForm]);
 
 
-
     const totalPrice = useMemo(()=> {
         return checkoutForm.items?.reduce((sum, data) => sum + data.prodPrice * data.quantity, 0);
     },[checkoutForm]);
@@ -109,7 +108,6 @@ const Checkout = () =>{
     }, [totalPrice, shippingFee]);
 
     
-
     useEffect(() => {
         fetch(`${import.meta.env.VITE_API_URL}/api/getBillingAddress`,{
             method:"GET",
@@ -198,7 +196,6 @@ const Checkout = () =>{
         }
     }
 
-
     const handleChange = (e) => {
 
         const { name, value } = e.target;
@@ -236,7 +233,8 @@ const Checkout = () =>{
                         {checkoutForm.items.map((data, i)=>(
                             <div key={i} className="row g-0 p-2 rounded bg-beige shadow-sm border mt-2">
                                 <div className="col-5 col-md-4 ">
-                                    <img src={data.imageFile}/>
+                                    <img src={data.imageFile}
+                                    className="img-fluid rounded shadow-sm border"/>
                                 </div>
 
                                 <div className="col ms-3">
