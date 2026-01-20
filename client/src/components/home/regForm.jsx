@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 const Register = () => {
-    const [step, setStep] = useState(1);
+    const [step, setStep] = useState(0);  
     const [selectedRole, setSelectedRole] = useState("");
     const [formData, setFormData] = useState({});
     const [confirmPassword, setConfirmPassword] = useState("");
@@ -35,7 +35,6 @@ const Register = () => {
     const [buyerTermsAgreed, setBuyerTermsAgreed] = useState(false);
 
 
-    const [showReminderModal, setShowReminderModal] = useState(true);
 
 
     const userTypes = [
@@ -342,9 +341,6 @@ const Register = () => {
 
 
 
-    const handleCloseReminderModal = () => {
-        setShowReminderModal(false);
-    };
 
 
 
@@ -360,8 +356,81 @@ const Register = () => {
             <div className="container my-3">
                 <div className="row justify-content-center">
                     <div className="col-12 col-md-8 col-lg-6">
-                        {step === 1 ? (
-                            <div className="card overflow-hidden shadow-lg">
+
+                        {step === 0 && (
+                            <div className="card overflow-hidden shadow">
+                                <h1 className="text-center p-3 text-white fs-4 fw-bold" 
+                                    style={{ background: "#4CAF50" }}>
+                                    Important Reminder
+                                </h1>
+                                
+                                <div className="card-body p-4">
+                                    {/* Direct content - no more nested boxes */}
+                                    <div className="mb-4">
+                                        <div className="d-flex align-items-start gap-3 mb-3">
+                                            <i className="fa fa-envelope text-success mt-1" style={{ fontSize: "1.5rem" }}></i>
+                                            <div>
+                                                <h6 className="fw-bold mb-2">Gmail Account Required</h6>
+                                                <p className="mb-0 text-muted" style={{ fontSize: "14px", lineHeight: "1.6" }}>
+                                                    Please use a valid <strong>Gmail account</strong> for registration. 
+                                                    This ensures better security and reliable communication.
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        <div className="d-flex align-items-start gap-3 mb-3">
+                                            <i className="fa fa-shield-alt text-success mt-1" style={{ fontSize: "1.5rem" }}></i>
+                                            <div>
+                                                <h6 className="fw-bold mb-2">Account Verification</h6>
+                                                <p className="mb-0 text-muted" style={{ fontSize: "14px", lineHeight: "1.6" }}>
+                                                    Make sure to provide accurate information. For Farmers and Riders, 
+                                                    your account will undergo admin verification before approval.
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        <div className="d-flex align-items-start gap-3">
+                                            <i className="fa fa-file-alt text-success mt-1" style={{ fontSize: "1.5rem" }}></i>
+                                            <div>
+                                                <h6 className="fw-bold mb-2">Terms and Conditions</h6>
+                                                <p className="mb-0 text-muted" style={{ fontSize: "14px", lineHeight: "1.6" }}>
+                                                    You will be required to read and accept the Terms and Conditions 
+                                                    specific to your selected account type before completing registration.
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="alert alert-warning mb-4" style={{ fontSize: "13px" }}>
+                                        <i className="fa fa-exclamation-triangle me-2"></i>
+                                        <strong>Note:</strong> Using non-Gmail accounts may result in registration issues or delayed notifications.
+                                    </div>
+
+                                    <button
+                                        onClick={() => setStep(1)}
+                                        className="btn w-100 fw-semibold"
+                                        style={{ 
+                                            backgroundColor: "#4CAF50",
+                                            color: "white",
+                                            fontSize: "14px"
+                                        }}
+                                    >
+                                        I Understand and continue
+                                    </button>
+
+                                    <div className="mt-3 text-center">
+                                        <p className="m-0" style={{ fontSize: "14px" }}>Already have an account?</p>
+                                        <Link to="/" className="text-decoration-none fw-semibold" 
+                                            style={{ color: "#4CAF50", fontSize: "14px" }}>
+                                            Sign In
+                                        </Link>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {step === 1 && (
+                            <div className="card overflow-hidden shadow">
                                 <h1 className="text-center p-3 text-white fs-4 fw-bold" 
                                     style={{ background: "#4CAF50" }}>
                                     Choose Account Type
@@ -412,6 +481,7 @@ const Register = () => {
                                             </div>
                                         ))}
                                     </div>
+                                    
                                     <div className="mt-4 text-center">
                                         <p className="m-0" style={{ fontSize: "14px" }}>Already have an account?</p>
                                         <Link to="/" className="text-decoration-none fw-semibold" 
@@ -421,8 +491,10 @@ const Register = () => {
                                     </div>
                                 </div>
                             </div>
-                        ) : (
-                            <div className="card overflow-hidden shadow-lg">
+                        )} 
+                        
+                        {step === 2 && (
+                            <div className="card overflow-hidden shadow">
                                 <h1 className="text-center p-3 text-white fs-4 fw-bold" 
                                     style={{ background: "#4CAF50" }}>
                                     {userTypes.find(t => t.role === selectedRole)?.title} Registration
@@ -1052,18 +1124,10 @@ const Register = () => {
                                                     background: ((isRider && !allTermsAgreed) || (isFarmer && !sellerTermsAgreed) || (isBuyer && !buyerTermsAgreed)) ? "#cccccc" : "#4CAF50",
                                                     opacity: ((isRider && !allTermsAgreed) || (isFarmer && !sellerTermsAgreed) || (isBuyer && !buyerTermsAgreed)) ? 0.6 : 1
                                                 }}
-
-
-
                                             >
                                                 register now
                                             </button>
                                         </div>
-
-
-
-
-
 
                                         <div className="my-4 text-center">
                                             <p className="m-0" style={{ fontSize: "14px" }}>Already have an account?</p>
@@ -1157,14 +1221,6 @@ const Register = () => {
             )}
 
 
-        
-        {showReminderModal && step === 1 && (
-            <ReminderModal
-                show={showReminderModal}
-                onClose={handleCloseReminderModal}
-            />
-        )}
-
 
 
         {showTermsModal && (
@@ -1204,96 +1260,6 @@ const Register = () => {
 
 export default Register;
 
-
-
-
-
-
-
-
-// Reminder Modal Component
-const ReminderModal = ({ show, onClose }) => {
-    if (!show) return null;
-    
-    return (
-        <div
-            className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
-            style={{ backgroundColor: "rgba(0,0,0,0.7)", zIndex: 9999 }}
-        >
-            <div
-                className="bg-white rounded shadow-lg"
-                style={{ maxWidth: "500px", width: "90%" }}
-                onClick={(e) => e.stopPropagation()}
-            >
-                {/* Header */}
-                <div className="p-4 border-bottom" style={{ backgroundColor: "#4CAF50" }}>
-                    <div className="text-center">
-                        <i className="fa fa-info-circle text-white mb-2" style={{ fontSize: "3rem" }}></i>
-                        <h4 className="mb-0 fw-bold text-white">Important Reminder</h4>
-                    </div>
-                </div>
-
-                {/* Content */}
-                <div className="p-4">
-                    <div className="mb-4">
-                        <div className="d-flex align-items-start gap-3 mb-3">
-                            <i className="fa fa-envelope text-success mt-1" style={{ fontSize: "1.5rem" }}></i>
-                            <div>
-                                <h6 className="fw-bold mb-2">Gmail Account Required</h6>
-                                <p className="mb-0 text-muted" style={{ fontSize: "14px", lineHeight: "1.6" }}>
-                                    Please use a valid <strong>Gmail account</strong> for registration. 
-                                    This ensures better security and reliable communication.
-                                </p>
-                            </div>
-                        </div>
-
-                        <div className="d-flex align-items-start gap-3 mb-3">
-                            <i className="fa fa-shield-alt text-success mt-1" style={{ fontSize: "1.5rem" }}></i>
-                            <div>
-                                <h6 className="fw-bold mb-2">Account Verification</h6>
-                                <p className="mb-0 text-muted" style={{ fontSize: "14px", lineHeight: "1.6" }}>
-                                    Make sure to provide accurate information. For Farmers and Riders, 
-                                    your account will undergo admin verification before approval.
-                                </p>
-                            </div>
-                        </div>
-
-                        <div className="d-flex align-items-start gap-3">
-                            <i className="fa fa-file-alt text-success mt-1" style={{ fontSize: "1.5rem" }}></i>
-                            <div>
-                                <h6 className="fw-bold mb-2">Terms and Conditions</h6>
-                                <p className="mb-0 text-muted" style={{ fontSize: "14px", lineHeight: "1.6" }}>
-                                    You will be required to read and accept the Terms and Conditions 
-                                    specific to your selected account type before completing registration.
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="alert alert-warning mb-0" style={{ fontSize: "13px" }}>
-                        <i className="fa fa-exclamation-triangle me-2"></i>
-                        <strong>Note:</strong> Using non-Gmail accounts may result in registration issues or delayed notifications.
-                    </div>
-                </div>
-
-                {/* Footer */}
-                <div className="p-4 border-top">
-                    <button
-                        onClick={onClose}
-                        className="btn w-100 fw-semibold"
-                        style={{ 
-                            backgroundColor: "#4CAF50",
-                            color: "white",
-                            fontSize: "14px"
-                        }}
-                    >
-                        I Understand, Continue
-                    </button>
-                </div>
-            </div>
-        </div>
-    );
-};
 
 
 
