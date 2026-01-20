@@ -31,6 +31,11 @@ const Register = () => {
 
 
 
+    const [showBuyerTermsModal, setShowBuyerTermsModal] = useState(false);
+    const [buyerTermsAgreed, setBuyerTermsAgreed] = useState(false);
+
+
+    const [showReminderModal, setShowReminderModal] = useState(true);
 
 
     const userTypes = [
@@ -327,12 +332,28 @@ const Register = () => {
 
 
 
+    const handleOpenBuyerTermsModal = () => {
+        setShowBuyerTermsModal(true);
+    };
+
+    const handleCloseBuyerTermsModal = () => {
+        setShowBuyerTermsModal(false);
+    };
+
+
+
+    const handleCloseReminderModal = () => {
+        setShowReminderModal(false);
+    };
 
 
 
     const needsEWallet = selectedRole.toLowerCase() === "farmer" || selectedRole.toLowerCase() === "rider";
     const isRider = selectedRole.toLowerCase() === "rider";
     const isFarmer = selectedRole.toLowerCase() === "farmer";
+    const isBuyer = selectedRole.toLowerCase() === "buyer";
+
+
 
     return (
         <>
@@ -998,21 +1019,38 @@ const Register = () => {
                                                 </div>
                                             )}
 
+
+                                            {isBuyer && (
+                                                <div className="mb-3 p-3 rounded" style={{ backgroundColor: "#fff3cd", border: "1px solid #ffc107" }}>
+                                                    <p className="mb-0" style={{ fontSize: "13px" }}>
+                                                        Registration may proceed only after reading and accepting the Buyer Terms and Conditions.{" "}
+                                                        <span
+                                                            className="fw-semibold"
+                                                            style={{ color: "#4CAF50", textDecoration: "underline", cursor: "pointer" }}
+                                                            onClick={handleOpenBuyerTermsModal}
+                                                        >
+                                                            CLICK HERE
+                                                        </span>
+                                                    </p>
+                                                </div>
+                                            )}
+
                                             
                                             <button
                                                 type="submit"
                                                 className="p-2 shadow-sm text-light rounded w-100 border-0 text-capitalize"
                                                 disabled={
                                                     (isRider && !allTermsAgreed) || 
-                                                    (isFarmer && !sellerTermsAgreed)
+                                                    (isFarmer && !sellerTermsAgreed) ||
+                                                    (isBuyer && !buyerTermsAgreed)
                                                 }
-                                               
                                                 style={{
                                                     outline: "none",
-                                                    cursor: ((isRider && !allTermsAgreed) || (isFarmer && !sellerTermsAgreed)) ? "not-allowed" : "pointer",
-                                                    background: ((isRider && !allTermsAgreed) || (isFarmer && !sellerTermsAgreed)) ? "#cccccc" : "#4CAF50",
                                                     fontWeight: "500",
-                                                    opacity: ((isRider && !allTermsAgreed) || (isFarmer && !sellerTermsAgreed)) ? 0.6 : 1
+
+                                                    cursor: ((isRider && !allTermsAgreed) || (isFarmer && !sellerTermsAgreed) || (isBuyer && !buyerTermsAgreed)) ? "not-allowed" : "pointer",
+                                                    background: ((isRider && !allTermsAgreed) || (isFarmer && !sellerTermsAgreed) || (isBuyer && !buyerTermsAgreed)) ? "#cccccc" : "#4CAF50",
+                                                    opacity: ((isRider && !allTermsAgreed) || (isFarmer && !sellerTermsAgreed) || (isBuyer && !buyerTermsAgreed)) ? 0.6 : 1
                                                 }}
 
 
@@ -1118,6 +1156,17 @@ const Register = () => {
                 </div>
             )}
 
+
+        
+        {showReminderModal && step === 1 && (
+            <ReminderModal
+                show={showReminderModal}
+                onClose={handleCloseReminderModal}
+            />
+        )}
+
+
+
         {showTermsModal && (
             <RiderTermsModal
                 show={showTermsModal}
@@ -1138,6 +1187,15 @@ const Register = () => {
                 onAccept={handleCloseSellerTermsModal}
             />
         )}
+        {showBuyerTermsModal && (
+            <BuyerTermsModal
+                show={showBuyerTermsModal}
+                onClose={handleCloseBuyerTermsModal}
+                agreedToTerms={buyerTermsAgreed}
+                setAgreedToTerms={setBuyerTermsAgreed}
+                onAccept={handleCloseBuyerTermsModal}
+            />
+        )}
 
 
         </>
@@ -1147,6 +1205,347 @@ const Register = () => {
 export default Register;
 
 
+
+
+
+
+
+
+// Reminder Modal Component
+const ReminderModal = ({ show, onClose }) => {
+    if (!show) return null;
+    
+    return (
+        <div
+            className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
+            style={{ backgroundColor: "rgba(0,0,0,0.7)", zIndex: 9999 }}
+        >
+            <div
+                className="bg-white rounded shadow-lg"
+                style={{ maxWidth: "500px", width: "90%" }}
+                onClick={(e) => e.stopPropagation()}
+            >
+                {/* Header */}
+                <div className="p-4 border-bottom" style={{ backgroundColor: "#4CAF50" }}>
+                    <div className="text-center">
+                        <i className="fa fa-info-circle text-white mb-2" style={{ fontSize: "3rem" }}></i>
+                        <h4 className="mb-0 fw-bold text-white">Important Reminder</h4>
+                    </div>
+                </div>
+
+                {/* Content */}
+                <div className="p-4">
+                    <div className="mb-4">
+                        <div className="d-flex align-items-start gap-3 mb-3">
+                            <i className="fa fa-envelope text-success mt-1" style={{ fontSize: "1.5rem" }}></i>
+                            <div>
+                                <h6 className="fw-bold mb-2">Gmail Account Required</h6>
+                                <p className="mb-0 text-muted" style={{ fontSize: "14px", lineHeight: "1.6" }}>
+                                    Please use a valid <strong>Gmail account</strong> for registration. 
+                                    This ensures better security and reliable communication.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="d-flex align-items-start gap-3 mb-3">
+                            <i className="fa fa-shield-alt text-success mt-1" style={{ fontSize: "1.5rem" }}></i>
+                            <div>
+                                <h6 className="fw-bold mb-2">Account Verification</h6>
+                                <p className="mb-0 text-muted" style={{ fontSize: "14px", lineHeight: "1.6" }}>
+                                    Make sure to provide accurate information. For Farmers and Riders, 
+                                    your account will undergo admin verification before approval.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="d-flex align-items-start gap-3">
+                            <i className="fa fa-file-alt text-success mt-1" style={{ fontSize: "1.5rem" }}></i>
+                            <div>
+                                <h6 className="fw-bold mb-2">Terms and Conditions</h6>
+                                <p className="mb-0 text-muted" style={{ fontSize: "14px", lineHeight: "1.6" }}>
+                                    You will be required to read and accept the Terms and Conditions 
+                                    specific to your selected account type before completing registration.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="alert alert-warning mb-0" style={{ fontSize: "13px" }}>
+                        <i className="fa fa-exclamation-triangle me-2"></i>
+                        <strong>Note:</strong> Using non-Gmail accounts may result in registration issues or delayed notifications.
+                    </div>
+                </div>
+
+                {/* Footer */}
+                <div className="p-4 border-top">
+                    <button
+                        onClick={onClose}
+                        className="btn w-100 fw-semibold"
+                        style={{ 
+                            backgroundColor: "#4CAF50",
+                            color: "white",
+                            fontSize: "14px"
+                        }}
+                    >
+                        I Understand, Continue
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+
+
+
+
+
+
+// Buyer Terms Modal Component
+const BuyerTermsModal = ({ show, onClose, agreedToTerms, setAgreedToTerms, onAccept }) => {
+    if (!show) return null;
+    
+    const termsData = [
+        {
+            number: '1',
+            title: 'Account Registration and Responsibilities',
+            content: [
+                'Buyers must provide accurate and complete information during registration.',
+                'Buyers are responsible for maintaining the confidentiality of their account credentials.',
+                'Any activity conducted under your account is your sole responsibility.'
+            ]
+        },
+        {
+            number: '2',
+            title: 'Order Placement and Product Information',
+            content: [
+                'Buyers must review product details, prices, and availability before placing orders.',
+                'All orders are subject to product availability and seller confirmation.',
+                'The platform is not responsible for inaccuracies in product listings provided by sellers.'
+            ]
+        },
+        {
+            number: '3',
+            title: 'Payment Methods and Procedures',
+            content: [
+                'Buyers can choose between Cash on Delivery (COD) or E-Wallet payment methods.',
+                'For COD orders: Payment must be exact. Overpayment is not the platform\'s or rider\'s responsibility.',
+                'For E-Wallet payments: Buyers must send payment only to the official platform QR code and upload a valid receipt.',
+                'Orders will not be confirmed if payment is insufficient or proof of payment is missing.'
+            ]
+        },
+        {
+            number: '4',
+            title: 'Payment Accuracy',
+            content: [
+                'Buyers are responsible for ensuring that payment amounts are accurate.',
+                'If payment is insufficient, the order will not be processed until the correct amount is settled.',
+                'For payment discrepancies, buyers may contact the admin for assistance through external channels.'
+            ]
+        },
+        {
+            number: '5',
+            title: 'E-Wallet Transaction Requirements',
+            content: [
+                'All e-wallet payments must be sent to the platform\'s official QR code only.',
+                'Buyers must upload a clear and authentic receipt as proof of payment.',
+                'Orders without valid proof of payment will not be approved or processed.'
+            ]
+        },
+        {
+            number: '6',
+            title: 'Product Condition and Delivery',
+            content: [
+                'Buyers have the right to inspect products upon delivery.',
+                'If a product is confirmed to have been damaged by the rider during delivery, buyers may file a complaint through the system.',
+                'Complaints must be supported by evidence such as photos or descriptions of the damage.'
+            ]
+        },
+        {
+            number: '7',
+            title: 'Returns and Refunds',
+            content: [
+                'Returns are only accepted for defective, spoiled, or incorrect products.',
+                'Buyers must report issues within 24 hours of delivery.',
+                'Refund processing will follow platform policies and timelines.'
+            ]
+        },
+        {
+            number: '8',
+            title: 'Prohibited Activities',
+            content: [
+                'Buyers are prohibited from:',
+                '• Providing false or misleading information',
+                '• Making fraudulent claims or chargebacks',
+                '• Harassing sellers, riders, or platform staff',
+                '• Conducting transactions outside the platform',
+                'Violations may result in account suspension or termination.'
+            ]
+        },
+        {
+            number: '9',
+            title: 'Buyer Complaints and Dispute Resolution',
+            content: [
+                'Buyers may file complaints regarding product quality, delivery issues, or rider misconduct.',
+                'All complaints must be submitted through the platform\'s official channels.',
+                'The platform will investigate and resolve disputes in accordance with established policies.'
+            ]
+        },
+        {
+            number: '10',
+            title: 'Limitation of Liability',
+            content: [
+                'The platform acts as an intermediary between buyers, sellers, and riders.',
+                'The platform is not liable for product quality issues, delivery delays caused by external factors, or disputes arising from buyer negligence.',
+                'Buyers are encouraged to communicate directly with sellers or contact platform support for assistance.'
+            ]
+        },
+        {
+            number: '11',
+            title: 'Privacy and Data Protection',
+            content: [
+                'Buyers\' personal information will be used solely for order processing and platform operations.',
+                'The platform is committed to protecting buyer data in accordance with applicable privacy laws.',
+                'Buyers\' information will not be shared with third parties without consent, except as required by law.'
+            ]
+        },
+        {
+            number: '12',
+            title: 'Communication and Support',
+            content: [
+                'Buyers may contact platform support for inquiries, complaints, or assistance.',
+                'Response times may vary depending on the nature and complexity of the issue.'
+            ]
+        },
+        {
+            number: '13',
+            title: 'Buyer Acknowledgment and Agreement',
+            content: [
+                'By registering as a buyer, you confirm that:',
+                '• You have read and understood these Buyer Terms and Conditions.',
+                '• You agree to comply with all payment and order placement procedures.',
+                '• You accept responsibility for the accuracy of payment amounts and transaction details.',
+                '• You understand your rights regarding product inspection, complaints, and refunds.'
+            ]
+        }
+    ];
+
+    return (
+        <div
+            className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
+            style={{ backgroundColor: "rgba(0,0,0,0.5)", zIndex: 9999 }}
+            onClick={onClose}
+        >
+            <div
+                className="bg-white rounded shadow-lg"
+                style={{ maxWidth: "800px", width: "90%", maxHeight: "90vh", display: "flex", flexDirection: "column" }}
+                onClick={(e) => e.stopPropagation()}
+            >
+                {/* Header */}
+                <div className="p-4 border-bottom" style={{ backgroundColor: "#4CAF50" }}>
+                    <div className="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h4 className="mb-1 fw-bold text-white">E-FARMERS' HUB</h4>
+                            <p className="mb-0 text-white" style={{ fontSize: "14px" }}>Buyer Terms and Conditions</p>
+                        </div>
+                        <button
+                            onClick={onClose}
+                            className="btn-close btn-close-white"
+                            aria-label="Close"
+                        ></button>
+                    </div>
+                </div>
+
+                {/* Scrollable Content */}
+                <div className="p-4" style={{ overflowY: "auto", flex: 1 }}>
+                    <p className="mb-4" style={{ fontSize: "13px", lineHeight: "1.6" }}>
+                        These Terms and Conditions govern the registration and participation of buyers 
+                        in E-FARMERS' HUB: A Web-Based E-Commerce Platform for Crop Products in Lupang Ramos, 
+                        Langkaan I, Dasmariñas, Cavite. By registering as a buyer, you acknowledge that you 
+                        have read, understood, and agreed to comply with all provisions stated below.
+                    </p>
+
+                    {termsData.map((term, index) => (
+                        <div key={index} className="mb-4">
+                            <div className="mb-2">
+                                <h6 className="fw-bold mb-2" style={{ fontSize: "14px" }}>
+                                    {term.number}. {term.title}
+                                </h6>
+                                <div style={{ fontSize: "13px", lineHeight: "1.6", color: "#555" }}>
+                                    {term.content.map((line, i) => (
+                                        <p key={i} className="mb-2">{line}</p>
+                                    ))}
+                                </div>
+                            </div>
+                            {index < termsData.length - 1 && <hr className="my-3" />}
+                        </div>
+                    ))}
+
+                    <div className="mt-4 p-3 rounded" style={{ backgroundColor: "#f0f0f0" }}>
+                        <p className="mb-0 small text-center fw-semibold">
+                            By proceeding with registration, you fully agree to these Buyer Terms and Conditions.
+                        </p>
+                    </div>
+                </div>
+
+                {/* Footer */}
+                <div className="p-4 border-top">
+                    <div 
+                        className="d-flex align-items-center gap-2 mb-3 p-3 rounded" 
+                        style={{ 
+                            backgroundColor: agreedToTerms ? "#d4edda" : "#fff3cd",
+                            cursor: "pointer"
+                        }}
+                        onClick={() => setAgreedToTerms(!agreedToTerms)}
+                    >
+                        <input
+                            type="checkbox"
+                            id="buyer-final-agreement"
+                            checked={agreedToTerms}
+                            onChange={() => setAgreedToTerms(!agreedToTerms)}
+                            style={{ cursor: "pointer" }}
+                        />
+                        <label 
+                            htmlFor="buyer-final-agreement" 
+                            className="mb-0 small" 
+                            style={{ cursor: "pointer" }}
+                        >
+                            by checking this box, I agree that I have read and accepted the terms and conditions
+                        </label>
+                    </div>
+                    
+                    <div className="d-flex gap-2">
+                        <button
+                            onClick={onClose}
+                            className="btn btn-secondary flex-fill"
+                            style={{ fontSize: "14px" }}
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            onClick={() => {
+                                if (agreedToTerms) {
+                                    onAccept();
+                                }
+                            }}
+                            disabled={!agreedToTerms}
+                            className="btn flex-fill"
+                            style={{ 
+                                fontSize: "14px",
+                                backgroundColor: agreedToTerms ? "#4CAF50" : "#cccccc",
+                                color: "white",
+                                cursor: agreedToTerms ? "pointer" : "not-allowed",
+                                opacity: agreedToTerms ? 1 : 0.6
+                            }}
+                        >
+                            Accept and Continue
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
 
 
 
