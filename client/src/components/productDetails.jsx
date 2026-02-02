@@ -5,13 +5,12 @@ import { adminContext } from "../context/adminContext";
 import { sellerContext } from "../context/sellerContext";
 import { userContext } from "../context/userContext";
 import icon from "../assets/images/icon.jpg";
-
-
+import Toast from "./toastNotif";
 
 
 
 const ProductDetails = () =>{
-    const {role} = useContext(appContext);
+    const {role, showToast, setShowToast, toastMessage, toastType} = useContext(appContext);
     const admin = useContext(adminContext);
     const seller = useContext(sellerContext);
     const user  = useContext(userContext);
@@ -41,7 +40,6 @@ const ProductDetails = () =>{
     const [pendingItems, setPendingItems] = useState([]);
     const [hasError, setHasError] = useState(false);
     const navigate = useNavigate();  
-     
 
     
     useEffect(()=>{
@@ -225,6 +223,7 @@ const ProductDetails = () =>{
     if(hasError) return null
     
     return(
+        <>
         <div className={role === "user" 
         ? "min-vh-100 d-flex bg " 
         : "min-vh-100 d-flex px-md-2 "}>
@@ -366,6 +365,7 @@ const ProductDetails = () =>{
                                             ? "border-1 rounded bg-white "
                                             : "border rounded-pill bg-dark  text-white"
                                         }
+                                        
                                         ${role === "user" && productDetails.stocks <= 0 && "opacity-75"}`}
                                         onClick={()=>handleButtons(productDetails._id, productDetails.name, productDetails.disc, productDetails.price, productDetails.imageFile, productDetails.seller, productDetails)}
                                         disabled={role === "user" ? productDetails.stocks <= 0 : false}
@@ -379,10 +379,12 @@ const ProductDetails = () =>{
                                                 )}
                                             </div>
                                         ) : (
-                                            <i className="fa fa-pen"></i>
+                                            // ✅ Fix: Show different icons based on status
+                                            role === "admin" && productDetails.statusApprove === "pending" 
+                                                ? <i className="fa fa-check"></i>       
+                                                : <i className="fa fa-pen"></i>  
                                         )}
 
-                                     
                                         {role === "admin" && productDetails.statusApprove === "pending"
                                             ? "accept now" 
                                             : role === "user" ? `add to cart` 
@@ -441,10 +443,11 @@ const ProductDetails = () =>{
                                             }
                                             
                                         }}>
-                                            {( role === "admin" || role === "seller" ) && (
-                                                <div className="bx bx-trash"></div>
-                                            )}
-                                            
+                                            {role === "admin" && 
+                                                productDetails.statusApprove === "pending"
+                                                ? <i className="fa fa-times"></i>        
+                                                : <div className="bx bx-trash"></div>
+                                            }
                                             
                                             {role === "admin" && productDetails.statusApprove === "pending"
                                             ? "reject" 
@@ -616,6 +619,14 @@ const ProductDetails = () =>{
             </div>
         </div>
         </div>
+
+        <Toast 
+            show={showToast}
+            message={toastMessage}
+            type={toastType}
+            onClose={() => setShowToast(false)}
+        />
+        </>
 
     )
   

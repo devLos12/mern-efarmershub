@@ -1,12 +1,24 @@
 import React, { useContext, useEffect, useState, useRef } from "react";
 import { adminContext } from "../../context/adminContext";
 import { useBreakpointHeight } from "../breakpoint";
-
+import Toast from "../toastNotif";
+import { appContext } from "../../context/appContext";
 
 
 
 const Announcement = () => {
-    const { addAnnouncement, setAddAnnouncement, setText, setAnnouncementModal } = useContext(adminContext);
+
+    const {
+        showToast,
+        toastMessage,
+        toastType,
+        setShowToast,
+    } = useContext(appContext);
+    
+
+    const { 
+        addAnnouncement, setAddAnnouncement, setText,setAnnouncementModal,
+    } = useContext(adminContext);
     const [announcement, setAnnouncement] = useState([]);
     const height = useBreakpointHeight();
     const [openMenuId, setOpenMenuId] = useState(null);
@@ -43,8 +55,6 @@ const Announcement = () => {
     }, [openMenuId]);
 
 
-
-
     useEffect(() => {
         fetch(`${import.meta.env.VITE_API_URL}/api/getAnnouncement`, {
             method: "GET",
@@ -65,6 +75,8 @@ const Announcement = () => {
         });
     },[addAnnouncement?.trigger]);
 
+
+
     // Pagination logic
     const indexOfLastItem = currentPage * itemsPerPage;
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
@@ -79,6 +91,7 @@ const Announcement = () => {
     if(loading) return null;
 
     return (
+        <>
         <div className="p-2">
             {announcement?.length > 0 && (
                 <div className="row g-0 bg-white p-2 shadow-sm rounded justify-content-between border">
@@ -226,9 +239,6 @@ const Announcement = () => {
                                                             onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#fee2e2'}
                                                             onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                                                             onClick={()=> {
-                                                                setAnnouncement((prev) => 
-                                                                    prev.filter((a) => a._id !== data._id )
-                                                                );
                                                                 setText("do you want to delete?")
                                                                 setAnnouncementModal((prev) => ({...prev, isShow: true, id: data._id }));
                                                                 setOpenMenuId(null);    
@@ -321,6 +331,17 @@ const Announcement = () => {
 
             </div>
         </div>
+        
+
+        <Toast 
+            show={showToast}
+            message={toastMessage}
+            type={toastType}
+            onClose={() => setShowToast(false)}
+        />
+
+        </>
+
     )
 }
 export default Announcement;

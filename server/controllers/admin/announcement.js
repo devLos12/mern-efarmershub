@@ -7,11 +7,14 @@ const storage = multer.memoryStorage();
 
 export const uploadAnnouncement = multer({ storage: storage });
 
+
+
 export const addAnnouncement = async (req, res) => {
     try {
         const { name, title, description, startDate, endDate } = req.body;
         let imageFile = null;
         let cloudinaryId = null;
+
 
         // Upload to Cloudinary if image exists
         if (req.file) {
@@ -117,6 +120,7 @@ export const deleteAnnouncement = async (req, res) => {
     try {
         const { id } = req.params;
 
+
         // Get cloudinary ID before deleting
         const announcement = await SeasonalAnnouncement.findById(id).select('cloudinaryId');
         
@@ -130,7 +134,7 @@ export const deleteAnnouncement = async (req, res) => {
             );
         }
 
-        res.status(200).json({ message: "Deleted Successfully." });
+        res.status(200).json({ message: "Announcement Deleted Successfully." });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }

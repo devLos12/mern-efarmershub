@@ -234,6 +234,8 @@ const sendApprovalEmail = async (email, name, accountType) => {
 // CONTROLLER FUNCTIONS
 // ============================================
 
+
+
 export const getAccounts = async(req, res)=>{
     try{
         const retrieveUsers = await User.find();
@@ -266,7 +268,10 @@ export const getAccounts = async(req, res)=>{
 export const removeAccount = async (req, res)=>{
     try{
         const id  = req.params.id;
+
+
         
+
         await User.deleteOne({_id : id});
         const seller = await Seller.deleteOne({_id : id});
         await Rider.deleteOne({_id: id});
@@ -276,11 +281,12 @@ export const removeAccount = async (req, res)=>{
             await Product.deleteMany({ "seller.id": id });
         }
 
-        res.status(201).json({ message : "Deleted Successfully"});
+        res.status(201).json({ message : "Account Deleted Successfully"});
     }catch(error){
         res.status(500).json({ message : error.message});
     }
 }
+
 
 export const viewProfile = async(req, res) => {
     try {
@@ -343,6 +349,8 @@ export const updateVerification = async(req, res) => {
         const accountId = req.params.id;
         const { verification } = req.body;
 
+
+
         // Validate verification value
         if (!['verified', 'rejected', 'pending'].includes(verification)) {
             return res.status(400).json({ 
@@ -369,7 +377,7 @@ export const updateVerification = async(req, res) => {
                     console.warn('Approval succeeded but email notification failed:', emailResult.error);
                 }
             }
-
+            
             return res.status(200).json({ 
                 success: true,
                 message: "Seller verification updated successfully",

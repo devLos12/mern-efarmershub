@@ -7,8 +7,6 @@ import Product from "../../models/products.js";
 import { v2 as cloudinary } from "cloudinary";
 
 
-
-
 const storage = multer.memoryStorage();
 
 export const updateProfile = multer({ storage: storage });

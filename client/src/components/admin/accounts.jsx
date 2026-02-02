@@ -6,9 +6,22 @@ import { useBreakpointHeight } from "../../components/breakpoint.jsx";
 import { userContext } from "../../context/userContext.jsx";
 import { useLocation, useNavigate } from "react-router-dom";
 import AddAccount from "./addAccount.jsx";
+import { appContext } from "../../context/appContext.jsx";
+import Toast from "../toastNotif.jsx";
+
+
+
+
 
 //user file
 const Accounts =()=>{  
+    const { showToast,
+            toastMessage,
+            toastType, 
+            setShowToast,
+        } = useContext(appContext);
+
+
     const {setText, setId, setAccountsModal, accountsData,
         setAccountsData
      } = useContext(adminContext);
@@ -754,6 +767,16 @@ const Accounts =()=>{
             onClose={() => setShowAddModal(false)}
             onSuccess={() => handleRefresh()}
         />
+
+
+        {/* ✅ ADD THIS - Toast Component */}
+        <Toast 
+            show={showToast}
+            message={toastMessage}
+            type={toastType}
+            onClose={() => setShowToast(false)}
+        />
+
         </>
     )
 }

@@ -38,6 +38,8 @@ import ActivityLog from "../components/admin/activityLog.jsx";
 //admin file
 const Admin = ({setAdminAuth})=>{
 
+    const { setLoadingStateButton, showNotification } = useContext(appContext);
+
     const { setOrders, setLoading, loading, setError, setAdminInfo, deleteProductModal, 
         setDeleteProductModal, updateStatusModal, setUpdateStatusModal,
         text, inventoryData, Id, setTrigger, exitModal, setExitModal,
@@ -199,8 +201,8 @@ const Admin = ({setAdminAuth})=>{
 
         {editProduct?.isShow && <Upload/>}
         {addAnnouncement?.isShow && <AddAnnouncement/>}
-                        
 
+        
         {/*delete order with api call */}                 
         {deleteOrderModal?.isShow && <Modal textModal={text}
         handleClickYes={()=> {
@@ -228,8 +230,12 @@ const Admin = ({setAdminAuth})=>{
     
 
          {/* deleting  accounts with api call */}
-        {accountsModal?.isShow && <Modal textModal={text} 
+        {accountsModal?.isShow && <Modal 
+         loadingText="deleteing..."
+         textModal={text} 
          handleClickYes={()=>{
+
+            setLoadingStateButton(true);
 
             const id = accountsModal?.id;
 
@@ -242,18 +248,33 @@ const Admin = ({setAdminAuth})=>{
                 console.log(data.message);
                 setAccountsData((accs) => accs.filter((acc) => acc._id !== id));
                 setAccountsModal({ isShow: false });
-            })
-            .catch(err => console.error("Error: ", err.message));
+                
 
-            }}
+                showNotification(data.message, 'success');
+            })
+            .catch(err => {
+                console.error("Error: ", err.message);
+                showNotification(err.message, 'error');
+            })
+            .finally(() => {
+                setLoadingStateButton(false);
+            })
+            ;
+        }}
          handleClickNo={()=>setAccountsModal((prev)=>!prev)}
          />}
 
             
 
         {/* deleting products with api call */}
-        {deleteProductModal && <Modal textModal={text}
+        {deleteProductModal && <Modal 
+            loadingText="deleteing..."
+            textModal={text}
             handleClickYes={()=>{
+
+                setLoadingStateButton(true);
+                
+
                 fetch(`${import.meta.env.VITE_API_URL}/api/removeProducts/${inventoryData.deleteProduct.id}`,{
                     method : "DELETE",
                     credentials: "include"
@@ -268,16 +289,32 @@ const Admin = ({setAdminAuth})=>{
                         navigate("/admin/inventory");
                     }
 
+                    showNotification(data.message, 'success');
+
                 })
-                .catch(err => console.error("Error: ", err.message));
+                .catch(err =>{
+                    console.error("Error: ", err.message)
+                    showNotification(err.message, 'error');
+                                        
+                })
+                .finally(()=> {
+                    setLoadingStateButton(false);
+                });
             }}
             handleClickNo={()=>setDeleteProductModal((prev)=>!prev)}
          />}
 
 
         {/*update status products with api call*/}
-        {updateStatusModal && <Modal textModal={text} 
+        {updateStatusModal && <Modal 
+
+            loadingText="processing..."
+            textModal={text} 
             handleClickYes={()=>{
+                
+                setLoadingStateButton(true);
+
+
                 fetch(`${import.meta.env.VITE_API_URL}/api/updateStatusApprove/${inventoryData.updateStatus.id}`, {
                     method : "PATCH",
                     headers : {"content-type" : "application/json"},
@@ -298,17 +335,30 @@ const Admin = ({setAdminAuth})=>{
                         navigate("/admin/inventory");
                     }
 
+                    showNotification(data.message, 'success');
                 }).catch((err) => {
-                    console.log("Error ", err.message)
+                    console.log("Error ", err.message);
+                    showNotification(err.message, 'error');
+
+                }).finally(()=> {
+                    setLoadingStateButton(false);
                 });
             }}
             handleClickNo={()=>setUpdateStatusModal((prev) => !prev)}
          />}
 
+        
+
+
 
         {/*delete annoucement with api call */} 
-        {announcementModal?.isShow && <Modal textModal={text}
+        {announcementModal?.isShow && <Modal 
+
+            loadingText="deleting..."
+            textModal={text}
             handleClickYes={()=> {
+
+                setLoadingStateButton(true);
 
                 const id = announcementModal?.id;
 
@@ -318,18 +368,33 @@ const Admin = ({setAdminAuth})=>{
                 })
                 .then((res) => res.json())
                 .then((data) => {
-                    console.log(data);
                     setAddAnnouncement((prev) => ({...prev , trigger: !prev.trigger }));
                     setAnnouncementModal((prev) => ({...prev, isShow: false }));
+                    
+
+
+                    showNotification(data.message, 'success');
                 })
-                .catch((err) => console.log("Error: ", err.message))
+                .catch((err) => {
+                    console.log("Error: ", err.message);
+                    showNotification(err.message, 'error');
+                })
+                .finally(() =>{
+                    setLoadingStateButton(false);
+                })
             }}
             handleClickNo={() => setAnnouncementModal((prev) => ({...prev, isShow: false }))}
         />}
 
+
+
+
         {/*exit with api call clearing cookies jwt auth*/}
-        {exitModal && <Modal textModal={text}
-         handleClickYes={()=>{
+        {exitModal && <Modal 
+        
+        textModal={text}
+        handleClickYes={()=>{
+
             setAdminAuth(false);
         
             fetch(`${import.meta.env.VITE_API_URL}/api/logoutAdmin`,{
@@ -342,7 +407,7 @@ const Admin = ({setAdminAuth})=>{
             })
             .catch(err => console.log("Error ",err.message));
 
-         }}
+            }}
          handleClickNo={()=>setExitModal(false)}/>}
         </>
     )

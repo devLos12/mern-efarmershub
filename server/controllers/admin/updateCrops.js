@@ -9,6 +9,8 @@ import cloudinary from "../../config/cloudinary.js";
 const storage = multer.memoryStorage();
 export const update = multer({ storage: storage });
 
+
+
 export const updateCrops = async (req, res) => {
     try {
         const { id, name, category, disc, image, kg, lifeSpan } = req.body;

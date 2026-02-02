@@ -7,11 +7,21 @@ import { sellerContext } from "../context/sellerContext";
 import { adminContext } from "../context/adminContext";
 import io from "socket.io-client";
 import html2pdf from 'html2pdf.js';
+import Toast from "./toastNotif";
+
 
 
 
 const Orders = () => {
-    const { role } = useContext(appContext);
+    const { role, 
+            showToast,
+            toastMessage,
+            toastType,
+            showNotification,
+            setShowToast,
+     } = useContext(appContext);
+
+
     const admin = useContext(adminContext);
     const seller = useContext(sellerContext);
     const context = role === "admin" ? admin : seller;
@@ -264,7 +274,6 @@ const Orders = () => {
 
 
 
-
     const handleArchive = async (orderId) => {
         const endPoint = role === "admin" ? "archiveOrder" : "archiveSellerOrder";
         try {
@@ -272,13 +281,23 @@ const Orders = () => {
                 method: "POST",
                 credentials: "include"
             });
-            if (!res.ok) throw new Error("Failed to archive");
+
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.message);
             await fetchOrders();
             setArchiveOrderModal({ isShow: false, id: null });
+
+            showNotification(data.message, 'success');
+
         } catch (error) {
             console.error("Archive error:", error);
+            showNotification(error.message, 'error');
+
         }
     };
+
+
+
 
     const handleUnarchive = async (orderId) => {
         const endPoint = role === "admin" ? "unarchiveOrder" : "unarchiveSellerOrder";
@@ -287,10 +306,15 @@ const Orders = () => {
                 method: "POST",
                 credentials: "include"
             });
-            if (!res.ok) throw new Error("Failed to unarchive");
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.message);
             await fetchOrders();
+            showNotification(data.message, 'success');
+
+
         } catch (error) {
             console.error("Unarchive error:", error);
+            showNotification(error.message, 'error');
         }
     };
 
@@ -343,7 +367,6 @@ const Orders = () => {
     useEffect(() => {
         setCurrentPage(1);
     }, [statusFilter, orderMethodFilter, searchQuery]);
-
 
     
     if(loading) return <p></p>
@@ -712,6 +735,13 @@ const Orders = () => {
                 </div>
             </div>
         )}
+
+        {<Toast
+            show={showToast}
+            message={toastMessage}
+            type={toastType}
+            onClose={() => setShowToast( false )}
+        />}
         </>
     );
 };

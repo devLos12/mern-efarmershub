@@ -1,20 +1,26 @@
-import React, { useState, useEffect } from "react";
-import Model from "../modal";
+import React, { useState, useEffect, useContext } from "react";
+import Modal from "../modal";
 import imageCompression from 'browser-image-compression';
+import { appContext } from "../../context/appContext";
+import Toast from "../toastNotif.jsx";
 
 
 
 const QrCodes = () => {
+    const { 
+        setLoadingStateButton,
+        showNotification,
+        showToast,
+        toastMessage,
+        toastType,
+        setShowToast
+    } = useContext(appContext);
     const [gcashQr, setGcashQr] = useState(null);
     const [mayaQr, setMayaQr] = useState(null);
     const [gcashPreview, setGcashPreview] = useState(null);
     const [mayaPreview, setMayaPreview] = useState(null);
     const [loading, setLoading] = useState(false);
     const [fetchLoading, setFetchLoading] = useState(true);
-    const [showSuccessModal, setShowSuccessModal] = useState(false);
-    const [showErrorModal, setShowErrorModal] = useState(false);
-    const [modalMessage, setModalMessage] = useState("");
-    const [isModalVisible, setIsModalVisible] = useState(false);
 
 
 
@@ -37,7 +43,6 @@ const QrCodes = () => {
 
     // Function para sa "Yes" button
     const handleDeleteYes = () => {
-        setShowDeleteModal(false);
         removeImage(deleteType);
     };
 
@@ -46,24 +51,8 @@ const QrCodes = () => {
         fetchQrCodes();
     }, []);
 
-    // Handle modal animation
-    useEffect(() => {
-        if (showSuccessModal || showErrorModal) {
-            setTimeout(() => setIsModalVisible(true), 10);
-            
-            // Auto-close after 2 seconds for success
-            if (showSuccessModal) {
-                const timer = setTimeout(() => {
-                    setIsModalVisible(false);
-                    setTimeout(() => {
-                        setShowSuccessModal(false);
-                    }, 300);
-                }, 2000);
-                
-                return () => clearTimeout(timer);
-            }
-        }
-    }, [showSuccessModal, showErrorModal]);
+
+
 
     const fetchQrCodes = async () => {
         try {
@@ -103,8 +92,11 @@ const QrCodes = () => {
         }
     };
 
+
     const removeImage = async (type) => {
         try {
+            setLoadingStateButton(true);
+
             const response = await fetch(
                 `${import.meta.env.VITE_API_URL}/api/deleteQr/${type}`, 
                 {
@@ -123,18 +115,29 @@ const QrCodes = () => {
                     setMayaQr(null);
                     setMayaPreview(null);
                 }
-                setModalMessage(data.message || 'QR Code removed successfully!');
-                setShowSuccessModal(true);
+                // ✅ GAMITIN TOAST
+                showNotification(data.message || 'QR Code removed successfully!', 'success');
+                
+                // ✅ CLOSE DELETE MODAL
+                setShowDeleteModal(false);
+                setDeleteType(null);
             } else {
-                setModalMessage(data.message || 'Failed to remove QR Code');
-                setShowErrorModal(true);
+                // ✅ GAMITIN TOAST
+                showNotification(data.message || 'Failed to remove QR Code', 'error');
             }
+
         } catch (error) {
             console.error('Delete error:', error);
-            setModalMessage('An error occurred while removing the QR Code');
-            setShowErrorModal(true);
+            // ✅ GAMITIN TOAST
+            showNotification('An error occurred while removing the QR Code', 'error');
+        } finally {
+            setLoadingStateButton(false);
         }
     };
+
+
+
+
 
     const handleSave = async () => {
         try {
@@ -156,18 +159,20 @@ const QrCodes = () => {
             if (data.success) {
                 setGcashQr(null);
                 setMayaQr(null);
-                setModalMessage(data.message || 'QR Codes saved successfully!');
-                setShowSuccessModal(true);
+                // ✅ GAMITIN TOAST
+                showNotification(data.message || 'QR Codes saved successfully!', 'success');
             } 
         } catch (error) {
             console.error('Save error:', error);
-            setModalMessage(error.message || 'Failed to save QR Codes');
-            setShowErrorModal(true);
+            // ✅ GAMITIN TOAST
+            showNotification(error.message || 'Failed to save QR Codes', 'error');
         } finally {
             setLoading(false);
         }
     };
 
+
+    
     const getImageSrc = (preview) => {
         if (!preview) return null;
         if (preview.startsWith('data:')) return preview;
@@ -192,79 +197,22 @@ const QrCodes = () => {
         <>
             {showDeleteModal && (
                 <div className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center" style={{zIndex: 10000 }}>
-                    <Model 
+                    <Modal 
+                        loadingText="deleting..."
                         textModal={`Do you want to remove this ${deleteType === 'gcash' ? 'GCash' : 'Maya'} QR code?`}
                         handleClickNo={handleDeleteNo}
                         handleClickYes={handleDeleteYes}
                     />
                 </div>
             )}
+            
+            <Toast 
+                show={showToast}
+                message={toastMessage}
+                type={toastType}
+                onClose={() => setShowToast(false)}
+            />
 
-
-            {/* Success Modal with Animation */}
-            {showSuccessModal && (
-                <div
-                    className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
-                    style={{ backgroundColor: "rgba(0,0,0,0.5)", zIndex: 10000 }}
-                >
-                    <div
-                        className="bg-white rounded shadow p-4 text-center"
-                        style={{
-                            maxWidth: "400px",
-                            width: "90%",
-                            transform: isModalVisible ? "scale(1)" : "scale(0.7)",
-                            opacity: isModalVisible ? 1 : 0,
-                            transition: "all 0.3s ease-in-out"
-                        }}
-                    >
-                        <div className="mb-3">
-                            <i className="fa fa-check-circle text-success" style={{ fontSize: "60px" }}></i>
-                        </div>
-                        <h5 className="fw-bold text-capitalize mb-2 text-success">
-                            Success!
-                        </h5>
-                        <p className="small text-muted mb-0">{modalMessage}</p>
-                    </div>
-                </div>
-            )}
-
-            {/* Error Modal */}
-            {showErrorModal && (
-                <div
-                    className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
-                    style={{ backgroundColor: "rgba(0,0,0,0.5)", zIndex: 10000 }}
-                    onClick={() => setShowErrorModal(false)}
-                >
-                    <div
-                        className="bg-white rounded shadow p-4 text-center"
-                        style={{
-                            maxWidth: "400px",
-                            width: "90%",
-                            transform: isModalVisible ? "scale(1)" : "scale(0.7)",
-                            opacity: isModalVisible ? 1 : 0,
-                            transition: "all 0.3s ease-in-out"
-                        }}
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        <div className="mb-3">
-                            <i className="fa fa-times-circle text-danger" style={{ fontSize: "60px" }}></i>
-                        </div>
-                        <h5 className="fw-bold text-capitalize mb-2 text-danger">
-                            Error!
-                        </h5>
-                        <p className="small text-muted mb-3">{modalMessage}</p>
-                        <button
-                            className="btn btn-danger btn-sm"
-                            onClick={() => {
-                                setIsModalVisible(false);
-                                setTimeout(() => setShowErrorModal(false), 300);
-                            }}
-                        >
-                            Close
-                        </button>
-                    </div>
-                </div>
-            )}
 
             <div className="min-vh-100 bg-light py-5">
                 <div className="container">
@@ -278,7 +226,7 @@ const QrCodes = () => {
                     </div>
 
                     {/* QR Cards */}
-                    <div className="row g-4 justify-content-center mb-4">
+                    <div className="row g-4 justify-content-center mb-4 ">
                         {/* GCash Card */}
                         <div className="col-12 col-md-6 col-lg-4">
                             <div className="card border-0 shadow-sm h-100 overflow-hidden">
@@ -394,31 +342,34 @@ const QrCodes = () => {
                                 </div>
                             </div>
                         </div>
+                        
+                        <div className="col-8 ">
+                            {/* Save Button - Show only if there are NEW uploads (File objects) */}
+                            {(gcashQr || mayaQr) && (
+                                <div className="text-start" style={{ animation: 'fadeIn 0.3s ease-in' }}>
+                                    <button
+                                        onClick={handleSave}
+                                        disabled={loading}
+                                        className="btn btn-success btn-sm p-2  shadow-sm fw-semibold"
+                                    >
+                                        {loading ? (
+                                            <>
+                                                <span className="spinner-border spinner-border-sm me-2" role="status"></span>
+                                                Saving...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <i className="fa-solid fa-check-circle me-2"></i>
+                                                Save QR Codes
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
+                            )}
+                        </div>
                     </div>
 
-                    {/* Save Button - Show only if there are NEW uploads (File objects) */}
-                    {(gcashQr || mayaQr) && (
-                        <div className="text-center" style={{ animation: 'fadeIn 0.3s ease-in' }}>
-                            <button
-                                onClick={handleSave}
-                                disabled={loading}
-                                className="btn btn-success btn-small p-2 rounded-4 shadow-sm fw-semibold"
-                                style={{ minWidth: '200px', transition: 'all 0.3s ease' }}
-                            >
-                                {loading ? (
-                                    <>
-                                        <span className="spinner-border spinner-border-sm me-2" role="status"></span>
-                                        Saving...
-                                    </>
-                                ) : (
-                                    <>
-                                        <i className="fa-solid fa-check-circle me-2"></i>
-                                        Save QR Codes
-                                    </>
-                                )}
-                            </button>
-                        </div>
-                    )}
+                
                 </div>
             </div>
         </>

@@ -9,10 +9,14 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useBreakpointHeight } from "./breakpoint.jsx";
 import ListReports from "./admin/listReports.jsx";
 import { io } from "socket.io-client";
+import Toast from "./toastNotif.jsx";
+
+
+
 
 
 const Inventory = () => {
-    const { role } = useContext(appContext);
+    const { role, showToast, toastMessage, toastType,  setShowToast } = useContext(appContext);
     const admin = useContext(adminContext);
     const seller = useContext(sellerContext);
     const context = role === "admin" ? admin : seller;
@@ -29,11 +33,18 @@ const Inventory = () => {
     const height = useBreakpointHeight();
     const location = useLocation();
 
+
+
+
+
     // Get current view from location state (products or list-report)
     const currentView = location.state?.view || "products";
     
     // Get unique categories from products
     const uniqueCategories = [...new Set(products.map(p => p.category?.toLowerCase()).filter(Boolean))];
+
+
+    
 
     useEffect(() => {
         if (role === "admin" && !location?.state?.source && !location?.state?.view) {
@@ -44,12 +55,15 @@ const Inventory = () => {
         }
     }, [location.state, location.pathname, navigate, role]);
 
-    
+
     // Fetch products function
     const fetchProducts = async () => {
         if (role === "seller" && !sellerInfo._id) return;
         try {
-            setLoading(true);
+            if(isRefreshing){
+                setLoading(true);
+            }
+
             const fetchUrl =
                 role === "admin"
                     ? `${import.meta.env.VITE_API_URL}/api/getProducts`
@@ -59,8 +73,6 @@ const Inventory = () => {
                 method: "GET", 
                 credentials: "include" 
             });
-
-            console.log("Response Status:", res.status);
             const data = await res.json();
             
             if (!res.ok) throw new Error(data.message);
@@ -85,8 +97,8 @@ const Inventory = () => {
     
     // Socket.IO - Real-time product updates for admin
     useEffect(() => {
-        if (role !== "admin") return;
         const socket = io(import.meta.env.VITE_API_URL);
+
         socket.on('product:uploaded', (data) => {
             // Refresh products list
             fetchProducts();
@@ -97,6 +109,14 @@ const Inventory = () => {
             fetchProducts();
         });
 
+        socket.on('product:updateStatus', (data) => {
+            console.log(data.message);
+            fetchProducts();
+        })
+
+        socket.on('product:deleted', (data) => {
+            fetchProducts();
+        })
 
         return () => {
             socket.disconnect();
@@ -193,7 +213,18 @@ const Inventory = () => {
         }
     }
 
-    if (loading) return <p></p>;
+
+    if(loading) return (
+        <div className="d-flex align-items-center justify-content-center h-100" 
+        >
+            <div className="text-center">
+                <div className="spinner-border text-success mb-2" role="status">
+                    <span className="visually-hidden">Loading...</span>
+                </div>
+                <p className="small text-muted mb-0">Loading Inventory...</p>
+            </div>
+        </div>
+    )
 
     return (
         <>
@@ -295,9 +326,6 @@ const Inventory = () => {
                                         ))
                                     )}
                                 </div>
-
-                                
-                            
                             </div>
 
                             {/* Search Bar */}
@@ -362,7 +390,6 @@ const Inventory = () => {
                                 </select>
                             </div>
 
-
                             {/* Refresh Button */}
                             <div className="col justify-content-end d-flex ">
                                 <button 
@@ -395,8 +422,9 @@ const Inventory = () => {
 
                         {/* Products Display with Refresh Overlay */}
                         <div className="position-relative">
+
                             {isRefreshing && (
-                                <div className="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center bg-white bg-opacity-75 rounded" 
+                                <div className="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center bg-white bg-opacity-100 rounded" 
                                     style={{ zIndex: 10 }}>
                                     <div className="text-center">
                                         <div className="spinner-border text-success mb-2" role="status">
@@ -469,6 +497,14 @@ const Inventory = () => {
                     <ListReports/>
                 )}
             </div>
+
+            {/* ✅ ADD THIS - Toast Component */}
+            <Toast 
+                show={showToast}
+                message={toastMessage}
+                type={toastType}
+                onClose={() => setShowToast(false)}
+            />
         </>
     );
 };

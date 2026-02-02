@@ -16,8 +16,8 @@ const Register = () => {
     const navigate = useNavigate();
     const [licenseImagePreview, setLicenseImagePreview] = useState(null);
 
-    
 
+    
     // Add these new states after your existing useState declarations
     const [showTermsModal, setShowTermsModal] = useState(false);
     const [allTermsAgreed, setAllTermsAgreed] = useState(false);
@@ -338,8 +338,6 @@ const Register = () => {
     const handleCloseBuyerTermsModal = () => {
         setShowBuyerTermsModal(false);
     };
-
-
 
 
 

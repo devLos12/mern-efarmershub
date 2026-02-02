@@ -25,10 +25,9 @@ import { appContext } from "../context/appContext.jsx";
 
 
 
-
 //seller file
 const Seller = ({setSellerAuth}) => {
-
+    const { showNotification, setLoadingStateButton } = useContext(appContext);
     const {exitModal,  setExitModal} = useContext(sellerContext);
     const { text, sellerData, sellerInf, loading } = useContext(sellerContext);
     const { setSellerInfo,  setNotifList } = useContext(sellerContext);
@@ -237,9 +236,7 @@ const Seller = ({setSellerAuth}) => {
 
         
         
-        
-
-              {/*delete order with api call */}                 
+        {/*delete order with api call */}                 
         {deleteOrderModal?.isShow && <Modal textModal={text}
         handleClickYes={()=> {
 
@@ -264,32 +261,42 @@ const Seller = ({setSellerAuth}) => {
         />
         }
 
-                        
-
 
         {/*delete product with api call */}
-        {sellerDeleteModal && <Modal textModal={text} 
+        {sellerDeleteModal && <Modal 
+            
+            textModal={text} 
+            loadingText="deleting ...."
             handleClickYes={()=>{
 
+                setLoadingStateButton(true);
+                
                 fetch(`${import.meta.env.VITE_API_URL}/api/removeSellerCrops/${sellerData.deleteProduct.id}`,{
                     method : "DELETE",
                     })
                 .then(res => res.json())
                 .then(data => {
-                    console.log(data.message);
                     setSellerDeleteModal((prev) => !prev);
                     setTrigger((prev) => !prev);
 
                     if(location.pathname === "/seller/productdetails"){
                         navigate("/", { replace : true});
                     }
+
+                    showNotification(data.message, "success");
                 })
-                .catch(err => console.error("Error: ", err.message));
+                .catch(err => console.error("Error: ", err.message))
+                .finally(()=> {
+                    setLoadingStateButton(false);
+                });
             }}
 
             handleClickNo={()=>setSellerDeleteModal((prev) => !prev)}
         />}
-    
+
+
+
+
         {exitModal && <Modal textModal={text}
         handleClickYes={()=>{
             setSellerAuth(false);

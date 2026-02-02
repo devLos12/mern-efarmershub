@@ -15,10 +15,34 @@ export const MyAppContext = ({children}) =>{
     const [inboxLoading, setInboxLoading] = useState(null);
     const [bestSellers, setBestSellers] = useState([]);
     
+    // ✅ ADD THESE - Toast states
+    const [showToast, setShowToast] = useState(false);
+    const [toastMessage, setToastMessage] = useState("");
+    const [toastType, setToastType] = useState("success");
+
+    const [loadingStateButton, setLoadingStateButton] = useState(false);
+    
+
+    // ✅ ADD THIS - Toast function
+    const showNotification = (message, type = "success") => {
+        setToastMessage(message);
+        setToastType(type);
+        setShowToast(true);
+    };
+         
+    // ✅ ADD THIS - Auto-hide toast after 3 seconds
+    useEffect(() => {
+        if (showToast) {
+            const timer = setTimeout(() => {
+                setShowToast(false);
+            }, 3000);
+            
+            return () => clearTimeout(timer);
+        }
+    }, [showToast]);
 
 
-
-
+    
     return (
         <appContext.Provider 
         value={{
@@ -27,12 +51,18 @@ export const MyAppContext = ({children}) =>{
             inboxBadge, setInboxBadge,
             inboxList, setInboxList,
             inboxError, setInboxError,
-            inboxLoading, setInboxLoading ,
-            bestSellers, setBestSellers
+            inboxLoading, setInboxLoading,
+            bestSellers, setBestSellers,
+            // ✅ ADD THESE to the context value
+            showToast,
+            toastMessage,
+            toastType,
+            showNotification,
+            setShowToast,
+
+            loadingStateButton, setLoadingStateButton
 
         }}>{children}
         </appContext.Provider>
     )
 }
-
-

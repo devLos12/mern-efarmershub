@@ -897,15 +897,15 @@ const AddAccount = ({ isOpen, onClose, onSuccess }) => {
                         onClick={(e) => e.stopPropagation()}
                     >
                         <div className="mb-3">
-                            <i className="fa fa-check-circle text-success" style={{ fontSize: "4rem" }}></i>
+                            <i className="fa fa-check fs-4 text-success bg-success bg-opacity-10 p-3 rounded-circle">
+                            </i>
                         </div>
                         <h5 className="fw-bold text-capitalize mb-2">account created successfully!</h5>
                         <p className="text-muted small mb-4">
                             The {userTypes.find(t => t.role === selectedRole)?.title.toLowerCase()} account has been created successfully.
                         </p>
                         <button
-                            className="btn text-capitalize w-100"
-                            style={{ background: "#4CAF50", color: "white" }}
+                            className="btn text-capitalize w-50 bg-success text-success bg-opacity-10"
                             onClick={handleSuccessModalClose}
                         >
                             close

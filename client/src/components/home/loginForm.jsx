@@ -10,11 +10,14 @@ const LoginForm = ({remove, adminAuth, userAuth, sellerAuth})=> {
     const [showPassword, setShowPassword] = useState(false);
     const [showModal, setShowModal] = useState(false);
     const [modalMessage, setModalMessage] = useState("");
-    const [modalType, setModalType] = useState("success");
     const [errors, setErrors] = useState({ email: "", password: "" });
-    const [isModalVisible, setIsModalVisible] = useState(false);
-    const [loginData, setLoginData] = useState(null);
+
+
     const navigate = useNavigate();
+    const [isLoading, setIsLoading] = useState(false);
+    
+
+
 
     const handleChange = (e)=> {
         const {name, value} = e.target;
@@ -26,38 +29,24 @@ const LoginForm = ({remove, adminAuth, userAuth, sellerAuth})=> {
         setErrors(prev => ({ ...prev, [name]: "" }));
     }
 
-    // Handle modal animation
-    useEffect(() => {
-        if (showModal) {
-            setTimeout(() => setIsModalVisible(true), 10);
-            
-            // Auto-close after 2 seconds
-            const timer = setTimeout(() => {
-                setIsModalVisible(false);
-                setTimeout(() => {
-                    setShowModal(false);
-                }, 300);
-            }, 2000);
-            
-            return () => clearTimeout(timer);
-        }
-    }, [showModal]);
 
-    const showNotification = (message, type = "success", role = null, id = null) => {
+
+    const showNotification = (message, type = "error") => {
         setModalMessage(message);
-        setModalType(type);
-        
-        // Store role and id for navigation after animation
-        if (role && id) {
-            setLoginData({ role, id });
-        }
-        
         setShowModal(true);
+        
+        // Auto-close after 2 seconds
+        setTimeout(() => {
+            setShowModal(false);
+        }, 2000);
     };
-    
+        
+
+
     const handleForm = async (e)=>{
         e.preventDefault();
         setErrors({ email: "", password: "" });
+        setIsLoading(true); // Start loading
 
         try{
             const response = await fetch(`${import.meta.env.VITE_API_URL}/api/login`, {
@@ -70,7 +59,9 @@ const LoginForm = ({remove, adminAuth, userAuth, sellerAuth})=> {
             const data = await response.json();
             
             if(!response.ok) {
-                // Handle verification errors (show modal)
+                setIsLoading(false); // Stop loading on error
+                
+                // Handle verification errors (show modal for errors lang)
                 if (data.verificationStatus) {
                     showNotification(data.message, "error");
                     return;
@@ -87,34 +78,34 @@ const LoginForm = ({remove, adminAuth, userAuth, sellerAuth})=> {
                 return;
             }
 
-            // Success - show modal then navigate after 2 seconds
-            showNotification(data.message, "success");
-            
-            // Set auth and navigate after modal animation
-            setTimeout(() => {
-                if(data.role === "admin"){
-                    setId(data.id);
-                    setRole(data.role);
-                    adminAuth(true);
-                    navigate("/admin", { replace: true });
-                }
-                if(data.role === "seller"){
-                    setRole(data.role);
-                    sellerAuth(true);
-                    navigate("/seller", { replace: true });
-                }     
-                if(data.role === "user"){
-                    setRole(data.role);
-                    userAuth(true);
-                    navigate("/user", { replace: true });
-                }
-            }, 2300); // 2s modal + 300ms fade out
+            // Success - navigate directly, NO success modal
+            if(data.role === "admin"){
+                setId(data.id);
+                setRole(data.role);
+                adminAuth(true);
+                navigate("/admin", { replace: true });
+            }
+            if(data.role === "seller"){
+                setRole(data.role);
+                sellerAuth(true);
+                navigate("/seller", { replace: true });
+            }     
+            if(data.role === "user"){
+                setRole(data.role);
+                userAuth(true);
+                navigate("/user", { replace: true });
+            }
 
         }catch(error){
+            setIsLoading(false); // Stop loading on error
             showNotification(error.message || "Network error occurred", "error");
             console.log("failed post request! ",error.message);
         }
-    }
+    }   
+
+
+
+
     
     return(
         <>
@@ -169,9 +160,23 @@ const LoginForm = ({remove, adminAuth, userAuth, sellerAuth})=> {
                                     ))}
                                     <div className="mt-4">
                                         <button
-                                        className="border-0 bg-dark w-100 p-2 small fw-semibold text-white rounded-3"
-                                        >Sign in</button>
+                                            type="submit"
+                                            className="border-0 bg-dark w-100 p-2 small fw-semibold text-white rounded-3 d-flex align-items-center justify-content-center"
+                                            disabled={isLoading}
+                                            style={{ opacity: isLoading ? 0.7 : 1 }}
+                                        >
+                                            {isLoading ? (
+                                                <>
+                                                    <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                                    Signing in...
+                                                </>
+                                            ) : (
+                                                'Sign in'
+                                            )}
+                                        </button>
                                     </div>
+
+                                    
                                     <div className="mt-3 d-flex justify-content-between align-items-center ">
                                         < Link to={"/forgot-password"} 
                                         className="small text-decoration-none text-green fw-semibold " 
@@ -200,26 +205,23 @@ const LoginForm = ({remove, adminAuth, userAuth, sellerAuth})=> {
                         className="bg-white rounded shadow p-4 text-center"
                         style={{
                             maxWidth: "400px",
-                            width: "90%",
-                            transform: isModalVisible ? "scale(1)" : "scale(0.7)",
-                            opacity: isModalVisible ? 1 : 0,
-                            transition: "all 0.3s ease-in-out"
+                            width: "90%"
                         }}
                     >
                         <div className="mb-3">
-                            {modalType === "success" ? (
-                                <i className="bx bx-check-circle text-success" style={{ fontSize: "60px" }}></i>
-                            ) : (
-                                <i className="bx bx-error-circle text-danger" style={{ fontSize: "60px" }}></i>
-                            )}
+                            <i className="bx bx-error-circle text-danger" style={{ fontSize: "60px" }}></i>
                         </div>
-                        <h5 className={`fw-bold text-capitalize mb-2 ${modalType === "success" ? "text-success" : "text-danger"}`}>
-                            {modalType === "success" ? "success!" : "error!"}
+                        <h5 className="fw-bold text-capitalize mb-2 text-danger">
+                            error!
                         </h5>
                         <p className="small text-muted mb-0">{modalMessage}</p>
                     </div>
                 </div>
             )}
+
+
+
+            
         </div>
         </>
     )

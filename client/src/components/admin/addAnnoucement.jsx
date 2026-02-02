@@ -2,12 +2,14 @@ import React, { useContext, useRef, useState, useEffect } from "react";
 import { adminContext } from "../../context/adminContext";
 import { useBreakpointHeight } from "../breakpoint";
 import imageCompression from 'browser-image-compression';
+import { appContext } from "../../context/appContext";
 
 
 
 const AddAnnouncement = () => {
+    const { showNotification } = useContext(appContext);
     const { addAnnouncement, setAddAnnouncement } = useContext(adminContext);
-    
+
     const [formData, setFormData] = useState({
         cropName: "",
         title: "",
@@ -20,15 +22,12 @@ const AddAnnouncement = () => {
 
     const [imagePreview, setImagePreview] = useState(null);
     const [imagePreviuos, setImagePreviuos] = useState(null);
-    const [showSuccessModal, setShowSuccessModal] = useState(false);
-    const [showErrorModal, setShowErrorModal] = useState(false);
-    const [modalMessage, setModalMessage] = useState("");
-    const [isModalVisible, setIsModalVisible] = useState(false);
     const [isUploading, setIsUploading] = useState(false); // ✅ NEW: Loading state
     const height = useBreakpointHeight();
     const handleRefFile = useRef();
 
     const isUpdate = Object.keys(addAnnouncement?.data ?? {}).length > 0;
+
 
     useEffect(() => {
         if(isUpdate){
@@ -47,30 +46,7 @@ const AddAnnouncement = () => {
         }
     }, [isUpdate, addAnnouncement?.data]);
 
-    // Handle success modal animation
-    useEffect(() => {
-        if (showSuccessModal || showErrorModal) {
-            setTimeout(() => setIsModalVisible(true), 10);
-            
-            // Auto-close after 2 seconds for success
-            if (showSuccessModal) {
-                const timer = setTimeout(() => {
-                    setIsModalVisible(false);
-                    setTimeout(() => {
-                        setShowSuccessModal(false);
-                        setAddAnnouncement((prev) => ({
-                            ...prev, 
-                            trigger: !prev.trigger,
-                            isShow: !prev.isShow
-                        }));
-                    }, 300);
-                }, 2000);
-                
-                return () => clearTimeout(timer);
-            }
-        }
-    }, [showSuccessModal, showErrorModal]);
-
+  
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({
@@ -173,91 +149,36 @@ const AddAnnouncement = () => {
             const data = await res.json();
 
             if(!res.ok) {
-                setModalMessage(data.message || 'Failed to save announcement');
-                setShowErrorModal(true);
+                // ✅ GAMITIN ANG TOAST PARA SA ERROR
+                showNotification(data.message || 'Failed to save announcement', 'error');
                 return;
             }
 
-            setModalMessage(data.message || (isUpdate ? 'Announcement updated successfully!' : 'Announcement created successfully!'));
-            setShowSuccessModal(true);
-
+            // ✅ GAMITIN ANG TOAST PARA SA SUCCESS
+            showNotification(data.message || (isUpdate ? 'Announcement updated successfully!' : 'Announcement created successfully!'), 'success');
+            
+            // ✅ CLOSE MODAL AT REFRESH
+            setAddAnnouncement((prev) => ({
+                ...prev, 
+                trigger: !prev.trigger,
+                isShow: false
+            }));
+                        
         } catch (error) {
             console.error("Error:", error.message);
-            setModalMessage('An error occurred. Please try again.');
-            setShowErrorModal(true);
+            // ✅ GAMITIN ANG TOAST PARA SA ERROR
+            showNotification(error.message, 'error');
         } finally {
             // ✅ Stop loading
             setIsUploading(false);
         }
     };
 
+
+
+
     return (
         <>
-            {/* Success Modal with Animation */}
-            {showSuccessModal && (
-                <div
-                    className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
-                    style={{ backgroundColor: "rgba(0,0,0,0.5)", zIndex: 10000 }}
-                >
-                    <div
-                        className="bg-white rounded shadow p-4 text-center"
-                        style={{
-                            maxWidth: "400px",
-                            width: "90%",
-                            transform: isModalVisible ? "scale(1)" : "scale(0.7)",
-                            opacity: isModalVisible ? 1 : 0,
-                            transition: "all 0.3s ease-in-out"
-                        }}
-                    >
-                        <div className="mb-3">
-                            <i className="fa fa-check-circle text-success" style={{ fontSize: "60px" }}></i>
-                        </div>
-                        <h5 className="fw-bold text-capitalize mb-2 text-success">
-                            Success!
-                        </h5>
-                        <p className="small text-muted mb-0">{modalMessage}</p>
-                    </div>
-                </div>
-            )}
-
-            {/* Error Modal */}
-            {showErrorModal && (
-                <div
-                    className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
-                    style={{ backgroundColor: "rgba(0,0,0,0.5)", zIndex: 10000 }}
-                    onClick={() => setShowErrorModal(false)}
-                >
-                    <div
-                        className="bg-white rounded shadow p-4 text-center"
-                        style={{
-                            maxWidth: "400px",
-                            width: "90%",
-                            transform: isModalVisible ? "scale(1)" : "scale(0.7)",
-                            opacity: isModalVisible ? 1 : 0,
-                            transition: "all 0.3s ease-in-out"
-                        }}
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        <div className="mb-3">
-                            <i className="fa fa-times-circle text-danger" style={{ fontSize: "60px" }}></i>
-                        </div>
-                        <h5 className="fw-bold text-capitalize mb-2 text-danger">
-                            Error!
-                        </h5>
-                        <p className="small text-muted mb-3">{modalMessage}</p>
-                        <button
-                            className="btn btn-danger btn-sm"
-                            onClick={() => {
-                                setIsModalVisible(false);
-                                setTimeout(() => setShowErrorModal(false), 300);
-                            }}
-                        >
-                            Close
-                        </button>
-                    </div>
-                </div>
-            )}
-
             <div className="container-fluid position-fixed top-0 start-0 end-0 vh-100 bg-darken"
                 style={{ zIndex: 99 }}
             >

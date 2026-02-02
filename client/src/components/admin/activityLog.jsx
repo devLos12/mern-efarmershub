@@ -1,7 +1,22 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useContext } from "react";
 import io from "socket.io-client";
+import Toast from "../toastNotif.jsx";
+import { appContext } from "../../context/appContext.jsx";
+
+
+
+
+
 
 const ActivityLog = () => {
+    const { 
+        showNotification,
+        showToast,
+        toastMessage,
+        toastType,
+        setShowToast
+    } = useContext(appContext);
+    
     const [activityLogs, setActivityLogs] = useState([]);
     const [loading, setLoading] = useState(true);
     const [isRefreshing, setIsRefreshing] = useState(false);
@@ -18,11 +33,7 @@ const ActivityLog = () => {
     const [isAllSelected, setIsAllSelected] = useState(false);
     const [isSelect, setIsSelect] = useState(false);
 
-    // Modal states
-    const [showSuccessModal, setShowSuccessModal] = useState(false);
-    const [showErrorModal, setShowErrorModal] = useState(false);
-    const [modalMessage, setModalMessage] = useState("");
-    const [isModalVisible, setIsModalVisible] = useState(false);
+
 
     // Socket.IO connection
     useEffect(() => {
@@ -38,24 +49,7 @@ const ActivityLog = () => {
         };
     }, []);
 
-    // Handle modal animation
-    useEffect(() => {
-        if (showSuccessModal || showErrorModal) {
-            setTimeout(() => setIsModalVisible(true), 10);
-            
-            // Auto-close after 2 seconds for success
-            if (showSuccessModal) {
-                const timer = setTimeout(() => {
-                    setIsModalVisible(false);
-                    setTimeout(() => {
-                        setShowSuccessModal(false);
-                    }, 300);
-                }, 2000);
-                
-                return () => clearTimeout(timer);
-            }
-        }
-    }, [showSuccessModal, showErrorModal]);
+    
 
     // Debounce search
     useEffect(() => {
@@ -64,6 +58,9 @@ const ActivityLog = () => {
         }, 300);
         return () => clearTimeout(timer);
     }, [searchQuery]);
+
+
+
 
     useEffect(() => {
         const loadInitialLogs = async () => {
@@ -137,10 +134,11 @@ const ActivityLog = () => {
         });
     };
 
+
     const handleDelete = async () => {
         if (selectedIds.size === 0) {
-            setModalMessage("No logs selected yet");
-            setShowErrorModal(true);
+            // ✅ GAMITIN TOAST
+            showNotification("No logs selected yet", "error");
             return;
         }
 
@@ -161,14 +159,18 @@ const ActivityLog = () => {
             setActivityLogs((prev) => prev.filter((item) => !selectedIds.has(item._id)));
             setSelectedIds(new Set());
             setIsAllSelected(false);
-            setModalMessage(data.message || `Successfully deleted ${sendData.length} log(s)`);
-            setShowSuccessModal(true);
+            
+            // ✅ GAMITIN TOAST
+            showNotification(data.message || `Successfully deleted ${sendData.length} log(s)`, "success");
+            
         } catch (error) {
             console.log("Error: ", error.message);
-            setModalMessage(error.message || "Failed to delete logs");
-            setShowErrorModal(true);
+            // ✅ GAMITIN TOAST
+            showNotification(error.message || "Failed to delete logs", "error");
         }
     };
+
+
 
     // Filtering
     const filteredLogs = activityLogs?.filter(log => {
@@ -212,72 +214,15 @@ const ActivityLog = () => {
         </div>
     );
 
+
     return (
         <>
-            {/* Success Modal with Animation */}
-            {showSuccessModal && (
-                <div
-                    className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
-                    style={{ backgroundColor: "rgba(0,0,0,0.5)", zIndex: 10000 }}
-                >
-                    <div
-                        className="bg-white rounded shadow p-4 text-center"
-                        style={{
-                            maxWidth: "400px",
-                            width: "90%",
-                            transform: isModalVisible ? "scale(1)" : "scale(0.7)",
-                            opacity: isModalVisible ? 1 : 0,
-                            transition: "all 0.3s ease-in-out"
-                        }}
-                    >
-                        <div className="mb-3">
-                            <i className="fa fa-check-circle text-success" style={{ fontSize: "60px" }}></i>
-                        </div>
-                        <h5 className="fw-bold text-capitalize mb-2 text-success">
-                            Success!
-                        </h5>
-                        <p className="small text-muted mb-0">{modalMessage}</p>
-                    </div>
-                </div>
-            )}
-
-            {/* Error Modal */}
-            {showErrorModal && (
-                <div
-                    className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
-                    style={{ backgroundColor: "rgba(0,0,0,0.5)", zIndex: 10000 }}
-                    onClick={() => setShowErrorModal(false)}
-                >
-                    <div
-                        className="bg-white rounded shadow p-4 text-center"
-                        style={{
-                            maxWidth: "400px",
-                            width: "90%",
-                            transform: isModalVisible ? "scale(1)" : "scale(0.7)",
-                            opacity: isModalVisible ? 1 : 0,
-                            transition: "all 0.3s ease-in-out"
-                        }}
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        <div className="mb-3">
-                            <i className="fa fa-times-circle text-danger" style={{ fontSize: "60px" }}></i>
-                        </div>
-                        <h5 className="fw-bold text-capitalize mb-2 text-danger">
-                            Error!
-                        </h5>
-                        <p className="small text-muted mb-3">{modalMessage}</p>
-                        <button
-                            className="btn btn-danger btn-sm"
-                            onClick={() => {
-                                setIsModalVisible(false);
-                                setTimeout(() => setShowErrorModal(false), 300);
-                            }}
-                        >
-                            Close
-                        </button>
-                    </div>
-                </div>
-            )}
+            <Toast 
+                show={showToast}
+                message={toastMessage}
+                type={toastType}
+                onClose={() => setShowToast(false)}
+            />
 
             <div className="p-2">
                 <div className="border row g-0 bg-white rounded shadow-sm p-2 px-2 px-lg-4 mt-1 gap-2">
@@ -355,7 +300,7 @@ const ActivityLog = () => {
                         </select>
                     </div>
                 </div>
-
+                                    
                 {filteredLogs.length > 0 ? (
                     <>
                         <div className="mt-1 bg-white rounded shadow-sm border position-relative" style={{ overflow: "auto" }}>
@@ -504,7 +449,7 @@ const ActivityLog = () => {
                         </div>
                     </>
                 ) : (
-                    <div className="mt-5 bg-white border rounded shadow-sm p-5">
+                    <div className="mt-2 bg-white border rounded shadow-sm p-5">
                         <p className="m-0 text-capitalize text-center small opacity-75">
                             {activityLogs.length === 0 ? "No activity logs yet" : "No logs match the selected filters"}
                         </p>

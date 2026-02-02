@@ -1,5 +1,8 @@
 import Product from "../../models/products.js";
 import mongoose from "mongoose";
+import cloudinary from "../../config/cloudinary.js";
+
+
 
 
 
@@ -25,18 +28,28 @@ export const removeProducts = async(req, res)=>{
     try{
         const id = req.params.id;
 
+
         if (!mongoose.Types.ObjectId.isValid(id)) {
             return res.status(400).json({ message: "Invalid product ID" });
         }
 
-        const result = await Product.deleteOne({ _id: id});
+        // Find the product first to get cloudinaryId
+        const product = await Product.findById(id);
 
-        if (result.deletedCount === 0) {
+        if (!product) {
             return res.status(404).json({ message: "Product not found" });
         }
 
-        // io.emit("productDeleted");
-        res.status(201).json({message : `Succesfully Deleted!`});
+        // Delete image from Cloudinary if exists
+        if (product.cloudinaryId) {
+            await cloudinary.uploader.destroy(product.cloudinaryId);
+        }
+
+        // Delete product from database
+        const result = await Product.deleteOne({ _id: id});
+
+        io.emit("product:deleted", { message: "product deleted."});
+        res.status(201).json({message : `Successfully Deleted!`});
     }catch(error){
         res.status(500).json({ message : error.message});
     }

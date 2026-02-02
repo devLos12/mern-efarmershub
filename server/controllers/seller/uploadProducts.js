@@ -8,6 +8,8 @@ import cloudinary from "../../config/cloudinary.js";
 const storage = multer.memoryStorage();
 export const upload = multer({ storage: storage });
 
+
+
 export const uploadProducts = async(req, res) => {
     try {
         const { id, role } = req.account;

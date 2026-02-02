@@ -6,7 +6,7 @@ const Messages = ({setOpenMessages, setOpenProfile}) =>{
         setOpenMessages(false);
         setOpenProfile(true);
     }
-
+        
     return (
         <div className="container mt-3">
             <div className="row">

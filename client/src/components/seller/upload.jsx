@@ -9,7 +9,7 @@ import imageCompression from "browser-image-compression";
 
 
 const Upload = () => {  
-    const { role } = useContext(appContext);
+    const { role, showNotification } = useContext(appContext);
     const admin = useContext(adminContext);
     const seller = useContext(sellerContext);
 
@@ -18,10 +18,9 @@ const Upload = () => {
     
     const [formData, setFormData] = useState({});
     const [imgPreview, setImgPreview] = useState(null);
-    const [showModal, setShowModal] = useState(false);
-    const [modalMessage, setModalMessage] = useState("");
-    const [modalType, setModalType] = useState("success");
-    const [isModalVisible, setIsModalVisible] = useState(false);
+    
+
+
     const [isUploading, setIsUploading] = useState(false); // ✅ NEW: Loading state
     const fileUploadRef = useRef(null);
 
@@ -32,6 +31,8 @@ const Upload = () => {
 
     const dataPreFill = role === "seller" ? sellerUpload : editProduct;
     const isUpdate = Object.keys(dataPreFill?.data ?? {}).length > 0;
+
+
 
     useEffect(() => {
         if (isUpdate) {
@@ -63,27 +64,9 @@ const Upload = () => {
         }
     }, [formData, isUpdate, dataPreFill]);
 
-    useEffect(() => {
-        if (showModal) {
-            setTimeout(() => setIsModalVisible(true), 10);
-            
-            const timer = setTimeout(() => {
-                setIsModalVisible(false);
-                setTimeout(() => {
-                    setShowModal(false);
-                    if (modalType === "success") {
-                        if (role === "seller") {
-                            setSellerUpload((prev) => ({ ...prev, isShow: false, data: null }));
-                        } else {
-                            setEditProduct((prev) => ({ ...prev, isShow: false, data: null }));
-                        }
-                    }
-                }, 300);
-            }, 2000);
-            
-            return () => clearTimeout(timer);
-        }
-    }, [showModal, modalType, role, setSellerUpload, setEditProduct]);
+
+
+
 
     useLayoutEffect(() => {
         if (isUpdate) {
@@ -190,11 +173,7 @@ const Upload = () => {
         }
     };
 
-    const showNotification = (message, type = "success") => {
-        setModalMessage(message);
-        setModalType(type);
-        setShowModal(true);
-    };
+
 
     const handleForm = async (e) => {
         e.preventDefault();
@@ -232,7 +211,18 @@ const Upload = () => {
             const data = await res.json();
             
             if (!res.ok) throw new Error(data.message);
+            
             setTrigger((prev) => !prev);
+            
+            // ✅ Close form immediately
+            if (role === "seller") {
+                setSellerUpload((prev) => ({ ...prev, isShow: false, data: null }));
+            } else {
+                setEditProduct((prev) => ({ ...prev, isShow: false, data: null }));
+            }
+            
+
+            // ✅ Then show toast
             showNotification(data.message, "success");
             
         } catch (error) {
@@ -245,40 +235,8 @@ const Upload = () => {
     };
 
 
-
     return (
         <>
-        {/* Success/Error Modal with Animation */}
-        {showModal && (
-            <div
-                className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
-                style={{ backgroundColor: "rgba(0,0,0,0.5)", zIndex: 10000 }}
-            >
-                <div
-                    className="bg-white rounded shadow p-4 text-center"
-                    style={{
-                        maxWidth: "400px",
-                        width: "90%",
-                        transform: isModalVisible ? "scale(1)" : "scale(0.7)",
-                        opacity: isModalVisible ? 1 : 0,
-                        transition: "all 0.3s ease-in-out"
-                    }}
-                >
-                    <div className="mb-3">
-                        {modalType === "success" ? (
-                            <i className="bx bx-check-circle text-success" style={{ fontSize: "60px" }}></i>
-                        ) : (
-                            <i className="bx bx-error-circle text-danger" style={{ fontSize: "60px" }}></i>
-                        )}
-                    </div>
-                    <h5 className={`fw-bold text-capitalize mb-2 ${modalType === "success" ? "text-success" : "text-danger"}`}>
-                        {modalType === "success" ? "success!" : "error!"}
-                    </h5>
-                    <p className="small text-muted mb-0">{modalMessage}</p>
-                </div>
-            </div>
-        )}
-
         <div className="container-fluid position-fixed top-0 start-0 end-0 vh-100 bg-darken"
             style={{ zIndex: 99 }}
         >

@@ -5,8 +5,6 @@ import Admin from "../../models/admin.js";
 
 
 
-
-
 const statusApprove = async(req, res) => {
     try{
         const { id , role } = req.account;
@@ -62,11 +60,11 @@ const statusApprove = async(req, res) => {
         }
 
 
-
         await product.save();
 
+        io.emit("product:updateStatus", { message: `product ${newStatus} successfully.`});
         io.emit("to seller", { message : "new notif"});
-        res.status(200).json({ message : `product ${newStatus}`});
+        res.status(200).json({ message : `product ${newStatus} successfully.`});
     }catch(err){
         res.status(500).json({ message : err.message});
     }

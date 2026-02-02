@@ -2,6 +2,9 @@ import QrCode from "../../models/qrCodes.js";
 import multer from "multer";
 import cloudinary from "../../config/cloudinary.js";
 
+
+
+
 // ✅ CHANGE: Use memoryStorage instead of diskStorage
 const storage = multer.memoryStorage();
 
@@ -11,6 +14,9 @@ export const qrCodeFiles = upload.fields([
     { name: 'gcashQr', maxCount: 1 },
     { name: 'mayaQr', maxCount: 1 }
 ]);
+
+
+
 
 export const updateQr = async (req, res) => {
     try {
@@ -118,6 +124,8 @@ export const getQrCodes = async (req, res) => {
     }
 };
 
+
+
 export const deleteQrCode = async (req, res) => {
     try {
         const { type } = req.params; // 'gcash' or 'maya'
@@ -150,6 +158,8 @@ export const deleteQrCode = async (req, res) => {
                 console.error(`Failed to delete ${type} QR from Cloudinary:`, err)
             );
         }
+
+
         return res.status(200).json({ 
             success: true,
             message: `${type} QR code deleted successfully` 

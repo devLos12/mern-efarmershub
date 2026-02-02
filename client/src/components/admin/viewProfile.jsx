@@ -1,8 +1,28 @@
 import React from "react";
 import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import Modal from "../modal.jsx";
+import Toast from "../toastNotif.jsx"; 
+import { useContext } from "react";
+import { appContext } from "../../context/appContext";
+
+
+
 
 const ViewProfile = () => {
+
+    const { 
+        role, 
+        showToast, 
+        toastMessage, 
+        toastType,  
+        setShowToast, 
+        showNotification,
+        setLoadingStateButton  
+
+    } = useContext(appContext);
+
+
     const location = useLocation();
     const navigate = useNavigate();
     const accountId = location?.state?.accountId;
@@ -11,14 +31,12 @@ const ViewProfile = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [showImageModal, setShowImageModal] = useState(false);
-    const [actionLoading, setActionLoading] = useState(false);
-    const [showActionModal, setShowActionModal] = useState(false);
-    const [selectedAction, setSelectedAction] = useState(null);
-    const [showResultModal, setShowResultModal] = useState(false);
-    const [resultMessage, setResultMessage] = useState({ type: '', message: '' });
+
+    
     const [showLicenseModal, setShowLicenseModal] = useState(false);
 
-
+    const [showActionModal, setShowActionModal] = useState(false);
+    const [selectedAction, setSelectedAction] = useState(null);
 
 
     useEffect(() => {
@@ -56,11 +74,12 @@ const ViewProfile = () => {
         setShowActionModal(true);
     };
 
-    
 
     const handleVerificationAction = async () => {
         try {
-            setActionLoading(true);
+
+            setLoadingStateButton(true);
+
             const res = await fetch(
                 `${import.meta.env.VITE_API_URL}/api/updateVerification/${accountId}`,
                 {
@@ -80,45 +99,17 @@ const ViewProfile = () => {
             
             // Close action modal
             setShowActionModal(false);
-            
-            // Show success result modal
-            setResultMessage({
-                type: 'success',
-                message: `${source === 'seller' ? 'Farmer' : 'Rider'} ${selectedAction}d successfully!`
-            });
-            setShowResultModal(true);
-            
-            // Auto close after 2 seconds
-            setTimeout(() => {
-                setShowResultModal(false);
-                setResultMessage({ type: '', message: '' });
-            }, 2000);
-            
             // Refresh profile
             await fetchViewProfile();
+
+            showNotification(data.message, 'success');
             
         } catch (error) {
             console.log("Error: ", error.message);
-            
-            // Close action modal
-            setShowActionModal(false);
-            
-            // Show error result modal
-            setResultMessage({
-                type: 'error',
-                message: error.message || 'Something went wrong'
-            });
-            setShowResultModal(true);
-            
-            // Auto close after 2 seconds
-            setTimeout(() => {
-                setShowResultModal(false);
-                setResultMessage({ type: '', message: '' });
-            }, 2000);
+            showNotification(error.message, 'error');
             
         } finally {
-            setActionLoading(false);
-            setSelectedAction(null);
+            setLoadingStateButton(false);
         }
     };
 
@@ -276,109 +267,6 @@ const ViewProfile = () => {
             )}
         </>
     );
-
-
-    // Result Modal Component
- 
-
-    // Action Modal Component
-    const ActionModal = () => (
-        <>
-            {showActionModal && (
-                <div 
-                    className="modal fade show d-block" 
-                    tabIndex="-1" 
-                    style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}
-                >
-                    <div className="modal-dialog modal-dialog-centered">
-                        <div className="modal-content">
-                            <div className="modal-header border-0">
-                                <h5 className="modal-title fw-bold">
-                                    {selectedAction === 'approve' ? 'Approve' : 'Reject'} {source === 'seller' ? 'Farmer' : 'Rider'}
-                                </h5>
-                                <button 
-                                    type="button" 
-                                    className="btn-close" 
-                                    onClick={() => {
-                                        setShowActionModal(false);
-                                        setSelectedAction(null);
-                                    }}
-                                    disabled={actionLoading}
-                                ></button>
-                            </div>
-                            <div className="modal-body">
-                                <div className="text-center py-3">
-                                    <i className={`fa ${selectedAction === 'approve' ? 'fa-check-circle text-success' : 'fa-times-circle text-danger'} mb-3`} 
-                                    style={{ fontSize: "64px" }}></i>
-                                    <h6 className="mb-3">
-                                        Are you sure you want to {selectedAction} this {source === 'seller' ? 'farmer' : 'rider'}?
-                                    </h6>
-                                    <p className="text-muted mb-0">
-                                        This action will update the verification status of <strong>{getFullName()}</strong>.
-                                    </p>
-                                </div>
-                            </div>
-                            <div className="modal-footer border-0">
-                                <button 
-                                    type="button" 
-                                    className="btn btn-secondary"
-                                    onClick={() => {
-                                        setShowActionModal(false);
-                                        setSelectedAction(null);
-                                    }}
-                                    disabled={actionLoading}
-                                >
-                                    Cancel
-                                </button>
-                                <button 
-                                    type="button" 
-                                    className={`btn ${selectedAction === 'approve' ? 'btn-success' : 'btn-danger'}`}
-                                    onClick={handleVerificationAction}
-                                    disabled={actionLoading}
-                                >
-                                    {actionLoading ? (
-                                        <>
-                                            <span className="spinner-border spinner-border-sm me-2"></span>
-                                            Processing...
-                                        </>
-                                    ) : (
-                                        <>
-                                            <i className={`fa ${selectedAction === 'approve' ? 'fa-check' : 'fa-times'} me-2`}></i>
-                                            {selectedAction === 'approve' ? 'Approve' : 'Reject'}
-                                        </>
-                                    )}
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
-        </>
-    );
-
-    const ResultModal = () => (
-        <>
-            {showResultModal && (
-                <div 
-                    className="modal fade show d-block" 
-                    tabIndex="-1" 
-                    style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}
-                >
-                    <div className="modal-dialog modal-dialog-centered modal-sm">
-                        <div className="modal-content">
-                            <div className="modal-body text-center py-4">
-                                <i className={`fa ${resultMessage.type === 'success' ? 'fa-check-circle text-success' : 'fa-times-circle text-danger'} mb-3`} 
-                                style={{ fontSize: "64px" }}></i>
-                                <h6 className="mb-0">{resultMessage.message}</h6>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
-        </>
-    );
-
-
 
 
 
@@ -728,6 +616,7 @@ const ViewProfile = () => {
     );
 
     return (
+        <>
         <div className="p-3">
             {/* Header */}
             <div className="bg-white rounded shadow-sm border mb-3 p-3">
@@ -791,9 +680,31 @@ const ViewProfile = () => {
             {/* Image Modal */}
             <ImageModal />
             <LicenseModal />
-            <ActionModal />
-            <ResultModal />
         </div>
+
+        {showActionModal && (
+            <Modal
+            textModal={
+                selectedAction === "approve"
+                ? "Do you want to approve this account?"
+                : "Do you want to reject this account?"
+            }
+            loadingText={"processing..."}
+            handleClickYes={handleVerificationAction}
+            handleClickNo={() => setShowActionModal(false)}
+            />
+        )}
+
+        {<Toast
+            show={showToast}
+            message={toastMessage}
+            type={toastType}
+            onClose={()=>setShowToast(false)}
+        />}
+
+
+        </>
+
     );
 };
 

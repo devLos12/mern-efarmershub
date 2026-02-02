@@ -2,7 +2,6 @@ import Order from "../../models/order.js";
 
 
 
-
 export const getOrders = async(req, res) =>{
     try{
         const { id } = await req.account;
@@ -21,7 +20,6 @@ export const getOrders = async(req, res) =>{
         res.status(500).json({message : error.message})
     }
 }
-
 
 
 

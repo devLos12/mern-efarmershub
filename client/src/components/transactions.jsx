@@ -9,11 +9,13 @@ import { sellerContext } from "../context/sellerContext";
 import html2pdf from 'html2pdf.js';
 import DamageLog from "./admin/damageLog";
 import imageCompression from 'browser-image-compression';
+import Toast from "./toastNotif";
+
 
 
 
 const Transactions = () => {
-    const { role } = useContext(appContext);
+    const { role, showNotification, showToast, toastMessage, toastType, setShowToast } = useContext(appContext);
     const admin = useContext(adminContext);
     const seller = useContext(sellerContext);
 
@@ -44,15 +46,6 @@ const Transactions = () => {
     const [itemsPerPage] = useState(10);
 
     
-
-
-    // Modal states - add after existing states
-    const [showSuccessModal, setShowSuccessModal] = useState(false);
-    const [showErrorModal, setShowErrorModal] = useState(false);
-    const [modalMessage, setModalMessage] = useState("");
-    const [isModalVisible, setIsModalVisible] = useState(false);
-
-
 
 
     // Payout Modal states
@@ -396,12 +389,10 @@ const Transactions = () => {
 
 
 
-
-
     const handlePayout = async(id) => {
         if(!imageFile[id]?.preview){
-            setModalMessage("Receipt file is required");
-            setShowErrorModal(true);
+            // ✅ GAMITIN ANG TOAST
+            showNotification("Receipt file is required", "error");
             return;
         }
 
@@ -442,20 +433,20 @@ const Transactions = () => {
             closePayoutModal();
             setRefresh(prev => !prev);
 
-
-            
-            setModalMessage(data.message || "Payout completed successfully!");
-            setShowSuccessModal(true);
-
+            // ✅ GAMITIN ANG TOAST PARA SA SUCCESS
+            showNotification(data.message || "Payout completed successfully!", "success");
 
         } catch (error) {
             console.log("Error: ", error.message);
-            setModalMessage(error.message || "Failed to process payout");
-            setShowErrorModal(true);
+            // ✅ GAMITIN ANG TOAST PARA SA ERROR
+            showNotification(error.message || "Failed to process payout", "error");
         } finally {
             setIsProcessingPayout(false);
         }
     }
+
+
+
 
 
     const handleRefresh = async () => {
@@ -471,12 +462,10 @@ const Transactions = () => {
     };
 
 
-
-
     const handleDelete = async() => {
         if(selectedIds.size === 0) {
-            setModalMessage("No transactions selected yet");
-            setShowErrorModal(true);
+            // ✅ GAMITIN ANG TOAST
+            showNotification("No transactions selected yet", "error");
             return;
         }
 
@@ -511,15 +500,15 @@ const Transactions = () => {
             setSelectedIds(new Set());
             setIsAllSelected(false);
             
-            setModalMessage(data.message || `Successfully deleted ${sendData.length} transaction(s)`);
-            setShowSuccessModal(true);
+            // ✅ GAMITIN ANG TOAST PARA SA SUCCESS
+            showNotification(data.message || `Successfully deleted ${sendData.length} transaction(s)`, "success");
+            
         } catch (error) {
             console.log("Error: ", error.message);
-            setModalMessage(error.message || "Failed to delete transactions");
-            setShowErrorModal(true);
+            // ✅ GAMITIN ANG TOAST PARA SA ERROR
+            showNotification(error.message || "Failed to delete transactions", "error");
         }
     }
-        
 
 
 
@@ -567,26 +556,7 @@ const Transactions = () => {
    
 
 
-
-    // Handle modal animation
-    useEffect(() => {
-        if (showSuccessModal || showErrorModal) {
-            setTimeout(() => setIsModalVisible(true), 10);
-            
-            // Auto-close after 2 seconds for success
-            if (showSuccessModal) {
-                const timer = setTimeout(() => {
-                    setIsModalVisible(false);
-                    setTimeout(() => {
-                        setShowSuccessModal(false);
-                    }, 300);
-                }, 2000);
-                
-                return () => clearTimeout(timer);
-            }
-        }
-    }, [showSuccessModal, showErrorModal]);
-
+   
 
 
 
@@ -603,70 +573,6 @@ const Transactions = () => {
     return (
 
         <>
-
-        {showSuccessModal && (
-            <div
-                className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
-                style={{ backgroundColor: "rgba(0,0,0,0.5)", zIndex: 10002 }}
-            >
-                <div
-                    className="bg-white rounded shadow p-4 text-center"
-                    style={{
-                        maxWidth: "400px",
-                        width: "90%",
-                        transform: isModalVisible ? "scale(1)" : "scale(0.7)",
-                        opacity: isModalVisible ? 1 : 0,
-                        transition: "all 0.3s ease-in-out"
-                    }}
-                >
-                    <div className="mb-3">
-                        <i className="fa fa-check-circle text-success" style={{ fontSize: "60px" }}></i>
-                    </div>
-                    <h5 className="fw-bold text-capitalize mb-2 text-success">
-                        Success!
-                    </h5>
-                    <p className="small text-muted mb-0">{modalMessage}</p>
-                </div>
-            </div>
-        )}
-
-        {/* Error Modal */}
-        {showErrorModal && (
-            <div
-                className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
-                style={{ backgroundColor: "rgba(0,0,0,0.5)", zIndex: 10002 }}
-                onClick={() => setShowErrorModal(false)}
-            >
-                <div
-                    className="bg-white rounded shadow p-4 text-center"
-                    style={{
-                        maxWidth: "400px",
-                        width: "90%",
-                        transform: isModalVisible ? "scale(1)" : "scale(0.7)",
-                        opacity: isModalVisible ? 1 : 0,
-                        transition: "all 0.3s ease-in-out"
-                    }}
-                    onClick={(e) => e.stopPropagation()}
-                >
-                    <div className="mb-3">
-                        <i className="fa fa-times-circle text-danger" style={{ fontSize: "60px" }}></i>
-                    </div>
-                    <h5 className="fw-bold text-capitalize mb-2 text-danger">
-                        Error!
-                    </h5>
-                    <p className="small text-muted mb-3">{modalMessage}</p>
-                    <button
-                        className="btn btn-danger btn-sm"
-                        onClick={() => {
-                            setIsModalVisible(false);
-                            setTimeout(() => setShowErrorModal(false), 300);
-                        }}
-                    >
-                        Close
-                    </button>
-                </div>
-            </div>
-        )}
 
 
         {/* Payout Modal - Role-based rendering */}
@@ -1011,6 +917,12 @@ const Transactions = () => {
             </div>
         )}
 
+        <Toast 
+            show={showToast}
+            message={toastMessage}
+            type={toastType}
+            onClose={() => setShowToast(false)}
+        />
 
         <div className="p-2 mb-5">
             <div className="row g-0 bg-white border rounded p-2 px-2 px-lg-4 mt-1 gap-2">
