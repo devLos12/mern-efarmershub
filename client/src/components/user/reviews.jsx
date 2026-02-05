@@ -3,10 +3,17 @@ import { userContext } from "../../context/userContext";
 import { Form, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useBreakpointHeight } from "../breakpoint";
 import imageCompression from 'browser-image-compression';
+import { appContext } from "../../context/appContext";
+import Toast from "../toastNotif";
+
+
+
 
 
 const Reviews = () => {
+    
     const { userData } = useContext(userContext);
+    const { showToast, toastMessage, toastType, showNotification, setShowToast } = useContext(appContext);
     const [rating, setRating] = useState(0);
     const [hover, setHover] = useState(0);
     const [imgPreview, setImgPreview] = useState(null);
@@ -18,10 +25,6 @@ const Reviews = () => {
     const [isDisabled, setIsDisabled] = useState(true);
     const [isCompressing, setIsCompressing] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [showModal, setShowModal] = useState(false);
-    const [modalMessage, setModalMessage] = useState("");
-    const [modalType, setModalType] = useState("success");
-    const [isModalVisible, setIsModalVisible] = useState(false);
     const navigate = useNavigate();
 
 
@@ -54,6 +57,11 @@ const Reviews = () => {
         if(!res.ok) throw new Error(data.message);
 
         showNotification(data.message, "success");
+
+        // Navigate after short delay
+        setTimeout(() => {
+            navigate(-1);
+        }, 1500);
                      
       }catch(err){
         console.log("Error: ", err.message);
@@ -61,30 +69,6 @@ const Reviews = () => {
         setIsSubmitting(false);
       }
     }
-
-    const showNotification = (message, type = "success") => {
-        setModalMessage(message);
-        setModalType(type);
-        setShowModal(true);
-    };
-
-    useEffect(() => {
-        if (showModal) {
-            setTimeout(() => setIsModalVisible(true), 10);
-            
-            const timer = setTimeout(() => {
-                setIsModalVisible(false);
-                setTimeout(() => {
-                    setShowModal(false);
-                    if (modalType === "success") {
-                        navigate(-1, {replace : true});
-                    }
-                }, 300);
-            }, 2000);
-            
-            return () => clearTimeout(timer);
-        }
-    }, [showModal, modalType, navigate]);
 
     const handleComment = (e) => {
       const { name, value } = e.target
@@ -155,16 +139,35 @@ const Reviews = () => {
     },[form, rating]);
 
 
+   
     return (
+        <>
         <div className=" d-flex min-vh-100 bg">
           <div className="container bg-white">
-            <div className="row justify-content-center mt-5">
+            <div className="row py-2 mt-5 justify-content-center">
               <div className="col-12 col-lg-10">
-                <p className="m-0 text-capitalize fs-4 fw-bold text-success ">review product</p>
+                {/* Back Button Header */}
+                <div className="d-flex align-items-center gap-3 mb-3">
+                  <button 
+                    className="btn btn-outline-success"
+                    onClick={() => navigate(-1)}
+                    disabled={isSubmitting}
+                    style={{
+                      opacity: isSubmitting ? 0.5 : 1,
+                      cursor: isSubmitting ? 'not-allowed' : 'pointer'
+                    }}
+                  >
+                    <i className="fa fa-arrow-left"></i>
+                  </button>
+                  <div>
+                    <p className="m-0 fs-5 fw-bold text-capitalize text-success">review product</p>
+                    <p className="m-0 small text-muted">Share your experience with this product</p>
+                  </div>
+                </div>
               </div>
             </div>
 
-            <div className="row justify-content-center mt-3 mb-5">
+            <div className="row justify-content-center mb-5">
               <div className="col-12 col-md-6 col-lg-5 col-xl-4 ">
                 <div className="d-flex flex-column justify-content-between h-100 p-3 bg-beige">
                   <img src={data.imageFile} 
@@ -306,37 +309,6 @@ const Reviews = () => {
           </div>
         </div>
 
-        {/* Success/Error Modal - Same as Checkout */}
-        {showModal && (
-            <div
-                className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
-                style={{ backgroundColor: "rgba(0,0,0,0.5)", zIndex: 10000 }}
-            >
-                <div
-                    className="bg-white rounded shadow p-4 text-center"
-                    style={{
-                        maxWidth: "400px",
-                        width: "90%",
-                        transform: isModalVisible ? "scale(1)" : "scale(0.7)",
-                        opacity: isModalVisible ? 1 : 0,
-                        transition: "all 0.3s ease-in-out"
-                    }}
-                >
-                    <div className="mb-3">
-                        {modalType === "success" ? (
-                            <i className="bx bx-check-circle text-success" style={{ fontSize: "60px" }}></i>
-                        ) : (
-                            <i className="bx bx-error-circle text-danger" style={{ fontSize: "60px" }}></i>
-                        )}
-                    </div>
-                    <h5 className={`fw-bold text-capitalize mb-2 ${modalType === "success" ? "text-success" : "text-danger"}`}>
-                        {modalType === "success" ? "success!" : "error!"}
-                    </h5>
-                    <p className="small text-muted mb-0">{modalMessage}</p>
-                </div>
-            </div>
-        )}
-
         {/* Transparent Overlay to prevent clicks while processing */}
         {isSubmitting && (
             <div
@@ -344,7 +316,15 @@ const Reviews = () => {
                 style={{ zIndex: 9999, cursor: "not-allowed" }}
             />
         )}
+
+        <Toast 
+            show={showToast}
+            message={toastMessage}
+            type={toastType}
+            onClose={() => setShowToast(false)}
+        />
       </div>
+      </>
     )
 }
 

@@ -1,6 +1,11 @@
 import { useContext, useEffect, useState, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { appContext } from "../context/appContext.jsx";
+import Toast from "./toastNotif.jsx";
+import imageCompression from "browser-image-compression";
+
+
+
 
 // ViewModal Component
 const ViewModal = ({ isOpen, onClose, imageSrc, title }) => {
@@ -39,9 +44,16 @@ const ViewModal = ({ isOpen, onClose, imageSrc, title }) => {
 
 
 
-
 const OrderDetails = () => {
-    const { role } = useContext(appContext);
+    const { role, 
+
+            showToast,
+            toastMessage,
+            toastType,
+            showNotification,
+            setShowToast,
+
+    } = useContext(appContext);
     const location = useLocation();
     const orderId = location.state?.orderId || null;
     const navigate = useNavigate();
@@ -50,8 +62,7 @@ const OrderDetails = () => {
     const [riders, setRiders] = useState([]);
     const [selectedRider, setSelectedRider] = useState({ id: "", name: "" });
     const [isUpdating, setIsUpdating] = useState(false);
-    const [showSuccessModal, setShowSuccessModal] = useState(false);
-    const [successMessage, setSuccessMessage] = useState("");
+
     const [viewProofModal, setViewProofModal] = useState(false);
     const [viewQRModal, setViewQRModal] = useState(false);
     const [refundReceipt, setRefundReceipt] = useState(null);
@@ -67,7 +78,6 @@ const OrderDetails = () => {
     const cancelFileInputRef = useRef(null); // NEW - add sa imports: import { useRef }
 
 
-    const [isModalVisible, setIsModalVisible] = useState(false);
 
 
 
@@ -89,24 +99,43 @@ const OrderDetails = () => {
     const [isSubmittingReview, setIsSubmittingReview] = useState(false);
 
     
-    const [showErrorModal, setShowErrorModal] = useState(false);
-    const [errorMessage, setErrorMessage] = useState("");
-
-
-
-
-
-
-
-
-
+    const [isCompressing, setIsCompressing] = useState(false);
     
+
+
+
+
     useEffect(() => {
         if (!orderId) {
             navigate("/", { replace: true });
         }
     }, [orderId, navigate]);
 
+
+
+    // Image compression helper function
+    const compressImage = async (file) => {
+        setIsCompressing(true);
+        const options = {
+            maxSizeMB: 0.5,
+            maxWidthOrHeight: 1024,
+            useWebWorker: true,
+            fileType: file.type
+        };
+        
+        try {
+            const compressedFile = await imageCompression(file, options);
+            return compressedFile;
+        } catch (error) {
+            console.log("Compression error:", error);
+            return file;
+        } finally {
+            setIsCompressing(false);
+        }
+    };
+
+
+    
 
 
     // Helper function: Check if order can show replacement section
@@ -132,11 +161,16 @@ const OrderDetails = () => {
     };
 
 
+
+    
+
+
+
+
     // Update the condition to show different button based on replacement status
     const hasReplacementRequest = orderData?.orderItems?.some(
         item => item.replacement?.isRequested === true
     );
-
 
 
 
@@ -268,16 +302,25 @@ const OrderDetails = () => {
 
 
     // Handle image upload for replacement
-    const handleReplacementImageUpload = (itemId, files) => {
+    const handleReplacementImageUpload = async (itemId, files) => {
         const fileArray = Array.from(files);
+        
+        // Compress all images
+        const compressedFiles = await Promise.all(
+            fileArray.map(file => compressImage(file))
+        );
+        
         setReplacementData(prev => ({
             ...prev,
             [itemId]: {
                 ...prev[itemId],
-                images: [...(prev[itemId].images || []), ...fileArray]
+                images: [...(prev[itemId].images || []), ...compressedFiles]
             }
         }));
     };
+
+
+
 
 
     // Remove replacement image
@@ -335,9 +378,10 @@ const OrderDetails = () => {
             
             // Success
             setShowReplacementModal(false);
-            setSuccessMessage("Replacement request submitted successfully!");
-            setShowSuccessModal(true);
-            
+            alert("Replacement request submitted successfully!");
+
+
+
             // Reset states
             setSelectedItemsForReplacement([]);
             setReplacementData({});
@@ -359,7 +403,6 @@ const OrderDetails = () => {
     const handleSubmitReplacementReview = async () => {
 
         
-
         // Validate that all items have decisions
         for (let itemId of selectedItemsForReplacement) {
             if (!replacementReview[itemId]?.decision) {
@@ -402,10 +445,12 @@ const OrderDetails = () => {
             if (!res.ok) throw new Error(data.message);
             
             // Success
+   
+
             setShowReplacementModal(false);
-            setSuccessMessage("Replacement review submitted successfully!");
-            setShowSuccessModal(true);
-            
+            showNotification("Replacement request submitted successfully!", "success");
+
+
             // Reset states
             setReplacementReview({});
             
@@ -414,8 +459,7 @@ const OrderDetails = () => {
             
         } catch (error) {
             console.log(error.message);
-            setErrorMessage("Failed to submit review: " + error.message);
-            setShowErrorModal(true);
+            showNotification("Failed to submit review: " + error.message, "error");
         } finally {
             setIsSubmittingReview(false);
         }
@@ -534,8 +578,9 @@ const OrderDetails = () => {
             if (!res.ok) throw new Error(data.message);
 
             // Show success modal
-            setSuccessMessage(`Replacement status updated to "${getReplacementStatusLabel(newStatus)}"`);
-            setShowSuccessModal(true);
+
+            showNotification(`Replacement status updated to "${getReplacementStatusLabel(newStatus)}"`, "success");
+
 
             // Refresh order details
             fetchOrderDetails();
@@ -567,20 +612,27 @@ const OrderDetails = () => {
         setShowCancelModal(true);
     };
 
+
+
+
     // NEW - Handle image file change with preview
-    const handleCancelImageChange = (e) => {
+    const handleCancelImageChange = async (e) => {
         const file = e.target.files[0];
         if (file) {
-            setCancelProofImage(file);
+            // Compress image muna
+            const compressedFile = await compressImage(file);
+            setCancelProofImage(compressedFile);
             
             // Create preview URL
             const reader = new FileReader();
             reader.onloadend = () => {
                 setCancelImagePreview(reader.result);
             };
-            reader.readAsDataURL(file);
+            reader.readAsDataURL(compressedFile);
         }
     };
+
+
 
     // NEW - Handle remove image
     const handleRemoveCancelImage = () => {
@@ -633,19 +685,20 @@ const OrderDetails = () => {
             if (!res.ok) throw new Error(data.message);
 
             // Close modal and show success
-            setShowCancelModal(false);
-            setSuccessMessage(data.message);
-            setShowSuccessModal(true);
 
             // Clear states
             handleRemoveCancelImage();
             
+            setShowCancelModal(false);
+            showNotification(data.message, "success");
+
+
             // Refresh order details
             fetchOrderDetails();
 
         } catch (error) {
             console.log(error.message);
-            alert("Failed to process action: " + error.message);
+            showNotification("Failed to process action: " + error.message, "error");
         } finally {
             setIsSubmittingCancel(false);
         }
@@ -683,22 +736,6 @@ const OrderDetails = () => {
 
 
 
-    // Handle success modal animation
-    useEffect(() => {
-        if (showSuccessModal) {
-            setTimeout(() => setIsModalVisible(true), 10);
-            
-            // Auto-close after 2 seconds
-            const timer = setTimeout(() => {
-                setIsModalVisible(false);
-                setTimeout(() => {
-                    setShowSuccessModal(false);
-                }, 300);
-            }, 2000);
-            
-            return () => clearTimeout(timer);
-        }
-    }, [showSuccessModal]);
 
 
 
@@ -770,15 +807,14 @@ const OrderDetails = () => {
             if (!res.ok) throw new Error(data.message);
 
             // Show success modal
-            setSuccessMessage(`Order status successfully updated to "${getStatusLabel(newStatus)}"`);
-            setShowSuccessModal(true);
+            showNotification(`Order status successfully updated to "${getStatusLabel(newStatus)}"`, "success");
 
             // Refresh order details to get updated data
             fetchOrderDetails();
 
         } catch (error) {
             console.log(error.message);
-            alert("Failed to update status: " + error.message);
+            showNotification("Failed to update status: " + error.message, "error");
         } finally {
             setIsUpdating(false);
         }
@@ -787,7 +823,6 @@ const OrderDetails = () => {
 
     const handleRefundStatusUpdate = async (newRefundStatus) => {
         setIsUpdating(true);   
-
 
         try {
             const formData = new FormData();
@@ -809,9 +844,7 @@ const OrderDetails = () => {
             if (!res.ok) throw new Error(data.message);
 
             // Show success modal
-            setSuccessMessage(`Refund status successfully updated to "${getRefundStatusLabel(newRefundStatus)}"`);
-            setShowSuccessModal(true);
-
+            showNotification(`Refund status successfully updated to "${getRefundStatusLabel(newRefundStatus)}"`, "success");
             // Clear receipt file
             setRefundReceipt(null);
 
@@ -820,7 +853,7 @@ const OrderDetails = () => {
             
         } catch (error) {
             console.log(error.message);
-            alert("Failed to update refund status: " + error.message);
+            showNotification("Failed to update refund status: " + error.message, "error");
         } finally {
             setIsUpdating(false);
         }
@@ -958,63 +991,13 @@ const OrderDetails = () => {
 
     return (
         <>
-            {/* Success Modal with Animation */}
-            {showSuccessModal && (
-                <div
-                    className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
-                    style={{ backgroundColor: "rgba(0,0,0,0.5)", zIndex: 10000 }}
-                >
-                    <div
-                        className="bg-white rounded shadow p-4 text-center"
-                        style={{
-                            maxWidth: "400px",
-                            width: "90%",
-                            transform: isModalVisible ? "scale(1)" : "scale(0.7)",
-                            opacity: isModalVisible ? 1 : 0,
-                            transition: "all 0.3s ease-in-out"
-                        }}
-                    >
-                        <div className="mb-3">
-                            <i className="fa fa-check-circle text-success" style={{ fontSize: "60px" }}></i>
-                        </div>
-                        <h5 className="fw-bold text-capitalize mb-2 text-success">
-                            Success!
-                        </h5>
-                        <p className="small text-muted mb-0">{successMessage}</p>
-                    </div>
-                </div>
-            )}
 
-            {showErrorModal && (
-                <div
-                    className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
-                    style={{ backgroundColor: "rgba(0,0,0,0.5)", zIndex: 10000 }}
-                    onClick={() => setShowErrorModal(false)}
-                >
-                    <div
-                        className="bg-white rounded shadow p-4 text-center"
-                        style={{
-                            maxWidth: "400px",
-                            width: "90%"
-                        }}
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        <div className="mb-3">
-                            <i className="fa fa-times-circle text-danger" style={{ fontSize: "60px" }}></i>
-                        </div>
-                        <h5 className="fw-bold text-capitalize mb-2 text-danger">
-                            Error!
-                        </h5>
-                        <p className="small text-muted mb-3">{errorMessage}</p>
-                        <button
-                            className="btn btn-danger btn-sm"
-                            onClick={() => setShowErrorModal(false)}
-                        >
-                            Close
-                        </button>
-                    </div>
-                </div>
-            )}
+            <Toast 
+                show={showToast}
+                message={toastMessage}
+                type={toastType}
+                onClose={() => setShowToast(false)}
+            />
 
 
             {/* Proof of Payment Modal */}

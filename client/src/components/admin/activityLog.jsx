@@ -300,6 +300,7 @@ const ActivityLog = () => {
                         </select>
                     </div>
                 </div>
+                 
                                     
                 {filteredLogs.length > 0 ? (
                     <>

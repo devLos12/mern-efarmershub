@@ -48,7 +48,7 @@ export const markAsRead = async(req, res) => {
         const { role, id } = req.account;
         const chatId = req.params.id;
 
-
+        
         const chat = await Chat.findById(chatId);
         if (!chat) return res.status(404).json({ message: "Chat not found" });
         

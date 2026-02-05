@@ -1,13 +1,13 @@
 import User from "../../models/user.js";
 
+
 const postAddress = async(req, res) => {
 
     try{
         const {userId, firstname, lastname,
             email, contact, province, city, barangay , detailAddress, zipCode
          } = req.body;
-
-        
+         
         const user = await User.findOne({_id : userId});
 
         if(!user) {

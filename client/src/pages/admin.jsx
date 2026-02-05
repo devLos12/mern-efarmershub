@@ -204,10 +204,14 @@ const Admin = ({setAdminAuth})=>{
 
         
         {/*delete order with api call */}                 
-        {deleteOrderModal?.isShow && <Modal textModal={text}
+        {deleteOrderModal?.isShow && <Modal 
+        loadingText="deleting..."
+        textModal={text}
         handleClickYes={()=> {
 
             const id = deleteOrderModal?.id;
+
+            setLoadingStateButton(true);
 
             fetch(`${import.meta.env.VITE_API_URL}/api/${"deleteAdminOrder"}/${id}`,{
                 method: "DELETE",
@@ -220,8 +224,15 @@ const Admin = ({setAdminAuth})=>{
                     order._id !== id
                 ))
                 setDeleteOrderModal({ isShow: false });
+                showNotification(data.message, 'success');
             })
-            .catch((err) => console.log("Error: ", err.message))
+            .catch((err) => {
+                console.log("Error: ", err.message)
+                showNotification(err.message, 'error');
+            })
+            .finally(() => {
+                setLoadingStateButton(false);
+            })
 
         }}
         handleClickNo={()=> setDeleteOrderModal((prev) => !prev.isShow)}

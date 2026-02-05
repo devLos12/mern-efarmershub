@@ -125,6 +125,9 @@ export const checkOut = async(req, res) => {
         const {firstname, lastname, contact, email, province, city, barangay, detailAddress, zipCode} = 
         billingAddress;
 
+        
+
+
         let imageFile = null;
         let cloudinaryId = null;
 
@@ -237,11 +240,12 @@ export const checkOut = async(req, res) => {
             await createNotification(userId, "user", newOrder._id);
             io.emit("user notif", { message: "new notif"});
             io.emit('new order');
-
-            return res.status(200).json({ message: "placed order succesfully!"});
+        
         }
 
+        
+        return res.status(200).json({ message: "placed order succesfully!"});
     } catch(err) {
-        res.status(500).json({ message: err.message});
+        return res.status(500).json({ message: err.message});
     }
 }

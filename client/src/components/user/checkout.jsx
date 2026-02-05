@@ -4,9 +4,21 @@ import ImageFullScreen from "./imgfullscreen.jsx";
 import OnlinePayment from "./onlinepayment.jsx";
 import { userContext } from "../../context/userContext.jsx";
 import { useLayoutEffect } from "react";
+import { appContext } from "../../context/appContext.jsx";
+import Toast from "../toastNotif.jsx";
+
+
 
 const Checkout = () =>{
-    const {viewQr, setOpenCart} = useContext(userContext);
+
+    const {  showToast,
+            toastMessage,
+            toastType,
+            showNotification,
+            setShowToast, } = useContext(appContext);
+
+
+    const {viewQr, setOpenCart, cart, setCart, setCartBadge} = useContext(userContext);
     const [enableSubmit,  setEnableSubmit] = useState(false);
     const {checkoutForm, setCheckoutForm} = useContext(userContext);
     const [billingAddress, setBillingAddress] = useState({
@@ -20,10 +32,8 @@ const Checkout = () =>{
     const navigate = useNavigate();
     const location = useLocation();
     const [isComplete, setIsComplete] = useState(false);
-    const [showModal, setShowModal] = useState(false);
-    const [modalMessage, setModalMessage] = useState("");
-    const [modalType, setModalType] = useState("success");
-    const [isModalVisible, setIsModalVisible] = useState(false);
+    const [prevCart, setPrevCart] = useState([]);
+
 
 
     useEffect(()=>{
@@ -40,29 +50,6 @@ const Checkout = () =>{
             }))
         }   
     },[location]);
-
-
-    useEffect(() => {
-        if (showModal) {
-            setTimeout(() => setIsModalVisible(true), 10);
-            
-            const timer = setTimeout(() => {
-                setIsModalVisible(false);
-                setTimeout(() => {
-                    setShowModal(false);
-                    if (modalType === "success") {
-                        if(location?.state.source === "cart"){
-                            placeOrderAndclearCart();
-                            setOpenCart((prev) => !prev);
-                        }
-                        navigate("/");
-                    }
-                }, 300);
-            }, 2000);
-            
-            return () => clearTimeout(timer);
-        }
-    }, [showModal, modalType, location, navigate, setOpenCart]);
 
     
     useLayoutEffect(() => {
@@ -133,15 +120,11 @@ const Checkout = () =>{
         });
     },[]);
 
-    const showNotification = (message, type = "success") => {
-        setModalMessage(message);
-        setModalType(type);
-        setShowModal(true);
-    };
-
     useEffect(() => {
         console.log("Checkout Form Data: ", checkoutForm.items);
     }, [checkoutForm]);
+
+
 
 
     const handleForm = async(e)=>{
@@ -170,17 +153,39 @@ const Checkout = () =>{
             const data = await res.json();
             if(!res.ok) throw new Error(data.message);
 
-            showNotification(data.message, "success");
+            
+            // Success - clear cart if from cart and navigate home
+            if(location?.state.source === "cart"){
+                placeOrderAndclearCart();
+                setOpenCart((prev) => !prev);
+            }
+
+            showNotification(data.message, 'success');
+
+            // Navigate after short delay
+            setTimeout(() => {
+                navigate(-1);
+            }, 1500);
             
         }catch(err){
             setSubmitting(false); // Stop loading on error
-            showNotification(err.message, "error");
             console.log("Error: ", err.message);
+            showNotification(err.message, 'error'); 
+
         }
     }
 
 
     const placeOrderAndclearCart = async()=>{
+        setPrevCart([...cart]);
+
+        setCartBadge((prev) => ({
+                ...prev, show: false, number: 0
+            }));
+        setCart([]);
+        
+
+
         try{
             const res = await fetch(`${import.meta.env.VITE_API_URL}/api/placeOrderclearCart`, {
                 method : "DELETE",
@@ -193,8 +198,11 @@ const Checkout = () =>{
             console.log(data.message);
         }catch(error){
             console.log(error.message);
+            setCart(setPrevCart);
         }
     }
+
+    
 
     const handleChange = (e) => {
 
@@ -429,36 +437,6 @@ const Checkout = () =>{
             </div>
         </div>
         {viewQr && <ImageFullScreen/>}
-        {/* Success/Error Modal with Animation */}
-        {showModal && (
-            <div
-                className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
-                style={{ backgroundColor: "rgba(0,0,0,0.5)", zIndex: 10000 }}
-            >
-                <div
-                    className="bg-white rounded shadow p-4 text-center"
-                    style={{
-                        maxWidth: "400px",
-                        width: "90%",
-                        transform: isModalVisible ? "scale(1)" : "scale(0.7)",
-                        opacity: isModalVisible ? 1 : 0,
-                        transition: "all 0.3s ease-in-out"
-                    }}
-                >
-                    <div className="mb-3">
-                        {modalType === "success" ? (
-                            <i className="bx bx-check-circle text-success" style={{ fontSize: "60px" }}></i>
-                        ) : (
-                            <i className="bx bx-error-circle text-danger" style={{ fontSize: "60px" }}></i>
-                        )}
-                    </div>
-                    <h5 className={`fw-bold text-capitalize mb-2 ${modalType === "success" ? "text-success" : "text-danger"}`}>
-                        {modalType === "success" ? "success!" : "error!"}
-                    </h5>
-                    <p className="small text-muted mb-0">{modalMessage}</p>
-                </div>
-            </div>
-        )}
 
         {/* Transparent Overlay to prevent clicks while processing */}
         {submitting && (
@@ -467,6 +445,14 @@ const Checkout = () =>{
                 style={{ zIndex: 9999, cursor: "not-allowed" }}
             />
         )}
+
+        
+        <Toast 
+            show={showToast}
+            message={toastMessage}
+            type={toastType}
+            onClose={() => setShowToast(false)}
+        />
        
         </>                        
     )

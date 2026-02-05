@@ -22,11 +22,43 @@ const AddAnnouncement = () => {
 
     const [imagePreview, setImagePreview] = useState(null);
     const [imagePreviuos, setImagePreviuos] = useState(null);
-    const [isUploading, setIsUploading] = useState(false); // ✅ NEW: Loading state
+    const [isUploading, setIsUploading] = useState(false);
     const height = useBreakpointHeight();
     const handleRefFile = useRef();
 
     const isUpdate = Object.keys(addAnnouncement?.data ?? {}).length > 0;
+
+
+    const hasChanges = () => {
+        if (!isUpdate) return true; // For add mode, always allow submit
+        
+        const original = addAnnouncement?.data;
+        
+        return (
+            formData.cropName !== original?.cropName ||
+            formData.title !== original?.title ||
+            formData.description !== original?.description ||
+            formData.startDate?.split('T')[0] !== original?.startDate?.split('T')[0] ||
+            formData.endDate?.split('T')[0] !== original?.endDate?.split('T')[0] ||
+            imagePreview !== null // New image uploaded
+        );
+    };
+
+
+    // ✅ Get today's date in YYYY-MM-DD format
+    const getTodayDate = () => {
+        const today = new Date();
+        return today.toISOString().split('T')[0];
+    };
+
+    // ✅ Get minimum end date (start date + 1 day)
+    const getMinEndDate = () => {
+        if (!formData.startDate) return getTodayDate();
+        
+        const startDate = new Date(formData.startDate);
+        startDate.setDate(startDate.getDate() + 1);
+        return startDate.toISOString().split('T')[0];
+    };
 
 
     useEffect(() => {
@@ -49,6 +81,8 @@ const AddAnnouncement = () => {
   
     const handleChange = (e) => {
         const { name, value } = e.target;
+        
+    
         setFormData(prev => ({
             ...prev,
             [name]: value
@@ -56,7 +90,43 @@ const AddAnnouncement = () => {
     };
 
 
-
+    const handleDateBlur = (e) => {
+        const { name, value } = e.target;
+        
+        if (!value) return; // Skip if empty
+        
+        // ✅ Validate start date
+        if (name === "startDate") {
+            const selectedDate = new Date(value);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            if (selectedDate < today) {
+                showNotification("Start date cannot be in the past", "error");
+                setFormData(prev => ({
+                    ...prev,
+                    startDate: ""
+                }));
+                return;
+            }
+        }
+        
+        // ✅ Validate end date
+        if (name === "endDate" && formData.startDate) {
+            const endDate = new Date(value);
+            const startDate = new Date(formData.startDate);
+            startDate.setDate(startDate.getDate() + 1);
+            
+            if (endDate < startDate) {
+                showNotification("End date must be at least 1 day after start date", "error");
+                setFormData(prev => ({
+                    ...prev,
+                    endDate: ""
+                }));
+                return;
+            }
+        }
+    };
 
 
     const handleFileChange = async (e) => {
@@ -64,22 +134,19 @@ const AddAnnouncement = () => {
         if (!file) return;
 
         try {   
-            // Compression options
             const options = {
-                maxSizeMB: 0.5,              // max 1MB
-                maxWidthOrHeight: 1920,    // max dimension
-                useWebWorker: true         // faster
+                maxSizeMB: 0.5,
+                maxWidthOrHeight: 1920,
+                useWebWorker: true
             };
-            // Compress the image
+            
             const compressedFile = await imageCompression(file, options);
             
-            // Update form data with compressed file
             setFormData(prev => ({
                 ...prev,
                 imageFile: compressedFile
             }));
             
-            // Create preview
             const reader = new FileReader();
             reader.onloadend = () => {
                 setFormData((prev) => ({
@@ -88,16 +155,13 @@ const AddAnnouncement = () => {
                 }))
                 setImagePreview(reader.result);
             };
-            reader.readAsDataURL(compressedFile); // Use compressed file for preview
+            reader.readAsDataURL(compressedFile);
             
         } catch (error) {
             console.error('Compression error:', error);
-            alert('Failed to compress image. Please try again.');
+            showNotification('Failed to compress image. Please try again.', 'error');
         }
     };
-
-
-
 
 
     const handleFileRemove = () => {
@@ -115,10 +179,38 @@ const AddAnnouncement = () => {
         }
     }
 
+
+    // ✅ Check if form is valid
+    const isFormValid = () => {
+        const { cropName, title, description, startDate, endDate } = formData;
+        
+        // Check if all required fields are filled
+        const allFieldsFilled = (
+            cropName?.trim() !== "" &&
+            title?.trim() !== "" &&
+            description?.trim() !== "" &&
+            startDate !== "" &&
+            endDate !== ""
+        );
+        
+        // For add mode: all fields + image required
+        if (!isUpdate) {
+            return allFieldsFilled && imagePreview !== null;
+        }
+        
+        // For update mode: all fields required + must have changes + must have image (existing or new)
+        return (
+            allFieldsFilled &&
+            hasChanges() && // ✅ Must have changes to enable save
+            (imagePreview !== null || imagePreviuos !== null)
+        );
+    };
+
+
+    
     const handleSubmit = async (e) => {
         e.preventDefault();
         
-        // ✅ Start loading
         setIsUploading(true);
 
         const submitData = new FormData();
@@ -149,15 +241,12 @@ const AddAnnouncement = () => {
             const data = await res.json();
 
             if(!res.ok) {
-                // ✅ GAMITIN ANG TOAST PARA SA ERROR
                 showNotification(data.message || 'Failed to save announcement', 'error');
                 return;
             }
 
-            // ✅ GAMITIN ANG TOAST PARA SA SUCCESS
             showNotification(data.message || (isUpdate ? 'Announcement updated successfully!' : 'Announcement created successfully!'), 'success');
             
-            // ✅ CLOSE MODAL AT REFRESH
             setAddAnnouncement((prev) => ({
                 ...prev, 
                 trigger: !prev.trigger,
@@ -166,10 +255,8 @@ const AddAnnouncement = () => {
                         
         } catch (error) {
             console.error("Error:", error.message);
-            // ✅ GAMITIN ANG TOAST PARA SA ERROR
             showNotification(error.message, 'error');
         } finally {
-            // ✅ Stop loading
             setIsUploading(false);
         }
     };
@@ -212,7 +299,7 @@ const AddAnnouncement = () => {
                                     <div className="mb-4">
                                         <label className="form-label text-capitalize fw-semibold text-success small">
                                             <i className="bx bx-leaf me-1"></i>
-                                            crop name
+                                            crop name <span className="text-danger">*</span>
                                         </label>
                                         <input 
                                             type="text"  
@@ -230,7 +317,7 @@ const AddAnnouncement = () => {
                                     <div className="mb-4">
                                         <label className="form-label text-capitalize fw-semibold text-success small">
                                             <i className="bx bx-text me-1"></i>
-                                            title
+                                            title <span className="text-danger">*</span>
                                         </label>
                                         <input 
                                             type="text"  
@@ -248,7 +335,7 @@ const AddAnnouncement = () => {
                                     <div className="mb-4">
                                         <label className="form-label text-capitalize fw-semibold text-success small">
                                             <i className="bx bx-detail me-1"></i>
-                                            description
+                                            description <span className="text-danger">*</span>
                                         </label>
                                         <textarea 
                                             className="form-control border-success border-opacity-25"
@@ -270,7 +357,7 @@ const AddAnnouncement = () => {
                                         <div className="col-md-6 mb-3 mb-md-0">
                                             <label className="form-label text-capitalize fw-semibold text-success small">
                                                 <i className="bx bx-calendar me-1"></i>
-                                                start date
+                                                start date <span className="text-danger">*</span>
                                             </label>
                                             <input 
                                                 type="date"  
@@ -279,6 +366,8 @@ const AddAnnouncement = () => {
                                                 name="startDate"
                                                 value={formData.startDate ? formData?.startDate.split('T')[0] : ""}
                                                 onChange={handleChange}
+                                                onBlur={handleDateBlur}
+                                                min={getTodayDate()} // ✅ Minimum today
                                                 disabled={isUploading}
                                                 required
                                             />
@@ -286,7 +375,7 @@ const AddAnnouncement = () => {
                                         <div className="col-md-6">
                                             <label className="form-label text-capitalize fw-semibold text-success small">
                                                 <i className="bx bx-calendar-check me-1"></i>
-                                                end date
+                                                end date <span className="text-danger">*</span>
                                             </label>
                                             <input 
                                                 type="date"  
@@ -295,8 +384,9 @@ const AddAnnouncement = () => {
                                                 name="endDate"
                                                 value={formData.endDate ? formData?.endDate.split('T')[0] : ""}
                                                 onChange={handleChange}
-                                                min={formData.startDate}
-                                                disabled={isUploading}
+                                                onBlur={handleDateBlur}
+                                                min={getMinEndDate()} // ✅ Minimum start date + 1 day
+                                                disabled={isUploading || !formData.startDate} // ✅ Disabled until start date is selected
                                                 required
                                             />
                                         </div>
@@ -305,7 +395,7 @@ const AddAnnouncement = () => {
                                     <div className="mb-3">
                                         <label className="form-label text-capitalize fw-semibold text-success small">
                                             <i className="bx bx-image me-1"></i>
-                                            image banner
+                                            image banner <span className="text-danger">*</span>
                                         </label>
                                         <div className="input-group">
                                             <input 
@@ -336,20 +426,15 @@ const AddAnnouncement = () => {
                                                     )}
                                                     <img 
                                                         src={(() => {
-                                                            // If there's a new preview, use it
                                                             if (imagePreview) return imagePreview;
                                                             
-                                                            // For update mode with existing image
                                                             if (isUpdate && formData.imageFile) {
-                                                                // Check if it's a Cloudinary URL (starts with https)
                                                                 if (typeof formData.imageFile === 'string' && formData.imageFile.startsWith("https")) {
                                                                     return formData.imageFile;
                                                                 }
-                                                                // Otherwise it's a local filename - use Cloudinary URL format
-                                                                return formData.imageFile; // Direct Cloudinary URL na
+                                                                return formData.imageFile;
                                                             }
                                                             
-                                                            // Fallback
                                                             return imagePreview || "";
                                                         })()}
                                                                                                 
@@ -380,7 +465,7 @@ const AddAnnouncement = () => {
                                         type="button"
                                         className="btn btn-success px-4 text-capitalize"
                                         onClick={handleSubmit}
-                                        disabled={isUploading}
+                                        disabled={isUploading || !isFormValid()} // ✅ Disabled if uploading OR form invalid
                                     >
                                         {isUploading ? (
                                             <>

@@ -74,7 +74,6 @@ const Cart = () => {
 
     const handleQuantity = async(operator, prodId) =>{
         
-        
         if (operator === "+") {
 
             setCartBadge((prev) => ({
@@ -136,14 +135,11 @@ const Cart = () => {
         ])
     }
 
-
     //debouce quantity request data
     useEffect(()=> {
         if(pendingData.length === 0) return 
 
         const timeout = setTimeout(async() => {
-
-            console.log(pendingData);
 
             try{
                 const res = await fetch(`${import.meta.env.VITE_API_URL}/api/reqQuantity`, {
@@ -164,7 +160,7 @@ const Cart = () => {
                 console.log("Error: ", error.message);
             }
 
-        }, 1000);
+        }, 500);
 
         return () => clearTimeout(timeout);
 

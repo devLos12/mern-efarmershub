@@ -8,17 +8,57 @@ const storage = multer.memoryStorage();
 export const uploadAnnouncement = multer({ storage: storage });
 
 
-
 export const addAnnouncement = async (req, res) => {
     try {
         const { name, title, description, startDate, endDate } = req.body;
+
+        // ✅ Validation
+        if (!name || name.trim() === '') {
+            return res.status(400).json({ message: "Crop name is required." });
+        }
+
+        if (!title || title.trim() === '') {
+            return res.status(400).json({ message: "Title is required." });
+        }
+
+        if (!description || description.trim() === '') {
+            return res.status(400).json({ message: "Description is required." });
+        }
+
+        if (!startDate) {
+            return res.status(400).json({ message: "Start date is required." });
+        }
+
+        if (!endDate) {
+            return res.status(400).json({ message: "End date is required." });
+        }
+
+        // ✅ Date validation
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+
+        if (isNaN(start.getTime())) {
+            return res.status(400).json({ message: "Invalid start date format." });
+        }
+
+        if (isNaN(end.getTime())) {
+            return res.status(400).json({ message: "Invalid end date format." });
+        }
+
+        if (end <= start) {
+            return res.status(400).json({ message: "End date must be after start date." });
+        }
+
+        // ✅ Optional: Check if image is required
+        if (!req.file) {
+            return res.status(400).json({ message: "Image is required." });
+        }
+
         let imageFile = null;
         let cloudinaryId = null;
 
-
-        // Upload to Cloudinary if image exists
+        // Upload to Cloudinary
         if (req.file) {
-            // Convert buffer to base64 data URI
             const base64 = req.file.buffer.toString('base64');
             const dataURI = `data:${req.file.mimetype};base64,${base64}`;
             
@@ -46,6 +86,8 @@ export const addAnnouncement = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 }
+
+
 
 export const getAnnouncement = async(req, res) => {
     try {

@@ -90,33 +90,45 @@ const createTransaction = async(order, receiptFIle) => {
 
 }
 
-
-const createOrUpdatePayout = async(items, orderId)=>{
-
+const createOrUpdatePayout = async(items, orderId) => {
+    // ✅ ADD: Get seller tax rate from environment
+    const SELLER_TAX_RATE = parseFloat(process.env.SELLER_TAX_RATE) || 0.05; // 5% tax default
+    
     for (const item of items) {
         const sellerId = item.seller.id;
-        const amount = item.prodPrice * item.quantity;
+        
+        // ✅ UPDATED: Calculate GROSS, TAX, and NET amounts
+        const grossAmount = item.prodPrice * item.quantity;
+        const taxAmount = grossAmount * SELLER_TAX_RATE;
+        const netAmount = grossAmount - taxAmount;
+        
         const today = new Date().toISOString().split("T")[0];
-
-        const payout = await PayoutTransaction.findOne({ sellerId, date: today, status: "pending"})
-
-        if (payout){
+        const payout = await PayoutTransaction.findOne({ 
+            sellerId, 
+            date: today, 
+            status: "pending"
+        });
+        
+        if (payout) {
+            // ✅ UPDATED: Update existing payout with tax calculation
             payout.orders.push({
                 orderId: orderId,
-                amount
-            })
-            payout.totalAmount += amount;
-            await payout.save();
-
-        } else {
+                amount: grossAmount // Store gross amount sa order
+            });
             
+            payout.totalAmount += grossAmount;  // Accumulate GROSS
+            payout.taxAmount += taxAmount;       // Accumulate TAX
+            payout.netAmount += netAmount;       // Accumulate NET
+            
+            await payout.save();
+            
+        } else {
+            // ✅ UPDATED: Create new payout with tax calculation
             const seller = await Seller.findOne({_id: sellerId});
-
-
             if(!seller){
                 throw new Error("seller not found. product must have an active seller.")
             }
-
+            
             await PayoutTransaction.create({
                 sellerId,
                 sellerName: `${seller.firstname} ${seller.lastname}`,
@@ -126,12 +138,18 @@ const createOrUpdatePayout = async(items, orderId)=>{
                     number: seller?.e_WalletAcc?.number
                 },
                 date: today,
-                orders: [{ orderId: orderId, amount }],
-                totalAmount: amount
+                orders: [{ 
+                    orderId: orderId, 
+                    amount: grossAmount // Store gross amount
+                }],
+                totalAmount: grossAmount,  // GROSS total
+                taxAmount: taxAmount,       // TAX total
+                netAmount: netAmount        // NET total (actual payout to seller)
             });
         }
     }
 }
+
 
 
 
@@ -186,9 +204,13 @@ const createOrUpdateRiderPayout = async(riderId, orderId) => {
     }
 }
 
+
+
+
+
+
 const storage = multer.memoryStorage();
 export const imageProof = multer({ storage: storage });
-
 
 const updateStatusDelivery = async (req, res) => {
     try {

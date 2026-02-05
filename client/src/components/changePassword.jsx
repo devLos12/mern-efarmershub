@@ -1,13 +1,22 @@
-import { useContext, useState, useEffect } from "react";
+import { useContext, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { appContext } from "../context/appContext";
 import { adminContext } from "../context/adminContext";
 import { sellerContext } from "../context/sellerContext";
 import { userContext } from "../context/userContext";
 import img from "../assets/images/home_bg.png";
+import Toast from "./toastNotif";
 
 const ChangePassword = () => {
-    const { role } = useContext(appContext);
+    const { 
+        role,
+        showToast,
+        toastMessage,
+        toastType,
+        showNotification,
+        setShowToast,
+    } = useContext(appContext);
+    
     const admin = useContext(adminContext);
     const seller = useContext(sellerContext);
     const user = useContext(userContext);
@@ -26,10 +35,7 @@ const ChangePassword = () => {
     });
 
     const [errors, setErrors] = useState({});
-    const [showModal, setShowModal] = useState(false);
-    const [modalMessage, setModalMessage] = useState("");
-    const [modalType, setModalType] = useState("success");
-    const [isModalVisible, setIsModalVisible] = useState(false);
+    const [loading, setLoading] = useState(false);
 
     let context = null;
     
@@ -50,7 +56,6 @@ const ChangePassword = () => {
             [name]: value
         }));
         
-        // Clear error for this field when user starts typing
         if (errors[name]) {
             setErrors(prev => ({
                 ...prev,
@@ -94,12 +99,6 @@ const ChangePassword = () => {
         return Object.keys(newErrors).length === 0;
     };
 
-    const showNotification = (message, type = "success") => {
-        setModalMessage(message);
-        setModalType(type);
-        setShowModal(true);
-    };
-
     const handleSubmit = async(e) => {
         e.preventDefault();
         
@@ -111,6 +110,7 @@ const ChangePassword = () => {
             ? "sellerChangePassword" 
             : "userChangePassword";
         
+        setLoading(true);
                 
         try {
             const res = await fetch(`${import.meta.env.VITE_API_URL}/api/${endPoint}`, {
@@ -131,32 +131,19 @@ const ChangePassword = () => {
 
             showNotification(data.message, "success");
             setTrigger((prev) => !prev);
+            
+            // Navigate after short delay
+            setTimeout(() => {
+                navigate(-1);
+            }, 1500);
 
         } catch (error) {
             showNotification(error.message, "error");
             console.log("Error: ", error.message);
+        } finally {
+            setLoading(false);
         }
     };
-
-    // Handle modal animation and navigation
-    useEffect(() => {
-        if (showModal) {
-            setTimeout(() => setIsModalVisible(true), 10);
-            
-            const timer = setTimeout(() => {
-                setIsModalVisible(false);
-                setTimeout(() => {
-                    setShowModal(false);
-                    if (modalType === "success") {
-                        navigate(-1);
-                    }
-                }, 300);
-            }, 2000);
-            
-            return () => clearTimeout(timer);
-        }
-    }, [showModal, modalType, navigate]);
-
 
     return (
         <>
@@ -172,6 +159,7 @@ const ChangePassword = () => {
                             <button 
                                 className="btn btn-outline-success"
                                 onClick={() => navigate(-1)}
+                                disabled={loading}
                             >
                                 <i className="fa fa-arrow-left"></i>
                             </button>
@@ -209,6 +197,7 @@ const ChangePassword = () => {
                                             placeholder="Enter current password"
                                             value={formData.currentPassword}
                                             onChange={handleInputChange}
+                                            disabled={loading}
                                             required
                                         />
                                         <i 
@@ -217,10 +206,10 @@ const ChangePassword = () => {
                                                 right: "15px",
                                                 top: "50%",
                                                 transform: "translateY(-50%)",
-                                                cursor: "pointer",
+                                                cursor: loading ? "not-allowed" : "pointer",
                                                 color: "#666"
                                             }}
-                                            onClick={() => togglePasswordVisibility('current')}
+                                            onClick={() => !loading && togglePasswordVisibility('current')}
                                         ></i>
                                     </div>
                                     {errors.currentPassword && (
@@ -244,6 +233,7 @@ const ChangePassword = () => {
                                             placeholder="Enter new password"
                                             value={formData.newPassword}
                                             onChange={handleInputChange}
+                                            disabled={loading}
                                             required
                                         />
                                         <i 
@@ -252,10 +242,10 @@ const ChangePassword = () => {
                                                 right: "15px",
                                                 top: "50%",
                                                 transform: "translateY(-50%)",
-                                                cursor: "pointer",
+                                                cursor: loading ? "not-allowed" : "pointer",
                                                 color: "#666"
                                             }}
-                                            onClick={() => togglePasswordVisibility('new')}
+                                            onClick={() => !loading && togglePasswordVisibility('new')}
                                         ></i>
                                     </div>
                                     {errors.newPassword && (
@@ -280,6 +270,7 @@ const ChangePassword = () => {
                                             placeholder="Confirm new password"
                                             value={formData.confirmPassword}
                                             onChange={handleInputChange}
+                                            disabled={loading}
                                             required
                                         />
                                         <i 
@@ -288,10 +279,10 @@ const ChangePassword = () => {
                                                 right: "15px",
                                                 top: "50%",
                                                 transform: "translateY(-50%)",
-                                                cursor: "pointer",
+                                                cursor: loading ? "not-allowed" : "pointer",
                                                 color: "#666"
                                             }}
-                                            onClick={() => togglePasswordVisibility('confirm')}
+                                            onClick={() => !loading && togglePasswordVisibility('confirm')}
                                         ></i>
                                     </div>
                                     {errors.confirmPassword && (
@@ -310,7 +301,9 @@ const ChangePassword = () => {
                                         type="button"
                                         className="text-capitalize px-3 py-2 rounded w-100 text-dark border-0
                                         small"
-                                        onClick={() => navigate(-1)}>
+                                        onClick={() => navigate(-1)}
+                                        disabled={loading}
+                                    >
                                         cancel
                                     </button>
                                 </div>
@@ -318,9 +311,17 @@ const ChangePassword = () => {
                                     <button 
                                         type="submit"
                                         className="text-capitalize bg-dark px-3 py-2 rounded w-100 text-light border-0
-                                        small"
-                                        >
-                                        change password
+                                        small d-flex align-items-center justify-content-center gap-2"
+                                        disabled={loading}
+                                    >
+                                        {loading ? (
+                                            <>
+                                                <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                                <span>Loading...</span>
+                                            </>
+                                        ) : (
+                                            "change password"
+                                        )}
                                     </button>
                                 </div>
                             </div>
@@ -336,36 +337,13 @@ const ChangePassword = () => {
             </div>
         </div>
 
-        {/* Success/Error Modal with Animation */}
-        {showModal && (
-            <div
-                className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
-                style={{ backgroundColor: "rgba(0,0,0,0.5)", zIndex: 10000 }}
-            >
-                <div
-                    className="bg-white rounded shadow p-4 text-center"
-                    style={{
-                        maxWidth: "400px",
-                        width: "90%",
-                        transform: isModalVisible ? "scale(1)" : "scale(0.7)",
-                        opacity: isModalVisible ? 1 : 0,
-                        transition: "all 0.3s ease-in-out"
-                    }}
-                >
-                    <div className="mb-3">
-                        {modalType === "success" ? (
-                            <i className="bx bx-check-circle text-success" style={{ fontSize: "60px" }}></i>
-                        ) : (
-                            <i className="bx bx-error-circle text-danger" style={{ fontSize: "60px" }}></i>
-                        )}
-                    </div>
-                    <h5 className={`fw-bold text-capitalize mb-2 ${modalType === "success" ? "text-success" : "text-danger"}`}>
-                        {modalType === "success" ? "success!" : "error!"}
-                    </h5>
-                    <p className="small text-muted mb-0">{modalMessage}</p>
-                </div>
-            </div>
-        )}
+        {/* Toast Notification */}
+        <Toast
+            show={showToast}
+            message={toastMessage}
+            type={toastType}
+            onClose={() => setShowToast(false)}
+        />
         </>
     );
 }

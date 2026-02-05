@@ -1,7 +1,21 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import Toast from "../toastNotif.jsx";
+import { appContext } from "../../context/appContext.jsx";
+
+
+
+
 
 const Register = () => {
+    const {
+            showToast,
+            toastMessage,
+            toastType,
+            showNotification,
+            setShowToast,
+     } = useContext(appContext);
+    
     const [step, setStep] = useState(0);  
     const [selectedRole, setSelectedRole] = useState("");
     const [formData, setFormData] = useState({});
@@ -22,9 +36,7 @@ const Register = () => {
     const [showTermsModal, setShowTermsModal] = useState(false);
     const [allTermsAgreed, setAllTermsAgreed] = useState(false);
 
-
-    
-
+     
     // Add after existing rider terms states
     const [showSellerTermsModal, setShowSellerTermsModal] = useState(false);
     const [sellerTermsAgreed, setSellerTermsAgreed] = useState(false);
@@ -347,13 +359,13 @@ const Register = () => {
     const isFarmer = selectedRole.toLowerCase() === "farmer";
     const isBuyer = selectedRole.toLowerCase() === "buyer";
 
-
+    
 
     return (
         <>
             <div className="container my-3">
                 <div className="row justify-content-center">
-                    <div className="col-12 col-md-8 col-lg-6">
+                    <div className="col-12 col-md-8 col-lg-8">
 
                         {step === 0 && (
                             <div className="card overflow-hidden shadow">

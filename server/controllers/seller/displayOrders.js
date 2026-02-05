@@ -16,7 +16,7 @@ export const displayOrders = async (req, res) => {
         
         const orders = sellerOrders.map(order => {
             const sellerItems = order.orderItems.filter(
-                (item) => item.seller.id.toString() === sellerId.toString()  
+                (item) => item.seller.id.toString() === sellerId  
             );
             
             const sellerTotalPrice = sellerItems.reduce((total, item) => {
@@ -31,8 +31,8 @@ export const displayOrders = async (req, res) => {
         });
         
         const filteredOrders = orders.filter((order) => {
-            const deleted = order.deletedBy.find((e) => e.id.toString() === sellerId.toString());
-            const archived = order.archivedBy.find((e) => e.id.toString() === sellerId.toString());
+            const deleted = order.deletedBy.find((e) => e.id.toString() === sellerId);
+            const archived = order.archivedBy.find((e) => e.id.toString() === sellerId);
             return !deleted && !archived; // Exclude both deleted AND archived
         });
         
@@ -41,7 +41,6 @@ export const displayOrders = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
-
 
 
 
@@ -130,7 +129,8 @@ export const getArchivedSellerOrders = async (req, res) => {
         
         const sellerOrders = await Order.find({
             "orderItems.seller.id": sellerId,
-            "archivedBy.id": sellerId
+            "archivedBy.id": sellerId,
+            "deletedBy.id": { $ne: sellerId }
         });
         
         if (!sellerOrders || sellerOrders.length === 0) {

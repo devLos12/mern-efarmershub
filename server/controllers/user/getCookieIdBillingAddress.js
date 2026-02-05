@@ -11,12 +11,12 @@ const getCookieIdBillingAddress = async(req, res) => {
 
         const isEmptyBillingAddress = !billingAddress.billingAddress || 
         Object.values(billingAddress.billingAddress).every(val => !val);
-
+        
         if (isEmptyBillingAddress) {
             return res.status(202).json({ id: decoded.id,  message : "add address"})
         }
 
-        
+
         res.status(200).json({id: decoded.id, message : "change address"});
     }catch(err){
         res.status(500).json({ message : err.message});

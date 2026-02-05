@@ -4,17 +4,22 @@ import Order from "../../models/order.js";
 
 export const getOrders = async(req, res) =>{
     try{
-        const { id } = await req.account;
+        const { id } = req.account;
+
+
         const orders = await Order.find();
         if(!orders || orders.length === 0){
             return res.status(404).json({message : "No Order Yet."});
         }
         
         const filteredOrders = orders.filter((order) => {
-            const deleted = order.deletedBy.find((e) => e.id.toString() === id.toString());
-            const archived = order.archivedBy.find((e) => e.id.toString() === id.toString());
-            return !deleted && !archived; // Exclude both deleted AND archived
+            const deleted = order.deletedBy.some((e) => e.id.toString() === id);
+            const archived = order.archivedBy.some((e) => e.id.toString() === id);
+        
+            
+            return !deleted && !archived;
         })
+
         res.status(200).json(filteredOrders);
     }catch(error){
         res.status(500).json({message : error.message})
@@ -39,11 +44,11 @@ export const removeOrders = async (req, res) =>{
             }
         })
 
-        const order = await Order.findOne({_id: orderId});
+        // const order = await Order.findOne({_id: orderId});
         
-        if(order.deletedBy.length >= 2){
-            await Order.deleteOne({_id: orderId});
-        }
+        // if(order.deletedBy.length >= 2){
+        //     await Order.deleteOne({_id: orderId});
+        // }
 
 
         res.status(200).json({ message: "Successfully deleted"});
@@ -78,6 +83,8 @@ export const archiveOrder = async (req, res) => {
     }
 };
 
+
+
 // Unarchive order
 export const unarchiveOrder = async (req, res) => {
     try {
@@ -99,19 +106,29 @@ export const unarchiveOrder = async (req, res) => {
     }
 };
 
+
+
 // Get archived orders
 export const getArchivedOrders = async (req, res) => {
     try {
         const { id } = req.account;
+        
         const orders = await Order.find({
             "archivedBy.id": id
         });
         
-        if (!orders || orders.length === 0) {
+        // ✅ Filter out deleted orders
+        const filteredOrders = orders.filter((order) => {
+            const deleted = order.deletedBy.some((e) => e.id.toString() === id);
+            return !deleted; // Only show if NOT deleted
+        });
+        
+
+        if (filteredOrders.length === 0) {
             return res.status(404).json({ message: "No archived orders" });
         }
         
-        res.status(200).json(orders);
+        res.status(200).json(filteredOrders);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }

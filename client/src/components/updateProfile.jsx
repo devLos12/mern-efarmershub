@@ -296,7 +296,7 @@ const UpadateProfile = () => {
     }
 
     return (
-        <div className="container-fluid position-fixed top-0 start-0 end-0 h-100 bg-darken" 
+        <div className="container-fluid position-fixed top-0 start-0 end-0 h-100 bg-darken " 
         style={{zIndex: 99}}>
             <div className="row mt-2 justify-content-center">
                 <div className="col-12 col-md-10 col-lg-7 col-xl-6">

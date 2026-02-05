@@ -196,6 +196,7 @@ export const statusOrder = async(req, res) => {
 
         const order = await Order.findById(orderId);
         
+
         if(!order) {
             return res.status(404).json({ message: "Order not found" });
         }
@@ -363,6 +364,9 @@ export const statusOrder = async(req, res) => {
 
 
 
+
+
+
 const storage = multer.memoryStorage();
 
 export const cancelOrderFile = multer({ storage: storage });
@@ -372,6 +376,7 @@ export const cancelOrder = async (req, res) => {
     try {
         const { orderId, reason, newStatus } = req.body;
         const adminId = req.account.id;
+
 
         // Validate required fields
         if (!orderId || !reason || !reason.trim()) {

@@ -14,7 +14,8 @@ export const productReview = async (req, res) => {
 
     const { prodId, rate, comment } = req.body;
 
-
+    
+    
     // ✅ CHANGE: Upload review image to Cloudinary instead of saving locally
     let imageFileUrl = null;
 

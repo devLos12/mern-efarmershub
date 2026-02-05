@@ -35,7 +35,7 @@ export const MyAppContext = ({children}) =>{
         if (showToast) {
             const timer = setTimeout(() => {
                 setShowToast(false);
-            }, 3000);
+            }, 2000);
             
             return () => clearTimeout(timer);
         }

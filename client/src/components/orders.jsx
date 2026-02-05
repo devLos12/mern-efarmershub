@@ -67,7 +67,7 @@ const Orders = () => {
         return Array.from(methods).sort();
     }, [orders]);
 
-
+    
     // Socket.IO connection and listener
     useEffect(() => {
         socketRef.current = io(import.meta.env.VITE_API_URL);
@@ -559,6 +559,7 @@ const Orders = () => {
                                                 </div>
 
                                                 {!showArchived ? (
+
                                                     <div className="px-2 bg-hover rounded text-capitalize p-1 d-flex align-items-center gap-2"
                                                     style={{cursor: "pointer"}}
                                                     onClick={()=> {
@@ -568,28 +569,34 @@ const Orders = () => {
                                                         <i className="fa fa-archive small text-warning"></i>
                                                         <p className="m-0 capitalize small text-warning">archive</p>
                                                     </div>
+                                                    
+
                                                 ) : (
-                                                    <div className="px-2 bg-hover rounded text-capitalize p-1 d-flex align-items-center gap-2"
-                                                    style={{cursor: "pointer"}}
-                                                    onClick={()=> {
-                                                        handleUnarchive(data._id);
-                                                        setOpenMenuId(null);
-                                                    }}>
-                                                        <i className="fa fa-inbox small text-info"></i>
-                                                        <p className="m-0 capitalize small text-info">unarchive</p>
-                                                    </div>
+                                                    <>
+                                                        <div className="px-2 bg-hover rounded text-capitalize p-1 d-flex align-items-center gap-2"
+                                                        style={{cursor: "pointer"}}
+                                                        onClick={()=> {
+                                                            handleUnarchive(data._id);
+                                                            setOpenMenuId(null);
+                                                        }}>
+                                                            <i className="fa fa-inbox small text-info"></i>
+                                                            <p className="m-0 capitalize small text-info">unarchive</p>
+                                                        </div>
+
+                                                        <div className="px-2 bg-hover rounded text-capitalize p-1 d-flex align-items-center gap-2"
+                                                            style={{cursor: "pointer"}}
+                                                            onClick={()=> {
+                                                                setDeleteOrderModal((prev) => ({...prev, isShow: true, id: data._id}));
+                                                                setText("do you want to delete?");
+                                                                setOpenMenuId(null);
+                                                            }}>
+                                                                <i className="fa fa-trash small text-danger"></i>
+                                                                <p className="m-0 capitalize small text-danger">delete</p>
+                                                        </div> 
+                                                    </>
                                                 )}
-{/* 
-                                                <div className="px-2 bg-hover rounded text-capitalize p-1 d-flex align-items-center gap-2"
-                                                style={{cursor: "pointer"}}
-                                                onClick={()=> {
-                                                    setDeleteOrderModal((prev) => ({...prev, isShow: true, id: data._id}));
-                                                    setText("do you want to delete?");
-                                                    setOpenMenuId(null);
-                                                }}>
-                                                    <i className="fa fa-trash small text-danger"></i>
-                                                    <p className="m-0 capitalize small text-danger">delete</p>
-                                                </div> */}
+
+                                              
                                             </div>
                                         )}
                                     </div>

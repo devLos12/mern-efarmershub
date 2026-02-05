@@ -59,7 +59,9 @@ const ProductDetails = () =>{
 
 
 
-    const handleButtons = (prodId, prodName, prodDisc, prodPrice, imageFile, seller, data)=>{
+    const handleButtons = (pid, prodId, prodName, prodDisc, prodPrice, imageFile, seller, data)=>{
+    
+        
         if(role === "admin"){
 
             if(productDetails.statusApprove === "pending"){
@@ -99,7 +101,7 @@ const ProductDetails = () =>{
                 }else{
                     return [
                         ...prev,
-                        { prodId, prodName, prodDisc, prodPrice,imageFile, seller, quantity: 1}
+                        {pid, prodId, prodName, prodDisc, prodPrice,imageFile, seller, quantity: 1}
                     ]
                 }
             })
@@ -119,7 +121,7 @@ const ProductDetails = () =>{
 
             setPendingItems((prev) => [
                 ...prev,
-                {prodId, prodName, prodDisc, prodPrice, imageFile, seller}
+                {pid, prodId, prodName, prodDisc, prodPrice, imageFile, seller}
             ])
             
 
@@ -132,7 +134,6 @@ const ProductDetails = () =>{
         if(pendingItems.length === 0) return
 
         const timeout = setTimeout(async()=>{
-            console.log(pendingItems);
             try{
                 const res = await fetch(`${import.meta.env.VITE_API_URL}/api/addToCart`, {
                     method : 'POST',
@@ -149,7 +150,7 @@ const ProductDetails = () =>{
             }catch(error){
                 console.log("failed post request ", error.message)
             }
-        }, 1000);
+        }, 500);
 
         return  ()=> clearTimeout(timeout);
     },[pendingItems]);
@@ -219,7 +220,17 @@ const ProductDetails = () =>{
 
 
 
-    if(loading) return <p></p>
+   if(loading) return (
+    <div className="d-flex justify-content-center flex-column gap-2 align-items-center vh-100" 
+    >
+        <div className="spinner-border text-success" role="status">
+            <span className="visually-hidden">Loading...</span>
+        </div>
+    </div>
+    )
+
+
+
     if(hasError) return null
     
     return(
@@ -367,7 +378,7 @@ const ProductDetails = () =>{
                                         }
                                         
                                         ${role === "user" && productDetails.stocks <= 0 && "opacity-75"}`}
-                                        onClick={()=>handleButtons(productDetails._id, productDetails.name, productDetails.disc, productDetails.price, productDetails.imageFile, productDetails.seller, productDetails)}
+                                        onClick={()=>handleButtons(productDetails.prodId, productDetails._id, productDetails.name, productDetails.disc, productDetails.price, productDetails.imageFile, productDetails.seller, productDetails)}
                                         disabled={role === "user" ? productDetails.stocks <= 0 : false}
                                         >
                                         {role === "user" ? (

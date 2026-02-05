@@ -10,6 +10,7 @@ const storage = multer.memoryStorage();
 
 export const sendImage = multer({ storage: storage });
 
+
 export const sendMessage = async (req, res) => {
     try {
         const { id, role } = req.account;
@@ -122,12 +123,15 @@ export const getMessages = async (req, res) => {
     }
 };
 
+
+
 export const getChatId = async (req, res) => {
     try {
         const { id, role } = req.account;
         let { receiverId, receiverRole } = req.body;
 
         let adminEmail; 
+
 
         if (receiverId === "unknown" && receiverRole === "admin") {
             const admin = await Admin.findOne({ adminType: { $in: ["main"] } });

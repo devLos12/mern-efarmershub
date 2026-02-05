@@ -7,11 +7,23 @@ import { userContext } from "../context/userContext";
 import philippineLocations from "../data/philippinesAddress.json";
 import img from "../assets/images/home_bg.png";
 import imageCompression from 'browser-image-compression';
+import Toast from "./toastNotif";
+
+
+
 
 
 
 const EditProfile = () => {
-    const { role } = useContext(appContext);
+    
+    const { role, 
+            showToast,
+            toastMessage,
+            toastType,
+            showNotification,
+            setShowToast,
+
+    } = useContext(appContext);
     const admin = useContext(adminContext);
     const seller = useContext(sellerContext);
     const user = useContext(userContext);
@@ -28,13 +40,6 @@ const EditProfile = () => {
     const [availableBarangays, setAvailableBarangays] = useState([]);
     const [imagePrev, setImagePrev] = useState("");
     const fileUploadRef = useRef(null);
-
-
-    const [showModal, setShowModal] = useState(false);
-    const [modalMessage, setModalMessage] = useState("");
-    const [modalType, setModalType] = useState("success");
-    const [isModalVisible, setIsModalVisible] = useState(false);
-
 
 
     let context = null;
@@ -133,37 +138,6 @@ const EditProfile = () => {
         }));
     };
 
-
-
-    useEffect(() => {
-        if (showModal) {
-            setTimeout(() => setIsModalVisible(true), 10);
-            
-            const timer = setTimeout(() => {
-                setIsModalVisible(false);
-                setTimeout(() => {
-                    setShowModal(false);
-                    if (modalType === "success") {
-                        setTrigger((prev) => !prev);
-                        navigate(-1);
-                    }
-                }, 300);
-            }, 2000);
-            
-            return () => clearTimeout(timer);
-        }
-    }, [showModal, modalType, navigate, setTrigger]);
-
-
-
-
-
-
-
-
-
-
-
     const handleLocationChange = (e) => {
         const { name, value } = e.target;
         
@@ -209,23 +183,31 @@ const EditProfile = () => {
         }
     };
 
-
-    const showNotification = (message, type = "success") => {
-        setModalMessage(message);
-        setModalType(type);
-        setShowModal(true);
-    };
-
-
-
-
     const handleSubmit = async(e) => {
         e.preventDefault();
 
         setIsSubmitting(true);
 
         const sendData = new FormData();
-        sendData.append('image', formData.image);
+        
+        // Compress image if it's a file object (newly uploaded)
+        if (formData.image instanceof File) {
+            try {
+                const options = {
+                    maxSizeMB: 1,
+                    maxWidthOrHeight: 1920,
+                    useWebWorker: true
+                };
+                const compressedFile = await imageCompression(formData.image, options);
+                sendData.append('image', compressedFile);
+            } catch (error) {
+                console.log("Image compression error:", error);
+                sendData.append('image', formData.image);
+            }
+        } else {
+            sendData.append('image', formData.image);
+        }
+        
         sendData.append('firstname', formData.firstname);
         sendData.append('lastname',  formData.lastname);
         sendData.append('email', formData.email);
@@ -256,25 +238,23 @@ const EditProfile = () => {
             const data = await res.json();
             if(!res.ok) throw new Error(data.message);
 
-            showNotification(data.message, "success");
+            showNotification(data.message, 'success');
+            
+            // // Success - trigger refresh and navigate back
+            setTrigger((prev) => !prev);
+
+                  // Navigate after short delay
+            setTimeout(() => {
+                navigate(-1);
+            }, 1500);
 
         } catch (error) {
-            showNotification(error.message, "error");
+            showNotification(error.message || 'Something went wrong', 'error');
             console.log("Error: ", error.message);
         } finally {
             setIsSubmitting(false);
         }
     }
-
-
-
-
-
-
-
-
-
-
 
     const handleFile = (e) =>{
         const {name} = e.target;
@@ -307,6 +287,7 @@ const EditProfile = () => {
     }
 
     return (
+        <>
         <div className={`${role === "seller" ? "min-vh-100 d-flex" : "min-vh-100 d-flex bg"}`}>
             <div className={`${role === "seller" ? "container-fluid bg-white mx-md-2" : "container bg-white"}`}>
                 <div className={`row justify-content-center ${role === "seller" ? "py-3" : "py-5"}`}>
@@ -388,6 +369,7 @@ const EditProfile = () => {
                                         name="image"
                                         onChange={handleFile}
                                         ref={fileUploadRef}
+                                        accept="image/*"
                                     />
                                 </div>
 
@@ -650,43 +632,15 @@ const EditProfile = () => {
                     </div>
                 </div>
             </div>
-
-
-
-
-
-
-            {/* Success/Error Modal with Animation */}
-            {showModal && (
-                <div
-                    className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
-                    style={{ backgroundColor: "rgba(0,0,0,0.5)", zIndex: 10000 }}
-                >
-                    <div
-                        className="bg-white rounded shadow p-4 text-center"
-                        style={{
-                            maxWidth: "400px",
-                            width: "90%",
-                            transform: isModalVisible ? "scale(1)" : "scale(0.7)",
-                            opacity: isModalVisible ? 1 : 0,
-                            transition: "all 0.3s ease-in-out"
-                        }}
-                    >
-                        <div className="mb-3">
-                            {modalType === "success" ? (
-                                <i className="bx bx-check-circle text-success" style={{ fontSize: "60px" }}></i>
-                            ) : (
-                                <i className="bx bx-error-circle text-danger" style={{ fontSize: "60px" }}></i>
-                            )}
-                        </div>
-                        <h5 className={`fw-bold text-capitalize mb-2 ${modalType === "success" ? "text-success" : "text-danger"}`}>
-                            {modalType === "success" ? "success!" : "error!"}
-                        </h5>
-                        <p className="small text-muted mb-0">{modalMessage}</p>
-                    </div>
-                </div>
-            )}
         </div>
+
+        <Toast 
+            show={showToast}
+            message={toastMessage}
+            type={toastType}
+            onClose={() => setShowToast(false)}
+        />
+        </>
     );
 }
 

@@ -22,7 +22,6 @@ riderRouter.get("/getAllDelivery", authRiderMiddleWares, allDelivery);
 riderRouter.patch("/riderDeleteOrders", authRiderMiddleWares, riderDeleteOrders);
 
 
-
 riderRouter.patch("/updateRiderStatusDelivery", 
     authRiderMiddleWares, 
     imageProof.fields([

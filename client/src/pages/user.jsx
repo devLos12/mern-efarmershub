@@ -156,7 +156,6 @@ const User = ({setUserAuth}) => {
 
 
 
-
   //api call for cart 
   useEffect(()=> { 
       fetch(`${import.meta.env.VITE_API_URL}/api/displayCart`,{

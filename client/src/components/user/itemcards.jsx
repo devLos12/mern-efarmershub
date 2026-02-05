@@ -20,7 +20,7 @@ const ItemCards = ({ products }) => {
     
     const addToCart = async(pid, prodId, prodName, prodDisc, prodPrice, imageFile, seller)=> {
 
-        
+
         setCartBadge((prev) => ({
             ...prev,
             number : prev.number + 1,
@@ -92,10 +92,11 @@ const ItemCards = ({ products }) => {
 
                 console.log("Response:", data.message);
             }catch(error){
+                alert(error.message);
                 console.log("failed post request ", error.message)
             }
                         
-        }, 1000);
+        }, 500);
 
         return () => clearTimeout(timeout);
 
