@@ -3,6 +3,8 @@ import User from "../../models/user.js";
 const TotalUser = async (req, res) => {
     try {
         const { year, month } = req.query;
+        
+
         const selectedYear = year ? parseInt(year) : new Date().getFullYear();
         const selectedMonth = month !== undefined ? parseInt(month) : null;
 

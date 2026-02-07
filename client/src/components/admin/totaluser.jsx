@@ -9,18 +9,25 @@ const TotalUser = () => {
     const [lineColor, setLineColor] = useState("green");
     const [userGrowthRate, setUserGrowthRate] = useState(0);
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
-    const [selectedMonth, setSelectedMonth] = useState(null); // null means use current month
+    const [selectedMonth, setSelectedMonth] = useState(null);
     const [availableYears, setAvailableYears] = useState([]);
+    const [showModal, setShowModal] = useState(false);
+    const [customYear, setCustomYear] = useState(new Date().getFullYear());
 
     useEffect(() => {
-        // Generate years from 2022 to current year
         const currentYear = new Date().getFullYear();
+        const yearsToShow = 5;
         const years = [];
-        for (let year = 2022; year <= currentYear; year++) {
-            years.push(year);
+        
+        // Generate last 5 years in ascending order
+        for (let i = yearsToShow - 1; i >= 0; i--) {
+            years.push(currentYear - i);
         }
+        
         setAvailableYears(years);
     }, []);
+
+    
 
     useEffect(() => {
         const monthParam = selectedMonth !== null ? `&month=${selectedMonth}` : '';
@@ -40,20 +47,48 @@ const TotalUser = () => {
             .catch((err) => console.error("Error: ", err.message));
     }, [selectedYear, selectedMonth]);
 
-    // Handle chart click
     const handleChartClick = (data) => {
         if (data && data.activePayload && data.activePayload.length > 0) {
             const clickedData = data.activePayload[0].payload;
-            setSelectedMonth(clickedData.id); // id is the month index (0-11)
+            setSelectedMonth(clickedData.id);
         }
     };
 
-    // Reset to current month
     const handleReset = () => {
         setSelectedMonth(null);
     };
 
-    // Get display text for selected month
+    
+    const handleYearChange = (e) => {
+        const value = e.target.value;
+        if (value === "custom") {
+            setCustomYear(selectedYear)
+            setShowModal(true);
+        } else {
+            setSelectedYear(Number(value));
+            setSelectedMonth(null);
+        }
+    };
+
+    const handleCustomYearSelect = () => {
+        setSelectedYear(customYear);
+        setSelectedMonth(null);
+        setShowModal(false);
+    };
+
+    // Generate years for modal (2000 to current year + 1)
+    const generateAllYears = () => {
+        const currentYear = new Date().getFullYear();
+        const years = [];
+        for (let year = 2000; year <= currentYear; year++) {
+            years.push(year);
+        }
+        return years.reverse(); // Descending sa modal para latest nauna
+    };
+
+
+
+
     const getSelectedMonthText = () => {
         if (selectedMonth === null) {
             const now = new Date();
@@ -85,115 +120,175 @@ const TotalUser = () => {
     };
 
     return (
-        <div className="card-body">
-            {/* Header with Year Filter */}
-            <div className="d-flex align-items-center justify-content-between mb-3">
-                <div className="d-flex align-items-center">
-                    <i className="fa-solid fa-user me-2 text-warning bg-warning p-2 rounded-circle bg-opacity-10"></i>
-                    <p className="m-0 fw-bold text-warning">Buyers</p>
-                </div>
-                
-                {/* Year Filter Dropdown */}
-                <div className="d-flex align-items-center gap-2">
-                    <p className="m-0 text-muted text-capitalize fw-semibold d-none d-xl-block"
-                    style={{fontSize: "12px"}}
-                    >time period: </p>
+        <>
+            <div className="card-body">
+                {/* Header with Year Filter */}
+                <div className="d-flex align-items-center justify-content-between mb-3">
+                    <div className="d-flex align-items-center">
+                        <i className="fa-solid fa-user me-2 text-warning bg-warning p-2 rounded-circle bg-opacity-10"></i>
+                        <p className="m-0 fw-bold text-warning">Buyers</p>
+                    </div>
+                    
+                    {/* Year Filter Dropdown */}
+                    <div className="d-flex align-items-center gap-2">
+                        <p className="m-0 text-muted text-capitalize fw-semibold d-none d-xl-block"
+                        style={{fontSize: "12px"}}
+                        >time period: </p>
 
-                    <select 
-                        className="form-select form-select-sm" 
-                        style={{ width: "auto", fontSize: "12px" }}
-                        value={selectedYear}
-                        onChange={(e) => {
-                            setSelectedYear(Number(e.target.value));
-                            setSelectedMonth(null); // Reset selected month when year changes
-                        }}
-                    >
-                        {availableYears.map((year) => (
-                            <option key={year} value={year}>
-                                {year}
-                            </option>
-                        ))}
-                    </select>
-
-                    {selectedMonth !== null && (
-                        <button 
-                            className="btn btn-sm btn-outline-secondary border-0"
-                            onClick={handleReset}
-                            title="Reset to current month"
+                        <select 
+                            className="form-select form-select-sm" 
+                            style={{ width: "auto", fontSize: "12px" }}
+                            value={availableYears.includes(selectedYear) ? selectedYear : "custom"}
+                            onChange={handleYearChange}
                         >
-                            <i className="fa-solid fa-rotate-left"></i>
-                        </button>
-                    )}
+                            <option value="custom">Custom</option>
+
+                            {availableYears.map((year) => (
+                                <option key={year} value={year}>
+                                    {year}
+                                </option>
+                            ))}
+                        </select>
+
+                        {selectedMonth !== null && (
+                            <button 
+                                className="btn btn-sm btn-outline-secondary border-0"
+                                onClick={handleReset}
+                                title="Reset to current month"
+                            >
+                                <i className="fa-solid fa-rotate-left"></i>
+                            </button>
+                        )}
+                    </div>
+                </div>
+
+                {/* Stats Section */}
+                <div className="d-flex justify-content-between align-items-center rounded p-1">
+                    <div className="rounded">
+                        <p className="m-0">{"+" + totalUser}</p>
+                        <p className="m-0 text-capitalize opacity-75" style={{ fontSize: "12px" }}>
+                            total Buyer
+                        </p>
+                    </div>
+                    <div className="rounded">
+                        <p className="m-0">{prevUsers > 0 ? "+" + prevUsers : 0}</p>
+                        <p className="m-0 text-capitalize opacity-75" style={{ fontSize: "12px" }}>
+                            {getPrevMonthText()}
+                        </p>
+                    </div>
+                    <div className="rounded">
+                        <p className="m-0">{currUsers > 0 ? "+" + currUsers : 0}</p>
+                        <p className="m-0 text-capitalize opacity-75" style={{ fontSize: "12px" }}>
+                            {getSelectedMonthText()}
+                        </p>
+                    </div>
+                </div>
+
+                {/* Growth Rate & Chart */}
+                <div className="d-flex justify-content-between align-items-center rounded mt-2 p-1">
+                    <div className="flex-column">
+                        <p className="m-0">
+                            {userGrowthRate > 0 ? `+${userGrowthRate}%` : `${userGrowthRate}%`}
+                        </p>
+                        <p className="m-0 text-capitalize opacity-75" style={{ fontSize: "12px" }}>
+                            monthly rate
+                        </p>
+                    </div>
+                    <ResponsiveContainer width="60%" height={50}>
+                        <LineChart 
+                            data={chartData}
+                            style={{cursor: "pointer"}}
+                            onClick={handleChartClick}
+                        >
+                            <Tooltip 
+                                contentStyle={{ 
+                                    fontSize: "12px", 
+                                    backgroundColor: "#fff",
+                                    border: "none",
+                                    borderRadius: "4px",
+                                    color: "green"
+                                }}
+                                labelStyle={{ color: "black", fontWeight: "bold" }}
+                                labelFormatter={(label, payload) => {
+                                    if (payload && payload.length > 0) {
+                                        const month = payload[0].payload.month;
+                                        return `${month} ${selectedYear}`;
+                                    }
+                                    return label;
+                                }}
+                                formatter={(value) => [`${value} users`, "Total"]}
+                            />
+                            <Line 
+                                type="monotone" 
+                                dataKey="users" 
+                                stroke={lineColor} 
+                                strokeWidth={2} 
+                                dot={false}
+                            />
+                        </LineChart>
+                    </ResponsiveContainer>
                 </div>
             </div>
 
-            {/* Stats Section */}
-            <div className="d-flex justify-content-between align-items-center rounded p-1">
-                <div className="rounded">
-                    <p className="m-0">{"+" + totalUser}</p>
-                    <p className="m-0 text-capitalize opacity-75" style={{ fontSize: "12px" }}>
-                        total Buyer
-                    </p>
+            {/* Custom Year Modal */}
+            {showModal && (
+                <div className="modal show d-block" tabIndex="-1" 
+                style={{backgroundColor: "rgba(0,0,0,0.5)"}}>
+                    <div className="modal-dialog modal-dialog-centered">
+                        <div className="modal-content">
+                            <div className="modal-header">
+                                <h5 className="modal-title">Select Custom Year</h5>
+                                <button 
+                                    type="button" 
+                                    className="btn-close" 
+                                    onClick={() => setShowModal(false)}
+                                ></button>
+                            </div>
+                            <div className="modal-body">
+                                <div 
+                                    style={{
+                                        maxHeight: "300px",
+                                        overflowY: "auto",
+                                        border: "1px solid #dee2e6",
+                                        borderRadius: "4px"
+                                    }}
+                                >
+                                    {generateAllYears().map((year) => (
+                                        <div
+                                            key={year}
+                                            className={`p-3 ${customYear === year ? 'bg-warning text-dark' : ''}`}
+                                            style={{
+                                                cursor: "pointer",
+                                                borderBottom: "1px solid #dee2e6"
+                                            }}
+                                            onClick={() => setCustomYear(year)}
+                                        >
+                                            {year}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                            <div className="modal-footer">
+                                <button 
+                                    type="button" 
+                                    className="btn btn-secondary" 
+                                    onClick={() => setShowModal(false)}
+                                >
+                                    Cancel
+                                </button>
+                                <button 
+                                    type="button" 
+                                    className="btn btn-warning " 
+                                    onClick={handleCustomYearSelect}
+                                >
+                                    Select
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div className="rounded">
-                    <p className="m-0">{prevUsers > 0 ? "+" + prevUsers : 0}</p>
-                    <p className="m-0 text-capitalize opacity-75" style={{ fontSize: "12px" }}>
-                        {getPrevMonthText()}
-                    </p>
-                </div>
-                <div className="rounded">
-                    <p className="m-0">{currUsers > 0 ? "+" + currUsers : 0}</p>
-                    <p className="m-0 text-capitalize opacity-75" style={{ fontSize: "12px" }}>
-                        {getSelectedMonthText()}
-                    </p>
-                </div>
-            </div>
-
-            {/* Growth Rate & Chart */}
-            <div className="d-flex justify-content-between align-items-center rounded mt-2 p-1">
-                <div className="flex-column">
-                    <p className="m-0">
-                        {userGrowthRate > 0 ? `+${userGrowthRate}%` : `${userGrowthRate}%`}
-                    </p>
-                    <p className="m-0 text-capitalize opacity-75" style={{ fontSize: "12px" }}>
-                        monthly rate
-                    </p>
-                </div>
-                <ResponsiveContainer width="60%" height={50}>
-                    <LineChart 
-                        data={chartData}
-                        style={{cursor: "pointer"}}
-                        onClick={handleChartClick}
-                    >
-                        <Tooltip 
-                            contentStyle={{ 
-                                fontSize: "12px", 
-                                backgroundColor: "#fff",
-                                border: "none",
-                                borderRadius: "4px",
-                                color: "green"
-                            }}
-                            labelStyle={{ color: "black", fontWeight: "bold" }}
-                            labelFormatter={(label, payload) => {
-                                if (payload && payload.length > 0) {
-                                    const month = payload[0].payload.month;
-                                    return `${month} ${selectedYear}`;
-                                }
-                                return label;
-                            }}
-                            formatter={(value) => [`${value} users`, "Total"]}
-                        />
-                        <Line 
-                            type="monotone" 
-                            dataKey="users" 
-                            stroke={lineColor} 
-                            strokeWidth={2} 
-                            dot={false}
-                        />
-                    </LineChart>
-                </ResponsiveContainer>
-            </div>
-        </div>
+            )}
+        </>
     );
 };
 
