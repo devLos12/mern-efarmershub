@@ -167,7 +167,15 @@ const Header = () => {
                 onClick={menu} 
                 style={{cursor : "pointer"}}></div>
 
-                <p className='m-0 fw-bold fs-5 text-capitalize d-none d-md-block text-green'>E-farmers Hub</p>
+                <div className="d-flex justify-content-between align-items-center gap-1">
+                                        
+                    <img src="https://res.cloudinary.com/dtelqtkzj/image/upload/v1770440242/image-removebg-preview_sfsot1.png" alt="logo" 
+                    style={{width:"30px", height:"30px"}} />
+                    
+                    <p className="m-0 fs-5 text-capitalize fw-bold text-green mt-1"
+                    >farmers hub</p>
+                </div>
+
 
                 <nav className="d-none d-md-block">
                     <ul className="list-unstyled d-flex gap-4 m-0">

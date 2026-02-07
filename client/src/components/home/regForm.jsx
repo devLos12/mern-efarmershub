@@ -2,7 +2,7 @@ import React, { useState, useEffect, useContext } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Toast from "../toastNotif.jsx";
 import { appContext } from "../../context/appContext.jsx";
-
+import philippinesAddress from "../../data/philippinesAddress.json";
 
 
 
@@ -46,8 +46,10 @@ const Register = () => {
     const [showBuyerTermsModal, setShowBuyerTermsModal] = useState(false);
     const [buyerTermsAgreed, setBuyerTermsAgreed] = useState(false);
 
-
-
+    // Address dropdown states
+    const [selectedProvince, setSelectedProvince] = useState("");
+    const [selectedCity, setSelectedCity] = useState("");
+    const [selectedBarangay, setSelectedBarangay] = useState("");
 
     const userTypes = [
         {
@@ -69,6 +71,13 @@ const Register = () => {
             icon: "🚴"
         }
     ];
+
+
+
+
+  
+
+
 
     const handleRoleSelect = (role) => {
         setSelectedRole(role);
@@ -171,14 +180,42 @@ const Register = () => {
         if (fileInput) fileInput.value = '';
     };
 
+
+
+
+
+
+    const handleTextOnlyChange = (e) => {
+        const { name, value } = e.target;
+        const regex = /^[A-Za-z\s]*$/; // Regex to allow only letters and spaces        
+        if (regex.test(value) || value === "") {
+            setFormData({
+                ...formData,
+                [name]: value
+            });
+        }
+    };
+
+
+
+
+    // Updated Contact Number Handler - 11 digits (09XXXXXXXXX)
     const handleContactChange = (e) => {
-        let value = e.target.value.replace(/\D/g, '');
+        let value = e.target.value.replace(/\D/g, ''); // Remove non-digits
         
-        if (value.startsWith('0')) {
-            value = value.substring(1);
+        // Ensure it starts with 09
+        if (value.length > 0 && !value.startsWith('09')) {
+            if (value.startsWith('9')) {
+                value = '0' + value;
+            } else if (value.startsWith('0') && value.charAt(1) !== '9') {
+                value = '09' + value.substring(1);
+            } else {
+                value = '09';
+            }
         }
         
-        if (value.length <= 10) {
+        // Limit to 11 digits
+        if (value.length <= 11) {
             setFormData({
                 ...formData,
                 contact: value
@@ -186,19 +223,79 @@ const Register = () => {
         }
     };
 
+
+
+
+    // Updated Wallet Number Handler - 11 digits (09XXXXXXXXX)
     const handleWalletNumberChange = (e) => {
-        let value = e.target.value.replace(/\D/g, '');
+        let value = e.target.value.replace(/\D/g, ''); // Remove non-digits
         
-        if (value.startsWith('0')) {
-            value = value.substring(1);
+        // Ensure it starts with 09
+        if (value.length > 0 && !value.startsWith('09')) {
+            if (value.startsWith('9')) {
+                value = '0' + value;
+            } else if (value.startsWith('0') && value.charAt(1) !== '9') {
+                value = '09' + value.substring(1);
+            } else {
+                value = '09';
+            }
         }
         
-        if (value.length <= 10) {
+        // Limit to 11 digits
+        if (value.length <= 11) {
             setFormData({
                 ...formData,
                 wallet_number: value
             });
         }
+    };
+
+
+
+
+
+
+
+    // Address dropdown handlers
+    const handleProvinceChange = (e) => {
+        const province = e.target.value;
+        setSelectedProvince(province);
+        setSelectedCity("");
+        setSelectedBarangay("");
+        setFormData({
+            ...formData,
+            province: province,
+            city: "",
+            barangay: "",
+            zipCode: ""
+        });
+    };
+
+    const handleCityChange = (e) => {
+        const city = e.target.value;
+        setSelectedCity(city);
+        setSelectedBarangay("");
+        
+        // Get zip code from selected city
+        const province = selectedProvince;
+        const cityData = philippinesAddress[province]?.cities[city];
+        const zipCode = cityData?.zipCode || "";
+        
+        setFormData({
+            ...formData,
+            city: city,
+            barangay: "",
+            zipCode: zipCode
+        });
+    };
+
+    const handleBarangayChange = (e) => {
+        const barangay = e.target.value;
+        setSelectedBarangay(barangay);
+        setFormData({
+            ...formData,
+            barangay: barangay
+        });
     };
 
     const validatePassword = (password) => {
@@ -359,7 +456,6 @@ const Register = () => {
     const isFarmer = selectedRole.toLowerCase() === "farmer";
     const isBuyer = selectedRole.toLowerCase() === "buyer";
 
-    
 
     return (
         <>
@@ -526,7 +622,7 @@ const Register = () => {
                                                 { label: 'First name', name: 'firstname', type: 'text', holder: 'Enter first name' },
                                                 { label: 'Last name', name: 'lastname', type: 'text',  holder: 'Enter last name' }
                                             ].map((data, i) => (
-                                                <div key={i} className="col">
+                                                <div key={i} className="col-12 col-md-6  mt-2 mt-md-0">
                                                     <label className="text-capitalize small"
                                                         htmlFor={data.name}>
                                                         {data.label}:
@@ -539,13 +635,15 @@ const Register = () => {
                                                         name={data.name}
                                                         id={data.name}
                                                         placeholder={data.holder}
-                                                        onChange={handleChange}
+                                                        value={formData[data.name] || ''}
+                                                        onChange={handleTextOnlyChange}
                                                         required
                                                     />
                                                 </div>
                                             ))}
                                         </div>
-
+                                        
+                                        
                                         {needsEWallet && (
                                             <>
                                                 <div className="d-flex align-items-center gap-2 opacity-75 mt-4 p-3 rounded" 
@@ -561,48 +659,71 @@ const Register = () => {
                                                         <label className="text-capitalize small" htmlFor="province">
                                                             Province:
                                                         </label>
-                                                        <input
-                                                            className="mt-2 form-control small"
+                                                        <select
+                                                            className="mt-2 form-control form-select small"
                                                             style={{fontSize: "14px"}}
-                                                            type="text"
-                                                            name="province"
                                                             id="province"
-                                                            placeholder="Enter Province"
-                                                            onChange={handleChange}
-                                                        />
+                                                            name="province"
+                                                            value={selectedProvince}
+                                                            onChange={handleProvinceChange}
+                                                            required
+                                                        >
+                                                            <option value="">-- Select Province --</option>
+                                                            {Object.keys(philippinesAddress).map((province) => (
+                                                                <option key={province} value={province}>
+                                                                    {province}
+                                                                </option>
+                                                            ))}
+                                                        </select>
                                                     </div>
-                                                    <div className="col-md-6">
+                                                    <div className="col-md-6 mt-2 mt-md-0">
                                                         <label className="text-capitalize small" htmlFor="city">
                                                             City/Municipality:
                                                         </label>
-                                                        <input
-                                                            className="mt-2 form-control small"
+                                                        <select
+                                                            className="mt-2 form-control form-select small"
                                                             style={{fontSize: "14px"}}
-                                                            type="text"
-                                                            name="city"
                                                             id="city"
-                                                            placeholder="Enter City"
-                                                            onChange={handleChange}
-                                                        />
+                                                            name="city"
+                                                            value={selectedCity}
+                                                            onChange={handleCityChange}
+                                                            disabled={!selectedProvince}
+                                                            required
+                                                        >
+                                                            <option value="">-- Select City --</option>
+                                                            {selectedProvince && Object.keys(philippinesAddress[selectedProvince]?.cities || {}).map((city) => (
+                                                                <option key={city} value={city}>
+                                                                    {city}
+                                                                </option>
+                                                            ))}
+                                                        </select>
                                                     </div>
                                                 </div>
                                                 
                                                 <div className="row mt-3">
-                                                    <div className="col-md-8">
+                                                    <div className="col-md-6">
                                                         <label className="text-capitalize small" htmlFor="barangay">
                                                             Barangay:
                                                         </label>
-                                                        <input
-                                                            className="mt-2 form-control small"
+                                                        <select
+                                                            className="mt-2 form-control form-select small"
                                                             style={{fontSize: "14px"}}
-                                                            type="text"
-                                                            name="barangay"
                                                             id="barangay"
-                                                            placeholder="Enter Barangay"
-                                                            onChange={handleChange}
-                                                        />
+                                                            name="barangay"
+                                                            value={selectedBarangay}
+                                                            onChange={handleBarangayChange}
+                                                            disabled={!selectedCity}
+                                                            required
+                                                        >
+                                                            <option value="">-- Select Barangay --</option>
+                                                            {selectedCity && philippinesAddress[selectedProvince]?.cities[selectedCity]?.barangays?.map((barangay) => (
+                                                                <option key={barangay} value={barangay}>
+                                                                    {barangay}
+                                                                </option>
+                                                            ))}
+                                                        </select>
                                                     </div>
-                                                    <div className="col-md-4">
+                                                    <div className="col-md-6 mt-2 mt-md-0">
                                                         <label className="text-capitalize small" htmlFor="zipCode">
                                                             Zip Code:
                                                         </label>
@@ -612,9 +733,9 @@ const Register = () => {
                                                             type="text"
                                                             name="zipCode"
                                                             id="zipCode"
-                                                            placeholder="e.g., 1100"
-                                                            maxLength="4"
-                                                            onChange={handleChange}
+                                                            placeholder="Auto-filled"
+                                                            value={formData.zipCode || ''}
+                                                            disabled
                                                         />
                                                     </div>
                                                 </div>
@@ -630,7 +751,9 @@ const Register = () => {
                                                         id="detailAddress"
                                                         rows="3"
                                                         placeholder="House/Unit No., Street, Subdivision, etc."
+                                                        value={formData.detailAddress || ''}
                                                         onChange={handleChange}
+                                                        required
                                                     />
                                                     <small className="text-muted d-block mt-1" style={{fontSize: "12px"}}>
                                                         Provide complete address details for deliveries
@@ -638,10 +761,6 @@ const Register = () => {
                                                 </div>
                                             </>
                                         )}
-
-
-
-
 
 
 
@@ -826,23 +945,21 @@ const Register = () => {
                                                         <label className="text-capitalize small" 
                                                             htmlFor="wallet_number">e-wallet number:
                                                         </label>
-                                                        <div className="input-group mt-2">
-                                                            <span className="input-group-text small" style={{fontSize: "14px"}}>+63</span>
-                                                            <input
-                                                                className="form-control small"
-                                                                style={{fontSize: "14px"}}
-                                                                type="text"
-                                                                name="wallet_number"
-                                                                id="wallet_number"
-                                                                placeholder="9XXXXXXXXX"
-                                                                value={formData.wallet_number || ''}
-                                                                onChange={handleWalletNumberChange}
-                                                                maxLength="10"
-                                                                required
-                                                            />
-                                                        </div>
+                                                        <input
+                                                            className="form-control small mt-2"
+                                                            style={{fontSize: "14px"}}
+                                                            type="text"
+                                                            name="wallet_number"
+                                                            id="wallet_number"
+                                                            placeholder="09XXXXXXXXX"
+                                                            value={formData.wallet_number || ''}
+                                                            onChange={handleWalletNumberChange}
+                                                            maxLength="11"
+                                                            required
+                                                        />
+                                                     
                                                         <small className="text-muted d-block mt-1" style={{fontSize: "12px"}}>
-                                                            Enter 10-digit mobile number starting with 9 (0 will be added automatically)
+                                                            Enter 11-digit mobile number (e.g., 09123456789) 
                                                         </small>
                                                     </div>
                                                 </div>
@@ -940,8 +1057,6 @@ const Register = () => {
 
                                         {/* Address Section - for farmers and riders */}
 
-
-
                                         {!needsEWallet && (
                                             <>
                                                 <div className="mt-3">
@@ -949,22 +1064,22 @@ const Register = () => {
                                                         htmlFor="contact">contact no:
                                                     </label>
                                                     <div className="input-group mt-2">
-                                                        <span className="input-group-text small" style={{fontSize: "14px"}}>+63</span>
                                                         <input
                                                             className="form-control small"
                                                             style={{fontSize: "14px"}}
                                                             type="text"
                                                             name="contact"
                                                             id="contact"
-                                                            placeholder="9XXXXXXXXX"
+                                                            placeholder="09XXXXXXXXX"
                                                             value={formData.contact || ''}
                                                             onChange={handleContactChange}
-                                                            maxLength="10"
+                                                            maxLength="11"
                                                             required
                                                         />
                                                     </div>
+                                               
                                                     <small className="text-muted d-block mt-1" style={{fontSize: "12px"}}>
-                                                        Enter 10-digit mobile number starting with 9 (0 will be added automatically)
+                                                        Enter 11-digit mobile number (e.g., 09123456789)
                                                     </small>
                                                 </div>
 
@@ -1065,7 +1180,6 @@ const Register = () => {
                                                 </p>
                                             </div>
                                         </div>
-
 
 
                                         {/* Replace your existing register button div with this */}

@@ -190,8 +190,8 @@ const ChangePassword = () => {
                                     </label>
                                     <div className="position-relative">
                                         <input 
-                                            className={`w-100 mt-2 py-2 form-control ${errors.currentPassword ? 'border-danger' : ''}`}
-                                            style={{ fontSize: "14px", background: "#F5F5DC", paddingRight: "40px" }}
+                                            className={`w-100 mt-2 py-2 form-control bg-warning bg-opacity-10 ${errors.currentPassword ? 'border-danger' : ''}`}
+                                            style={{ fontSize: "14px", paddingRight: "40px" }}
                                             name="currentPassword"
                                             type={showPasswords.current ? "text" : "password"}
                                             placeholder="Enter current password"
@@ -226,8 +226,8 @@ const ChangePassword = () => {
                                     </label>
                                     <div className="position-relative">
                                         <input 
-                                            className={`w-100 mt-2 py-2 form-control ${errors.newPassword ? 'border-danger' : ''}`}
-                                            style={{ fontSize: "14px", background: "#F5F5DC", paddingRight: "40px" }}
+                                            className={`w-100 mt-2 py-2 form-control bg-warning bg-opacity-10 ${errors.newPassword ? 'border-danger' : ''}`}
+                                            style={{ fontSize: "14px", paddingRight: "40px" }}
                                             name="newPassword"
                                             type={showPasswords.new ? "text" : "password"}
                                             placeholder="Enter new password"
@@ -263,8 +263,8 @@ const ChangePassword = () => {
                                     </label>
                                     <div className="position-relative">
                                         <input 
-                                            className={`w-100 mt-2 py-2 form-control ${errors.confirmPassword ? 'border-danger' : ''}`}
-                                            style={{ fontSize: "14px", background: "#F5F5DC", paddingRight: "40px" }}
+                                            className={`w-100 mt-2 py-2 form-control bg-warning bg-opacity-10 ${errors.confirmPassword ? 'border-danger' : ''}`}
+                                            style={{ fontSize: "14px", paddingRight: "40px" }}
                                             name="confirmPassword"
                                             type={showPasswords.confirm ? "text" : "password"}
                                             placeholder="Confirm new password"

@@ -20,6 +20,39 @@ import SeasonAnnouncement from "../components/user/seasonAnnouncement.jsx";
 import BestSellerProducts from "../components/bestSeller.jsx";
 
 
+// Loading Component
+const LoadingScreen = () => {
+  return (
+    <div className="vh-100 d-flex flex-column justify-content-center align-items-center bg-white">
+      <div className="mb-4" style={{
+        animation: 'bounce 1s infinite',
+      }}>
+        <div className="d-flex align-items-center gap-2">
+          <img src="https://res.cloudinary.com/dtelqtkzj/image/upload/v1770440242/image-removebg-preview_sfsot1.png" alt="logo"
+          style={{width:"55px", height:"55px"}}
+          />
+        </div>
+      </div>
+      
+      <span className="text-success fw-bold">Loading...</span>
+
+      <style>
+        {`
+          @keyframes bounce {
+            0%, 100% {
+              transform: translateY(0);
+            }
+            50% {
+              transform: translateY(-20px);
+            }
+          }
+        `}
+      </style>
+    </div>
+  );
+};
+
+
 //main entry file
 const  App = ()=> {
   const {setRole, setId} = useContext(appContext);
@@ -48,7 +81,7 @@ const  App = ()=> {
   },[]);
 
 
-  if(isLoading) return <p></p>
+  if(isLoading) return <LoadingScreen />;
 
 
   const getRedirectPath = () => {
@@ -126,11 +159,3 @@ const  App = ()=> {
 
 
 export default App;
-
-
-
-
-
-
-
- 

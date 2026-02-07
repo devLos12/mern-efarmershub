@@ -11,6 +11,8 @@ const SeasonAnnouncement = () => {
   const autoplayRef = useRef(null);
   const { role } = useContext(appContext);
 
+  
+
   useEffect(() => {
     setLoading(true); // Start loading
     fetch(`${import.meta.env.VITE_API_URL}/api/displayAnnouncement`, {
@@ -122,20 +124,20 @@ const SeasonAnnouncement = () => {
   };
 
   return (
-    <div className={`container g-0`} style={{ marginTop: role === "user" ? "110px" : "" }}>
-      <div className="row g-0 justify-content-center overflow-hidden">
+    <div className={`container g-0`} style={{ opacity: loading ? 0.6 : 1, transition: "opacity 0.6s ease-in-out" }}>
+      <div className="row g-0 justify-content-center overflow-hidden "
+      style={{marginTop: role === "user" ?  "120px" : ""}}
+      >
         <div className="col-12">
           {loading ? (
-            // Loading spinner
-            <div className="d-flex justify-content-center align-items-center"
-            style={{height: "420px"}} 
-            >
-              <div className="spinner-border text-success" role="status">
+            // Minimalist loading spinner
+            <div className="d-flex justify-content-center align-items-center" style={{height: "400px"}} >
+              <div className="spinner-border" role="status" style={{ width: "40px", height: "40px", borderWidth: "3px", color: "#22c55e" }}>
                 <span className="visually-hidden">Loading...</span>
               </div>
             </div>
           ) : getAnnouncement.length > 0 ? (
-            <div className="position-relative overflow-hidden">
+            <div className="position-relative overflow-hidden" style={{ borderRadius: "12px" }}>
               <div
                 ref={scrollRef}
                 className="d-flex"
@@ -152,15 +154,68 @@ const SeasonAnnouncement = () => {
                   .announcement-scroll::-webkit-scrollbar {
                     display: none;
                   }
+                  .announcement-item {
+                    animation: fadeInUp 0.6s ease-out forwards;
+                    opacity: 0;
+                  }
+                  @keyframes fadeInUp {
+                    from {
+                      opacity: 0;
+                      transform: translateY(20px);
+                    }
+                    to {
+                      opacity: 1;
+                      transform: translateY(0);
+                    }
+                  }
+                  .announcement-title {
+                    font-size: clamp(1.75rem, 4vw, 2.8rem);
+                    font-weight: 700;
+                    letter-spacing: -0.01em;
+                    line-height: 1.2;
+                    text-transform: capitalize;
+                  }
+                  .announcement-desc {
+                    font-size: clamp(0.95rem, 1.8vw, 1.1rem);
+                    font-weight: 400;
+                    line-height: 1.6;
+                    text-transform: capitalize;
+                    opacity: 0.9;
+                  }
+                  .announcement-meta-label {
+                    font-size: 0.8rem;
+                    font-weight: 600;
+                    letter-spacing: 0.06em;
+                    text-transform: uppercase;
+                    opacity: 0.6;
+                  }
+                  .announcement-meta-value {
+                    font-size: clamp(0.95rem, 1.8vw, 1.1rem);
+                    font-weight: 500;
+                    text-transform: capitalize;
+                  }
+                  .nav-btn {
+                    transition: all 0.2s ease;
+                    background: rgba(255, 255, 255, 0.85) !important;
+                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+                    border: none !important;
+                  }
+                  .nav-btn:hover {
+                    background: rgba(255, 255, 255, 1) !important;
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+                  }
                 `}</style>
 
                 {getAnnouncement.map((item, index) => (
                   <div
                     key={index}
-                    className="flex-shrink-0"
+                    className="flex-shrink-0 announcement-item"
                     style={{
                       width: "100%",
                       scrollSnapAlign: "start",
+                      animationDelay: `${index * 0.1}s`,
+                      borderRadius: "12px",
+                      overflow: "hidden",
                     }}
                   >
                     <div className="position-relative bg-transparent" style={{ overflow: "hidden" }}>
@@ -173,32 +228,33 @@ const SeasonAnnouncement = () => {
                         alt={item.title}
                         className="w-100"
                         style={{
-                          height: "450px",
+                          height: "400px",
                           objectFit: "cover",
                           display: "block",
                         }}
                       />
                       <div
-                        className="position-absolute bottom-0 start-0 w-100 p-4"
+                        className="position-absolute bottom-0 start-0 w-100"
                         style={{
                           background:
-                            "linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.7) 30%, rgba(255,255,255,0.85) 80%, rgba(255,255,255,0.95) 100%)",
+                            "linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.4) 50%, rgba(0,0,0,0.7) 100%)",
+                          padding: "clamp(1.5rem, 5vw, 2.5rem)",
                         }}
                       >
                         <div className="mb-3">
-                          <p className="m-0 fw-bold text-capitalize fs-1 text-dark">{item.title}</p>
-                          <p className="m-0 text-capitalize text-wrap fw-bold">{item.description}</p>
+                          <p className="announcement-title text-white m-0">{item.title}</p>
+                          <p className="announcement-desc text-white m-0 mt-2">{item.description}</p>
                         </div>
 
-                        <div className="d-flex gap-5">
+                        <div className="d-flex gap-3 gap-md-4 flex-wrap">
                           <div>
-                            <p className="m-0 text-capitalize small">Crop name</p>
-                            <p className="m-0 fw-bold text-capitalize text-success">{item.cropName}.</p>
+                            <p className="announcement-meta-label text-white m-0">Crop</p>
+                            <p className="announcement-meta-value text-white m-0 mt-1">{item.cropName}</p>
                           </div>
 
                           <div>
-                            <p className="m-0 text-capitalize small">End Date</p>
-                            <p className="m-0 fw-bold text-capitalize text-success">{formatDate(item.endDate)}</p>
+                            <p className="announcement-meta-label text-white m-0">End Date</p>
+                            <p className="announcement-meta-value text-white m-0 mt-1">{formatDate(item.endDate)}</p>
                           </div>
                         </div>
                       </div>
@@ -209,28 +265,24 @@ const SeasonAnnouncement = () => {
 
               {leftArrow && (
                 <button
-                  className="fa-solid fa-chevron-left fs-6 bg-light position-absolute top-50 start-0 ms-3
-                    translate-middle-y border-0 rounded-circle shadow-sm d-flex align-items-center
-                    justify-content-center z-1 d-none d-md-flex text-success"
-                  style={{ width: "45px", height: "45px" }}
+                  className="nav-btn fa-solid fa-chevron-left fs-6 position-absolute top-50 start-0 ms-3 translate-middle-y rounded-circle d-flex align-items-center justify-content-center z-1 d-none d-md-flex text-dark"
+                  style={{ width: "44px", height: "44px" }}
                   onClick={() => handleScroll("left")}
                 ></button>
               )}
 
               {rightArrow && (
                 <button
-                  className="fa-solid fa-chevron-right fs-6 bg-light position-absolute top-50 end-0 me-3
-                    translate-middle-y border-0 rounded-circle shadow-sm d-flex align-items-center 
-                    justify-content-center z-1 d-none d-md-flex text-success"
-                  style={{ width: "45px", height: "45px" }}
+                  className="nav-btn fa-solid fa-chevron-right fs-6 position-absolute top-50 end-0 me-3 translate-middle-y rounded-circle d-flex align-items-center justify-content-center z-1 d-none d-md-flex text-dark"
+                  style={{ width: "44px", height: "44px" }}
                   onClick={() => handleScroll("right")}
                 ></button>
               )}
             </div>
           ) : (
-            <div className="mt-5 p-5 d-flex align-items-center flex-column gap-2">
-              <i className="fa-solid fa-bell fs-3 text-muted"></i>
-              <p className="text-center text-muted mt-3">No annoucement season yet.</p>
+            <div className="p-4 d-flex align-items-center flex-column gap-2 text-center" style={{ minHeight: "250px", justifyContent: "center" }}>
+              <i className="fa-solid fa-bell" style={{ fontSize: "2.5rem", opacity: 0.2 }}></i>
+              <p className="text-muted m-0 mt-2" style={{ fontSize: "0.95rem" }}>No seasonal announcements</p>
             </div>
           )}
         </div>

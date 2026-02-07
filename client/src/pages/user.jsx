@@ -29,6 +29,7 @@ import BestSellerProducts from "../components/bestSeller.jsx";
 
 
 const User = ({setUserAuth}) => {
+  const { setRole } = useContext(appContext);
   const { openExit, setOpenExit } = useContext(userContext);
   const { text, setNotifList, loading, setLoading } = useContext(userContext);
   const { userData, setUserData } = useContext(userContext);
@@ -303,8 +304,8 @@ const User = ({setUserAuth}) => {
               })
               .then(res => res.json())
               .then(data => {
-                console.log(data.message);
                 navigate("/", { replace: true});
+                setRole(null);
 
               })
               .catch(err => console.log("Error ",err.message));

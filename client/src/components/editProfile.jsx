@@ -11,9 +11,6 @@ import Toast from "./toastNotif";
 
 
 
-
-
-
 const EditProfile = () => {
     
     const { role, 
@@ -132,9 +129,21 @@ const EditProfile = () => {
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
+        let sanitizedValue = value;
+
+        // Sanitize text inputs - allow only letters and spaces
+        if (name === 'firstname' || name === 'lastname' || name === 'detailAddress') {
+            sanitizedValue = value.replace(/[^a-zA-Z\s]/g, '');
+        }
+
+        // Contact number - only digits, max 11 digits
+        if (name === 'contact') {
+            sanitizedValue = value.replace(/\D/g, '').slice(0, 11);
+        }
+
         setFormData(prevData => ({
             ...prevData,
-            [name]: value
+            [name]: sanitizedValue
         }));
     };
 
@@ -383,8 +392,8 @@ const EditProfile = () => {
                                         first name:
                                     </label>
                                     <input 
-                                        className="w-100 mt-2 py-2 form-control text-capitalize"
-                                        style={{ fontSize: "14px", background: "#F5F5DC" }}
+                                        className="w-100 mt-2 py-2 form-control bg-warning bg-opacity-10"
+                                        style={{ fontSize: "14px" }}
                                         name="firstname"
                                         type="text"
                                         value={formData.firstname || ""}
@@ -398,8 +407,8 @@ const EditProfile = () => {
                                         last name:
                                     </label>
                                     <input 
-                                        className="w-100 mt-2 py-2 form-control text-capitalize"
-                                        style={{ fontSize: "14px", background: "#F5F5DC" }}
+                                        className="w-100 mt-2 py-2 form-control bg-warning bg-opacity-10"
+                                        style={{ fontSize: "14px" }}
                                         name="lastname"
                                         type="text"
                                         value={formData.lastname || ""}
@@ -414,8 +423,8 @@ const EditProfile = () => {
                                         email:
                                     </label>
                                     <input 
-                                        className="w-100 mt-2 py-2 form-control"
-                                        style={{ fontSize: "14px", background: "#F5F5DC" }}
+                                        className="w-100 mt-2 py-2 form-control bg-warning bg-opacity-10"
+                                        style={{ fontSize: "14px" }}
                                         name="email"
                                         type="email"
                                         value={formData.email || ""}
@@ -432,17 +441,20 @@ const EditProfile = () => {
                                                 e-wallet account:
                                             </label>
                                             <input 
-                                                className="w-100 mt-2 py-2 form-control"
-                                                style={{ fontSize: "14px", background: "#F5F5DC" }}
+                                                className="w-100 mt-2 py-2 form-control bg-warning bg-opacity-10"
+                                                style={{ fontSize: "14px" }}
                                                 name="wallet_number"
                                                 type="text"
+                                                placeholder="11-digit number"
                                                 value={formData?.e_WalletAcc?.number || ""}
                                                 onChange={(e)=>{
+                                                    const sanitized = e.target.value.replace(/\D/g, '').slice(0, 11);
                                                     setFormData((prev) => ({
                                                         ...prev,
-                                                        e_WalletAcc: { ...prev.e_WalletAcc, number: e.target.value },
+                                                        e_WalletAcc: { ...prev.e_WalletAcc, number: sanitized },
                                                     }))
                                                 }}
+                                                maxLength="11"
                                                 required
                                             />
                                         </div>
@@ -450,27 +462,25 @@ const EditProfile = () => {
                                             <label className="text-capitalize mt-2" style={{ fontSize: "14px" }}>
                                                 e-wallet type:
                                             </label>
-                                            <div style={{background: "#F5F5DC"}}>
-                                                <select 
-                                                    className="form-select text-capitalize bg-transparent mt-2 w-100"
-                                                    style={{fontSize: "14px"}} 
-                                                    name="wallet_type" 
-                                                    value={formData?.e_WalletAcc?.type || ""}
-                                                    onChange={(e) => {
-                                                        setFormData((prev) => ({
-                                                            ...prev,
-                                                            e_WalletAcc: { ...prev.e_WalletAcc, type: e.target.value },
-                                                        }))
-                                                    }}
-                                                    required>
-                                                    <option value="" hidden>
-                                                        {formData?.e_WalletAcc?.type || "select wallet"}
-                                                    </option>
-                                                    {["g-cash", "maya"].map((data, i) => (
-                                                        <option key={i} value={data}>{data}</option>
-                                                    ))}
-                                                </select>
-                                            </div>
+                                            <select 
+                                                className="form-select text-capitalize mt-2 w-100 bg-warning bg-opacity-10"
+                                                style={{fontSize: "14px"}} 
+                                                name="wallet_type" 
+                                                value={formData?.e_WalletAcc?.type || ""}
+                                                onChange={(e) => {
+                                                    setFormData((prev) => ({
+                                                        ...prev,
+                                                        e_WalletAcc: { ...prev.e_WalletAcc, type: e.target.value },
+                                                    }))
+                                                }}
+                                                required>
+                                                <option value="" hidden>
+                                                    {formData?.e_WalletAcc?.type || "select wallet"}
+                                                </option>
+                                                {["g-cash", "maya"].map((data, i) => (
+                                                    <option key={i} value={data}>{data}</option>
+                                                ))}
+                                            </select>
                                         </div>
                                     </>
                                 ) : (
@@ -479,12 +489,14 @@ const EditProfile = () => {
                                             contact no:
                                         </label>
                                         <input 
-                                            className="w-100 mt-2 py-2 form-control"
-                                            style={{ fontSize: "14px", background: "#F5F5DC" }}
+                                            className="w-100 mt-2 py-2 form-control bg-warning bg-opacity-10"
+                                            style={{ fontSize: "14px" }}
                                             name="contact"
                                             type="text"
+                                            placeholder="11-digit number"
                                             value={formData.contact || ""}
                                             onChange={handleInputChange}
+                                            maxLength="11"
                                             required
                                         />
                                     </div>
@@ -499,22 +511,20 @@ const EditProfile = () => {
                                     <label className="text-capitalize mt-2" style={{ fontSize: "14px" }}>
                                         province:
                                     </label>
-                                    <div style={{background: "#F5F5DC"}}>
-                                        <select 
-                                            name="province" 
-                                            className="mt-2 w-100 form-control bg-transparent"
-                                            style={{fontSize:"14px"}}
-                                            onChange={handleLocationChange}
-                                            value={formData.province || ''}
-                                            required>
-                                            <option value="">Select Province</option>
-                                            {Object.keys(philippineLocations).map((province) => (
-                                                <option key={province} value={province}>
-                                                    {province}
-                                                </option>
-                                            ))}
-                                        </select>
-                                    </div>
+                                    <select 
+                                        name="province" 
+                                        className="form-select mt-2 w-100 bg-warning bg-opacity-10"
+                                        style={{fontSize:"14px"}}
+                                        onChange={handleLocationChange}
+                                        value={formData.province || ''}
+                                        required>
+                                        <option value="">Select Province</option>
+                                        {Object.keys(philippineLocations).map((province) => (
+                                            <option key={province} value={province}>
+                                                {province}
+                                            </option>
+                                        ))}
+                                    </select>
                                 </div>
 
                                 {/* City */}
@@ -522,23 +532,21 @@ const EditProfile = () => {
                                     <label className="text-capitalize mt-2" style={{ fontSize: "14px" }}>
                                         city:
                                     </label>
-                                    <div style={{background: "#F5F5DC"}}>
-                                        <select 
-                                            name="city" 
-                                            className={`mt-2 w-100 form-control ${formData.province ? "bg-transparent" : ""}`}
-                                            style={{fontSize:"14px"}}
-                                            onChange={handleLocationChange}
-                                            value={formData.city || ''}
-                                            disabled={!formData.province || formData.province === fallBack}
-                                            required>
-                                            <option value="">Select City</option>
-                                            {availableCities.map((city) => (
-                                                <option key={city} value={city}>
-                                                    {city}
-                                                </option>
-                                            ))}
-                                        </select>
-                                    </div>
+                                    <select 
+                                        name="city" 
+                                        className="form-select mt-2 w-100 bg-warning bg-opacity-10"
+                                        style={{fontSize:"14px"}}
+                                        onChange={handleLocationChange}
+                                        value={formData.city || ''}
+                                        disabled={!formData.province || formData.province === fallBack}
+                                        required>
+                                        <option value="">Select City</option>
+                                        {availableCities.map((city) => (
+                                            <option key={city} value={city}>
+                                                {city}
+                                            </option>
+                                        ))}
+                                    </select>
                                 </div>
 
                                 {/* Barangay */}
@@ -546,23 +554,21 @@ const EditProfile = () => {
                                     <label className="text-capitalize mt-2" style={{ fontSize: "14px" }}>
                                         barangay:
                                     </label>
-                                    <div style={{background: "#F5F5DC"}}>
-                                        <select 
-                                            name="barangay"
-                                            className={`mt-2 w-100 form-control ${formData.city ? "bg-transparent" : ""}`}
-                                            style={{fontSize:"14px"}}
-                                            onChange={handleLocationChange}
-                                            value={formData.barangay || ''}
-                                            disabled={!formData.city || formData.city === fallBack}
-                                            required>
-                                            <option value="">Select Barangay</option>
-                                            {availableBarangays.map((barangay) => (
-                                                <option key={barangay} value={barangay}>
-                                                    {barangay}
-                                                </option>
-                                            ))}
-                                        </select>
-                                    </div>
+                                    <select 
+                                        name="barangay"
+                                        className="form-select mt-2 w-100 bg-warning bg-opacity-10"
+                                        style={{fontSize:"14px"}}
+                                        onChange={handleLocationChange}
+                                        value={formData.barangay || ''}
+                                        disabled={!formData.city || formData.city === fallBack}
+                                        required>
+                                        <option value="">Select Barangay</option>
+                                        {availableBarangays.map((barangay) => (
+                                            <option key={barangay} value={barangay}>
+                                                {barangay}
+                                            </option>
+                                        ))}
+                                    </select>
                                 </div>
 
                                 {/* Zip Code */}
@@ -571,8 +577,8 @@ const EditProfile = () => {
                                         zip code:
                                     </label>
                                     <input 
-                                        className="w-100 mt-2 py-2 form-control"
-                                        style={{ fontSize: "14px", background: "#F5F5DC" }}
+                                        className="w-100 mt-2 py-2 form-control bg-warning bg-opacity-10"
+                                        style={{ fontSize: "14px" }}
                                         name="zipcode"
                                         type="text"
                                         value={formData.zipcode || ''}
@@ -588,8 +594,8 @@ const EditProfile = () => {
                                         blk/lot/street:
                                     </label>
                                     <textarea 
-                                        className="w-100 mt-2 form-control text-capitalize"
-                                        style={{ fontSize: "14px", resize: "none", background: "#F5F5DC" }}
+                                        className="w-100 mt-2 form-control text-capitalize bg-warning bg-opacity-10"
+                                        style={{ fontSize: "14px", resize: "none" }}
                                         name="detailAddress"
                                         onChange={handleInputChange}
                                         value={formData.detailAddress || ''}

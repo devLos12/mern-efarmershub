@@ -243,11 +243,6 @@ const BestSellerProducts = ({signIn}) => {
                                     
                                     <div className="mt-2 rounded">
                                         <p className="m-0 text-capitalize fw-bold text-success text-center">{data.name}</p>
-                                        <div className="text-center mb-1">
-                                            <span className="badge bg-success bg-opacity-10 text-success text-capitalize" style={{fontSize: "10px"}}>
-                                                {data.productType}
-                                            </span>
-                                        </div>
 
                                         {/* Total Sold Badge */}
                                         <div className="text-center mb-2">

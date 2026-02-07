@@ -3,6 +3,8 @@ import style from '../../styles/header.module.css';
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+
+
 //header file!
 const Header = ({signIn, isUserAuthenticated, setAuth})=> {
     const [isMenuVisible, setMenuVisible] = useState(false);
@@ -42,9 +44,13 @@ const Header = ({signIn, isUserAuthenticated, setAuth})=> {
                 <div className="border-bottom border">
                 <header className="d-flex align-items-center
                 justify-content-between p-3 px-md-5 ">
-                    <div className="d-flex justify-content-between align-items-center">
-                        <p className="m-0 fs-5 text-capitalize fw-bold text-green"
-                        >e farmers hub</p>
+                    <div className="d-flex justify-content-between align-items-center gap-1">
+                        
+                        <img src="https://res.cloudinary.com/dtelqtkzj/image/upload/v1770440242/image-removebg-preview_sfsot1.png" alt="logo" 
+                        style={{width:"30px", height:"30px"}} />
+                        
+                        <p className="m-0 fs-5 text-capitalize fw-bold text-green mt-1"
+                        >farmers hub</p>
                     </div>
                     <nav className="d-none d-md-block">
                         <ul className="list-unstyled d-flex gap-4 m-0">
