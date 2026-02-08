@@ -28,6 +28,8 @@ const createResendClient = () => {
 
 const resend = createResendClient();
 
+
+// Email sending function using Resend
 // Email sending function using Resend
 const sendApprovalEmail = async (email, name, accountType) => {
     // Check if Resend client is available
@@ -45,42 +47,96 @@ const sendApprovalEmail = async (email, name, accountType) => {
 
     try {
         const { data, error } = await resend.emails.send({
-            from: 'E-Farmers Hub <onboarding@resend.dev>', // Change to your verified domain
+            from: 'E-Farmers Hub <security@efarmershub.com>',
             to: [email],
-            subject: `Account Approved - ${accountType === 'seller' ? 'Farmer' : 'Rider'} Account Verification`,
+            subject: `Account Approved - ${accountType === 'seller' ? 'Farmer' : 'Rider'} Account`,
             html: `
-                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-                    <div style="background-color: #28a745; padding: 20px; text-align: center; border-radius: 10px 10px 0 0;">
-                        <h1 style="color: white; margin: 0;">Account Approved! ✓</h1>
-                    </div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account Approved - E-Farmers Hub</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f4;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f4f4; padding: 20px 0;">
+        <tr>
+            <td align="center">
+                <!-- Main Container -->
+                <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
                     
-                    <div style="background-color: #f8f9fa; padding: 30px; border-radius: 0 0 10px 10px;">
-                        <h2 style="color: #333;">Hello ${name},</h2>
-                        
-                        <p style="font-size: 16px; color: #555; line-height: 1.6;">
-                            Great news! Your ${accountType === 'seller' ? 'farmer' : 'rider'} account has been successfully verified and approved.
-                        </p>
-                        
-                        <div style="background-color: white; padding: 20px; border-left: 4px solid #28a745; margin: 20px 0;">
-                            <p style="margin: 0; color: #333;">
-                                <strong>Account Status:</strong> <span style="color: #28a745;">✓ Verified</span><br>
-                                <strong>Account Type:</strong> ${accountType === 'seller' ? 'Farmer' : 'Rider'}<br>
-                                <strong>Email:</strong> ${email}
+                    <!-- Header with Logo (No Background) -->
+                    <tr>
+                        <td style="padding: 40px 20px; text-align: center;">
+                            <!-- Logo Image -->
+                            <img src="https://res.cloudinary.com/dtelqtkzj/image/upload/v1770440242/image-removebg-preview_sfsot1.png" alt="E-Farmers Hub Logo" style="max-width: 150px; height: auto; margin-bottom: 15px;" />
+                            <h1 style="color: #28a745; margin: 0; font-size: 28px; font-weight: 600;">E-Farmers Hub</h1>
+                        </td>
+                    </tr>
+
+                    <!-- Body Content -->
+                    <tr>
+                        <td style="padding: 40px 30px;">
+
+                            <h2 style="color: #333333; margin: 0 0 20px 0; font-size: 24px; font-weight: 600; text-align: start; color: #28a745;">Account Approved!</h2>
+                            
+                            <p style="color: #666666; font-size: 16px; line-height: 1.6; margin: 0 0 25px 0;">
+                                Hello <strong>${name}</strong>,
                             </p>
-                        </div>
-                        
-                        <p style="font-size: 16px; color: #555; line-height: 1.6;">
-                            You can now access all features available for ${accountType === 'seller' ? 'farmers' : 'riders'}. 
-                            Log in to your account to get started!
-                        </p>
-                        
-                        <hr style="border: none; border-top: 1px solid #ddd; margin: 20px 0;">
-                        
-                        <p style="font-size: 12px; color: #999; text-align: center;">
-                            This is an automated message, please do not reply to this email.
-                        </p>
-                    </div>
-                </div>
+
+                            <p style="color: #666666; font-size: 16px; line-height: 1.6; margin: 0 0 25px 0;">
+                                Great news! Your ${accountType === 'seller' ? 'farmer' : 'rider'} account has been successfully verified and approved.
+                            </p>
+
+                            <!-- Account Details Box -->
+                            <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f8f9fa; border-left: 4px solid #28a745; border-radius: 4px; margin: 25px 0;">
+                                <tr>
+                                    <td style="padding: 20px;">
+                                        <p style="color: #333333; font-size: 14px; margin: 0 0 10px 0; line-height: 1.8;">
+                                            <strong>Account Status:</strong> <span style="color: #28a745;">✓ Verified</span>
+                                        </p>
+                                        <p style="color: #333333; font-size: 14px; margin: 0 0 10px 0; line-height: 1.8;">
+                                            <strong>Account Type:</strong> ${accountType === 'seller' ? 'Farmer' : 'Rider'}
+                                        </p>
+                                        <p style="color: #333333; font-size: 14px; margin: 0; line-height: 1.8;">
+                                            <strong>Email:</strong> ${email}
+                                        </p>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <p style="color: #666666; font-size: 16px; line-height: 1.6; margin: 25px 0 0 0;">
+                                You can now access all features available for ${accountType === 'seller' ? 'farmers' : 'riders'}. Log in to your account to get started!
+                            </p>
+
+                            <!-- CTA Button -->
+                            <table width="100%" cellpadding="0" cellspacing="0" style="margin: 30px 0;">
+                                <tr>
+                                    <td align="center">
+                                        <a href="https://www.efarmershub.com/" style="display: inline-block; background-color: #28a745; color: #ffffff; text-decoration: none; padding: 14px 40px; border-radius: 6px; font-size: 16px; font-weight: 600;">
+                                            Login to Your Account
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
+                    <!-- Footer - Simple -->
+                    <tr>
+                        <td style="background-color: #f8f9fa; padding: 20px; text-align: center;">
+                            <p style="color: #6c757d; font-size: 12px; margin: 0;">
+                                © 2026 E-Farmers Hub. All rights reserved.
+                            </p>
+                        </td>
+                    </tr>
+
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
             `
         });
 
@@ -98,6 +154,12 @@ const sendApprovalEmail = async (email, name, accountType) => {
         return { success: false, error: error.message };
     }
 };
+
+
+
+
+
+
 
 
 // ============================================
@@ -230,11 +292,12 @@ const sendApprovalEmail = async (email, name, accountType) => {
 */
 
 
+
+
+
 // ============================================
 // CONTROLLER FUNCTIONS
 // ============================================
-
-
 
 export const getAccounts = async(req, res)=>{
     try{

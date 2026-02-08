@@ -17,6 +17,8 @@ export const sendMessage = async (req, res) => {
         const { receiverId, receiverRole, textMessage } = req.body;
         const files = req.files;
         
+
+                
         let imageFiles = [];
 
         // Upload images to Cloudinary if files exist

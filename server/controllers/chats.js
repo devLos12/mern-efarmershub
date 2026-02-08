@@ -86,10 +86,9 @@ export const markAsRead = async(req, res) => {
 export const deleteChat = async(req, res) => {
     try{
         const chatId  = req.params.id;  
-        const {id, role } = req.account;
+        const {id, role} = req.account;
 
-        
-
+                    
         const chat = await Chat.findById(chatId);
 
         if (!chat) {
@@ -101,7 +100,7 @@ export const deleteChat = async(req, res) => {
             entry.accountId.toString() === id.toString() 
         );
         
-        if (alreadyDeleted) {
+        if(alreadyDeleted) {
             await Chat.updateOne(
                 {_id : chatId, "deletedBy.accountId": id},
                 {$set : { "deletedBy.$.deletedAt": new Date()}},
@@ -109,11 +108,13 @@ export const deleteChat = async(req, res) => {
             );
             
         } else {
+
             chat.deletedBy.push({ 
                 accountId: id, 
                 role: role.charAt(0).toUpperCase() + role.slice(1),
                 deletedAt: new Date()
             });
+            
             await chat.save({ timestamps : false });
         }
         

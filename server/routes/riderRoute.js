@@ -6,7 +6,7 @@ import updateStatusDelivery, { imageProof } from "../controllers/rider/statusDel
 import { getProfile, updateActiveStatus } from "../controllers/rider/profile.js";
 import updateProfile, { updateRiderProfile } from "../controllers/rider/editprofile.js";
 import { getChatId, getMessages, sendImage, sendMessage } from "../controllers/messages.js";
-import { inboxChats, markAsRead } from "../controllers/chats.js";
+import { inboxChats, markAsRead, deleteChat } from "../controllers/chats.js";
 import { riderPayout, deleteRiderPayout } from "../controllers/rider/payouts.js";
 import { getQrCodes } from "../controllers/rider/qrpayment.js";
 
@@ -38,6 +38,7 @@ riderRouter.get('/getRiderInboxChat/', authRiderMiddleWares, inboxChats);
 riderRouter.get('/getPayouts', authRiderMiddleWares, riderPayout);
 riderRouter.patch('/riderDeletePayout', authRiderMiddleWares, deleteRiderPayout);
 riderRouter.get('/getRiderQrPayment', authRiderMiddleWares, getQrCodes);
+riderRouter.patch("/deleteRiderChat/:id", authRiderMiddleWares, deleteChat);
 
 
 

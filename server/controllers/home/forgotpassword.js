@@ -13,35 +13,103 @@ const verificationCodes = new Map();
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 
-
-// Resend version - ACTIVE
+// Enhanced Email Template with Logo and Professional Design
 const sendVerificationEmail = async (email, code) => {
     try {
         const { data, error } = await resend.emails.send({
-            from: 'E-Farmers Hub <security@efarmershub.com>',  // ✅ GAMITIN MO TO!
-            to: [email],  // ✅ Gawing dynamic, hindi hardcoded
-            subject: 'Password Reset Verification Code',
+            from: 'E-Farmers Hub <security@efarmershub.com>',
+            to: [email],
+            subject: 'Password Reset Verification Code - E-Farmers Hub',
             html: `
-                <h2>Password Reset Request</h2>
-                <p>Your verification code is:</p>
-                <h1 style="color: #28a745; font-size: 32px;">${code}</h1>
-                <p>This code will expire in 5 minutes.</p>
-                <p>If you didn't request this, please ignore this email.</p>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Password Reset - E-Farmers Hub</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f4;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f4f4; padding: 20px 0;">
+        <tr>
+            <td align="center">
+                <!-- Main Container -->
+                <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                    
+                    <!-- Header with Logo (No Background) -->
+                    <tr>
+                        <td style="padding: 40px 20px; text-align: center;">
+                            <!-- Logo Image (Upload mo sa Cloudinary) -->
+                            <img src="https://res.cloudinary.com/dtelqtkzj/image/upload/v1770440242/image-removebg-preview_sfsot1.png" alt="E-Farmers Hub Logo" style="max-width: 150px; height: auto; margin-bottom: 15px;" />
+                            <h1 style="color: #28a745; margin: 0; font-size: 28px; font-weight: 600;">E-Farmers Hub</h1>
+                        </td>
+                    </tr>
+
+                    <!-- Body Content -->
+                    <tr>
+                        <td style="padding: 40px 30px;">
+                            <h2 style="color: #333333; margin: 0 0 20px 0; font-size: 24px; font-weight: 600;">Password Reset Request</h2>
+                            
+                            <p style="color: #666666; font-size: 16px; line-height: 1.6; margin: 0 0 25px 0;">
+                                We received a request to reset your password. Use the verification code below to proceed:
+                            </p>
+
+                            <!-- Verification Code Box -->
+                            <table width="100%" cellpadding="0" cellspacing="0" style="margin: 30px 0;">
+                                <tr>
+                                    <td align="center" style="background-color: #f8f9fa; border: 2px dashed #28a745; border-radius: 8px; padding: 25px;">
+                                        <p style="color: #666666; font-size: 14px; margin: 0 0 10px 0; text-transform: uppercase; letter-spacing: 1px;">Your Verification Code</p>
+                                        <h1 style="color: #28a745; margin: 0; font-size: 42px; font-weight: 700; letter-spacing: 8px; font-family: 'Courier New', monospace;">${code}</h1>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <!-- Info Alert -->
+                            <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #fff3cd; border-left: 4px solid #ffc107; border-radius: 4px; margin: 25px 0;">
+                                <tr>
+                                    <td style="padding: 15px;">
+                                        <p style="color: #856404; font-size: 14px; margin: 0; line-height: 1.5;">
+                                            ⏱️ <strong>Important:</strong> This code will expire in <strong>5 minutes</strong> for security reasons.
+                                        </p>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <p style="color: #666666; font-size: 14px; line-height: 1.6; margin: 20px 0 0 0;">
+                                If you didn't request this password reset, please ignore this email or contact our support team if you have concerns.
+                            </p>
+                        </td>
+                    </tr>
+
+                    <!-- Footer - Simple -->
+                    <tr>
+                        <td style="background-color: #f8f9fa; padding: 20px; text-align: center;">
+                            <p style="color: #6c757d; font-size: 12px; margin: 0;">
+                                © 2026 E-Farmers Hub. All rights reserved.
+                            </p>
+                        </td>
+                    </tr>
+
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
             `
         });
 
         if (error) {
             console.error('Resend error:', error);
-            return { success: false };
+            return { success: false, error };
         }
 
-        return { success: true };
+        console.log('Email sent successfully:', data);
+        return { success: true, data };
     } catch (error) {
         console.error('Send email error:', error);
-        return { success: false };
+        return { success: false, error };
     }
 };
-
 
 
 

@@ -65,7 +65,7 @@ userRouter.get("/getUserMessages/:id", authMiddleware, getMessages);
 userRouter.get('/getUserInboxChat', authMiddleware, inboxChats);
 userRouter.patch("/updateMarkAsReadFromUser/:id", authMiddleware, markAsRead);
 userRouter.post('/getUserChatId', authMiddleware, getChatId);
-userRouter.patch("/deleteChat/:id", authMiddleware, deleteChat);
+userRouter.patch("/deleteChatUser/:id", authMiddleware, deleteChat);
 userRouter.get('/displayAnnouncement',  displayAnnouncement);
 userRouter.patch('/userChangePassword', authMiddleware, changePassword);
 userRouter.post('/cancelOrder/:id', authMiddleware, uploadRefundFile.single("qrCode"), cancelOrder);

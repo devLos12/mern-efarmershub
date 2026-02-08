@@ -52,7 +52,7 @@ const Header = ({signIn, isUserAuthenticated, setAuth})=> {
                         <p className="m-0 fs-5 text-capitalize fw-bold text-green mt-1"
                         >farmers hub</p>
                     </div>
-                    <nav className="d-none d-md-block">
+                    <nav className="d-none d-md-block"> 
                         <ul className="list-unstyled d-flex gap-4 m-0">
                         {links.map((link, i) => (
                             <li key={i}>
@@ -74,16 +74,16 @@ const Header = ({signIn, isUserAuthenticated, setAuth})=> {
                         Sign in
                     </button>
 
-                    <i className={`bx bx-${isMenuVisible ? "x" : "menu" } fs-2 d-md-none text-green`}
+                    <i className={`bx bx-${isMenuVisible ? "x" : "menu" } fs-1 d-md-none text-green`}
                     onClick={()=> setMenuVisible((prev) => !prev)}
                     style={{cursor: "pointer"}}
                     >
                     </i>
                 </header>
                 </div>
-
+                
                 {isMenuVisible && (
-                    <nav className="d-md-none vh-100 bg-white">
+                    <nav className="d-md-none  bg-white shadow">
                         <ul className="list-unstyled d-flex flex-column gap-4 m-0 p-3">
                         {links.map((link, i) => (
                             <li key={i}>

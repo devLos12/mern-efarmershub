@@ -34,7 +34,7 @@ const Sidebar = () => {
         ], 
 
         seller : [
-            {label: 'My Crops',     link: '/seller',              icon : "fa-solid fa-box",           source: undefined},
+            {label: 'My Crops',     link: '/seller',              icon : "fa-solid fa-leaf",           source: undefined},
             {label: 'Orders',       link: '/seller/orders',       icon : "fa-solid fa-bag-shopping",  source: undefined},
             {label: 'inbox',        link: '/seller/inbox',        icon : "fa-solid fa-inbox",         source: undefined},
             {label: 'chat support', link: '/seller/messages',     icon : "fa-solid fa-message",       source: undefined},
@@ -120,15 +120,15 @@ const Sidebar = () => {
                             }
                         }
                     }}>
-                        <div className="row">
+                        <div className="row ">
                             <div className="col-1">
                                 <div className={`${data.icon} position-relative 
                                 ${active ? 'text-green' : (role === "seller" ? "text-dark" : "text-light")}`}>
                                     {data.label === "inbox" && inboxBadge.show && (
                                         <p className="position-absolute top-0 end-0  m-2 
-                                            d-flex justify-content-center align-items-center fw-normal text-white"
+                                            d-flex justify-content-center align-items-center fw-normal text-white bg-danger"
                                             style={{fontSize : "9px",
-                                            width:"17px", height:"17px", borderRadius:"50%", background:"red"}}
+                                            width:"17px", height:"17px", borderRadius:"50%"}}
                                             >{inboxBadge.number}
                                         </p>
                                     )}

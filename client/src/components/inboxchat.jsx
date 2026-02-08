@@ -65,9 +65,14 @@ const InboxChat = () =>{
     const colors = ["#007bff", "#28a745", "#ffc107", "#dc3545", "#6f42c1", "#20c997"];
     const randomColor = useMemo(() => colors[Math.floor(Math.random() * colors.length)], []);
 
-
-
-    if(inboxLoading) return <p></p>
+    
+    if(inboxLoading) return <p>
+        <div className="d-flex align-items-center justify-content-center vh-100">
+            <div className="spinner-border text-success" role="status">
+                <span className="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    </p>
 
     return (
         <div className={"mx-2 d-flex vh-100"} style={{ height : role ==="user" ? height : height-68}}>
@@ -225,11 +230,22 @@ const InboxChat = () =>{
                                                 onClick={(e)=> {
                                                     e.stopPropagation();
 
+                                                    let roleParamsDelete = '';
+
+                                                    if(role === "admin"){
+                                                        roleParamsDelete = "deleteChatAdmin";
+                                                    } else if (role === "seller") {
+                                                        roleParamsDelete = "deleteChatSeller";
+                                                    } else {
+                                                        roleParamsDelete = "deleteChatUser";
+                                                    }
+
+
                                                     setInboxList((chats) => 
                                                         chats.filter((chat) => chat._id !== data._id)
                                                     );
 
-                                                    fetch(`${import.meta.env.VITE_API_URL}/api/deleteChat/${data._id}`, {
+                                                    fetch(`${import.meta.env.VITE_API_URL}/api/${roleParamsDelete}/${data._id}`, {
                                                         method : "PATCH",
                                                         credentials : "include"
                                                     })

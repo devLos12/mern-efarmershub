@@ -8,7 +8,7 @@ import { displayOrders, deleteOrder, archiveSellerOrder, getArchivedSellerOrders
 import getOrderDetails from "../controllers/seller/orderDetails.js";
 import getProductDetails from "../controllers/seller/productDetails.js";
 import { getMessages, sendMessage, getChatId, sendImage } from "../controllers/messages.js";
-import { inboxChats, markAsRead,  } from "../controllers/chats.js";
+import { inboxChats, markAsRead, deleteChat } from "../controllers/chats.js";
 import { updateCrops, update } from "../controllers/seller/updateCrops.js";
 import { UpdateProfile, updateProfile } from "../controllers/seller/updateProfile.js";
 import { getSellerTransaction, sellerDeletePayment, sellerDeletePayout } from "../controllers/seller/transaction.js";
@@ -46,6 +46,8 @@ sellerRouter.get("/getSellerMessages/:id", authMiddleware, getMessages);
 sellerRouter.get("/getSellerInboxChat", authMiddleware, inboxChats);
 sellerRouter.patch("/updateMarkAsReadFromSeller/:id", authMiddleware, markAsRead);
 sellerRouter.post("/getSellerChatId", authMiddleware, getChatId);
+sellerRouter.patch("/deleteChatSeller/:id", authMiddleware, deleteChat);
+
 sellerRouter.get('/getSellerTransactions', authMiddleware, getSellerTransaction);
 sellerRouter.delete('/sellerDeletePayment', authMiddleware, sellerDeletePayment);
 sellerRouter.patch("/sellerDeletePayout", authMiddleware, sellerDeletePayout);

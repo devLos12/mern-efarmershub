@@ -1,30 +1,34 @@
 import { useContext, useEffect, useLayoutEffect, useState } from "react";
 import { useBreakpoint } from "./breakpoint.jsx"
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { adminContext } from "../context/adminContext.jsx";
 import { sellerContext } from "../context/sellerContext.jsx";
 import IconCard from "./iconcard.jsx";
 import { appContext } from "../context/appContext.jsx";
 
+
+
 // Menu items configuration
 const MENU_ITEMS = {
     seller: [
-        {label: 'My Crops',     link: '/', icon: 'bx-leaf'},
-        {label: 'Orders',       link: '/seller/orders', icon: 'bx-package'},
-        {label: 'Inbox',        link: '/seller/inbox', icon: 'bx-envelope', badge: true},
-        {label: 'Chat Support', link: '/seller/messages', icon: 'bx-chat'},
-        {label: 'Payment',      link: "/seller/payment", icon: 'bx-wallet', source: "payment"},
-        {label: 'Payout',       link: "/seller/payout", icon: 'bx-money', source: "payout"},
+        {label: 'My Crops',     link: '/seller', icon: 'fa-solid fa-leaf'},
+        {label: 'Orders',       link: '/seller/orders', icon: 'fa-solid fa-bag-shopping'},
+        {label: 'Inbox',        link: '/seller/inbox', icon: 'fa-solid fa-inbox', badge: true},
+        {label: 'Chat Support', link: '/seller/messages', icon: 'fa-solid fa-message'},
+        {label: 'Payment',      link: "/seller/payment", icon: 'fa-solid fa-credit-card', source: "payment"},
+        {label: 'Payout',       link: "/seller/payout", icon: 'fa-solid fa-money-bill-transfer', source: "payout"},
     ],
     admin: [
-        {label: 'Dashboard',    link: '/admin', icon: 'bx-grid-alt'},
-        {label: 'Accounts',     link: '/admin/accounts', icon: 'bx-user-circle', source: "user"},
-        {label: 'Inventory',    link: '/admin/inventory', icon: 'bx-package'},
-        {label: 'Inbox',        link: '/admin/inbox', icon: 'bx-envelope', badge: true},
-        {label: 'Announcement', link: '/admin/announcement', icon: 'bx-megaphone'},
-        {label: 'Payment',      link: "/admin/payment", icon: 'bx-wallet', source: "payment"},
-        {label: 'Payout',       link: "/admin/payout/seller", icon: 'bx-money', source: "payout/seller"},
-        {label: 'Activity Logs', link: '/admin/activity-logs', icon: 'bx-history'},
+        {label: 'Dashboard',    link: '/admin', icon: 'fa fa-table '},
+        {label: 'Inventory',    link: '/admin/inventory', icon: 'fa-solid fa-boxes-stacked'},
+        {label: 'Accounts',     link: '/admin/accounts', icon: 'fa fa-user', source: "user"},
+        {label: 'Inbox',        link: '/admin/inbox', icon: 'fa fa-inbox', badge: true},
+        {label: 'Announcement', link: '/admin/announcement', icon: 'fa-solid fa-bell'},
+        {label: 'Payment',      link: "/admin/payment", icon: 'fa-solid fa-credit-card', source: "payment"},
+        {label: 'Payout',       link: "/admin/payout/seller", icon: 'fa-solid fa-money-bill-transfer', source: "payout/seller"},
+        {label: 'QR Payment',   link: '/admin/qrcodes',       icon: 'fa-solid fa-qrcode',         source: undefined},
+
+        {label: 'Activity Logs', link: '/admin/activity-logs', icon: 'fa-solid fa-clock-rotate-left'},
     ]
 };
 
@@ -45,6 +49,7 @@ const Header = ()=> {
     const [isMenu, setMenu] = useState(false);
     const width = useBreakpoint();  
     const navigate = useNavigate();
+    const location = useLocation();
     const { inboxBadge, setInboxBadge } = useContext(appContext);
 
     useLayoutEffect(() => {
@@ -80,6 +85,9 @@ const Header = ()=> {
         setOpenNotif(false);
         setOpenProfile((prev) => !prev);
     }
+
+    
+
 
     const handleMenuItemClick = async (data, index) => {
         setMenu(false);
@@ -119,6 +127,18 @@ const Header = ()=> {
     }
 
 
+    // Add this helper function inside Header component
+    const isActive = (link) => {
+        // Exact match for root paths
+        if (link === '/admin' || link === '/seller') {
+            return location.pathname === link;
+        }
+        // Check if current path starts with the link
+        return location.pathname.startsWith(link);
+    };
+
+
+
     const getProfileData = () => {
         if(role === "seller"){
             return {
@@ -153,7 +173,7 @@ const Header = ()=> {
             >
                 <div className="d-flex align-items-center gap-2">
                     <div 
-                        className={`${isMenu ? "bx bx-x" : "bx bx-menu"} d-flex align-items-center justify-content-center text-success fs-3 d-md-none`}
+                        className={`${isMenu ? "bx bx-x" : "bx bx-menu"} d-flex align-items-center justify-content-center text-success fs-1 d-md-none`}
                         style={{cursor: "pointer", transition: 'all 0.3s ease'}} 
                         onClick={handleMenu}
                         role="button"
@@ -176,14 +196,13 @@ const Header = ()=> {
                             aria-label="Notifications"
                         >
                             {notifBadge.show && (
-                                <span className="position-absolute top-0 end-0 d-flex justify-content-center align-items-center fw-bold text-white"
+                                <span className="position-absolute top-0 end-0 d-flex justify-content-center align-items-center fw-normal text-white m-2 "
                                     style={{
                                         fontSize: "9px",
-                                        width: "18px", 
-                                        height: "18px", 
+                                        width: "17px", 
+                                        height: "17px", 
                                         borderRadius: "50%", 
                                         background: "#dc3545",
-                                        transform: 'translate(4px, -4px)'
                                     }}
                                 >
                                     {notifBadge.number}
@@ -199,8 +218,8 @@ const Header = ()=> {
                                 <div 
                                     className="rounded-circle bg-primary d-flex justify-content-center text-white align-items-center border border-white" 
                                     style={{
-                                        height: "35px", 
-                                        width: "35px",
+                                        height: "30px", 
+                                        width: "30px",
                                         boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
                                         fontWeight: '600'
                                     }}
@@ -220,15 +239,13 @@ const Header = ()=> {
                                     <div 
                                         className="border border-2 rounded-circle" 
                                         style={{
-                                            width: "35px", 
-                                            height: "35px", 
+                                            width: "30px", 
+                                            height: "30px", 
                                             overflow: "hidden",
                                             boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
                                             borderColor: '#dee2e6',
                                             transition: 'all 0.2s ease'
                                         }}
-                                        onMouseEnter={(e) => e.currentTarget.style.boxShadow = '0 4px 10px rgba(0,0,0,0.15)'}
-                                        onMouseLeave={(e) => e.currentTarget.style.boxShadow = '0 2px 6px rgba(0,0,0,0.1)'}
                                     >
                                         <img
                                             src={dataProfile?.profile}
@@ -241,8 +258,8 @@ const Header = ()=> {
                                     <div 
                                         className="rounded-circle bg-primary d-flex justify-content-center text-white align-items-center" 
                                         style={{
-                                            height: "35px", 
-                                            width: "35px",
+                                            height: "30px", 
+                                            width: "30px",
                                             boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
                                             fontWeight: '600'
                                         }}
@@ -261,43 +278,50 @@ const Header = ()=> {
             {isMenu && (
                 <nav className="w-100 d-md-none" style={{maxHeight: 'calc(100vh - 70px)', overflowY: 'auto'}}>
                     <div className={`d-flex flex-column p-0 ${role === "seller" ? "bg-white" : "bg-dark"}`}>
-                        {MENU_ITEMS[role]?.map((data, i) => (
-                            <div 
-                                key={i} 
-                                className={`d-flex align-items-center gap-3 p-3 border-bottom ${role === "seller" ? "text-success" : "text-white"}`}
-                                style={{
-                                    cursor: "pointer",
-                                    transition: 'all 0.2s ease',
-                                    backgroundColor: role === "seller" ? '#f8f9fa' : '#343a40'
-                                }}
-                                onClick={() => handleMenuItemClick(data, i)}
-                                onMouseEnter={(e) => {
-                                    e.currentTarget.style.backgroundColor = role === "seller" ? '#e9ecef' : '#495057';
-                                }}
-                                onMouseLeave={(e) => {
-                                    e.currentTarget.style.backgroundColor = role === "seller" ? '#f8f9fa' : '#343a40';
-                                }}
-                            >
-                                <i className={`bx ${data.icon} fs-5`} />
-                                <span className="text-capitalize fw-500">{data.label}</span>
-                                {data.badge && data.label.toLowerCase() === "inbox" && inboxBadge.show && (
-                                    <span className="ms-auto d-flex justify-content-center align-items-center fw-bold text-white"
-                                        style={{
-                                            fontSize: "11px",
-                                            width: "20px", 
-                                            height: "20px", 
-                                            borderRadius: "50%", 
-                                            background: "#dc3545"
-                                        }}
-                                    >
-                                        {inboxBadge.number}
-                                    </span>
-                                )}
-                            </div>
-                        ))}
+                        {MENU_ITEMS[role]?.map((data, i) => {
+                            const active = isActive(data.link); // 👈 CHECK IF ACTIVE
+                            
+                            return (
+                                <div 
+                                    key={i} 
+                                    className={`row p-2 mt-2 ${role === "seller" ? "text-dark" : "text-white"}`}
+                                    style={{
+                                        cursor: "pointer",
+                                        transition: 'all 0.2s ease',
+                                    }}
+                                    onClick={() => handleMenuItemClick(data, i)}
+                                >   
+                                    <div className="col-1">
+                                        <i className={`${data.icon} ${
+                                            active ? 'text-green fw-bold' : '' // 👈 ACTIVE ICON COLOR
+                                        } text-capitalize ms-2 position-relative`}>
+                                            {data.badge && data.label.toLowerCase() === "inbox" && inboxBadge.show && (
+                                                <p className="m-0 d-flex justify-content-center align-items-center text-white position-absolute fw-normal top-0 end-0 m-2 bg-danger"
+                                                    style={{
+                                                        fontSize: "9px",
+                                                        width:"17px", 
+                                                        height:"17px",
+                                                        borderRadius: "50%", 
+                                                    }}
+                                                >
+                                                    {inboxBadge.number}
+                                                </p>
+                                            )}
+                                        </i>
+                                    </div>
+                                    <div className="col-auto">
+                                        <span className={`text-capitalize ${
+                                            active ? 'fw-bold text-green' : 'fw-500' // 👈 ACTIVE TEXT
+                                        }`}>
+                                            {data.label}
+                                        </span>
+                                    </div>
+                                </div>
+                            );
+                        })}
                         <div className="p-3 border-top">
                             <button 
-                                className={`w-100 border-0 p-2 text-capitalize d-flex align-items-center gap-2 justify-content-center rounded ${role === "seller" ? "bg-danger text-white" : "bg-light text-dark"}`} 
+                                className={`w-100 border-0 p-2 text-capitalize d-flex align-items-center gap-2 justify-content-center rounded ${role === "seller" ? "bg-dark text-white" : "bg-light text-dark"}`} 
                                 style={{
                                     outline: "none",
                                     transition: 'all 0.2s ease',
@@ -306,12 +330,6 @@ const Header = ()=> {
                                 onClick={() => {
                                     setExitModal(true);
                                     setText("do you want to exit?");
-                                }}
-                                onMouseEnter={(e) => {
-                                    e.currentTarget.style.opacity = '0.85';
-                                }}
-                                onMouseLeave={(e) => {
-                                    e.currentTarget.style.opacity = '1';
                                 }}
                             >
                                 <i className="fa-solid fa-right-from-bracket" />

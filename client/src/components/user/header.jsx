@@ -162,19 +162,23 @@ const Header = () => {
         >
             <div ref={headerRef} className="d-flex align-items-center justify-content-between bg-white p-3 px-lg-5 border border-bottom">
 
-                <div className={`bx ${isMenu ? "bx-x" : "bx-menu"} 
-                 fs-3 me-3 text-green d-md-none`} 
-                onClick={menu} 
-                style={{cursor : "pointer"}}></div>
+               
 
                 <div className="d-flex justify-content-between align-items-center gap-1">
-                                        
-                    <img src="https://res.cloudinary.com/dtelqtkzj/image/upload/v1770440242/image-removebg-preview_sfsot1.png" alt="logo" 
-                    style={{width:"30px", height:"30px"}} />
+                    <div className="d-flex align-items-center gap-3">
+                        <div className={`bx ${isMenu ? "bx-x" : "bx-menu"} 
+                        fs-1 text-green d-md-none`} 
+                        onClick={menu} 
+                        style={{cursor : "pointer"}}></div>          
+                        <img src="https://res.cloudinary.com/dtelqtkzj/image/upload/v1770440242/image-removebg-preview_sfsot1.png" alt="logo" 
+                        style={{width:"30px", height:"30px"}} />
+                    </div>
+
                     
-                    <p className="m-0 fs-5 text-capitalize fw-bold text-green mt-1"
+                    <p className="m-0 fs-5 text-capitalize fw-bold text-green mt-1 d-none d-md-block"
                     >farmers hub</p>
                 </div>
+
 
 
                 <nav className="d-none d-md-block">
@@ -192,6 +196,8 @@ const Header = () => {
                         ))}
                     </ul>
                 </nav>
+
+                
 
                 <div className="d-flex align-items-center gap-1" >
                     {[  
@@ -255,7 +261,7 @@ const Header = () => {
             </div>
 
             {isMenu && (
-                <div className="bg-white p-3 d-block d-md-none vh-100 ">
+                <div className="bg-white p-3 d-block d-md-none shadow ">
                     <nav>
                         <ul className="list-unstyled d-flex flex-column gap-3">
                             {links.map((data, i) => (

@@ -45,7 +45,7 @@ const chatSchema = new mongoose.Schema({
         },
         role : {
             type : "String",
-            enum : ["Admin", "Seller", "User"],
+            enum : ["Admin", "Seller", "User", "Rider"],
             required : false
         },
         

@@ -13,7 +13,7 @@ import { getNotification } from "../controllers/notification.js";
 import getOrderDetails from "../controllers/admin/orderDetails.js";
 import getProductsDetails from "../controllers/admin/productDetails.js";
 import { getChatId, getMessages, sendImage, sendMessage } from "../controllers/messages.js";
-import { inboxChats, markAsRead } from "../controllers/chats.js";
+import { inboxChats, markAsRead, deleteChat } from "../controllers/chats.js";
 import getRiders from "../controllers/admin/getAvailableRider.js";
 import AdminInfo from "../controllers/admin/adminInfo.js";
 import { updateCrops, update } from "../controllers/admin/updateCrops.js";
@@ -74,6 +74,8 @@ adminRouter.get("/getAdminMessages/:id", authMiddleware, getMessages);
 adminRouter.get("/getAdminInboxChat", authMiddleware, inboxChats);
 adminRouter.patch("/updateMarkAsReadFromAdmin/:id", authMiddleware, markAsRead);
 adminRouter.post("/getAdminChatId", authMiddleware, getChatId);
+adminRouter.patch("/deleteChatAdmin/:id", authMiddleware, deleteChat);
+
 adminRouter.get("/getTransactions", authMiddleware, transaction);
 adminRouter.patch("/updatePayout", authMiddleware, payout.single("image"), updatePayout);
 adminRouter.delete("/deletePayment", authMiddleware, deletePayment);

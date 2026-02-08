@@ -229,9 +229,7 @@ const User = ({setUserAuth}) => {
         socket.off("user notif");
     }
   },[userData?._id]);
-
     
-  
   //api call for userInfo
   useEffect(() => {
 
