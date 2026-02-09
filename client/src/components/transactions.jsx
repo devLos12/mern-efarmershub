@@ -1107,7 +1107,11 @@ const Transactions = () => {
                                     <th key={i}
                                     className={`text-capitalize p-3 text-success ${i === 8 && "text-center"} ${i === 7 && "text-center"}  }
                                     ${i === 0 && "text-center "} small`}
-                                    >{data}</th>
+                                    >
+                                        {data}
+                                        {i === 4 && (<span className="small ms-2">(5.0%)</span>)
+                                        }
+                                    </th>
                                 ))}
 
 
