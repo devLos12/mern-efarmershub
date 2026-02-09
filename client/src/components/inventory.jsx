@@ -41,8 +41,8 @@ const Inventory = () => {
     const currentView = location.state?.view || "products";
     
     // Get unique categories from products
-    const uniqueCategories = [...new Set(products.map(p => p.category?.toLowerCase()).filter(Boolean))];
-
+    // const uniqueCategories = [...new Set(products.map(p => p.category?.toLowerCase()).filter(Boolean))];
+    const uniquCategories = ["all", "grains", "root crops", "fruits", "fruit vegetables", "leafy vegetables", "legumes"];;
 
     
 
