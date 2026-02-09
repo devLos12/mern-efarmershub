@@ -70,6 +70,12 @@ const TotalOrder = () => {
     const handleCustomYearSelect = () => {
         setSelectedYear(customYear);
         setSelectedMonth(null);
+        
+        // Add custom year to available years if not already included
+        if (!availableYears.includes(customYear)) {
+            setAvailableYears(prev => [...prev, customYear].sort((a, b) => a - b));
+        }
+        
         setShowModal(false);
     };
 
@@ -142,8 +148,6 @@ const TotalOrder = () => {
                                     {year}
                                 </option>
                             ))}
-
-
                         </select>
 
                         {selectedMonth !== null && (

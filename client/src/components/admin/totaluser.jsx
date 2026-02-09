@@ -73,8 +73,16 @@ const TotalUser = () => {
     const handleCustomYearSelect = () => {
         setSelectedYear(customYear);
         setSelectedMonth(null);
+        
+        // Add custom year to available years if not already included
+        if (!availableYears.includes(customYear)) {
+            setAvailableYears(prev => [...prev, customYear].sort((a, b) => a - b));
+        }
+        
         setShowModal(false);
     };
+
+
 
     // Generate years for modal (2000 to current year + 1)
     const generateAllYears = () => {
