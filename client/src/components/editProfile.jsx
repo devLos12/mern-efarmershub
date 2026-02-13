@@ -58,6 +58,22 @@ const EditProfile = () => {
 
     const fallBack = "n/a";
 
+    // Helper function to convert from 09XXXXXXXXX to 9XXXXXXXXX for display
+    const normalizePhoneNumber = (number) => {
+        if (!number || number === fallBack) return '';
+        // Remove any non-digits
+        const cleaned = number.replace(/\D/g, '');
+        // If starts with 0, remove it
+        if (cleaned.startsWith('0')) {
+            return cleaned.substring(1);
+        }
+        // If starts with 63, remove it and ensure it starts with 9
+        if (cleaned.startsWith('63')) {
+            return cleaned.substring(2);
+        }
+        return cleaned;
+    };
+
     if(role === "admin"){
         
     } else if(role === "seller"){
@@ -69,7 +85,7 @@ const EditProfile = () => {
             
             e_WalletAcc: { 
                 type: sellerInfo?.e_WalletAcc?.type ?? fallBack, 
-                number: sellerInfo?.e_WalletAcc?.number ?? fallBack
+                number: normalizePhoneNumber(sellerInfo?.e_WalletAcc?.number) ?? fallBack
             },
             province: sellerInfo?.sellerAddress?.province ?? fallBack,
             city: sellerInfo?.sellerAddress?.city ?? fallBack,
@@ -85,7 +101,7 @@ const EditProfile = () => {
             firstname: userData?.firstname ?? fallBack,
             lastname: userData?.lastname ?? fallBack,
             email: userData?.email ?? fallBack,
-            contact: userData?.billingAddress?.contact ?? fallBack,
+            contact: normalizePhoneNumber(userData?.billingAddress?.contact) ?? fallBack,
             province: userData?.billingAddress?.province ?? fallBack,
             city: userData?.billingAddress?.city ?? fallBack,
             barangay: userData?.billingAddress?.barangay ?? fallBack,
@@ -127,6 +143,16 @@ const EditProfile = () => {
         setIsChanged(JSON.stringify(formData) !== JSON.stringify(originalData));
     }, [formData, originalData]);
 
+    // Format phone number with spaces for display
+    const formatPhoneNumber = (value) => {
+        if (!value) return '';
+        const cleaned = value.replace(/\D/g, '');
+        // Format as: 9XX XXX XXXX
+        if (cleaned.length <= 3) return cleaned;
+        if (cleaned.length <= 6) return `${cleaned.slice(0, 3)} ${cleaned.slice(3)}`;
+        return `${cleaned.slice(0, 3)} ${cleaned.slice(3, 6)} ${cleaned.slice(6, 10)}`;
+    };
+
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         let sanitizedValue = value;
@@ -136,9 +162,27 @@ const EditProfile = () => {
             sanitizedValue = value.replace(/[^a-zA-Z\s]/g, '');
         }
 
-        // Contact number - only digits, max 11 digits
+        // Contact number - format to 9XXXXXXXXX (10 digits)
         if (name === 'contact') {
-            sanitizedValue = value.replace(/\D/g, '').slice(0, 11);
+            let cleaned = value.replace(/\D/g, ''); // Remove non-digits
+            
+            // Remove 63 prefix if user types it
+            if (cleaned.startsWith('63')) {
+                cleaned = cleaned.substring(2);
+            }
+            
+            // Ensure it starts with 9
+            if (cleaned.length > 0 && !cleaned.startsWith('9')) {
+                if (cleaned.startsWith('0')) {
+                    cleaned = cleaned.substring(1);
+                }
+                if (!cleaned.startsWith('9')) {
+                    cleaned = '9' + cleaned;
+                }
+            }
+            
+            // Limit to 10 digits
+            sanitizedValue = cleaned.slice(0, 10);
         }
 
         setFormData(prevData => ({
@@ -222,10 +266,18 @@ const EditProfile = () => {
         sendData.append('email', formData.email);
 
         if(role === "seller" ){
-            sendData.append('wallet_number', formData?.e_WalletAcc?.number);
+            // Convert 9XXXXXXXXX to 09XXXXXXXXX before sending
+            const walletNumber = formData?.e_WalletAcc?.number?.startsWith('9') 
+                ? `0${formData?.e_WalletAcc?.number}` 
+                : formData?.e_WalletAcc?.number;
+            sendData.append('wallet_number', walletNumber);
             sendData.append('wallet_type',  formData?.e_WalletAcc?.type);
         } else {
-            sendData.append('contact', formData.contact);
+            // Convert 9XXXXXXXXX to 09XXXXXXXXX before sending
+            const contactNumber = formData.contact?.startsWith('9') 
+                ? `0${formData.contact}` 
+                : formData.contact;
+            sendData.append('contact', contactNumber);
         }
 
         sendData.append('province', formData.province);
@@ -438,25 +490,48 @@ const EditProfile = () => {
                                     <>
                                         <div className="col-6 px-2 mt-2">
                                             <label className="text-capitalize mt-2" style={{ fontSize: "14px" }}>
-                                                e-wallet account:
+                                                e-wallet number:
                                             </label>
-                                            <input 
-                                                className="w-100 mt-2 py-2 form-control bg-warning bg-opacity-10"
-                                                style={{ fontSize: "14px" }}
-                                                name="wallet_number"
-                                                type="text"
-                                                placeholder="11-digit number"
-                                                value={formData?.e_WalletAcc?.number || ""}
-                                                onChange={(e)=>{
-                                                    const sanitized = e.target.value.replace(/\D/g, '').slice(0, 11);
-                                                    setFormData((prev) => ({
-                                                        ...prev,
-                                                        e_WalletAcc: { ...prev.e_WalletAcc, number: sanitized },
-                                                    }))
-                                                }}
-                                                maxLength="11"
-                                                required
-                                            />
+                                            <div className="input-group mt-2">
+                                                <span className="input-group-text bg-warning bg-opacity-10" style={{ fontSize: "14px" }}>
+                                                    +63
+                                                </span>
+                                                <input 
+                                                    className="form-control bg-warning bg-opacity-10"
+                                                    style={{ fontSize: "14px" }}
+                                                    name="wallet_number"
+                                                    type="text"
+                                                    placeholder="9XX XXX XXXX"
+                                                    value={formatPhoneNumber(formData?.e_WalletAcc?.number || '')}
+                                                    onChange={(e)=>{
+                                                        let cleaned = e.target.value.replace(/\D/g, '');
+                                                        
+                                                        if (cleaned.startsWith('63')) {
+                                                            cleaned = cleaned.substring(2);
+                                                        }
+                                                        
+                                                        if (cleaned.length > 0 && !cleaned.startsWith('9')) {
+                                                            if (cleaned.startsWith('0')) {
+                                                                cleaned = cleaned.substring(1);
+                                                            }
+                                                            if (!cleaned.startsWith('9')) {
+                                                                cleaned = '9' + cleaned;
+                                                            }
+                                                        }
+                                                        
+                                                        if (cleaned.length <= 10) {
+                                                            setFormData((prev) => ({
+                                                                ...prev,
+                                                                e_WalletAcc: { ...prev.e_WalletAcc, number: cleaned },
+                                                            }))
+                                                        }
+                                                    }}
+                                                    required
+                                                />
+                                            </div>
+                                            <small className="text-muted d-block mt-1" style={{fontSize: "12px"}}>
+                                                Enter 10-digit mobile number
+                                            </small>
                                         </div>
                                         <div className="col-6 px-2 mt-2">
                                             <label className="text-capitalize mt-2" style={{ fontSize: "14px" }}>
@@ -488,17 +563,24 @@ const EditProfile = () => {
                                         <label className="text-capitalize mt-2" style={{ fontSize: "14px" }}>
                                             contact no:
                                         </label>
-                                        <input 
-                                            className="w-100 mt-2 py-2 form-control bg-warning bg-opacity-10"
-                                            style={{ fontSize: "14px" }}
-                                            name="contact"
-                                            type="text"
-                                            placeholder="11-digit number"
-                                            value={formData.contact || ""}
-                                            onChange={handleInputChange}
-                                            maxLength="11"
-                                            required
-                                        />
+                                        <div className="input-group mt-2">
+                                            <span className="input-group-text bg-warning bg-opacity-10" style={{ fontSize: "14px" }}>
+                                                +63
+                                            </span>
+                                            <input 
+                                                className="form-control bg-warning bg-opacity-10"
+                                                style={{ fontSize: "14px" }}
+                                                name="contact"
+                                                type="text"
+                                                placeholder="9XX XXX XXXX"
+                                                value={formatPhoneNumber(formData.contact || '')}
+                                                onChange={handleInputChange}
+                                                required
+                                            />
+                                        </div>
+                                        <small className="text-muted d-block mt-1" style={{fontSize: "12px"}}>
+                                            Enter 10-digit mobile number (e.g., 912 345 6789)
+                                        </small>
                                     </div>
                                 )}
 
@@ -633,8 +715,13 @@ const EditProfile = () => {
                             </div>
                         </form>
                     </div>
-                    <div className={`col-12 col-md-6 col-lg-6 ${ role === "seller" ? "d-md-none d-lg-block"  :"d-md-block d-none"} `}>
-                        <img src={img} alt="background" className="img-fluid" />
+                  
+                    <div className="col-12 col-md-6 col-lg-6  mt-4 mt-md-0 d-flex align-items-start justify-content-center">
+                        <div className="d-flex flex-column align-items-center">
+                        <img src={`https://res.cloudinary.com/dtelqtkzj/image/upload/v1770440242/image-removebg-preview_sfsot1.png`} alt="background" 
+                        className="img-fluid" />
+                        <p className="text-center mt-2 fs-1 text-capitalize fw-bold text-success">e farmers hub</p>
+                        </div>
                     </div>
                 </div>
             </div>

@@ -217,7 +217,7 @@ const Seller = ({setSellerAuth}) => {
         <Header/>
         <div className={`container-fluid ${ hasIcon ? "mt-5": "mt-0"}`}>
             <div className="row">
-                <div className="p-3 d-none d-md-flex border-end bg-white" 
+                <div className="p-0 d-none d-md-flex border-end bg-white flex-column justify-content-between" 
                 style={{width : "210px"}}>
                     <Sidebar />
                 </div>

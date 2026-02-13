@@ -7,7 +7,9 @@ const postAddress = async(req, res) => {
         const {userId, firstname, lastname,
             email, contact, province, city, barangay , detailAddress, zipCode
          } = req.body;
-         
+        
+        
+
         const user = await User.findOne({_id : userId});
 
         if(!user) {

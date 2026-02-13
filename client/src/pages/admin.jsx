@@ -25,6 +25,7 @@ import { appContext } from "../context/appContext.jsx";
 import ViewProfile from "../components/admin/viewProfile.jsx";
 import TrackReplacementProduct from "../components/trackProduct.jsx";
 import ActivityLog from "../components/admin/activityLog.jsx";
+import SalesReport from "../components/admin/salesReport.jsx";
 
 
 
@@ -155,6 +156,7 @@ const Admin = ({setAdminAuth})=>{
 
     const routes = [
         {path: '/',                 element: <Dashboard/> },
+        {path: 'sales',             element: <SalesReport/>},
         {path: 'accounts',          element: <Accounts />},
         {path: 'orderdetails',      element: <OrderDetails/>},
         {path: 'productdetails',    element: <ProductDetails/>},
@@ -183,8 +185,9 @@ const Admin = ({setAdminAuth})=>{
         <Header /> 
         <div className={`container-fluid ${ hasIcon ? "mt-5" : "mt-0"} `}>
             <div className="row ">
-                <div className="p-3 d-none d-md-flex border-end bg-dark" 
-                style={{width:"210px"}}>
+                <div className="p-0 bg-dark d-none d-md-flex border-end  justify-content-between flex-column " 
+                style={{width: "220px"}}>
+                        
                     <Sidebar />
                 </div>
                 <div className={`col p-0 bg-warning bg-opacity-10`} 

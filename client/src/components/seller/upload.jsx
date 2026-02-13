@@ -57,15 +57,13 @@ const Upload = () => {
                 lifeSpan: formData?.lifeSpan || "",
                 disc: formData?.disc || "",
                 image: formData?.image || null,
-                productType: dataPreFill?.data?.productType || "",
+                productType: formData?.productType || "",
             };
 
             setIsChanged(JSON.stringify(originalData) !== JSON.stringify(currentData));
         }
     }, [formData, isUpdate, dataPreFill]);
-
-
-
+    
 
 
     useLayoutEffect(() => {

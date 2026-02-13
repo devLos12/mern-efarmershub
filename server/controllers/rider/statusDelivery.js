@@ -7,6 +7,9 @@ import SellerPaymentTransaction from "../../models/sellerPaymentTrans.js";
 import Rider from "../../models/rider.js";
 import RiderPayout from "../../models/riderPayout.js";
 import { v2 as cloudinary } from "cloudinary";
+import SalesList from "../../models/salesReport.js";
+import Product from "../../models/products.js";
+
 
 
 
@@ -207,8 +210,6 @@ const createOrUpdateRiderPayout = async(riderId, orderId) => {
 
 
 
-
-
 const storage = multer.memoryStorage();
 export const imageProof = multer({ storage: storage });
 
@@ -220,6 +221,7 @@ const updateStatusDelivery = async (req, res) => {
         // ✅ Upload images to Cloudinary instead of saving locally
         let imageFileUrl = null;
         let paymentReceiptFileUrl = null;
+
 
         try {
             // Upload delivery proof image
@@ -283,12 +285,51 @@ const updateStatusDelivery = async (req, res) => {
                 order.paymentStatus = "paid";
                 await createOrUpdatePayout(order.orderItems, order._id);
                 await createTransaction(order, paymentReceiptFileUrl); // ✅ Pass Cloudinary URL
+
+                
+                // ========================================
+                // CREATE SALES LIST FOR COD PAYMENTS
+                // ========================================
+                try {
+
+                    for (const item of order.orderItems) {
+                        const product = await Product.findById(item.prodId);
+                        
+                        // Generate saleId
+                        let newSaleId;
+                        const lastSale = await SalesList.findOne().sort({ saleId: -1 });
+                        
+                        if (lastSale && lastSale.saleId) {
+                            const lastNumber = parseInt(lastSale.saleId.substring(1));
+                            const newNumber = lastNumber + 1;
+                            newSaleId = 'S' + String(newNumber).padStart(4, '0');
+                        } else {
+                            newSaleId = 'S0001';
+                        }
+                        
+                        const salesRecord = new SalesList({
+                            saleId: newSaleId,
+                            orderId: order._id,
+                            customerName: `${order.firstname} ${order.lastname}`,
+                            productId: product?._id,
+                            category: product?.category || "Uncategorized",
+                            quantity: item.quantity,
+                            price: item.prodPrice,
+                            totalAmount: item.prodPrice * item.quantity,
+                            paymentMethod: "cash on delivery",
+                            status: "paid",
+                            saleDate: new Date()
+                        });  
+                        await salesRecord.save();
+                    }
+                } catch (salesError) {
+                    console.error('Error creating COD sales list:', salesError.message);
+                }
             }
 
-                        
+
             // Rider payout is still created regardless (para sa delivery fee)
             await createOrUpdateRiderPayout(riderId, order._id);
-            
             await order.save();
         }
 

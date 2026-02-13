@@ -73,11 +73,14 @@ export const getListProducts = async (req, res) => {
                 endDate.setUTCHours(23, 59, 59, 999);
         }
 
+
+
         // Get DELIVERED/COMPLETE orders within the time period
         const orders = await Order.find({
-            statusDelivery: { $in: ["delivered", "completed"] },
+            paymentStatus: "paid",
             createdAt: { $gte: startDate, $lte: endDate }
         }).lean();
+
 
         // Map products with sold count
         const productsWithSales = products.map(product => {

@@ -14,6 +14,7 @@ const register = async (req, res) => {
     try {
         const { 
             firstname, 
+            middlename,
             lastname, 
             contact, 
             email, 
@@ -28,6 +29,12 @@ const register = async (req, res) => {
             detailAddress,
             zipCode
         } = req.body;
+
+
+        if(contact && !/^\d{11}$/.test(contact)) {
+            return res.status(400).json({ message: "Invalid contact number format! Must be 11 digits." });
+        }
+
 
         // Validate role
         const validRoles = ['buyer', 'farmer', 'rider'];
@@ -86,7 +93,8 @@ const register = async (req, res) => {
 
             const newSeller = new Seller({
                 accountId,
-                firstname, 
+                firstname,
+                middlename, 
                 lastname, 
                 contact: wallet_number, 
                 email, 
@@ -133,7 +141,8 @@ const register = async (req, res) => {
 
             const newUser = new User({
                 accountId,
-                firstname, 
+                firstname,
+                middlename, 
                 lastname, 
                 contact, 
                 email, 
@@ -216,10 +225,11 @@ const register = async (req, res) => {
             } catch (uploadError) {
                 return res.status(400).json({ message: "Failed to upload images to Cloudinary!" });
             }
-
+                        
             const newRider = new Rider({
                 accountId,
                 firstname, 
+                middlename,  // Optional field
                 lastname, 
                 contact: wallet_number, 
                 email, 

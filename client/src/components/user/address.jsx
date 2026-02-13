@@ -46,16 +46,35 @@ const Address = () => {
   }, []);
 
 
+  // Format phone number with spaces for display
+  const formatPhoneNumber = (value) => {
+    if (!value) return '';
+    const cleaned = value.replace(/\D/g, '');
+    // Format as: 9XX XXX XXXX
+    if (cleaned.length <= 3) return cleaned;
+    if (cleaned.length <= 6) return `${cleaned.slice(0, 3)} ${cleaned.slice(3)}`;
+    return `${cleaned.slice(0, 3)} ${cleaned.slice(3, 6)} ${cleaned.slice(6, 10)}`;
+  };
+
 
   const handleForm = async (e) => {
     e.preventDefault();
     setSubmitting(true);
 
     try {
+      // Convert contact from 9XXXXXXXXX to 09XXXXXXXXX before sending
+      const contactToSend = form.contact?.startsWith('9') 
+        ? `0${form.contact}` 
+        : form.contact;
+
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/postAddress`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId, ...form })
+        body: JSON.stringify({ 
+          userId, 
+          ...form,
+          contact: contactToSend // Send as 09XXXXXXXXX
+        })
       })
 
       if (!res.ok) {
@@ -66,7 +85,6 @@ const Address = () => {
       const data = await res.json();
       if (data.message) {
         showNotification(data.message, 'success');
-
 
         setTimeout(() => {
             navigate(-1);
@@ -90,10 +108,29 @@ const Address = () => {
       return;
     }
 
-    // Validation for contact (numbers only, max 11 digits)
+    // Validation for contact (numbers only, format: 9XXXXXXXXX)
     if (name === 'contact') {
-      const numbersOnly = value.replace(/[^0-9]/g, '').slice(0, 11);
-      setForm(prev => ({ ...prev, [name]: numbersOnly }));
+      let cleaned = value.replace(/\D/g, ''); // Remove non-digits
+      
+      // Remove 63 prefix if user types it
+      if (cleaned.startsWith('63')) {
+        cleaned = cleaned.substring(2);
+      }
+      
+      // Ensure it starts with 9
+      if (cleaned.length > 0 && !cleaned.startsWith('9')) {
+        if (cleaned.startsWith('0')) {
+          cleaned = cleaned.substring(1);
+        }
+        if (!cleaned.startsWith('9')) {
+          cleaned = '9' + cleaned;
+        }
+      }
+      
+      // Limit to 10 digits
+      if (cleaned.length <= 10) {
+        setForm(prev => ({ ...prev, [name]: cleaned }));
+      }
       return;
     }
 
@@ -148,7 +185,7 @@ const Address = () => {
         <div className="container bg-white" >
           <div className="row py-5 justify-content-center ">
 
-            <div className="col-12 col-lg-10">
+            <div className="col-12 col-lg-11">
               {/* Back Button Header */}
               <div className="d-flex align-items-center gap-3 mb-3">
                 <button 
@@ -164,7 +201,7 @@ const Address = () => {
               </div>
             </div>
 
-            <div className="col-12 col-md-6 col-lg-4 mt-3 mt-md-3">
+            <div className="col-12 col-md-6 col-lg-5 mt-3 mt-md-3">
               <form action="#" onSubmit={handleForm}>
                 <div className="row g-0 mt-3">
                   <div className="col-12">
@@ -213,19 +250,28 @@ const Address = () => {
                       required />
                   </div>
 
-                  {/* Contact */}
+                  {/* Contact - UPDATED WITH +63 PREFIX */}
                   <div className="px-2 mt-2 col-12">
                     <label className="text-capitalize mt-2" style={{ fontSize: "14px" }}
                       htmlFor="contact"> contact:</label>
-                    <input className="w-100 mt-2 py-2 form-control bg-warning bg-opacity-10"
-                      style={{ fontSize: "14px", outline: "none" }}
-                      name="contact"
-                      type="text"
-                      placeholder="Contact Number"
-                      value={form.contact || ''}
-                      onChange={handleChange}
-                      maxLength="11"
-                      required />
+                    <div className="input-group mt-2">
+                      <span className="input-group-text bg-warning bg-opacity-10" style={{ fontSize: "14px" }}>
+                        +63
+                      </span>
+                      <input 
+                        className="form-control bg-warning bg-opacity-10"
+                        style={{ fontSize: "14px", outline: "none" }}
+                        name="contact"
+                        type="text"
+                        placeholder="9XX XXX XXXX"
+                        value={formatPhoneNumber(form.contact || '')}
+                        onChange={handleChange}
+                        required 
+                      />
+                    </div>
+                    <small className="text-muted d-block mt-1" style={{fontSize: "12px"}}>
+                      Enter 10-digit mobile number (e.g., 912 345 6789)
+                    </small>
                   </div>
 
                   <div className="col-12 mt-4">
@@ -337,8 +383,12 @@ const Address = () => {
               </form>
             </div>
 
-            <div className="col-12 col-md-6 col-lg-6">
-              <img src={img} alt="background" className="img-fluid" />
+            <div className="col-12 col-md-6 col-lg-6  mt-4 mt-md-0 d-flex align-items-start justify-content-center">
+              <div className="d-flex flex-column align-items-center">
+                <img src={`https://res.cloudinary.com/dtelqtkzj/image/upload/v1770440242/image-removebg-preview_sfsot1.png`} alt="background" 
+                className="img-fluid" />
+                <p className="text-center mt-2 fs-1 text-capitalize fw-bold text-success">e farmers hub</p>
+              </div>
             </div>
           </div>
         </div>

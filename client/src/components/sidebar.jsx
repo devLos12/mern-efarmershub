@@ -3,6 +3,7 @@ import { useContext, useState } from "react";
 import { appContext } from "../context/appContext";
 import { adminContext } from "../context/adminContext";
 import { sellerContext } from "../context/sellerContext";
+import { useBreakpointHeight } from "./breakpoint";
 
 //sidebar
 const Sidebar = () => {
@@ -14,6 +15,9 @@ const Sidebar = () => {
     const navigate = useNavigate();
     const location = useLocation(); // Get current location
     const { inboxBadge, setInboxBadge } = useContext(appContext);
+    const height = useBreakpointHeight();
+
+
 
     const handleClick = ()=> {
         setExitModal(true);
@@ -23,6 +27,7 @@ const Sidebar = () => {
     const data = {
         admin : [
             {label: 'dashboard',    link: '/admin',               icon : "fa fa-table",               source : undefined},
+            {label: 'sales report', link: '/admin/sales',         icon: "fa fa-chart-bar",                  source: undefined  },            
             {label: 'inventory',    link: '/admin/inventory',     icon : "fa-solid fa-boxes-stacked", source : undefined},
             {label: 'accounts',     link: '/admin/accounts',      icon : "fa fa-user",                source : "user"},
             {label: 'inbox',        link: '/admin/inbox',         icon : "fa-solid fa-inbox",         source : undefined},
@@ -58,11 +63,17 @@ const Sidebar = () => {
     
     return (
         <>
-        <nav className="nav flex-column px-2 ">
+        <nav className="nav custom-scrollbar px-3 "
+        style={{
+            overflowY: 'auto', 
+            overflowX: 'hidden', 
+            maxHeight: height - 120,
+        }}>
         {
             navLinks.map((data, i)=>{
                 const active = isActive(data.link);
                 
+
                 return (
                     <div key={i} className="navbar-brand text-dark mt-4" 
                     style={{cursor : "pointer"}}
@@ -145,14 +156,20 @@ const Sidebar = () => {
                 )
             })
         }
-        <button className={`mt-4 border-0 p-1 d-flex align-items-center justify-content-center rounded-3
-        shadow-lg ${role === "seller" ? "bg-dark text-white" : "bg-white text-dark"}`} 
-        onClick={handleClick} 
-        style={{cursor : "pointer"}}>
-            <div className="fa-solid fa-right-from-bracket  small"></div>
-            <p className="m-0 ms-2 small">Exit</p>
-        </button>
+
+
         </nav>
+        
+        <div className="p-2">
+            <button className={`w-100 mt-4 border-0 p-1 d-flex align-items-center justify-content-center rounded-3
+            shadow-lg ${role === "seller" ? "bg-dark text-white" : "bg-white text-dark"}`} 
+            onClick={handleClick} 
+            style={{cursor : "pointer"}}>
+                <div className="fa-solid fa-right-from-bracket  small"></div>
+                <p className="m-0 ms-2 small">Exit</p>
+            </button>
+        </div>
+
         </>
     );
 };

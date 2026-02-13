@@ -35,3 +35,29 @@
 .pointer{
   cursor: pointer;
 }
+
+
+
+/* Custom scrollbar - white bar only */
+.custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: white transparent; /* Firefox - white thumb, transparent track */
+}
+
+/* Webkit browsers (Chrome, Safari, Edge) */
+.custom-scrollbar::-webkit-scrollbar {
+    width: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent; /* Invisible track */
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: white; /* White bar */
+    border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.8); /* Slightly transparent on hover */
+}

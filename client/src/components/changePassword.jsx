@@ -331,7 +331,13 @@ const ChangePassword = () => {
                     <div className={`${role === "seller" 
                         ? "col-12 col-lg-6 d-none d-md-block" 
                         : "col-12 col-md-6 col-lg-6 d-md-block"} `}>
-                        <img src={img} alt="background" className="img-fluid" />
+
+                        <div className="d-flex flex-column align-items-center">
+                        <img src={`https://res.cloudinary.com/dtelqtkzj/image/upload/v1770440242/image-removebg-preview_sfsot1.png`} alt="background" 
+                        className="img-fluid" />
+                        <p className="text-center mt-2 fs-1 text-capitalize fw-bold text-success">e farmers hub</p>
+                        </div>
+
                     </div>
                 </div>
             </div>

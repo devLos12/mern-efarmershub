@@ -10,6 +10,8 @@ import SellerPaymentTransaction from "../../models/sellerPaymentTrans.js";
 import Notification from "../../models/notification.js";
 import DamageLog from "../../models/damageLog.js";
 import { v2 as cloudinary } from "cloudinary";
+import SalesList from "../../models/salesReport.js";
+
 
 
 
@@ -208,6 +210,8 @@ export const statusOrder = async(req, res) => {
             const descriptionMess = newStatus === "confirm"
                 ? "order confirmed, waiting for process."
                 : "your order is now process.";
+             
+            
 
             order.statusDelivery = newStatus;
             order.statusHistory.push({
@@ -234,7 +238,55 @@ export const statusOrder = async(req, res) => {
                         order.refNo,
                         order.proofOfPayment.image,
                     );
+
+
+
+                    // ========================================
+                    // CREATE SALES LIST ENTRIES
+                    // ========================================
+                
+                    try {
+
+                        for (const item of order.orderItems) {
+                            const product = await Product.findById(item.prodId);
+                            
+                            // MANUALLY GENERATE SALEID
+                            let newSaleId;
+                            const lastSale = await SalesList.findOne().sort({ saleId: -1 });
+                            
+                            if (lastSale && lastSale.saleId) {
+                                const lastNumber = parseInt(lastSale.saleId.substring(1));
+                                const newNumber = lastNumber + 1;
+                                newSaleId = 'S' + String(newNumber).padStart(4, '0');
+                            } else {
+                                newSaleId = 'S0001';
+                            }
+                            
+                            const salesRecord = new SalesList({
+                                saleId: newSaleId,
+                                orderId: order._id,
+                                customerName: `${order.firstname} ${order.lastname}`,
+                                productId: product?._id,
+                                category: product?.category || "Uncategorized",
+                                quantity: item.quantity,
+                                price: item.prodPrice,
+                                totalAmount: item.prodPrice * item.quantity,
+                                paymentMethod: order.paymentType.toLowerCase(),
+                                status: "paid",
+                                saleDate: new Date()
+                            });  
+
+                            await salesRecord.save();
+                        }
+                        
+                    } catch (salesError) {
+                        return res.status(500).json({ message: "Error creating sales list" });
+                    }
                 }
+
+                
+
+
                 
                 // GROUP ITEMS BY SELLER
                 const sellerGroups = {};
@@ -275,13 +327,6 @@ export const statusOrder = async(req, res) => {
                         `${item.prodName} (${item.quantity} bundle${item.quantity > 1 ? 's' : ''})`
                     ).join(', ');
                     
-                    // console.log("---------------------");
-                    // console.log("Seller:", seller.firstname);
-                    // console.log("Contact:", sellerContact);
-                    // console.log("Products:", productList);
-                    // console.log("Total Amount:", totalAmount);
-                    // console.log("Order ID:", order.orderId);
-
 
                     // Send SMS with all products in one message
                     await sendSMS(sellerContact, order.orderId, seller.firstname, productList, totalAmount);

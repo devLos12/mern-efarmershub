@@ -28,6 +28,7 @@ import { getListProducts } from "../controllers/admin/listProductReports.js";
 import { cancelOrder, statusOrder, cancelOrderFile, reviewReplacement } from "../controllers/admin/statusOrder.js";
 import { getDamageLogs, createDamageLog, updateDamageLog, deleteDamageLogs } from "../controllers/damageLog.js";
 import { deleteActivityLogs, getActivityLogs } from "../controllers/admin/activityLogs.js";
+import { deleteSales, getSalesData, getSalesGraphData } from "../controllers/admin/salesReport.js";
 
 
 
@@ -108,6 +109,10 @@ adminRouter.patch('/updateDamageLog/:id', authMiddleware, updateDamageLog);
 adminRouter.delete('/deleteDamageLogs', authMiddleware, deleteDamageLogs);
 adminRouter.get('/getActivityLogs', authMiddleware, getActivityLogs);
 adminRouter.delete('/deleteActivityLogs', authMiddleware, deleteActivityLogs);
+
+adminRouter.get('/getSalesData', authMiddleware, getSalesData);
+adminRouter.delete('/deleteSales',authMiddleware, deleteSales);
+adminRouter.get('/getSalesGraphData', authMiddleware, getSalesGraphData);
 
 adminRouter.get("/logoutAdmin", authMiddleware, Logout);
 

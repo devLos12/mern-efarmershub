@@ -23,13 +23,13 @@ const ViewModal = ({ isOpen, onClose, imageSrc, title, source }) => {
             style={{backgroundColor: "rgba(0,0,0,0.85)", zIndex: 9999}}
             onClick={onClose}
         >
-            <div className="position-relative" 
-            style={{maxWidth: "90%", maxHeight: "90vh"}} 
+            <div className="position-relative w-100" 
+            style={{maxHeight: "90vh"}} 
             onClick={(e) => e.stopPropagation()}>
-                <div className="d-flex justify-content-between align-items-center mb-3 ">
+                <div className="d-flex justify-content-between px-5 align-items-center mb-3 ">
                     <h5 className="text-white m-0">{title}</h5>
 
-                    <div className="d-flex align-items-center gap-2">
+                    <div className="d-flex align-items-center gap-2 ">
                         {source && (
                             <button
                                 type="button"
@@ -50,12 +50,16 @@ const ViewModal = ({ isOpen, onClose, imageSrc, title, source }) => {
                         </button>
                     </div>
                 </div>
-                <img 
-                    src={imageSrc} 
-                    alt={title}
-                    className="img-fluid rounded shadow-lg bg-white"
-                    style={{maxHeight: "80vh", width: "auto"}}
-                />
+                <div className="d-flex w-100 justify-content-center">
+
+                    <img 
+                        src={imageSrc} 
+                        alt={title}
+                        className="img-fluid rounded shadow-lg bg-white"
+                        style={{maxHeight: "80vh", width: "auto"}}
+                    />
+                </div>
+
             </div>
         </div>
     );
@@ -109,16 +113,43 @@ const OnlinePayment = () => {
 
     const handleFileChange = (e) => {
         const {name} = e.target;
-        setCheckoutForm({
-            ...checkoutForm,
-            [name]: e.target.files[0]
-        }) 
-
         const file = e.target.files[0];
+        
         if(file){
+            // Check file type - only allow PNG and JPG
+            const allowedTypes = ['image/png', 'image/jpg', 'image/jpeg'];
+            
+            if (!allowedTypes.includes(file.type)) {
+                alert('Invalid file type! Please upload PNG or JPG only.');
+                
+                // Clear the input
+                if(fileUploadRef.current){
+                    fileUploadRef.current.value = null;
+                }
+                return;
+            }
+            
+            // Optional: Check file size (e.g., max 5MB)
+            const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+            if (file.size > maxSize) {
+                alert('File size too large! Maximum size is 5MB.');
+                
+                if(fileUploadRef.current){
+                    fileUploadRef.current.value = null;
+                }
+                return;
+            }
+            
+            // Set form data
+            setCheckoutForm({
+                ...checkoutForm,
+                [name]: file
+            });
+            
+            // Create preview
             const reader = new FileReader();
             reader.onload = (e) => {
-                setImgPreview(e.target.result)
+                setImgPreview(e.target.result);
             }
             reader.readAsDataURL(file);
         }
@@ -296,7 +327,7 @@ const OnlinePayment = () => {
                         type="file"
                         id="inputFile" 
                         name="image"
-                        accept="image/*,.pdf"
+                        accept="image/png, image/jpg, image/jpeg"  // ← Updated to
                     />
 
                     {/* Notes Section */}

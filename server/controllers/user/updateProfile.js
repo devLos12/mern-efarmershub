@@ -19,7 +19,6 @@ export const UpdateProfile = async (req, res) => {
         
         let imageFileUrl = image;
 
-
         const updateProfile = await User.findOne({_id: id});
         if(!updateProfile) {
             return res.status(404).json({ message: "user not found"});

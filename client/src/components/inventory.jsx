@@ -46,6 +46,9 @@ const Inventory = () => {
 
     
 
+
+
+    
     useEffect(() => {
         if (role === "admin" && !location?.state?.source && !location?.state?.view) {
             navigate(location.pathname, {

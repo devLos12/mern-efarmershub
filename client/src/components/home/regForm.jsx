@@ -50,6 +50,10 @@ const Register = () => {
     const [selectedProvince, setSelectedProvince] = useState("");
     const [selectedCity, setSelectedCity] = useState("");
     const [selectedBarangay, setSelectedBarangay] = useState("");
+    
+    
+    const [submitting, setSubmitting] = useState(false); 
+
 
     const userTypes = [
         {
@@ -197,25 +201,38 @@ const Register = () => {
     };
 
 
+    // Format number with spaces for display
+    const formatPhoneNumber = (value) => {
+        if (!value) return '';
+        // Remove all non-digits
+        const cleaned = value.replace(/\D/g, '');
+        // Add spaces: 9XX XXX XXXX
+        if (cleaned.length <= 3) return cleaned;
+        if (cleaned.length <= 6) return `${cleaned.slice(0, 3)} ${cleaned.slice(3)}`;
+        return `${cleaned.slice(0, 3)} ${cleaned.slice(3, 6)} ${cleaned.slice(6, 10)}`;
+    };
 
-
-    // Updated Contact Number Handler - 11 digits (09XXXXXXXXX)
+    // Updated Contact Number Handler with formatting
     const handleContactChange = (e) => {
         let value = e.target.value.replace(/\D/g, ''); // Remove non-digits
         
-        // Ensure it starts with 09
-        if (value.length > 0 && !value.startsWith('09')) {
-            if (value.startsWith('9')) {
-                value = '0' + value;
-            } else if (value.startsWith('0') && value.charAt(1) !== '9') {
-                value = '09' + value.substring(1);
-            } else {
-                value = '09';
+        // Remove 63 prefix if user types it
+        if (value.startsWith('63')) {
+            value = value.substring(2);
+        }
+        
+        // Ensure it starts with 9
+        if (value.length > 0 && !value.startsWith('9')) {
+            if (value.startsWith('0')) {
+                value = value.substring(1);
+            }
+            if (!value.startsWith('9')) {
+                value = '9' + value;
             }
         }
         
-        // Limit to 11 digits
-        if (value.length <= 11) {
+        // Limit to 10 digits
+        if (value.length <= 10) {
             setFormData({
                 ...formData,
                 contact: value
@@ -223,33 +240,30 @@ const Register = () => {
         }
     };
 
-
-
-
-    // Updated Wallet Number Handler - 11 digits (09XXXXXXXXX)
+    // Same for wallet
     const handleWalletNumberChange = (e) => {
-        let value = e.target.value.replace(/\D/g, ''); // Remove non-digits
+        let value = e.target.value.replace(/\D/g, '');
         
-        // Ensure it starts with 09
-        if (value.length > 0 && !value.startsWith('09')) {
-            if (value.startsWith('9')) {
-                value = '0' + value;
-            } else if (value.startsWith('0') && value.charAt(1) !== '9') {
-                value = '09' + value.substring(1);
-            } else {
-                value = '09';
+        if (value.startsWith('63')) {
+            value = value.substring(2);
+        }
+        
+        if (value.length > 0 && !value.startsWith('9')) {
+            if (value.startsWith('0')) {
+                value = value.substring(1);
+            }
+            if (!value.startsWith('9')) {
+                value = '9' + value;
             }
         }
         
-        // Limit to 11 digits
-        if (value.length <= 11) {
+        if (value.length <= 10) {
             setFormData({
                 ...formData,
                 wallet_number: value
             });
         }
     };
-
 
 
 
@@ -322,14 +336,21 @@ const Register = () => {
     const handleForm = async (e) => {
         e.preventDefault();
 
+
+
+        setSubmitting(true);
+
         const passwordValidationError = validatePassword(formData.password);
         if (passwordValidationError) {
             setPasswordError(passwordValidationError);
+            setSubmitting(false);
             return;
         }
 
         if (formData.password !== confirmPassword) {
             setPasswordError("Passwords do not match");
+            setSubmitting(false);
+
             return;
         }
 
@@ -338,16 +359,21 @@ const Register = () => {
             if (!formData.plateNumber || formData.plateNumber.trim() === "") {
                 setErrorMessage("Please enter your plate number");
                 setShowErrorModal(true);
+                setSubmitting(false);
                 return;
             }
             if (!formData.plateImage) {
                 setErrorMessage("Please upload a photo of your plate number");
                 setShowErrorModal(true);
+                setSubmitting(false);
+
                 return;
             }
             if (!formData.licenseImage) {
                 setErrorMessage("Please upload a photo of your driver's license");
                 setShowErrorModal(true);
+                setSubmitting(false);
+
                 return;
             }
         }
@@ -369,9 +395,17 @@ const Register = () => {
                         dataToSend.append('licenseImage', formData[key]);
                     }
                 } else if (key === 'contact') {
-                    dataToSend.append('contact', `0${formData[key]}`);
+                    // Convert 9XXXXXXXXX to 09XXXXXXXXX
+                    const contactNumber = formData[key].startsWith('9') 
+                        ? `0${formData[key]}` 
+                        : formData[key];
+                    dataToSend.append('contact', contactNumber);
                 } else if (key === 'wallet_number') {
-                    dataToSend.append('wallet_number', `0${formData[key]}`);
+                    // Convert 9XXXXXXXXX to 09XXXXXXXXX
+                    const walletNumber = formData[key].startsWith('9') 
+                        ? `0${formData[key]}` 
+                        : formData[key];
+                    dataToSend.append('wallet_number', walletNumber);
                 } else {
                     dataToSend.append(key, formData[key]);
                 }
@@ -389,9 +423,11 @@ const Register = () => {
             setErrorMessage(error.message);
             setShowErrorModal(true);
             console.log("failed post request: ", error.message);
+        } finally {
+            setSubmitting(false);
         }
     };
-    
+
     const handleBack = () => {
         setStep(1);
         setSelectedRole("");
@@ -620,10 +656,12 @@ const Register = () => {
                                         <div className="row mt-3">
                                             {[
                                                 { label: 'First name', name: 'firstname', type: 'text', holder: 'Enter first name' },
-                                                { label: 'Last name', name: 'lastname', type: 'text',  holder: 'Enter last name' }
+                                                { label: "Middle name", name: "middlename", type: "text", holder: "Enter middle"},
+                                                { label: 'Last name', name: 'lastname', type: 'text',  holder: 'Enter last name' },
+
                                             ].map((data, i) => (
-                                                <div key={i} className="col-12 col-md-6  mt-2 mt-md-0">
-                                                    <label className="text-capitalize small"
+                                                <div key={i} className="col-12 col-md-4 mt-2 mt-md-0">
+                                                    <label className="text-capitalize small mt-2  fw-bold"
                                                         htmlFor={data.name}>
                                                         {data.label}:
                                                     </label>
@@ -656,7 +694,7 @@ const Register = () => {
                                                 
                                                 <div className="row mt-3">
                                                     <div className="col-md-6">
-                                                        <label className="text-capitalize small" htmlFor="province">
+                                                        <label className="text-capitalize small fw-bold" htmlFor="province">
                                                             Province:
                                                         </label>
                                                         <select
@@ -677,7 +715,7 @@ const Register = () => {
                                                         </select>
                                                     </div>
                                                     <div className="col-md-6 mt-2 mt-md-0">
-                                                        <label className="text-capitalize small" htmlFor="city">
+                                                        <label className="text-capitalize small fw-bold" htmlFor="city">
                                                             City/Municipality:
                                                         </label>
                                                         <select
@@ -702,7 +740,7 @@ const Register = () => {
                                                 
                                                 <div className="row mt-3">
                                                     <div className="col-md-6">
-                                                        <label className="text-capitalize small" htmlFor="barangay">
+                                                        <label className="text-capitalize small fw-bold" htmlFor="barangay">
                                                             Barangay:
                                                         </label>
                                                         <select
@@ -724,7 +762,7 @@ const Register = () => {
                                                         </select>
                                                     </div>
                                                     <div className="col-md-6 mt-2 mt-md-0">
-                                                        <label className="text-capitalize small" htmlFor="zipCode">
+                                                        <label className="text-capitalize small fw-bold" htmlFor="zipCode">
                                                             Zip Code:
                                                         </label>
                                                         <input
@@ -741,7 +779,7 @@ const Register = () => {
                                                 </div>
                                                 
                                                 <div className="mt-3">
-                                                    <label className="text-capitalize small" htmlFor="detailAddress">
+                                                    <label className="text-capitalize small fw-bold" htmlFor="detailAddress">
                                                         Detailed Address:
                                                     </label>
                                                     <textarea
@@ -763,7 +801,6 @@ const Register = () => {
                                         )}
 
 
-
                                         {/* Rider Vehicle Information */}
                                         {isRider && (
                                             <>
@@ -776,7 +813,7 @@ const Register = () => {
                                                 </div>
 
                                                 <div className="mt-3">
-                                                    <label className="text-capitalize small" 
+                                                    <label className="text-capitalize small fw-bold" 
                                                         htmlFor="plateNumber">Plate Number:
                                                     </label>
                                                     <input
@@ -795,7 +832,7 @@ const Register = () => {
                                                 </div>
 
                                                 <div className="mt-3">
-                                                    <label className="text-capitalize small" 
+                                                    <label className="text-capitalize small fw-bold" 
                                                         htmlFor="plateImage">vehicle with plate number photo:
                                                     </label>
                                                     
@@ -853,7 +890,7 @@ const Register = () => {
 
 
                                                 <div className="mt-3">
-                                                    <label className="text-capitalize small" htmlFor="licenseImage">
+                                                    <label className="text-capitalize small fw-bold" htmlFor="licenseImage">
                                                         Driver's License Photo:
                                                     </label>
                                                     
@@ -924,7 +961,7 @@ const Register = () => {
                                             <>
                                                 <div className="row mt-2">
                                                     <div className="col">
-                                                        <label className="text-capitalize small" 
+                                                        <label className="text-capitalize small fw-bold" 
                                                             htmlFor="wallet_type">e-wallet type:
                                                         </label>
 
@@ -942,34 +979,35 @@ const Register = () => {
                                                     </div>
 
                                                     <div className="col">
-                                                        <label className="text-capitalize small" 
+                                                        <label className="text-capitalize small fw-bold" 
                                                             htmlFor="wallet_number">e-wallet number:
                                                         </label>
-                                                        <input
-                                                            className="form-control small mt-2"
-                                                            style={{fontSize: "14px"}}
-                                                            type="text"
-                                                            name="wallet_number"
-                                                            id="wallet_number"
-                                                            placeholder="09XXXXXXXXX"
-                                                            value={formData.wallet_number || ''}
-                                                            onChange={handleWalletNumberChange}
-                                                            maxLength="11"
-                                                            required
-                                                        />
-                                                     
+                                                        <div className="input-group mt-2">
+                                                            <span className="input-group-text" style={{fontSize: "14px"}}>+63</span>
+                                                            <input
+                                                                className="form-control small"
+                                                                style={{fontSize: "14px"}}
+                                                                type="text"
+                                                                name="wallet_number"
+                                                                id="wallet_number"
+                                                                placeholder="9XX XXX XXXX"
+                                                                value={formatPhoneNumber(formData.wallet_number || '')}
+                                                                onChange={handleWalletNumberChange}
+                                                                required
+                                                            />
+                                                        </div>
                                                         <small className="text-muted d-block mt-1" style={{fontSize: "12px"}}>
-                                                            Enter 11-digit mobile number (e.g., 09123456789) 
+                                                            Enter 10-digit mobile number (e.g., 912 345 6789) 
                                                         </small>
                                                     </div>
                                                 </div>
 
                                                 <div className="mt-3">
-                                                    <label className="text-capitalize small" 
+                                                    <label className="text-capitalize small fw-bold" 
                                                         htmlFor="email">Email:
                                                     </label>
                                                     <input
-                                                        className="mt-2 form-control small"
+                                                        className="mt-2 form-control small "
                                                         style={{fontSize: "14px"}}
                                                         type="email"
                                                         name="email"
@@ -985,7 +1023,7 @@ const Register = () => {
                                                 </div>
 
                                                 <div className="mt-3">
-                                                    <label className="text-capitalize small" 
+                                                    <label className="text-capitalize small fw-bold" 
                                                         htmlFor="password">Create Password:
                                                     </label>
                                                     <div className="position-relative">
@@ -1017,7 +1055,7 @@ const Register = () => {
                                                 </div>
 
                                                 <div className="mt-3">
-                                                    <label className="text-capitalize small" 
+                                                    <label className="text-capitalize small fw-bold" 
                                                         htmlFor="confirmPassword">Confirm Password:
                                                     </label>
                                                     <div className="position-relative">
@@ -1060,35 +1098,34 @@ const Register = () => {
                                         {!needsEWallet && (
                                             <>
                                                 <div className="mt-3">
-                                                    <label className="text-capitalize small" 
+                                                    <label className="text-capitalize small fw-bold" 
                                                         htmlFor="contact">contact no:
                                                     </label>
                                                     <div className="input-group mt-2">
+                                                        <span className="input-group-text" style={{fontSize: "14px"}}>+63</span>
                                                         <input
                                                             className="form-control small"
                                                             style={{fontSize: "14px"}}
                                                             type="text"
                                                             name="contact"
                                                             id="contact"
-                                                            placeholder="09XXXXXXXXX"
-                                                            value={formData.contact || ''}
+                                                            placeholder="9XX XXX XXXX"
+                                                            value={formatPhoneNumber(formData.contact || '')}
                                                             onChange={handleContactChange}
-                                                            maxLength="11"
                                                             required
                                                         />
                                                     </div>
-                                               
                                                     <small className="text-muted d-block mt-1" style={{fontSize: "12px"}}>
-                                                        Enter 11-digit mobile number (e.g., 09123456789)
+                                                        Enter 10-digit mobile number (e.g., 912 345 6789)
                                                     </small>
                                                 </div>
 
                                                 <div className="mt-3">
-                                                    <label className="text-capitalize small" 
+                                                    <label className="text-capitalize small fw-bold" 
                                                         htmlFor="email">Email:
                                                     </label>
                                                     <input
-                                                        className="mt-2 form-control small"
+                                                        className="mt-2 form-control small "
                                                         style={{fontSize: "14px"}}
                                                         type="email"
                                                         name="email"
@@ -1103,7 +1140,7 @@ const Register = () => {
                                                 </div>
 
                                                 <div className="mt-3">
-                                                    <label className="text-capitalize small" 
+                                                    <label className="text-capitalize small fw-bold " 
                                                         htmlFor="password">Create Password:
                                                     </label>
                                                     <div className="position-relative">
@@ -1135,7 +1172,7 @@ const Register = () => {
                                                 </div>
 
                                                 <div className="mt-3">
-                                                    <label className="text-capitalize small" 
+                                                    <label className="text-capitalize small fw-bold" 
                                                         htmlFor="confirmPassword">Confirm Password:
                                                     </label>
                                                     <div className="position-relative">
@@ -1238,18 +1275,27 @@ const Register = () => {
                                                 disabled={
                                                     (isRider && !allTermsAgreed) || 
                                                     (isFarmer && !sellerTermsAgreed) ||
-                                                    (isBuyer && !buyerTermsAgreed)
+                                                    (isBuyer && !buyerTermsAgreed) || 
+                                                    submitting
+                                                    
                                                 }
                                                 style={{
                                                     outline: "none",
                                                     fontWeight: "500",
 
-                                                    cursor: ((isRider && !allTermsAgreed) || (isFarmer && !sellerTermsAgreed) || (isBuyer && !buyerTermsAgreed)) ? "not-allowed" : "pointer",
+                                                    cursor: ((isRider && !allTermsAgreed) || (isFarmer && !sellerTermsAgreed) || (isBuyer && !buyerTermsAgreed) || submitting) ? "not-allowed" : "pointer",
                                                     background: ((isRider && !allTermsAgreed) || (isFarmer && !sellerTermsAgreed) || (isBuyer && !buyerTermsAgreed)) ? "#cccccc" : "#4CAF50",
-                                                    opacity: ((isRider && !allTermsAgreed) || (isFarmer && !sellerTermsAgreed) || (isBuyer && !buyerTermsAgreed)) ? 0.6 : 1
+                                                    opacity: ((isRider && !allTermsAgreed) || (isFarmer && !sellerTermsAgreed) || (isBuyer && !buyerTermsAgreed) || submitting) ? 0.6 : 1
                                                 }}
                                             >
-                                                register now
+                                                {submitting ? (
+                                                    <>
+                                                        <span className="spinner-border spinner-border-sm me-2"></span>
+                                                        {"Submitting..."}
+                                                    </>
+                                                ) : (
+                                                    "Register Now"
+                                                )}
                                             </button>
                                         </div>
 
@@ -1268,11 +1314,10 @@ const Register = () => {
                 </div>
             </div>
 
-            {showSuccessModal && (
+            {showSuccessModal  && (
                 <div
                     className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
                     style={{ backgroundColor: "rgba(0,0,0,0.5)", zIndex: 9999 }}
-                    onClick={handleModalClose}
                 >
                     <div
                         className="bg-white rounded shadow-lg p-4 text-center"
@@ -1280,7 +1325,9 @@ const Register = () => {
                         // onClick={(e) => e.stopPropagation()}
                     >
                         <div className="mb-3">
-                            <i className="fa fa-check-circle text-success" style={{ fontSize: "4rem" }}></i>
+                            <i className="fa fa-check-circle text-green fs-1" 
+                            >
+                            </i>
                         </div>
                          <h5 className="fw-bold text-capitalize mb-2">registration successful!</h5>
 
@@ -1301,12 +1348,11 @@ const Register = () => {
                             </>
                         ) : (
                             <p className="text-muted small mb-4">
-                                Your account has been created successfully. You can now sign in with your credentials.
+                                Your account has been created successfully.
                             </p>
                         )}
                         <button
-                            className="btn text-capitalize w-100"
-                            style={{ background: "#4CAF50", color: "white" }}
+                            className="btn text-capitalize  btn-outline-success btn-sm "
                             onClick={handleModalClose}
                         >
                             {(selectedRole === "farmer" || selectedRole === "rider") ? "understood" : "go to sign in"}
@@ -1327,15 +1373,15 @@ const Register = () => {
                         onClick={(e) => e.stopPropagation()}
                     >
                         <div className="mb-3">
-                            <i className="fa fa-times-circle text-danger" style={{ fontSize: "4rem" }}></i>
+                            <i className="fa fa-times-circle text-danger fs-1 " 
+                            ></i>
                         </div>
                         <h5 className="fw-bold text-capitalize mb-2">registration failed</h5>
                         <p className="text-muted small mb-4">
                             {errorMessage || "An error occurred during registration. Please try again."}
                         </p>
                         <button
-                            className="btn text-capitalize w-100"
-                            style={{ background: "#dc3545", color: "white" }}
+                            className="btn btn-outline-danger btn-sm text-capitalize w-25"
                             onClick={handleErrorModalClose}
                         >
                             close

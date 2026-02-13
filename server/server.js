@@ -52,11 +52,9 @@
       
 
       const server = app.listen(port, "0.0.0.0", () => {
-        console.log(`- Local:   http://localhost:${port}`);
-        console.log(`- Network: http://192.168.43.150:${port}`);
+        console.log(`Server is running on port ${port}`);
       });
       
-
       
       const io = new Server(server, {
         cors: {
