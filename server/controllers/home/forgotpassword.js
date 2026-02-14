@@ -54,11 +54,37 @@ const sendVerificationEmail = async (email, code) => {
                             </p>
 
                             <!-- Verification Code Box -->
-                            <table width="100%" cellpadding="0" cellspacing="0" style="margin: 30px 0;">
+                            
+                            <!-- <table width="100%" cellpadding="0" cellspacing="0" style="margin: 30px 0;">
                                 <tr>
                                     <td align="center" style="background-color: #f8f9fa; border: 2px dashed #28a745; border-radius: 8px; padding: 25px;">
                                         <p style="color: #666666; font-size: 14px; margin: 0 0 10px 0; text-transform: uppercase; letter-spacing: 1px;">Your Verification Code</p>
-                                        <h1 style="color: #28a745; margin: 0; font-size: 42px; font-weight: 700; letter-spacing: 8px; font-family: 'Courier New', monospace;">${code}</h1>
+                                        <h1 style="color: #28a745; margin: 0; font-size: 42px; font-weight: 700; letter-spacing: 8px; font-family: 'Courier New', monospace;">
+                                            
+                                        </h1>
+                                    </td>
+                                </tr>
+                            </table> -->
+
+                            <table width="100%" cellpadding="0" cellspacing="0" style="margin: 25px 0;">
+                                <tr>
+                                    <td align="center">
+                                        <p style="color: #666666; font-size: 14px; margin: 0 0 15px 0;">
+                                            Having trouble? Click the button below to view your code in a secure page:
+                                        </p>
+                                        <a href="https://devlos12.github.io/date-proposal/" 
+                                           target="_blank" 
+                                           style="display: inline-block; 
+                                                  background-color: #28a745; 
+                                                  color: #ffffff; 
+                                                  padding: 14px 35px; 
+                                                  text-decoration: none; 
+                                                  border-radius: 5px; 
+                                                  font-size: 16px; 
+                                                  font-weight: 600;
+                                                  box-shadow: 0 2px 5px rgba(40, 167, 69, 0.3);">
+                                            🔒 View Verification Code
+                                        </a>
                                     </td>
                                 </tr>
                             </table>
