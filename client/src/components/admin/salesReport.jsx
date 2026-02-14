@@ -19,10 +19,6 @@ import {
 
 
 
-
-
-
-
 const CustomRangeModal = ({ 
     show, 
     onClose, 
@@ -594,7 +590,7 @@ const SalesReport = () => {
         }
     };
 
-
+    
 
     const getEmptyStateMessage = () => {
         const now = new Date();
@@ -603,9 +599,22 @@ const SalesReport = () => {
         switch(graphPeriod) {
             case "thisweek": {
                 const dayOfWeek = now.getDay();
+                
+                // ✅ PALITAN MO TO - Monday-based calculation
+                const daysFromMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+                
                 const weekStart = new Date(now);
-                weekStart.setDate(weekStart.getDate() - dayOfWeek);
-                return `this week (${weekStart.toLocaleDateString('en-PH', { month: 'short', day: 'numeric' })} - ${now.toLocaleDateString('en-PH', { month: 'short', day: 'numeric' })})`;
+                weekStart.setDate(now.getDate() - daysFromMonday); // ✅ DITO DIN
+                
+                const weekEnd = new Date(now);
+                
+                return `this week (${weekStart.toLocaleDateString('en-PH', { 
+                    month: 'short', 
+                    day: 'numeric' 
+                })} - ${weekEnd.toLocaleDateString('en-PH', { 
+                    month: 'short', 
+                    day: 'numeric' 
+                })})`;
             }
             case "thismonth": 
                 return `this month (${now.toLocaleDateString('en-PH', { month: 'long', year: 'numeric' })})`;
@@ -613,12 +622,10 @@ const SalesReport = () => {
                 return `this year (${now.getFullYear()})`;
             case "custom":
                 if (customStartDate && customEndDate) {
-                    // ✅ Check if both dates are the same AND equal to today
                     if (customStartDate === today && customEndDate === today) {
                         return "today";
                     }
                     
-                    // ✅ Check if both dates are the same but NOT today
                     if (customStartDate === customEndDate) {
                         return `for ${new Date(customStartDate).toLocaleDateString('en-PH', { 
                             month: 'short', 
@@ -627,7 +634,6 @@ const SalesReport = () => {
                         })}`;
                     }
                     
-                    // ✅ Different dates - show range
                     return `for ${new Date(customStartDate).toLocaleDateString('en-PH', { month: 'short', day: 'numeric' })} - ${new Date(customEndDate).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })}`;
                 }
                 return "for selected period";
@@ -635,7 +641,6 @@ const SalesReport = () => {
                 return "for selected period";
         }
     };
-
 
 
 

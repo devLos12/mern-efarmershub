@@ -555,10 +555,7 @@ const Transactions = () => {
 
    
 
-
    
-
-
 
     const Height = () =>{
         if(height < 574) return height ;
@@ -566,9 +563,9 @@ const Transactions = () => {
     }
     
     // Add this calculation where you need it (e.g., in the modal body)
-    const taxPercentage = selectedTransaction?.totalAmount > 0 
-        ? ((selectedTransaction?.taxAmount / selectedTransaction?.totalAmount) * 100).toFixed(2)
-        : 0;
+   const taxPercentage = selectedTransaction?.totalAmount > 0 
+    ? ((selectedTransaction?.taxAmount / selectedTransaction?.totalAmount) * 100).toFixed(0) // Changed .toFixed(2) to .toFixed(0)
+    : 0;
 
     return (
 
@@ -1094,7 +1091,7 @@ const Transactions = () => {
                                     ${i === 0 && "text-center "} small`}
                                     >
                                         {data}
-                                        {i === 4 && (<span className="small ms-2">(5.0%)</span>)
+                                        {i === 4 && (<span className="small ms-2">(5%)</span>)
                                         }
                                     </th>
                                 ))}
@@ -1109,7 +1106,7 @@ const Transactions = () => {
                                     ${i === 0 && "text-center "} small`}
                                     >
                                         {data}
-                                        {i === 4 && (<span className="small ms-2">(5.0%)</span>)
+                                        {i === 4 && (<span className="small ms-2">(5%)</span>)
                                         }
                                     </th>
                                 ))}

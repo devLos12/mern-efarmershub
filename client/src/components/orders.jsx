@@ -469,143 +469,165 @@ const Orders = () => {
                 
                                 
                 {/* Added overflow wrapper */}
-                <div ref={printRef} style={{ overflowY: "auto" }}>
-                    <table className="w-100" >
-                    <thead className="bg-white border-bottom shadow-sm"> 
-                        <tr>
-                        {["Order Id", "Buyer Name", "Total Payment", "Status", "Rider", "Date/Time", "Action"].map((data, i) => {
-                            return(
-                                <th key={i} className={`p-3 text-success small ${[3,4,6].includes(i) && "text-center"}`}>
-                                    {data}
-                                </th>
-                            )
-                        })} 
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {currentItems.map((data, i) => {
-                            const isMenuOpen = openMenuId === data._id;
-                            return (
-                            <tr key={i}>
-                                {[
-                                {data : data.orderId || "N/A", isBold: true},
-                                {data : data.firstname + " " + data.lastname},
-                                {data : "₱"+data.totalPrice.toLocaleString('en-PH')+".00"},
-                                {data : data.statusDelivery === 'confirm' ? 'confirmed' : data.statusDelivery},
-                                {data : data.riderName},
-                                {data : { 
-                                    date: new Date(data.createdAt).toLocaleDateString('en-PH',{
-                                        year: 'numeric', 
-                                        month: 'short', 
-                                        day: 'numeric'
-                                    }), 
-                                    time: new Date(data.createdAt).toLocaleTimeString(), 
-                                }}].map((e, j) => {
-                                    return (
-                                        <td key={j} className={`p-3 text-capitalize small`} style={{ whiteSpace: "nowrap" }}>
-                                            {j === 3 ? (
-                                                <div className="d-flex justify-content-center">
-                                                    <span className={`bg-${getStatusColor(e.data)} bg-opacity-10 text-${getStatusColor(e.data)} fw-bold small`}
-                                                        style={{ padding: "4px 12px", borderRadius: "4px", display: "inline-block" }}>
-                                                        {e.data}
-                                                    </span>
-                                                </div>
-                                            ) : j === 4 ? (
-                                                <div className="d-flex justify-content-center">
-                                                    {data.orderMethod === "pick up" ? (
-                                                        <span className="text-muted small fst-italic">N/A</span>
-                                                    ) : e.data && e.data.trim() ? (
-                                                        <span className="fw-bold text-dark small">{e.data}</span>
-                                                    ) : (
-                                                        <span className="text-muted small fst-italic">Not assigned</span>
-                                                    )}
-                                                </div>
-                                            ) : j === 5 ? (
-                                                <div>
-                                                    <p className="m-0 small">{e.data?.date}</p>
-                                                    <p className="m-0 small text-muted">{e.data?.time}</p>
-                                                </div>
-                                            ) : j === 0 ? (
-                                                <span className="fw-bold text-dark">{e.data}</span>
+                <div ref={printRef} className="table-responsive" style={{ overflow: "auto" }}>
+                    <table className="table table-hover">
+                        <thead className="bg-light">
+                            <tr>
+                                <th className="text-uppercase small text-success">#</th>
+                                <th className="text-uppercase small text-success">Order Id</th>
+                                <th className="text-uppercase small text-success">Buyer Name</th>
+                                <th className="text-uppercase small text-success">Total Payment</th>
+                                <th className="text-uppercase small text-success text-center">Status</th>
+                                <th className="text-uppercase small text-success text-center">Rider</th>
+                                <th className="text-uppercase small text-success">Date/Time</th>
+                                <th className="text-uppercase small text-success text-center">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {currentItems.map((data, i) => {
+                                const isMenuOpen = openMenuId === data._id;
+                                const rowNumber = indexOfFirstItem + i + 1; // ✅ Calculate row number
+                                
+                                return (
+                                    <tr key={i}>
+                                        {/* ✅ Number Column */}
+                                        <td className="align-middle small">{rowNumber}</td>
+                                        
+                                        {/* Order ID */}
+                                        <td className="align-middle small fw-bold">{data.orderId || "N/A"}</td>
+                                        
+                                        {/* Buyer Name */}
+                                        <td className="align-middle small text-capitalize">
+                                            {data.firstname + " " + data.lastname}
+                                        </td>
+                                        
+                                        {/* Total Payment */}
+                                        <td className="align-middle small">
+                                            ₱{data.totalPrice.toLocaleString('en-PH')}.00
+                                        </td>
+                                        
+                                        {/* Status */}
+                                        <td className="align-middle small text-center text-capitalize">
+                                            <span className={`badge  bg-${getStatusColor(data.statusDelivery === 'confirm' ? 'confirmed' : data.statusDelivery)}`}>
+                                                {data.statusDelivery === 'confirm' ? 'confirmed' : data.statusDelivery}
+                                            </span>
+                                        </td>
+                                        
+                                        {/* Rider */}
+                                        <td className="align-middle small text-center">
+                                            {data.orderMethod === "pick up" ? (
+                                                <span className="text-muted fst-italic">N/A</span>
+                                            ) : data.riderName && data.riderName.trim() ? (
+                                                <span className="fw-semibold">{data.riderName}</span>
                                             ) : (
-                                                <span className="opacity-75">{e.data}</span>
+                                                <span className="text-muted fst-italic">Not assigned</span>
                                             )}
                                         </td>
-                                    )
-                                })}
-                                <td className="p-3 position-relative">
-                                    <div 
-                                    ref={(el) => (buttonRefs.current[data._id] = el )}
-                                    className="position-relative mx-auto d-flex align-items-center justify-content-center shadow-sm border rounded-circle"
-                                    onClick={(e) => {
-                                        setOpenMenuId(isMenuOpen ? null: data._id);
-                                    }}
-                                    style={{cursor: "pointer", width: "30px", height: "30px"}}>
-                                        <i className="fa fa-ellipsis"></i>
-                                     {isMenuOpen && (
+                                        
+                                        {/* Date/Time */}
+                                        <td className="align-middle small">
+                                            <div>
+                                                <p className="m-0">{new Date(data.createdAt).toLocaleDateString('en-PH', {
+                                                    year: 'numeric',
+                                                    month: 'short',
+                                                    day: 'numeric'
+                                                })}</p>
+                                                <p className="m-0 text-muted">{new Date(data.createdAt).toLocaleTimeString()}</p>
+                                            </div>
+                                        </td>
+                                        
+                                        {/* Action */}
+                                        <td className="align-middle text-center">
                                             <div 
-                                            ref={(el) => (menuRefs.current[data._id] = el)} 
-                                            className="card position-absolute top-100 end-0 p-2 z-1"
-                                            style={{width: "220px", cursor: "default", boxShadow: "0px 2px 10px rgba(0, 0, 0, 0.25)"}}
-                                            onClick={(e)=> e.stopPropagation()}>
-                                                <div className="px-2 bg-hover rounded text-capitalize p-1 d-flex align-items-center gap-2"
-                                                style={{cursor: "pointer"}}
-                                                onClick={()=> {
-                                                    handleViewDetails(data._id);
-                                                    setOpenMenuId(null);
-                                                }}>
-                                                    <i className="fa fa-list small"></i>
-                                                    <p className="m-0 capitalize small">view details</p>
-                                                </div>
-
-                                                {!showArchived ? (
-
-                                                    <div className="px-2 bg-hover rounded text-capitalize p-1 d-flex align-items-center gap-2"
-                                                    style={{cursor: "pointer"}}
-                                                    onClick={()=> {
-                                                        setArchiveOrderModal({ isShow: true, id: data._id });
-                                                        setOpenMenuId(null);
-                                                    }}>
-                                                        <i className="fa fa-archive small text-warning"></i>
-                                                        <p className="m-0 capitalize small text-warning">archive</p>
-                                                    </div>
-                                                    
-
-                                                ) : (
-                                                    <>
-                                                        <div className="px-2 bg-hover rounded text-capitalize p-1 d-flex align-items-center gap-2"
-                                                        style={{cursor: "pointer"}}
-                                                        onClick={()=> {
-                                                            handleUnarchive(data._id);
-                                                            setOpenMenuId(null);
-                                                        }}>
-                                                            <i className="fa fa-inbox small text-info"></i>
-                                                            <p className="m-0 capitalize small text-info">unarchive</p>
+                                                ref={(el) => (buttonRefs.current[data._id] = el)}
+                                                className="position-relative mx-auto d-flex align-items-center justify-content-center shadow-sm border rounded-circle"
+                                                onClick={(e) => {
+                                                    setOpenMenuId(isMenuOpen ? null : data._id);
+                                                }}
+                                                style={{ cursor: "pointer", width: "30px", height: "30px" }}
+                                            >
+                                                <i className="fa fa-ellipsis"></i>
+                                                {isMenuOpen && (
+                                                    <div 
+                                                        ref={(el) => (menuRefs.current[data._id] = el)}
+                                                        className="card position-absolute top-100 end-0 p-2 z-1"
+                                                        style={{ width: "220px", cursor: "default", boxShadow: "0px 2px 10px rgba(0, 0, 0, 0.25)" }}
+                                                        onClick={(e) => e.stopPropagation()}
+                                                    >
+                                                        <div 
+                                                            className="px-2 bg-hover rounded text-capitalize p-1 d-flex align-items-center gap-2"
+                                                            style={{ cursor: "pointer" }}
+                                                            onClick={() => {
+                                                                handleViewDetails(data._id);
+                                                                setOpenMenuId(null);
+                                                            }}
+                                                        >
+                                                            <i className="fa fa-list small"></i>
+                                                            <p className="m-0 capitalize small">view details</p>
                                                         </div>
 
-                                                        <div className="px-2 bg-hover rounded text-capitalize p-1 d-flex align-items-center gap-2"
-                                                            style={{cursor: "pointer"}}
-                                                            onClick={()=> {
-                                                                setDeleteOrderModal((prev) => ({...prev, isShow: true, id: data._id}));
-                                                                setText("do you want to delete?");
-                                                                setOpenMenuId(null);
-                                                            }}>
-                                                                <i className="fa fa-trash small text-danger"></i>
-                                                                <p className="m-0 capitalize small text-danger">delete</p>
-                                                        </div> 
-                                                    </>
-                                                )}
+                                                        {!showArchived ? (
+                                                            <div 
+                                                                className="px-2 bg-hover rounded text-capitalize p-1 d-flex align-items-center gap-2"
+                                                                style={{ cursor: "pointer" }}
+                                                                onClick={() => {
+                                                                    setArchiveOrderModal({ isShow: true, id: data._id });
+                                                                    setOpenMenuId(null);
+                                                                }}
+                                                            >
+                                                                <i className="fa fa-archive small text-warning"></i>
+                                                                <p className="m-0 capitalize small text-warning">archive</p>
+                                                            </div>
+                                                        ) : (
+                                                            <>
+                                                                <div 
+                                                                    className="px-2 bg-hover rounded text-capitalize p-1 d-flex align-items-center gap-2"
+                                                                    style={{ cursor: "pointer" }}
+                                                                    onClick={() => {
+                                                                        handleUnarchive(data._id);
+                                                                        setOpenMenuId(null);
+                                                                    }}
+                                                                >
+                                                                    <i className="fa fa-inbox small text-info"></i>
+                                                                    <p className="m-0 capitalize small text-info">unarchive</p>
+                                                                </div>
 
-                                              
+                                                                <div 
+                                                                    className="px-2 bg-hover rounded text-capitalize p-1 d-flex align-items-center gap-2"
+                                                                    style={{ cursor: "pointer" }}
+                                                                    onClick={() => {
+                                                                        setDeleteOrderModal((prev) => ({ ...prev, isShow: true, id: data._id }));
+                                                                        setText("do you want to delete?");
+                                                                        setOpenMenuId(null);
+                                                                    }}
+                                                                >
+                                                                    <i className="fa fa-trash small text-danger"></i>
+                                                                    <p className="m-0 capitalize small text-danger">delete</p>
+                                                                </div>
+                                                            </>
+                                                        )}
+                                                    </div>
+                                                )}
                                             </div>
-                                        )}
-                                    </div>
-                                </td>
-                            </tr>
-                        )})}
-                    </tbody>
+                                        </td>
+                                    </tr>
+                                );
+                            })}
+                        </tbody>
                     </table>
                 </div>
+
+
+
+
+
+
+
+
+
+
+
+
             </div>
 
             <div className="row g-0 bg-white rounded border shadow-sm">

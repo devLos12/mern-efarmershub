@@ -114,7 +114,6 @@ const storage = multer.memoryStorage();
 
 export const upload = multer({ storage: storage });
 
-
 export const checkOut = async(req, res) => {
     try {
         const userId = req.account.id;
@@ -125,13 +124,10 @@ export const checkOut = async(req, res) => {
         const {firstname, lastname, contact, email, province, city, barangay, detailAddress, zipCode} = 
         billingAddress;
 
-        
-
-
         let imageFile = null;
         let cloudinaryId = null;
 
-        // ✅ CHANGE: Upload proof of payment to Cloudinary using memoryStorage buffer
+        // ✅ Upload proof of payment to Cloudinary using memoryStorage buffer
         if (req.file) {
             try {
                 const base64Proof = req.file.buffer.toString('base64');
@@ -148,21 +144,36 @@ export const checkOut = async(req, res) => {
             }
         }
         
-        // Generate date for reference number
-        const date = new Date().toISOString().split("T")[0].replace(/-/g, ""); // 20251211
+        // ✅ Generate date for reference number (YYYYMMDD format)
+        const date = new Date().toISOString().split("T")[0].replace(/-/g, ""); // 20260215
 
-        // Find last order with today's date in refNo to get sequential number
+        // ✅ Find last order with today's date in refNo to get sequential number
         const lastOrderWithRefNo = await Order.findOne({
             refNo: new RegExp(`^REF${date}-`)
         }).sort({ createdAt: -1 });
 
-        let sequenceNumber = 1;
+        let refSequence = 1;
         if (lastOrderWithRefNo && lastOrderWithRefNo.refNo) {
             const lastSequence = parseInt(lastOrderWithRefNo.refNo.split("-")[1]);
-            sequenceNumber = lastSequence + 1;
+            refSequence = lastSequence + 1;
         }
 
-        const refNo = `REF${date}-${sequenceNumber.toString().padStart(4, "0")}`;
+        const refNo = `REF${date}-${refSequence.toString().padStart(4, "0")}`;
+
+        // ✅ Generate sequential ORDER ID with date (OID + date + sequence)
+        const lastOrderWithOID = await Order.findOne({
+            orderId: new RegExp(`^OID${date}-`)
+        }).sort({ createdAt: -1 });
+        
+        let oidSequence = 1;
+        if (lastOrderWithOID && lastOrderWithOID.orderId) {
+            const lastSequence = parseInt(lastOrderWithOID.orderId.split("-")[1]);
+            oidSequence = lastSequence + 1;
+        }
+        
+        const newOrderId = `OID${date}-${oidSequence.toString().padStart(4, "0")}`;
+        // Example: OID20260215-0001, OID20260215-0002, etc.
+
 
         // if user attempt to buy directly.
         if(source === "buy"){
@@ -171,18 +182,6 @@ export const checkOut = async(req, res) => {
                 { $inc: { stocks : - 1 } }
             );
         }
-        
-        // Generate sequential order ID
-        const lastOrder = await Order.findOne().sort({ createdAt: -1 });
-        
-        let newOrderId = "OID0001";
-
-        if (lastOrder && lastOrder.orderId) {
-            const lastNumber = parseInt(lastOrder.orderId.replace("OID", "")); // OID0001 -> 1
-            const nextNumber = lastNumber + 1;
-            newOrderId = "OID" + nextNumber.toString().padStart(4, "0"); // OID0002
-        }
-        
         
         if(orderMethod === "delivery" && payment === "cash on delivery" ){
             const newOrder = new Order({
@@ -229,9 +228,9 @@ export const checkOut = async(req, res) => {
                 paymentType: payment,
                 paymentStatus: "paid",
                 proofOfPayment: {
-                    image: imageFile, // ✅ Store Cloudinary URL
+                    image: imageFile,
                     textMessage: text ?? "",
-                    cloudinaryId: cloudinaryId // ✅ Store Cloudinary public_id
+                    cloudinaryId: cloudinaryId
                 },
                 refNo: refNo
             })
@@ -243,7 +242,6 @@ export const checkOut = async(req, res) => {
         
         }
 
-        
         return res.status(200).json({ message: "placed order succesfully!"});
     } catch(err) {
         return res.status(500).json({ message: err.message});

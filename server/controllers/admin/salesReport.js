@@ -36,11 +36,16 @@ export const getSalesData = async(req, res) => {
                     queryEndDate.setHours(23, 59, 59, 999);
                     break;
                 
-                case "thisweek":
-                    const dayOfWeek = now.getDay();
+               case "thisweek":
+                    const dayOfWeek = now.getDay(); // 0=Sunday, 1=Monday, ..., 6=Saturday
+                    
+                    // ✅ Calculate days from Monday (Monday = start of week)
+                    const daysFromMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+                    
                     queryStartDate = new Date(now);
-                    queryStartDate.setDate(queryStartDate.getDate() - dayOfWeek);
+                    queryStartDate.setDate(queryStartDate.getDate() - daysFromMonday);
                     queryStartDate.setHours(0, 0, 0, 0);
+                    
                     queryEndDate = new Date(now);
                     queryEndDate.setHours(23, 59, 59, 999);
                     break;
@@ -91,7 +96,6 @@ export const getSalesData = async(req, res) => {
 }
 
 
-
 export const getSalesGraphData = async(req, res) => {
     try {
         const { period = 'today', startDate: customStart, endDate: customEnd } = req.query;
@@ -128,12 +132,15 @@ export const getSalesGraphData = async(req, res) => {
                 
                 case "thisweek":
                     const dayOfWeek = now.getDay();
+                    const daysFromMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // ✅ FIX
+                    
                     startDate = new Date(now);
-                    startDate.setDate(startDate.getDate() - dayOfWeek);
+                    startDate.setDate(now.getDate() - daysFromMonday); // ✅ FIX
                     startDate.setHours(0, 0, 0, 0);
+                    
                     endDate = new Date(now);
                     endDate.setHours(23, 59, 59, 999);
-                    break;
+                    break; // ✅ BREAK LANG, WALANG RETURN!
                     
                 case "thismonth":
                     startDate = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -300,6 +307,13 @@ export const getSalesGraphData = async(req, res) => {
         return res.status(500).json({ message: error.message });
     }
 };
+
+
+
+
+
+
+
 
 
 export const deleteSales = async(req, res) => {
