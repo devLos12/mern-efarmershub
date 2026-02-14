@@ -12,6 +12,373 @@ import {
     ResponsiveContainer 
 } from 'recharts';
 
+
+
+
+
+
+
+
+
+
+
+
+const CustomRangeModal = ({ 
+    show, 
+    onClose, 
+    onApply, 
+    initialStartDate = '', 
+    initialEndDate = '',
+    showNotification 
+}) => {
+    const [tempStartDate, setTempStartDate] = useState(initialStartDate);
+    const [tempEndDate, setTempEndDate] = useState(initialEndDate);
+    const [startDateError, setStartDateError] = useState('');
+    const [endDateError, setEndDateError] = useState('');
+    
+    const today = new Date().toISOString().split('T')[0];
+    
+
+
+    // ✅ Get human-readable duration text
+    const getDurationText = (startDate, endDate) => {
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        const today = new Date().toISOString().split('T')[0];
+        
+        // ✅ Special case: Same day and it's today
+        if (startDate === endDate && startDate === today) {
+            return "Today";
+        }
+        
+        // ✅ Special case: Same day but not today
+        if (startDate === endDate) {
+            return "1 day";
+        }
+        
+        const diffTime = Math.abs(end - start);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+        
+        const startYear = start.getFullYear();
+        const startMonth = start.getMonth();
+        const endYear = end.getFullYear();
+        const endMonth = end.getMonth();
+        
+        const monthsDiff = (endYear - startYear) * 12 + (endMonth - startMonth);
+        
+        // Exact month(s)
+        if (monthsDiff >= 1 && start.getDate() === end.getDate()) {
+            return monthsDiff === 1 ? "1 month" : `${monthsDiff} months`;
+        }
+        
+        // Approximately 1 month
+        if (diffDays >= 28 && diffDays <= 32 && monthsDiff === 1) {
+            return "~1 month";
+        }
+        
+        // Weeks
+        if (diffDays % 7 === 0 && diffDays <= 28) {
+            const weeks = diffDays / 7;
+            return `${weeks} ${weeks === 1 ? 'week' : 'weeks'}`;
+        }
+        
+        // Days with context
+        if (diffDays <= 7) {
+            return `${diffDays} ${diffDays === 1 ? 'day' : 'days'}`;
+        } else if (diffDays < 28) {
+            const weeks = Math.floor(diffDays / 7);
+            const remainingDays = diffDays % 7;
+            if (remainingDays === 0) {
+                return `${weeks} ${weeks === 1 ? 'week' : 'weeks'}`;
+            }
+            return `${diffDays} days`;
+        } else {
+            const months = Math.floor(diffDays / 30);
+            if (months >= 1) {
+                return `~${months} ${months === 1 ? 'month' : 'months'} (${diffDays} days)`;
+            }
+            return `${diffDays} days`;
+        }
+    };
+
+
+
+
+
+
+    // ✅ Validate Start Date
+    const validateStartDate = (dateValue = tempStartDate) => {
+        if (!dateValue) {
+            setStartDateError('');
+            return true;
+        }
+        
+        const selectedDate = new Date(dateValue);
+        const todayDate = new Date(today);
+        
+        if (selectedDate > todayDate) {
+            setStartDateError('Start date cannot be in the future');
+            return false;
+        }
+        
+        setStartDateError('');
+        return true;
+    };
+    
+    // ✅ Validate End Date
+    const validateEndDate = (endValue = tempEndDate, startValue = tempStartDate) => {
+        if (!endValue) {
+            setEndDateError('');
+            return true;
+        }
+        
+        const selectedDate = new Date(endValue);
+        const todayDate = new Date(today);
+        const startDateObj = startValue ? new Date(startValue) : null;
+        
+        if (selectedDate > todayDate) {
+            setEndDateError('End date cannot be in the future');
+            return false;
+        } else if (startDateObj && selectedDate < startDateObj) {
+            setEndDateError('End date must be after start date');
+            return false;
+        }
+        
+        setEndDateError('');
+        return true;
+    };
+
+
+
+
+
+
+
+    const handleApply = () => {
+        if (!tempStartDate || !tempEndDate) {
+            showNotification("Please select both start and end dates", "error");
+            return;
+        }
+        
+        const isStartValid = validateStartDate(tempStartDate);
+        const isEndValid = validateEndDate(tempEndDate, tempStartDate);
+        
+        if (!isStartValid || !isEndValid) {
+            showNotification("Please fix the date errors before applying", "error");
+            return;
+        }
+        
+        const today = new Date().toISOString().split('T')[0];
+        
+        if (tempStartDate > today) {
+            showNotification("Start date cannot be in the future", "error");
+            return;
+        }
+        
+        if (tempEndDate > today) {
+            showNotification("End date cannot be in the future", "error");
+            return;
+        }
+        
+        if (tempStartDate > tempEndDate) {
+            showNotification("Start date must be before end date", "error");
+            return;
+        }
+        
+        onApply(tempStartDate, tempEndDate);
+        
+        setStartDateError('');
+        setEndDateError('');
+    };
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
+    
+    // ✅ Handle Cancel
+    const handleCancel = () => {
+        setStartDateError('');
+        setEndDateError('');
+        onClose();
+    };
+    
+    if (!show) return null;
+    
+    return (
+        <>
+            {/* Backdrop */}
+            <div 
+                className="modal-backdrop fade show"
+                onClick={handleCancel}
+            />
+            
+            {/* Modal */}
+            <div 
+                className="modal fade show"
+                style={{ display: 'block' }}
+                tabIndex="-1"
+            >
+                <div className="modal-dialog modal-dialog-centered">
+                    <div className="modal-content">
+                        <div className="modal-header border-0 pb-0">
+                            <h5 className="modal-title fw-bold">
+                                <i className="fa-solid fa-calendar-days text-success me-2"></i>
+                                Custom Date Range
+                            </h5>
+                            <button 
+                                type="button" 
+                                className="btn-close" 
+                                onClick={handleCancel}
+                            />
+                        </div>
+                        
+                        <div className="modal-body pt-2">
+                            <p className="text-muted small mb-3">
+                                Select a custom date range for your sales report
+                            </p>
+                            
+                            {/* Start Date */}
+                            <div className="mb-3">
+                                <label className="form-label small fw-semibold">
+                                    <i className="fa-regular fa-calendar me-1"></i>
+                                    Start Date
+                                </label>
+                                <input 
+                                    type="date"
+                                    className={`form-control ${startDateError ? 'is-invalid' : ''}`}
+                                    value={tempStartDate}
+                                    onChange={(e) => setTempStartDate(e.target.value)}
+                                    onBlur={() => {
+                                        validateStartDate(tempStartDate);
+                                        if (tempEndDate) {
+                                            validateEndDate(tempEndDate, tempStartDate);
+                                        }
+                                    }}
+                                    max={today}
+                                />
+                                {startDateError && (
+                                    <div className="invalid-feedback d-block">
+                                        {startDateError}
+                                    </div>
+                                )}
+                            </div>
+                            
+                            {/* End Date */}
+                            <div className="mb-3">
+                                <label className="form-label small fw-semibold">
+                                    <i className="fa-regular fa-calendar me-1"></i>
+                                    End Date
+                                </label>
+                                <input 
+                                    type="date"
+                                    className={`form-control ${endDateError ? 'is-invalid' : ''}`}
+                                    value={tempEndDate}
+                                    onChange={(e) => setTempEndDate(e.target.value)}
+                                    onBlur={() => validateEndDate(tempEndDate, tempStartDate)}
+                                    max={today}
+                                    min={tempStartDate}
+                                />
+                                {endDateError && (
+                                    <div className="invalid-feedback d-block">
+                                        {endDateError}
+                                    </div>
+                                )}
+                            </div>
+                            
+                            {/* Error Alert */}
+                            {(startDateError || endDateError) && (
+                                <div className="alert alert-danger alert-sm py-2 px-3 mb-3">
+                                    <i className="fa-solid fa-exclamation-triangle me-2"></i>
+                                    <small>
+                                        <strong>Invalid dates selected.</strong> Please correct the errors above.
+                                    </small>
+                                </div>
+                            )}
+                            
+                            {/* Success Preview */}
+                            {tempStartDate && tempEndDate && !startDateError && !endDateError && (() => {
+                                const today = new Date().toISOString().split('T')[0];
+                                const isToday = tempStartDate === today && tempEndDate === today;
+                                
+                                return (
+                                    <div className="alert alert-success alert-sm py-2 px-3 mb-0">
+                                        <i className="fa-solid fa-check-circle me-2"></i>
+                                        <small>
+                                            <strong>Selected Range:</strong> {' '}
+                                            {isToday ? (
+                                                <strong className="text-success">Today</strong>
+                                            ) : (
+                                                <>
+                                                    {new Date(tempStartDate).toLocaleDateString('en-PH', {
+                                                        month: 'short',
+                                                        day: 'numeric',
+                                                        year: 'numeric'
+                                                    })}
+                                                    {' '}-{' '}
+                                                    {new Date(tempEndDate).toLocaleDateString('en-PH', {
+                                                        month: 'short',
+                                                        day: 'numeric',
+                                                        year: 'numeric'
+                                                    })}
+                                                    {' '}
+                                                    ({getDurationText(tempStartDate, tempEndDate)})
+                                                </>
+                                            )}
+                                        </small>
+                                    </div>
+                                );
+                            })()}
+
+
+
+
+
+
+                        </div>
+                        
+                        <div className="modal-footer border-0 pt-0">
+                            <button 
+                                type="button" 
+                                className="btn btn-sm btn-light"
+                                onClick={handleCancel}
+                            >
+                                <i className="fa-solid fa-times me-1"></i>
+                                Cancel
+                            </button>
+                            <button 
+                                type="button" 
+                                className="btn btn-sm btn-success"
+                                onClick={handleApply}
+                                disabled={!tempStartDate || !tempEndDate || !!startDateError || !!endDateError}
+                            >
+                                <i className="fa-solid fa-check me-1"></i>
+                                Apply Range
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </>
+    );
+};
+
+
+
+
+
+
+
+
 const SalesReport = () => {
     const { 
         showToast,
@@ -33,30 +400,65 @@ const SalesReport = () => {
     
     // Graph states
     const [graphData, setGraphData] = useState([]);
-    const [graphPeriod, setGraphPeriod] = useState('today');
+    const [graphPeriod, setGraphPeriod] = useState('thisweek'); // ✅ Changed from 'today' to 'thisweek'
     const [graphLoading, setGraphLoading] = useState(false);
     
     // Pagination
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage] = useState(10);
     
+    // Custom Range Modal states
+    const [showCustomRangeModal, setShowCustomRangeModal] = useState(false);
+    const [customStartDate, setCustomStartDate] = useState('');
+    const [customEndDate, setCustomEndDate] = useState('');
+    const [isCustomRange, setIsCustomRange] = useState(false);
+    
     const printRef = useRef();
 
+    // ✅ Fetch data when period or refresh changes
     useEffect(() => {
         getSalesData();
-    }, [refresh]);
+    }, [refresh, graphPeriod]);
 
     useEffect(() => {
         fetchGraphData();
     }, [graphPeriod, refresh]);
 
+    // ✅ Reset states when period changes
+    useEffect(() => {
+        setCurrentPage(1);
+        setSelectedIds(new Set());
+        setIsAllSelected(false);
+    }, [graphPeriod]);
+
+    // ✅ Debounced search
+    useEffect(() => {
+        const result = setTimeout(() => {
+            setDebouncedSearch(search.trim().toLowerCase());
+        }, 300);
+
+        return () => clearTimeout(result);
+    }, [search]);
+
+    // ✅ Reset page when search changes
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [search]);
+
+    // ✅ Get Sales Data
     const getSalesData = async() => {
         try {
             if (!isRefreshing) {
                 setLoading(true);
             }
             
-            const res = await fetch(`${import.meta.env.VITE_API_URL}/api/getSalesData`, {
+            let url = `${import.meta.env.VITE_API_URL}/api/getSalesData?period=${graphPeriod}`;
+            
+            if (graphPeriod === 'custom' && customStartDate && customEndDate) {
+                url += `&startDate=${customStartDate}&endDate=${customEndDate}`;
+            }
+            
+            const res = await fetch(url, {
                 method: "GET",
                 credentials: "include"
             });
@@ -66,7 +468,7 @@ const SalesReport = () => {
 
             if(data.success){
                 const { salesData } = data;
-                setSalesData(salesData.reverse());
+                setSalesData(salesData);
             }
             
         } catch (error) {
@@ -77,17 +479,21 @@ const SalesReport = () => {
         }
     }
 
+    // ✅ Fetch Graph Data
     const fetchGraphData = async() => {
         try {
             setGraphLoading(true);
             
-            const res = await fetch(
-                `${import.meta.env.VITE_API_URL}/api/getSalesGraphData?period=${graphPeriod}`,
-                {
-                    method: "GET",
-                    credentials: "include"
-                }
-            );
+            let url = `${import.meta.env.VITE_API_URL}/api/getSalesGraphData?period=${graphPeriod}`;
+            
+            if (graphPeriod === 'custom' && customStartDate && customEndDate) {
+                url += `&startDate=${customStartDate}&endDate=${customEndDate}`;
+            }
+            
+            const res = await fetch(url, {
+                method: "GET",
+                credentials: "include"
+            });
 
             const data = await res.json();
             if (!res.ok) throw new Error(data.message);
@@ -103,21 +509,7 @@ const SalesReport = () => {
         }
     };
 
-    // Debounced search
-    useEffect(() => {
-        const result = setTimeout(() => {
-            setDebouncedSearch(search.trim().toLowerCase());
-        }, 300);
-
-        return () => clearTimeout(result);
-    }, [search]);
-
-    // Reset page when search changes
-    useEffect(() => {
-        setCurrentPage(1);
-    }, [search]);
-
-    // Filtered data
+    // ✅ Filtered sales data
     const filteredSales = useMemo(() => {
         let filtered = salesData;
 
@@ -144,6 +536,7 @@ const SalesReport = () => {
     const currentItems = filteredSales.slice(indexOfFirstItem, indexOfLastItem);
     const totalPages = Math.ceil(filteredSales.length / itemsPerPage);
 
+    // ✅ Format currency
     const formatCurrency = (amount) => {
         return new Intl.NumberFormat('en-PH', {
             style: 'currency',
@@ -152,6 +545,7 @@ const SalesReport = () => {
         }).format(amount);
     }
 
+    // ✅ Format date
     const formatDate = (date) => {
         return new Date(date).toLocaleDateString('en-PH', {
             year: 'numeric',
@@ -160,18 +554,92 @@ const SalesReport = () => {
         });
     }
 
+    
+    // ✅ Get period label
     const getPeriodLabel = () => {
         switch(graphPeriod) {
-            case "today": return "Today's Sales (Hourly)";
-            case "yesterday": return "Yesterday's Sales (Hourly)";
             case "thisweek": return "This Week";
             case "thismonth": return "This Month";
             case "thisyear": return "This Year";
+            case "custom": 
+                if (customStartDate && customEndDate) {
+                    const today = new Date().toISOString().split('T')[0];
+                    
+                    // ✅ Check if both dates are the same AND equal to today
+                    if (customStartDate === today && customEndDate === today) {
+                        return "Today";
+                    }
+                    
+                    // ✅ Check if both dates are the same but NOT today
+                    if (customStartDate === customEndDate) {
+                        return `${new Date(customStartDate).toLocaleDateString('en-PH', {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric'
+                        })}`;
+                    }
+                    
+                    // ✅ Different dates - show range
+                    return `Custom Range (${new Date(customStartDate).toLocaleDateString('en-PH', {
+                        month: 'short',
+                        day: 'numeric'
+                    })} - ${new Date(customEndDate).toLocaleDateString('en-PH', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric'
+                    })})`;
+                }
+                return "Custom Range";
             default: return "";
         }
     };
 
-    // Custom Tooltip for Graph
+
+
+    const getEmptyStateMessage = () => {
+        const now = new Date();
+        const today = new Date().toISOString().split('T')[0];
+        
+        switch(graphPeriod) {
+            case "thisweek": {
+                const dayOfWeek = now.getDay();
+                const weekStart = new Date(now);
+                weekStart.setDate(weekStart.getDate() - dayOfWeek);
+                return `this week (${weekStart.toLocaleDateString('en-PH', { month: 'short', day: 'numeric' })} - ${now.toLocaleDateString('en-PH', { month: 'short', day: 'numeric' })})`;
+            }
+            case "thismonth": 
+                return `this month (${now.toLocaleDateString('en-PH', { month: 'long', year: 'numeric' })})`;
+            case "thisyear": 
+                return `this year (${now.getFullYear()})`;
+            case "custom":
+                if (customStartDate && customEndDate) {
+                    // ✅ Check if both dates are the same AND equal to today
+                    if (customStartDate === today && customEndDate === today) {
+                        return "today";
+                    }
+                    
+                    // ✅ Check if both dates are the same but NOT today
+                    if (customStartDate === customEndDate) {
+                        return `for ${new Date(customStartDate).toLocaleDateString('en-PH', { 
+                            month: 'short', 
+                            day: 'numeric', 
+                            year: 'numeric' 
+                        })}`;
+                    }
+                    
+                    // ✅ Different dates - show range
+                    return `for ${new Date(customStartDate).toLocaleDateString('en-PH', { month: 'short', day: 'numeric' })} - ${new Date(customEndDate).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })}`;
+                }
+                return "for selected period";
+            default: 
+                return "for selected period";
+        }
+    };
+
+
+
+
+    // ✅ Custom Tooltip for Graph
     const CustomTooltip = ({ active, payload, label }) => {
         if (active && payload && payload.length) {
             return (
@@ -189,7 +657,7 @@ const SalesReport = () => {
         return null;
     };
 
-    // Select/Deselect handlers
+    // ✅ Select/Deselect handlers
     const toggleSelectAll = () => {
         setIsAllSelected((prev) => {
             const newValue = !prev;
@@ -216,11 +684,13 @@ const SalesReport = () => {
         });
     }
 
+    // ✅ Handle refresh
     const handleRefresh = async () => {
         setIsRefreshing(true);
         setRefresh((prev) => !prev);
     };
 
+    // ✅ Handle delete
     const handleDelete = async() => {
         if(selectedIds.size === 0) {
             showNotification("No sales selected yet", "error");
@@ -251,6 +721,7 @@ const SalesReport = () => {
         }
     }
 
+    // ✅ Handle print
     const handlePrint = () => {
         const printContent = printRef.current.cloneNode(true);
         const windowPrint = window.open('', '', 'width=900,height=650');
@@ -258,7 +729,7 @@ const SalesReport = () => {
         windowPrint.document.write(`
             <html>
                 <head>
-                    <title>Sales Report</title>
+                    <title>Sales Report - ${getPeriodLabel()}</title>
                     <style>
                         body {
                             font-family: Arial, sans-serif;
@@ -303,7 +774,8 @@ const SalesReport = () => {
                 <body>
                     <div class="header">
                         <h2>Sales Report</h2>
-                        <p>Date: ${new Date().toLocaleDateString('en-PH', {
+                        <p><strong>Period:</strong> ${getPeriodLabel()}</p>
+                        <p>Generated: ${new Date().toLocaleDateString('en-PH', {
                             year: 'numeric',
                             month: 'long',
                             day: 'numeric'
@@ -324,6 +796,7 @@ const SalesReport = () => {
         windowPrint.document.close();
     };
 
+    // ✅ Handle download PDF
     const handleDownloadPDF = () => {
         const printContent = printRef.current.cloneNode(true);
         
@@ -331,7 +804,8 @@ const SalesReport = () => {
         wrapper.innerHTML = `
             <div style="text-align: center; margin-bottom: 20px;">
                 <h2 style="margin: 0; color: #198754;">Sales Report</h2>
-                <p style="margin: 5px 0; color: #666;">Date: ${new Date().toLocaleDateString('en-PH', {
+                <p style="margin: 5px 0; color: #666;"><strong>Period:</strong> ${getPeriodLabel()}</p>
+                <p style="margin: 5px 0; color: #666;">Generated: ${new Date().toLocaleDateString('en-PH', {
                     year: 'numeric',
                     month: 'long',
                     day: 'numeric'
@@ -343,7 +817,7 @@ const SalesReport = () => {
 
         const opt = {
             margin: 10,
-            filename: `sales_report_${new Date().getTime()}.pdf`,
+            filename: `sales_report_${graphPeriod}_${new Date().getTime()}.pdf`,
             image: { type: 'jpeg', quality: 0.98 },
             html2canvas: { scale: 2 },
             jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
@@ -352,12 +826,32 @@ const SalesReport = () => {
         html2pdf().set(opt).from(wrapper).save();
     };
 
+    // ✅ Handle Custom Range Apply
+    const handleCustomRangeApply = (startDate, endDate) => {
+        setCustomStartDate(startDate);
+        setCustomEndDate(endDate);
+        setGraphPeriod('custom');
+        setIsCustomRange(true);
+        setShowCustomRangeModal(false);
+        setRefresh(prev => !prev);
+    };
+
+    // ✅ Handle Custom Range Close
+    const handleCustomRangeClose = () => {
+        setShowCustomRangeModal(false);
+        if (!isCustomRange) {
+            setGraphPeriod('thisweek'); // ✅ Changed from 'today' to 'thisweek'
+        }
+    };
+
+
+
+    // ✅ Loading state
     if (loading) {
         return (
-            <div className="p-4 d-flex justify-content-center align-items-center" style={{minHeight: '400px'}}>
-                <div className="spinner-border text-success" role="status">
-                    <span className="visually-hidden">Loading...</span>
-                </div>
+            <div className="p-4 d-flex justify-content-center align-items-center flex-column vh-100">
+                <div className="spinner-border text-success" role="status"></div>
+                <p className="text-capitalize m-0 mt-2 text-muted fs-6">Loading sales..</p>
             </div>
         );
     }
@@ -366,7 +860,7 @@ const SalesReport = () => {
         <>
         <div className="p-2">
             <div className="row g-0 bg-white rounded mb-5 position-relative overflow-hidden">
-                {/* Loading Overlay with Refresh Trigger */}
+                {/* Loading Overlay */}
                 {isRefreshing && (
                     <div className="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center bg-white bg-opacity-75" 
                         style={{ zIndex: 10 }}>
@@ -390,13 +884,18 @@ const SalesReport = () => {
                                     className="form-select form-select-sm"
                                     style={{ minWidth: "150px" }}
                                     value={graphPeriod}
-                                    onChange={(e) => setGraphPeriod(e.target.value)}
+                                    onChange={(e) => {
+                                        if (e.target.value === 'custom') {
+                                            setShowCustomRangeModal(true);
+                                        } else {
+                                            setGraphPeriod(e.target.value);
+                                        }
+                                    }}
                                 >
-                                    <option value="today">Today</option>
-                                    <option value="yesterday">Yesterday</option>
                                     <option value="thisweek">This Week</option>
                                     <option value="thismonth">This Month</option>
                                     <option value="thisyear">This Year</option>
+                                    <option value="custom">Custom </option>
                                 </select>
                             </div>
                         </div>
@@ -433,7 +932,6 @@ const SalesReport = () => {
                         Revenue trends based on paid orders
                     </p>
 
-                 
                     <ResponsiveContainer width="100%" height={300}>
                         <BarChart data={graphData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
                             <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
@@ -455,12 +953,21 @@ const SalesReport = () => {
                             <Tooltip content={<CustomTooltip />} />
                             <Bar 
                                 dataKey="sales" 
-                                fill="#198754" 
-                                radius={[8, 8, 0, 0]}
+                                fill="#10b981"
                                 maxBarSize={60}
                             />
                         </BarChart>
                     </ResponsiveContainer>
+
+
+
+                    {graphData.length === 0 && !graphLoading && (
+                        <div className="text-center py-4">
+                            <i className="fa-solid fa-chart-line text-muted mb-2" style={{fontSize: "2rem"}}></i>
+                            <p className="text-muted small mb-0">No sales data available for this period</p>
+                        </div>
+                    )}
+
                 </div>
 
                 {/* Search and Actions */}
@@ -515,10 +1022,18 @@ const SalesReport = () => {
                     {filteredSales.length === 0 ? (
                         <div className="text-center py-5">
                             <i className="fa-solid fa-inbox text-muted mb-3" style={{ fontSize: "3rem" }}></i>
-                            <p className="text-muted">No sales data found</p>
+                            <p className="text-muted fw-semibold mb-1">No sales found</p>
+                            <p className="text-muted small">
+                                {search 
+                                    ? `No results matching "${search}" in ${getPeriodLabel().toLowerCase()}`
+                                    : `No sales recorded ${getEmptyStateMessage()}`
+                                }
+                            </p>
                         </div>
                     ) : (
-                        <div ref={printRef} style={{overflow: "auto"}}>
+                        <div ref={printRef} className="table-responsive"
+                        
+                        style={{overflow: "auto"}}>
                             <table className="table table-hover">
                                 <thead className="bg-light">
                                     <tr>
@@ -688,6 +1203,15 @@ const SalesReport = () => {
             </div>
         </div>
 
+        {/* ✅ Clean Modal Usage */}
+        <CustomRangeModal 
+            show={showCustomRangeModal}
+            onClose={handleCustomRangeClose}
+            onApply={handleCustomRangeApply}
+            initialStartDate={customStartDate}
+            initialEndDate={customEndDate}
+            showNotification={showNotification}
+        />
 
         <Toast 
             show={showToast}
@@ -700,3 +1224,11 @@ const SalesReport = () => {
 }
 
 export default SalesReport;
+
+
+
+
+
+
+
+

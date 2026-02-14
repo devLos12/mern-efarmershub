@@ -1,6 +1,9 @@
 import Product from "../../models/products.js";
 import Order from "../../models/order.js";
 
+
+
+
 export const getListProducts = async (req, res) => {
     try {
         const { period, dateFrom, dateTo } = req.query;

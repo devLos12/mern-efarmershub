@@ -1,78 +1,160 @@
 import Order from "../../models/order.js";
 import SalesList from "../../models/salesReport.js";
 
+
+
 export const getSalesData = async(req, res) => {
     try {
-        const salesData = await SalesList.find()
-            .populate('productId', 'name prodId imageFile')
-            .populate('orderId', 'orderId');
+        const { period = 'today', startDate, endDate } = req.query;
+        
+        const now = new Date();
+        let queryStartDate, queryEndDate;
 
-        return res.status(200).json({ success: true, salesData: salesData });
+        // ✅ Handle custom range
+        if (period === 'custom' && startDate && endDate) {
+            queryStartDate = new Date(startDate);
+            queryStartDate.setHours(0, 0, 0, 0);
+            
+            queryEndDate = new Date(endDate);
+            queryEndDate.setHours(23, 59, 59, 999);
+        } else {
+            // ✅ COMPLETE switch case for all periods
+            switch(period) {
+                case "today":
+                    queryStartDate = new Date(now);
+                    queryStartDate.setHours(0, 0, 0, 0);
+                    queryEndDate = new Date(now);
+                    queryEndDate.setHours(23, 59, 59, 999);
+                    break;
+                
+                case "yesterday":
+                    queryStartDate = new Date(now);
+                    queryStartDate.setDate(queryStartDate.getDate() - 1);
+                    queryStartDate.setHours(0, 0, 0, 0);
+                    queryEndDate = new Date(now);
+                    queryEndDate.setDate(queryEndDate.getDate() - 1);
+                    queryEndDate.setHours(23, 59, 59, 999);
+                    break;
+                
+                case "thisweek":
+                    const dayOfWeek = now.getDay();
+                    queryStartDate = new Date(now);
+                    queryStartDate.setDate(queryStartDate.getDate() - dayOfWeek);
+                    queryStartDate.setHours(0, 0, 0, 0);
+                    queryEndDate = new Date(now);
+                    queryEndDate.setHours(23, 59, 59, 999);
+                    break;
+                    
+                case "thismonth":
+                    queryStartDate = new Date(now.getFullYear(), now.getMonth(), 1);
+                    queryStartDate.setHours(0, 0, 0, 0);
+                    queryEndDate = new Date(now);
+                    queryEndDate.setHours(23, 59, 59, 999);
+                    break;
+                    
+                case "thisyear":
+                    queryStartDate = new Date(now.getFullYear(), 0, 1);
+                    queryStartDate.setHours(0, 0, 0, 0);
+                    queryEndDate = new Date(now);
+                    queryEndDate.setHours(23, 59, 59, 999);
+                    break;
+                    
+                default:
+                    // Default to today
+                    queryStartDate = new Date(now);
+                    queryStartDate.setHours(0, 0, 0, 0);
+                    queryEndDate = new Date(now);
+                    queryEndDate.setHours(23, 59, 59, 999);
+            }
+        }
+
+        const salesData = await SalesList.find({
+            saleDate: { $gte: queryStartDate, $lte: queryEndDate }
+        })
+        .populate('productId', 'name prodId imageFile')
+        .populate('orderId', 'orderId')
+        .sort({ saleDate: -1 });
+
+        return res.status(200).json({ 
+            success: true, 
+            salesData: salesData,
+            period: period,
+            dateRange: {
+                start: queryStartDate,
+                end: queryEndDate
+            }
+        });
     } catch (error) {
+        console.error("Error in getSalesData:", error.message);
         return res.status(500).json({ message: error.message});
     }
 }
 
+
+
 export const getSalesGraphData = async(req, res) => {
     try {
-        const { period = 'today' } = req.query;
+        const { period = 'today', startDate: customStart, endDate: customEnd } = req.query;
         
         const now = new Date();
         let startDate, endDate;
         let groupedData = [];
 
-        // Calculate date range based on period
-        switch(period) {
-            case "today":
-                // Today from 12 AM to current time
-                startDate = new Date(now);
-                startDate.setHours(0, 0, 0, 0);
-                endDate = new Date(now);
-                endDate.setHours(23, 59, 59, 999);
-                break;
+        // ✅ Handle custom range
+        if (period === 'custom' && customStart && customEnd) {
+            startDate = new Date(customStart);
+            startDate.setHours(0, 0, 0, 0);
             
-            case "yesterday":
-                // Yesterday 12 AM to 11:59 PM
-                startDate = new Date(now);
-                startDate.setDate(startDate.getDate() - 1);
-                startDate.setHours(0, 0, 0, 0);
-                endDate = new Date(now);
-                endDate.setDate(endDate.getDate() - 1);
-                endDate.setHours(23, 59, 59, 999);
-                break;
-            
-            case "thisweek":
-                // Current week (Sunday to Saturday)
-                const dayOfWeek = now.getDay();
-                startDate = new Date(now);
-                startDate.setDate(startDate.getDate() - dayOfWeek);
-                startDate.setHours(0, 0, 0, 0);
-                endDate = new Date(now);
-                endDate.setHours(23, 59, 59, 999);
-                break;
+            endDate = new Date(customEnd);
+            endDate.setHours(23, 59, 59, 999);
+        } else {
+            // Calculate date range based on period
+            switch(period) {
+                case "today":
+                    startDate = new Date(now);
+                    startDate.setHours(0, 0, 0, 0);
+                    endDate = new Date(now);
+                    endDate.setHours(23, 59, 59, 999);
+                    break;
                 
-            case "thismonth":
-                // Current month from day 1
-                startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-                startDate.setHours(0, 0, 0, 0);
-                endDate = new Date(now);
-                endDate.setHours(23, 59, 59, 999);
-                break;
+                case "yesterday":
+                    startDate = new Date(now);
+                    startDate.setDate(startDate.getDate() - 1);
+                    startDate.setHours(0, 0, 0, 0);
+                    endDate = new Date(now);
+                    endDate.setDate(endDate.getDate() - 1);
+                    endDate.setHours(23, 59, 59, 999);
+                    break;
                 
-            case "thisyear":
-                // Current year from January 1
-                startDate = new Date(now.getFullYear(), 0, 1);
-                startDate.setHours(0, 0, 0, 0);
-                endDate = new Date(now);
-                endDate.setHours(23, 59, 59, 999);
-                break;
-                
-            default:
-                // Default to today
-                startDate = new Date(now);
-                startDate.setHours(0, 0, 0, 0);
-                endDate = new Date(now);
-                endDate.setHours(23, 59, 59, 999);
+                case "thisweek":
+                    const dayOfWeek = now.getDay();
+                    startDate = new Date(now);
+                    startDate.setDate(startDate.getDate() - dayOfWeek);
+                    startDate.setHours(0, 0, 0, 0);
+                    endDate = new Date(now);
+                    endDate.setHours(23, 59, 59, 999);
+                    break;
+                    
+                case "thismonth":
+                    startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+                    startDate.setHours(0, 0, 0, 0);
+                    endDate = new Date(now);
+                    endDate.setHours(23, 59, 59, 999);
+                    break;
+                    
+                case "thisyear":
+                    startDate = new Date(now.getFullYear(), 0, 1);
+                    startDate.setHours(0, 0, 0, 0);
+                    endDate = new Date(now);
+                    endDate.setHours(23, 59, 59, 999);
+                    break;
+                    
+                default:
+                    startDate = new Date(now);
+                    startDate.setHours(0, 0, 0, 0);
+                    endDate = new Date(now);
+                    endDate.setHours(23, 59, 59, 999);
+            }
         }
 
         // ✅ GET PAID ORDERS ONLY
@@ -81,9 +163,12 @@ export const getSalesGraphData = async(req, res) => {
             createdAt: { $gte: startDate, $lte: endDate }
         }).lean();
 
-        // Group data based on period
-        if (period === 'today' || period === 'yesterday') {
-            // HOURLY BREAKDOWN (12 AM to 11 PM = 24 hours)
+        // ✅ Determine grouping logic based on period OR custom range duration
+        const daysDifference = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24));
+        
+        // Group data based on period or custom range duration
+        if (period === 'today' || period === 'yesterday' || (period === 'custom' && daysDifference <= 1)) {
+            // HOURLY BREAKDOWN (for single day)
             for (let hour = 0; hour < 24; hour++) {
                 const hourStart = new Date(startDate);
                 hourStart.setHours(hour, 0, 0, 0);
@@ -98,7 +183,6 @@ export const getSalesGraphData = async(req, res) => {
                 
                 const totalSales = hourOrders.reduce((sum, order) => sum + (order.totalPrice || 0), 0);
                 
-                // Format: 12 AM, 1 AM, 2 AM... 11 PM
                 const hourLabel = hour === 0 ? '12 AM' : 
                                  hour < 12 ? `${hour} AM` : 
                                  hour === 12 ? '12 PM' : 
@@ -111,17 +195,17 @@ export const getSalesGraphData = async(req, res) => {
                 });
             }
             
-        } else if (period === 'thisweek') {
-            // DAILY BREAKDOWN for current week (7 days)
-            const dayOfWeek = now.getDay();
-            
-            for (let i = 0; i <= dayOfWeek; i++) {
+        } else if (period === 'thisweek' || (period === 'custom' && daysDifference <= 7)) {
+            // DAILY BREAKDOWN (for week or up to 7 days)
+            for (let i = 0; i <= daysDifference; i++) {
                 const dayStart = new Date(startDate);
                 dayStart.setDate(dayStart.getDate() + i);
                 dayStart.setHours(0, 0, 0, 0);
                 
                 const dayEnd = new Date(dayStart);
                 dayEnd.setHours(23, 59, 59, 999);
+                
+                if (dayEnd > endDate) break;
                 
                 const dayOrders = paidOrders.filter(order => {
                     const orderDate = new Date(order.createdAt);
@@ -137,15 +221,15 @@ export const getSalesGraphData = async(req, res) => {
                 });
             }
             
-        } else if (period === 'thismonth') {
-            // DAILY BREAKDOWN for current month
-            const daysInMonth = now.getDate();
+        } else if (period === 'thismonth' || (period === 'custom' && daysDifference <= 31)) {
+            // DAILY BREAKDOWN for month
+            let currentDay = new Date(startDate);
             
-            for (let day = 1; day <= daysInMonth; day++) {
-                const dayStart = new Date(now.getFullYear(), now.getMonth(), day);
+            while (currentDay <= endDate) {
+                const dayStart = new Date(currentDay);
                 dayStart.setHours(0, 0, 0, 0);
                 
-                const dayEnd = new Date(dayStart);
+                const dayEnd = new Date(currentDay);
                 dayEnd.setHours(23, 59, 59, 999);
                 
                 const dayOrders = paidOrders.filter(order => {
@@ -160,32 +244,39 @@ export const getSalesGraphData = async(req, res) => {
                     sales: totalSales,
                     orders: dayOrders.length
                 });
+                
+                currentDay.setDate(currentDay.getDate() + 1);
             }
             
-        } else if (period === 'thisyear') {
-            // MONTHLY BREAKDOWN for current year
-            const currentMonth = now.getMonth();
+        } else {
+            // MONTHLY BREAKDOWN (for year or longer periods)
+            const monthsMap = new Map();
             
-            for (let month = 0; month <= currentMonth; month++) {
-                const monthStart = new Date(now.getFullYear(), month, 1);
-                monthStart.setHours(0, 0, 0, 0);
+            paidOrders.forEach(order => {
+                const orderDate = new Date(order.createdAt);
+                const monthKey = `${orderDate.getFullYear()}-${orderDate.getMonth()}`;
                 
-                const monthEnd = new Date(now.getFullYear(), month + 1, 0);
-                monthEnd.setHours(23, 59, 59, 999);
+                if (!monthsMap.has(monthKey)) {
+                    monthsMap.set(monthKey, {
+                        date: new Date(orderDate.getFullYear(), orderDate.getMonth(), 1),
+                        sales: 0,
+                        orders: 0
+                    });
+                }
                 
-                const monthOrders = paidOrders.filter(order => {
-                    const orderDate = new Date(order.createdAt);
-                    return orderDate >= monthStart && orderDate <= monthEnd;
-                });
-                
-                const totalSales = monthOrders.reduce((sum, order) => sum + (order.totalPrice || 0), 0);
-                
-                groupedData.push({
-                    label: monthStart.toLocaleDateString('en-PH', { month: 'short' }),
-                    sales: totalSales,
-                    orders: monthOrders.length
-                });
-            }
+                const monthData = monthsMap.get(monthKey);
+                monthData.sales += order.totalPrice || 0;
+                monthData.orders += 1;
+            });
+            
+            // Convert to array and sort
+            groupedData = Array.from(monthsMap.values())
+                .sort((a, b) => a.date - b.date)
+                .map(item => ({
+                    label: item.date.toLocaleDateString('en-PH', { month: 'short', year: 'numeric' }),
+                    sales: item.sales,
+                    orders: item.orders
+                }));
         }
 
         // Summary stats
@@ -209,6 +300,7 @@ export const getSalesGraphData = async(req, res) => {
         return res.status(500).json({ message: error.message });
     }
 };
+
 
 export const deleteSales = async(req, res) => {
     try {

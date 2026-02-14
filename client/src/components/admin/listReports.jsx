@@ -3,13 +3,321 @@ import html2pdf from 'html2pdf.js';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
 
+// Custom Range Modal Component
+const CustomRangeModal = ({ 
+    show, 
+    onClose, 
+    onApply, 
+    initialStartDate = '', 
+    initialEndDate = ''
+}) => {
+    const [tempStartDate, setTempStartDate] = useState(initialStartDate);
+    const [tempEndDate, setTempEndDate] = useState(initialEndDate);
+    const [startDateError, setStartDateError] = useState('');
+    const [endDateError, setEndDateError] = useState('');
+    
+    const today = new Date().toISOString().split('T')[0];
+
+    // Get human-readable duration text
+    const getDurationText = (startDate, endDate) => {
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        const today = new Date().toISOString().split('T')[0];
+        
+        if (startDate === endDate && startDate === today) {
+            return "Today";
+        }
+        
+        if (startDate === endDate) {
+            return "1 day";
+        }
+        
+        const diffTime = Math.abs(end - start);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+        
+        const startYear = start.getFullYear();
+        const startMonth = start.getMonth();
+        const endYear = end.getFullYear();
+        const endMonth = end.getMonth();
+        
+        const monthsDiff = (endYear - startYear) * 12 + (endMonth - startMonth);
+        
+        if (monthsDiff >= 1 && start.getDate() === end.getDate()) {
+            return monthsDiff === 1 ? "1 month" : `${monthsDiff} months`;
+        }
+        
+        if (diffDays >= 28 && diffDays <= 32 && monthsDiff === 1) {
+            return "~1 month";
+        }
+        
+        if (diffDays % 7 === 0 && diffDays <= 28) {
+            const weeks = diffDays / 7;
+            return `${weeks} ${weeks === 1 ? 'week' : 'weeks'}`;
+        }
+        
+        if (diffDays <= 7) {
+            return `${diffDays} ${diffDays === 1 ? 'day' : 'days'}`;
+        } else if (diffDays < 28) {
+            const weeks = Math.floor(diffDays / 7);
+            const remainingDays = diffDays % 7;
+            if (remainingDays === 0) {
+                return `${weeks} ${weeks === 1 ? 'week' : 'weeks'}`;
+            }
+            return `${diffDays} days`;
+        } else {
+            const months = Math.floor(diffDays / 30);
+            if (months >= 1) {
+                return `~${months} ${months === 1 ? 'month' : 'months'} (${diffDays} days)`;
+            }
+            return `${diffDays} days`;
+        }
+    };
+
+    // Validate Start Date
+    const validateStartDate = (dateValue = tempStartDate) => {
+        if (!dateValue) {
+            setStartDateError('');
+            return true;
+        }
+        
+        const selectedDate = new Date(dateValue);
+        const todayDate = new Date(today);
+        
+        if (selectedDate > todayDate) {
+            setStartDateError('Start date cannot be in the future');
+            return false;
+        }
+        
+        setStartDateError('');
+        return true;
+    };
+    
+    // Validate End Date
+    const validateEndDate = (endValue = tempEndDate, startValue = tempStartDate) => {
+        if (!endValue) {
+            setEndDateError('');
+            return true;
+        }
+        
+        const selectedDate = new Date(endValue);
+        const todayDate = new Date(today);
+        const startDateObj = startValue ? new Date(startValue) : null;
+        
+        if (selectedDate > todayDate) {
+            setEndDateError('End date cannot be in the future');
+            return false;
+        } else if (startDateObj && selectedDate < startDateObj) {
+            setEndDateError('End date must be after start date');
+            return false;
+        }
+        
+        setEndDateError('');
+        return true;
+    };
+
+    const handleApply = () => {
+        if (!tempStartDate || !tempEndDate) {
+            alert("Please select both start and end dates");
+            return;
+        }
+        
+        const isStartValid = validateStartDate(tempStartDate);
+        const isEndValid = validateEndDate(tempEndDate, tempStartDate);
+        
+        if (!isStartValid || !isEndValid) {
+            alert("Please fix the date errors before applying");
+            return;
+        }
+        
+        const today = new Date().toISOString().split('T')[0];
+        
+        if (tempStartDate > today) {
+            alert("Start date cannot be in the future");
+            return;
+        }
+        
+        if (tempEndDate > today) {
+            alert("End date cannot be in the future");
+            return;
+        }
+        
+        if (tempStartDate > tempEndDate) {
+            alert("Start date must be before end date");
+            return;
+        }
+        
+        onApply(tempStartDate, tempEndDate);
+        
+        setStartDateError('');
+        setEndDateError('');
+    };
+
+    const handleCancel = () => {
+        setStartDateError('');
+        setEndDateError('');
+        onClose();
+    };
+    
+    if (!show) return null;
+    
+    return (
+        <>
+            {/* Backdrop */}
+            <div 
+                className="modal-backdrop fade show"
+                onClick={handleCancel}
+            />
+            
+            {/* Modal */}
+            <div 
+                className="modal fade show"
+                style={{ display: 'block' }}
+                tabIndex="-1"
+            >
+                <div className="modal-dialog modal-dialog-centered">
+                    <div className="modal-content">
+                        <div className="modal-header border-0 pb-0">
+                            <h5 className="modal-title fw-bold">
+                                <i className="fa-solid fa-calendar-days text-success me-2"></i>
+                                Custom Date Range
+                            </h5>
+                            <button 
+                                type="button" 
+                                className="btn-close" 
+                                onClick={handleCancel}
+                            />
+                        </div>
+                        
+                        <div className="modal-body pt-2">
+                            <p className="text-muted small mb-3">
+                                Select a custom date range for your product report
+                            </p>
+                            
+                            {/* Start Date */}
+                            <div className="mb-3">
+                                <label className="form-label small fw-semibold">
+                                    <i className="fa-regular fa-calendar me-1"></i>
+                                    Start Date
+                                </label>
+                                <input 
+                                    type="date"
+                                    className={`form-control ${startDateError ? 'is-invalid' : ''}`}
+                                    value={tempStartDate}
+                                    onChange={(e) => setTempStartDate(e.target.value)}
+                                    onBlur={() => {
+                                        validateStartDate(tempStartDate);
+                                        if (tempEndDate) {
+                                            validateEndDate(tempEndDate, tempStartDate);
+                                        }
+                                    }}
+                                    max={today}
+                                />
+                                {startDateError && (
+                                    <div className="invalid-feedback d-block">
+                                        {startDateError}
+                                    </div>
+                                )}
+                            </div>
+                            
+                            {/* End Date */}
+                            <div className="mb-3">
+                                <label className="form-label small fw-semibold">
+                                    <i className="fa-regular fa-calendar me-1"></i>
+                                    End Date
+                                </label>
+                                <input 
+                                    type="date"
+                                    className={`form-control ${endDateError ? 'is-invalid' : ''}`}
+                                    value={tempEndDate}
+                                    onChange={(e) => setTempEndDate(e.target.value)}
+                                    onBlur={() => validateEndDate(tempEndDate, tempStartDate)}
+                                    max={today}
+                                    min={tempStartDate}
+                                />
+                                {endDateError && (
+                                    <div className="invalid-feedback d-block">
+                                        {endDateError}
+                                    </div>
+                                )}
+                            </div>
+                            
+                            {/* Error Alert */}
+                            {(startDateError || endDateError) && (
+                                <div className="alert alert-danger alert-sm py-2 px-3 mb-3">
+                                    <i className="fa-solid fa-exclamation-triangle me-2"></i>
+                                    <small>
+                                        <strong>Invalid dates selected.</strong> Please correct the errors above.
+                                    </small>
+                                </div>
+                            )}
+                            
+                            {/* Success Preview */}
+                            {tempStartDate && tempEndDate && !startDateError && !endDateError && (() => {
+                                const today = new Date().toISOString().split('T')[0];
+                                const isToday = tempStartDate === today && tempEndDate === today;
+                                
+                                return (
+                                    <div className="alert alert-success alert-sm py-2 px-3 mb-0">
+                                        <i className="fa-solid fa-check-circle me-2"></i>
+                                        <small>
+                                            <strong>Selected Range:</strong> {' '}
+                                            {isToday ? (
+                                                <strong className="text-success">Today</strong>
+                                            ) : (
+                                                <>
+                                                    {new Date(tempStartDate).toLocaleDateString('en-PH', {
+                                                        month: 'short',
+                                                        day: 'numeric',
+                                                        year: 'numeric'
+                                                    })}
+                                                    {' '}-{' '}
+                                                    {new Date(tempEndDate).toLocaleDateString('en-PH', {
+                                                        month: 'short',
+                                                        day: 'numeric',
+                                                        year: 'numeric'
+                                                    })}
+                                                    {' '}
+                                                    ({getDurationText(tempStartDate, tempEndDate)})
+                                                </>
+                                            )}
+                                        </small>
+                                    </div>
+                                );
+                            })()}
+                        </div>
+                        
+                        <div className="modal-footer border-0 pt-0">
+                            <button 
+                                type="button" 
+                                className="btn btn-sm btn-light"
+                                onClick={handleCancel}
+                            >
+                                <i className="fa-solid fa-times me-1"></i>
+                                Cancel
+                            </button>
+                            <button 
+                                type="button" 
+                                className="btn btn-sm btn-success"
+                                onClick={handleApply}
+                                disabled={!tempStartDate || !tempEndDate || !!startDateError || !!endDateError}
+                            >
+                                <i className="fa-solid fa-check me-1"></i>
+                                Apply Range
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </>
+    );
+};
 
 
 const ListReports = () => {
     const [listProducts, setListProducts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
-    const [timePeriod, setTimePeriod] = useState("today");
+    const [timePeriod, setTimePeriod] = useState("weekly");
     const [customDateFrom, setCustomDateFrom] = useState("");
     const [customDateTo, setCustomDateTo] = useState("");
     const [productTypeFilter, setProductTypeFilter] = useState("all");
@@ -20,6 +328,8 @@ const ListReports = () => {
     const [priceSortOrder, setPriceSortOrder] = useState(null);
     const [stocksSortOrder, setStocksSortOrder] = useState(null);
     const [isRefreshing, setIsRefreshing] = useState(false);
+    const [showCustomRangeModal, setShowCustomRangeModal] = useState(false);
+    const [isCustomRange, setIsCustomRange] = useState(false);
     const printRef = useRef();
 
 
@@ -40,8 +350,6 @@ const ListReports = () => {
 
     const getAdminListProducts = async () => {
         try {
-            // Remove setLoading(true) dito since handled na sa useEffect
-            
             let url = `${import.meta.env.VITE_API_URL}/api/getListProducts?period=${timePeriod}`;
             
             if (timePeriod === "custom" && customDateFrom && customDateTo) {
@@ -92,21 +400,18 @@ const ListReports = () => {
         return matchesSearch && matchesProductType && matchesCategory;
 
     }).sort((a, b) => {
-        // Sort by Sold
         if (sortOrder === 'asc') {
             return (b.soldToday || 0) - (a.soldToday || 0);
         } else if (sortOrder === 'desc') {
             return (a.soldToday || 0) - (b.soldToday || 0);
         }
         
-        // Sort by Price
         if (priceSortOrder === 'asc') {
             return (b.price || 0) - (a.price || 0);
         } else if (priceSortOrder === 'desc') {
             return (a.price || 0) - (b.price || 0);
         }
         
-        // Sort by Stocks
         if (stocksSortOrder === 'asc') {
             return (b.stocks || 0) - (a.stocks || 0);
         } else if (stocksSortOrder === 'desc') {
@@ -290,8 +595,11 @@ const ListReports = () => {
         return "success";
     };
 
+
+
     const getDateRangeText = () => {
         const now = new Date();
+        const today = new Date().toISOString().split('T')[0];
         
         switch(timePeriod) {
             case "today":
@@ -321,6 +629,18 @@ const ListReports = () => {
             
             case "custom":
                 if (customDateFrom && customDateTo) {
+                    // ✅ Check if both dates are the same AND equal to today
+                    if (customDateFrom === today && customDateTo === today) {
+                        return "Today";
+                    }
+                    
+                    // ✅ Check if both dates are the same but NOT today
+                    if (customDateFrom === customDateTo) {
+                        const from = new Date(customDateFrom);
+                        return from.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                    }
+                    
+                    // ✅ Different dates - show range
                     const from = new Date(customDateFrom);
                     const to = new Date(customDateTo);
                     return `${from.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${to.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
@@ -332,6 +652,8 @@ const ListReports = () => {
         }
     };
 
+
+
     const getPeriodLabel = () => {
         switch(timePeriod) {
             case "today": return "Today";
@@ -339,13 +661,62 @@ const ListReports = () => {
             case "weekly": return "This Week";
             case "monthly": return "This Month";
             case "yearly": return "This Year";
-            case "custom": return "Custom Range";
+            case "custom": 
+                if (customDateFrom && customDateTo) {
+                    const today = new Date().toISOString().split('T')[0];
+                    
+                    // ✅ Check if both dates are the same AND equal to today
+                    if (customDateFrom === today && customDateTo === today) {
+                        return "Today";
+                    }
+                    
+                    // ✅ Check if both dates are the same but NOT today
+                    if (customDateFrom === customDateTo) {
+                        return `${new Date(customDateFrom).toLocaleDateString('en-PH', {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric'
+                        })}`;
+                    }
+                    
+                    // ✅ Different dates - show range
+                    return `Custom Range (${new Date(customDateFrom).toLocaleDateString('en-PH', {
+                        month: 'short',
+                        day: 'numeric'
+                    })} - ${new Date(customDateTo).toLocaleDateString('en-PH', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric'
+                    })})`;
+                }
+                return "Custom Range";
             default: return "";
         }
     };
 
 
+
+
+    // Handle Custom Range Apply
+    const handleCustomRangeApply = (startDate, endDate) => {
+        setCustomDateFrom(startDate);
+        setCustomDateTo(endDate);
+        setTimePeriod('custom');
+        setIsCustomRange(true);
+        setShowCustomRangeModal(false);
+    };
+
+    // Handle Custom Range Close
+    const handleCustomRangeClose = () => {
+        setShowCustomRangeModal(false);
+        if (!isCustomRange) {
+            setTimePeriod('weekly');
+        }
+    };
+
+
     return (
+        <>
         <div className="row g-0 bg-white rounded mb-5 position-relative overflow-hidden">
             {isRefreshing && (
                 <div className="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center bg-white bg-opacity-75" 
@@ -369,46 +740,29 @@ const ListReports = () => {
                                 className="form-select form-select-sm"
                                 style={{ minWidth: "150px" }}
                                 value={timePeriod}
-                                onChange={(e) => setTimePeriod(e.target.value)}
+                                onChange={(e) => {
+                                    if (e.target.value === 'custom') {
+                                        setShowCustomRangeModal(true);
+                                    } else {
+                                        setTimePeriod(e.target.value);
+                                        setIsCustomRange(false);
+                                    }
+                                }}
                             >
-                                <option value="today">Today</option>
-                                <option value="yesterday">Yesterday</option>
                                 <option value="weekly">This Week</option>
                                 <option value="monthly">This Month</option>
                                 <option value="yearly">This Year</option>
-                                <option value="custom">Custom Range</option>
+                                <option value="custom">Custom </option>
                             </select>
                         </div>
                     </div>
-
-                    {timePeriod === "custom" && (
-                        <div className="col-12 col-md">
-                            <div className="d-flex align-items-center gap-2 flex-wrap">
-                                <label className="small fw-semibold text-nowrap">From:</label>
-                                <input
-                                    type="date"
-                                    className="form-control form-control-sm"
-                                    style={{ maxWidth: "160px" }}
-                                    value={customDateFrom}
-                                    onChange={(e) => setCustomDateFrom(e.target.value)}
-                                />
-                                <label className="small fw-semibold text-nowrap">To:</label>
-                                <input
-                                    type="date"
-                                    className="form-control form-control-sm"
-                                    style={{ maxWidth: "160px" }}
-                                    value={customDateTo}
-                                    onChange={(e) => setCustomDateTo(e.target.value)}
-                                />
-                            </div>
-                        </div>
-                    )}
+                    
 
                     <div className="col-12 col-md-auto ms-auto">
                         <div className="d-flex align-items-center justify-content-end gap-2">
                             <span className="text-muted small">
-                                <i className="fa-solid fa-calendar-day me-1"></i>
-                                {getDateRangeText()}
+                                <i className="fa-solid fa-chart-line me-1"></i>
+                                {getPeriodLabel()}
                             </span>
                             <button 
                                 className="btn btn-sm btn-success d-flex align-items-center gap-2"
@@ -424,7 +778,6 @@ const ListReports = () => {
                 </div>
             </div>
 
-            {/* Summary Cards */}
             {/* Summary Cards */}
             <div className="row g-3 mb-4">
                 <div className="col-12 col-md-6 col-lg-3">
@@ -493,11 +846,6 @@ const ListReports = () => {
                 </div>
             </div>
 
-
-
-            
-
-
             {/* Top 5 Best-Selling Products Chart - Compact & Responsive */}
             <div className="col-12 p-1 p-md-5 border-bottom">
                 <div className="d-flex align-items-center gap-2 mb-2">
@@ -557,8 +905,6 @@ const ListReports = () => {
                     </BarChart>
                 </ResponsiveContainer>
             </div>
-
-
 
             <div className="col-12 p-3 p-md-4" >
                 <div className="row g-2 mb-3">
@@ -880,6 +1226,16 @@ const ListReports = () => {
                 </div>
             )}
         </div>
+
+        {/* Custom Range Modal */}
+        <CustomRangeModal 
+            show={showCustomRangeModal}
+            onClose={handleCustomRangeClose}
+            onApply={handleCustomRangeApply}
+            initialStartDate={customDateFrom}
+            initialEndDate={customDateTo}
+        />
+        </>
     );
 };
 
