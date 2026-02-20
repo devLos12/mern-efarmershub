@@ -30,6 +30,7 @@ const createNotification = async(id, role, orderId) => {
 
 
 
+
 const createTransaction = async(items, payment, userId, firstname, lastname, email, totalPrice, refNo) => {
     for (const item of items){
         const sellerId = item.seller.id;
@@ -182,6 +183,7 @@ export const checkOut = async(req, res) => {
                 { $inc: { stocks : - 1 } }
             );
         }
+
         
         if(orderMethod === "delivery" && payment === "cash on delivery" ){
             const newOrder = new Order({
@@ -209,7 +211,8 @@ export const checkOut = async(req, res) => {
             await createNotification(userId, "user", newOrder._id);
             io.emit("user notif", { message: "new notif"});
             io.emit('new order');
-
+                
+            
             return res.status(200).json({ message: "placed order succesfully!"});
         }
 

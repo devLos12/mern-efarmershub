@@ -12,18 +12,22 @@
   import "./cron/index.js";
 
 
+  
+  
 
   const startServer = async () => {
     try {
       await connectDb();
       const app = express();
       const port = process.env.PORT || 3000;
-
+      
+      
       // Get allowed origins from environment variable
       const allowedOrigins = process.env.ALLOWED_ORIGINS 
         ? process.env.ALLOWED_ORIGINS.split(',').map(origin => origin.trim())
         : [];
-
+      
+      
       const corsOption = {
         origin: function (origin, callback) {
           // Allow requests with no origin (like mobile apps or curl requests)
@@ -37,6 +41,7 @@
         },
         credentials: true,
       };
+
 
       app.set('trust proxy', true);
       app.use(cors(corsOption));
@@ -55,7 +60,7 @@
         console.log(`Server is running on port ${port}`);
       });
       
-      
+
       const io = new Server(server, {
         cors: {
           origin: allowedOrigins,

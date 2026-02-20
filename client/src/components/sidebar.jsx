@@ -1,21 +1,32 @@
 import { Link, Navigate, useNavigate, useLocation } from "react-router-dom";
-import { useContext, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { appContext } from "../context/appContext";
 import { adminContext } from "../context/adminContext";
 import { sellerContext } from "../context/sellerContext";
 import { useBreakpointHeight } from "./breakpoint";
 
+
+
+
+
 //sidebar
 const Sidebar = () => {
-    const { role } = useContext(appContext);
+    const { role, 
+        inboxBadge, setInboxBadge, orderBadge, setOrderBadge, prodBadge, setProdBadge 
+     } = useContext(appContext);
     const admin = useContext(adminContext);
     const seller = useContext(sellerContext);
     const context = role === "admin" ? admin : seller
     const {setText, setExitModal} = context;
     const navigate = useNavigate();
     const location = useLocation(); // Get current location
-    const { inboxBadge, setInboxBadge } = useContext(appContext);
     const height = useBreakpointHeight();
+    
+
+
+    useEffect(() => {
+        console.log("numbers of Order: ", orderBadge);
+    },[orderBadge]);
 
 
 
@@ -81,6 +92,24 @@ const Sidebar = () => {
                         if(role === "admin"){
                             navigate(data.link, { state : { source : data?.source}})
 
+
+                            if(data.label === 'dashboard'){
+
+                                setOrderBadge((prev) => ({
+                                    ...prev, 
+                                    show: false
+                                }))
+                            }
+
+                            if(data.label === "inventory"){
+
+                                setProdBadge((prev) => ({
+                                    ...prev,
+                                    show: false
+                                }))
+
+                            }
+
                             if(data.label === "inbox"){
                                 setInboxBadge((prev) => ({
                                     ...prev,
@@ -118,6 +147,7 @@ const Sidebar = () => {
                                 .catch((err) => console.log("Error:", err.message))
                             
                             } else {
+
                                 if(data.label === "inbox"){
                                     setInboxBadge((prev) => ({
                                         ...prev,
@@ -135,6 +165,24 @@ const Sidebar = () => {
                             <div className="col-1">
                                 <div className={`${data.icon} position-relative 
                                 ${active ? 'text-green' : (role === "seller" ? "text-dark" : "text-light")}`}>
+                                    {data.label === "dashboard" && orderBadge.show && (
+                                        <p className="position-absolute top-0 end-0  m-2 
+                                            d-flex justify-content-center align-items-center fw-normal text-white bg-danger"
+                                            style={{fontSize : "9px",
+                                            width:"17px", height:"17px", borderRadius:"50%"}}
+                                            >{orderBadge.number}
+                                        </p>
+                                    )}
+                                    
+                                    {data.label === "inventory" && prodBadge.show && (
+                                        <p className="position-absolute top-0 end-0  m-2 
+                                            d-flex justify-content-center align-items-center fw-normal text-white bg-danger"
+                                            style={{fontSize : "9px",
+                                            width:"17px", height:"17px", borderRadius:"50%"}}
+                                            >{prodBadge.number}
+                                        </p>
+                                    )}
+
                                     {data.label === "inbox" && inboxBadge.show && (
                                         <p className="position-absolute top-0 end-0  m-2 
                                             d-flex justify-content-center align-items-center fw-normal text-white bg-danger"
@@ -143,6 +191,8 @@ const Sidebar = () => {
                                             >{inboxBadge.number}
                                         </p>
                                     )}
+
+
                                 </div>
                             </div>
 

@@ -46,10 +46,9 @@ const User = ({setUserAuth}) => {
                   inboxList, setInboxList,
                   inboxError, setInboxError,
                   inboxLoading, setInboxLoading } = useContext(appContext);
+  
 
-
-
-
+  
 
 
   const getChatsInbox = async() => {

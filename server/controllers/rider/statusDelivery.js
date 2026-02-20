@@ -209,7 +209,6 @@ const createOrUpdateRiderPayout = async(riderId, orderId) => {
 
 
 
-
 const storage = multer.memoryStorage();
 export const imageProof = multer({ storage: storage });
 

@@ -23,7 +23,6 @@ import BestSellerProducts from "../components/bestSeller.jsx";
 
 
 
-
 // Loading Component
 const LoadingScreen = () => {
   return (
@@ -83,7 +82,6 @@ const  App = ()=> {
     .finally(()=> setIsLoading(false));
 
   },[]);
-
 
   if(isLoading) return <LoadingScreen />;
 

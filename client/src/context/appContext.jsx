@@ -8,7 +8,7 @@ export const MyAppContext = ({children}) =>{
     const [role, setRole] = useState(null);
     const [inboxBadge, setInboxBadge] = useState({
         number: null,
-        show: null
+        show: false
     })
     const [inboxList, setInboxList] = useState([]);
     const [inboxError, setInboxError] = useState(null);
@@ -21,8 +21,19 @@ export const MyAppContext = ({children}) =>{
     const [toastType, setToastType] = useState("success");
 
     const [loadingStateButton, setLoadingStateButton] = useState(false);
-    
 
+
+    const [orderBadge, setOrderBadge] = useState({
+        number: null,
+        show: false
+    });
+
+    const [prodBadge, setProdBadge] = useState({
+        number: null,
+        show: false
+    })
+
+    
     // ✅ ADD THIS - Toast function
     const showNotification = (message, type = "success") => {
         setToastMessage(message);
@@ -60,7 +71,9 @@ export const MyAppContext = ({children}) =>{
             showNotification,
             setShowToast,
 
-            loadingStateButton, setLoadingStateButton
+            loadingStateButton, setLoadingStateButton,
+            orderBadge, setOrderBadge,
+            prodBadge, setProdBadge
 
         }}>{children}
         </appContext.Provider>

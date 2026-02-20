@@ -4,6 +4,7 @@ import User from "../../models/user.js";
 import Cart from "../../models/cart.js";
 
 
+
 const getBillingAddress = async(req, res) => {
 
     try{
@@ -14,7 +15,7 @@ const getBillingAddress = async(req, res) => {
         if(!billingAddress) {
             return res.status(404).json({ message : "no item"});
         }
-
+        
         const data = {
             billingAddress : billingAddress.billingAddress
         };

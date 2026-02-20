@@ -115,7 +115,7 @@ const Announcement = () => {
             )}
             
             
-            <div className="rounded  border mt-2 "
+            <div className="rounded  border mt-2"
             >
                 {announcement.length > 0 ? (
                     <>
@@ -331,8 +331,8 @@ const Announcement = () => {
 
             </div>
         </div>
-        
 
+        
         <Toast 
             show={showToast}
             message={toastMessage}

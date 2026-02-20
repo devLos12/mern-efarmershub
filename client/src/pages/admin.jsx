@@ -35,11 +35,10 @@ import SalesReport from "../components/admin/salesReport.jsx";
 
 
 
-
 //admin file
 const Admin = ({setAdminAuth})=>{
 
-    const { setLoadingStateButton, showNotification } = useContext(appContext);
+    const { setLoadingStateButton, showNotification, setOrderBadge, setProdBadge } = useContext(appContext);
 
     const { setOrders, setLoading, loading, setError, setAdminInfo, deleteProductModal, 
         setDeleteProductModal, updateStatusModal, setUpdateStatusModal,
@@ -82,9 +81,10 @@ const Admin = ({setAdminAuth})=>{
             }).length;
 
             setInboxBadge({
-                number: unreadChatsCount,
+                number: unreadChatsCount > 9 ? `${unreadChatsCount}+`: unreadChatsCount,
                 show: unreadChatsCount > 0
             });
+
 
         }catch(err){
             setInboxLoading(false);
@@ -93,12 +93,85 @@ const Admin = ({setAdminAuth})=>{
         }
     }
 
+
+    const fetchOrders = async () => {
+        const endPoint = "getOrders"
+        try {
+
+            const fetchUrl = `${import.meta.env.VITE_API_URL}/api/${endPoint}`;
+            const res = await fetch(fetchUrl, { method: "GET", credentials: "include" });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.message);
+            setError((prev) => ({ ...prev, orders: null }));
+            setOrders(data.reverse());
+
+
+            const totalOrderPending = data.filter(order => {
+                return order.statusDelivery === 'pending'
+            }).length;
+            
+            setOrderBadge({
+                number: totalOrderPending > 9 ? `${totalOrderPending}+` : totalOrderPending,
+                show: totalOrderPending > 0
+            });
+            
+                        
+        } catch (err) {
+            setOrders([]);
+            setError((prev) => ({ ...prev, orders: err.message }));
+            console.log("Error: ", err.message);
+        }
+    };
+
+
+
+    // Fetch products function
+    const fetchProducts = async () => {
+        try {
+
+            const fetchUrl = `${import.meta.env.VITE_API_URL}/api/getProducts`
+
+            const res = await fetch(fetchUrl, { 
+                method: "GET", 
+                credentials: "include" 
+            });
+            const data = await res.json();
+            
+            if (!res.ok) throw new Error(data.message);
+
+
+            const allPendings = data.filter(prod => {
+                return prod.statusApprove === "pending"
+            }).length;
+
+            
+            setProdBadge({
+                number: allPendings > 9 ? `${allPendings}+` : allPendings,
+                show: allPendings > 0
+            })
+            
+        } catch (err) {
+            console.log("Error: ", err.message);
+        } 
+    };
+
+
+
     useEffect(()=>{
         const socket = io(`${import.meta.env.VITE_API_URL}`);
         getChatsInbox();
+        fetchOrders();
+        fetchProducts();
 
         socket.on("newChatInbox", (e) => {
             getChatsInbox();
+        });
+        socket.on('new order', (e) => {
+            fetchOrders();
+        });
+
+        socket.on('product:uploaded', (e) => {
+            fetchProducts();
         })
         
         return () => {

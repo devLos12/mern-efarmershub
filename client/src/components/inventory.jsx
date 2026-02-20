@@ -44,8 +44,6 @@ const Inventory = () => {
     // const uniqueCategories = [...new Set(products.map(p => p.category?.toLowerCase()).filter(Boolean))];
     const uniqueCategories = ["all", "grains", "root crops", "fruits", "fruit vegetables", "leafy vegetables", "legumes"];;
 
-    
-
 
 
     
@@ -222,12 +220,14 @@ const Inventory = () => {
         >
             <div className="text-center">
                 <div className="spinner-border text-success mb-2" role="status">
-                    <span className="visually-hidden">Loading...</span>
                 </div>
                 <p className="small text-muted mb-0">Loading Inventory...</p>
             </div>
         </div>
     )
+
+
+
 
     return (
         <>
@@ -511,5 +511,7 @@ const Inventory = () => {
         </>
     );
 };
+
+
 
 export default Inventory;

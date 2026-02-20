@@ -19,7 +19,8 @@ const Orders = () => {
             toastType,
             showNotification,
             setShowToast,
-     } = useContext(appContext);
+            setOrderBadge
+    } = useContext(appContext);
 
 
     const admin = useContext(adminContext);
@@ -44,7 +45,6 @@ const Orders = () => {
     const [showArchived, setShowArchived] = useState(false);
     const [archiveOrderModal, setArchiveOrderModal] = useState({ isShow: false, id: null });
 
-
     // Dynamic status options based on existing orders
     const availableStatuses = useMemo(() => {
         const statuses = new Set();
@@ -55,6 +55,9 @@ const Orders = () => {
         });
         return Array.from(statuses).sort();
     }, [orders]);
+    
+
+
 
     // Dynamic order method options based on existing orders
     const availableOrderMethods = useMemo(() => {
@@ -206,10 +209,6 @@ const Orders = () => {
 
 
 
-
-
-
-
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (!openMenuId) return;
@@ -226,20 +225,23 @@ const Orders = () => {
     }, [openMenuId]);
 
 
-
+    
     const fetchOrders = async () => {
         const endPoint = role === "admin"
             ? (showArchived ? "getArchivedOrders" : "getOrders")
             : (showArchived ? "getArchivedSellerOrders" : "getSellerOrders");
 
         try {
+
             const fetchUrl = `${import.meta.env.VITE_API_URL}/api/${endPoint}`;
             const res = await fetch(fetchUrl, { method: "GET", credentials: "include" });
-            console.log("Response from orders: ", res.status);
             const data = await res.json();
             if (!res.ok) throw new Error(data.message);
             setError((prev) => ({ ...prev, orders: null }));
             setOrders(data.reverse());
+            
+
+
         } catch (err) {
             setOrders([]);
             setError((prev) => ({ ...prev, orders: err.message }));
@@ -258,6 +260,7 @@ const Orders = () => {
         };
         loadInitialOrders();
     }, [showArchived])
+
 
 
     const handleRefresh = async () => {

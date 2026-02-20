@@ -28,6 +28,7 @@ const Footer = () => {
         }
     };
 
+    
     return (
         <footer className="bg-dark py-5 mt-5" style={{borderTop: '1px solid #e5e7eb'}}>
             <div className="container">
