@@ -5,10 +5,120 @@ import Admin from "../../models/admin.js";
 import User from "../../models/user.js";
 import multer from "multer";
 import { v2 as cloudinary } from "cloudinary";
+import { Resend } from "resend";
+
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 // ✅ CHANGE: Use memoryStorage instead of diskStorage
 const storage = multer.memoryStorage();
 export const addAccountFile = multer({ storage: storage });
+
+
+
+const sendRiderAppEmail = async (email, firstname, lastname) => {
+
+    if (!resend) {
+        console.warn('Resend client not configured. Skipping email notification.');
+        return { success: false, error: 'Email service not configured' };
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email || !emailRegex.test(email)) {
+        console.error('Invalid email address:', email);
+        return { success: false, error: 'Invalid email address' };
+    }
+
+    try {
+        const { data, error } = await resend.emails.send({
+            from: 'E-Farmers Hub <security@efarmershub.com>',
+            to: [email],
+            subject: 'Download the Rider App - E-Farmers Hub',
+            html: `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Download Rider App - E-Farmers Hub</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f4;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f4f4; padding: 20px 0;">
+        <tr>
+            <td align="center">
+                <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+
+                    <!-- Header: Logo Only -->
+                    <tr>
+                        <td style="padding: 40px 20px 20px 20px; text-align: center;">
+                            <img 
+                                src="https://res.cloudinary.com/dtelqtkzj/image/upload/v1770440242/image-removebg-preview_sfsot1.png" 
+                                alt="E-Farmers Hub Logo" 
+                                style="max-width: 150px; height: auto;" 
+                            />
+                        </td>
+                    </tr>
+
+                    <!-- Body -->
+                    <tr>
+                        <td style="padding: 20px 40px 40px 40px; text-align: center;">
+
+                            <p style="color: #666666; font-size: 16px; line-height: 1.6; margin: 0 0 8px 0;">
+                                Hello <strong>${firstname} ${lastname}</strong>,
+                            </p>
+
+                            <p style="color: #666666; font-size: 15px; line-height: 1.6; margin: 0 0 32px 0;">
+                                Your rider account is ready. Tap the button below to download the Rider App and start delivering.
+                            </p>
+
+                            <!-- Download Button -->
+                            <table width="100%" cellpadding="0" cellspacing="0">
+                                <tr>
+                                    <td align="center">
+                                        <a 
+                                            href="https://expo.dev/accounts/buuuu012/projects/rider-app/builds/a14fba15-e02d-40c5-a25b-356230b79ab8" 
+                                            style="display: inline-block; background-color: #28a745; color: #ffffff; text-decoration: none; padding: 14px 48px; border-radius: 6px; font-size: 16px; font-weight: 600;"
+                                        >
+                                            📱 Download Rider App
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
+                    <!-- Footer -->
+                    <tr>
+                        <td style="background-color: #f8f9fa; padding: 20px; text-align: center;">
+                            <p style="color: #6c757d; font-size: 12px; margin: 0;">
+                                © 2026 E-Farmers Hub. All rights reserved.
+                            </p>
+                        </td>
+                    </tr>
+
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
+            `
+        });
+
+        if (error) {
+            console.error('Failed to send rider app email:', error);
+            return { success: false, error: error.message };
+        }
+
+        console.log('Rider app email sent successfully to:', email);
+        console.log('Message ID:', data.id);
+        return { success: true, messageId: data.id };
+
+    } catch (error) {
+        console.error('Failed to send rider app email:', error.message);
+        return { success: false, error: error.message };
+    }
+};
+
 
 const addAccount = async (req, res) => {
     try {
@@ -30,12 +140,19 @@ const addAccount = async (req, res) => {
             zipCode
         } = req.body;
 
+
+        
+        
+        
+        
+
+        
         // Validate role
         const validRoles = ['admin', 'seller', 'rider'];
         if (!role || !validRoles.includes(role.toLowerCase())) {
             return res.status(400).json({ message: "Invalid role. Must be admin, seller, or rider." });
         }
-
+        
         // Validate email
         if (!email || !email.trim()) {
             return res.status(400).json({ message: "Email is required!" });
@@ -185,7 +302,6 @@ const addAccount = async (req, res) => {
             let imagePlateNumberUrl = null;
             let licenseImageUrl = null;
             
-            // ✅ CHANGE: Upload to Cloudinary instead of saving locally
             try {
                 if (req.files && req.files.plateImage && req.files.plateImage[0]) {
                     const plateBuffer = req.files.plateImage[0].buffer;
@@ -236,7 +352,14 @@ const addAccount = async (req, res) => {
                 verification: "verified"
             });
 
-            await newRider.save();
+            // await newRider.save();
+
+
+            // ✅ NEW: Send rider app download link email (non-blocking)
+            sendRiderAppEmail(email, firstname, lastname).catch((emailError) => {
+                console.error("Failed to send rider app email:", emailError);
+            });
+
             return res.status(201).json({ message: "Rider account created successfully!" });
         }
 

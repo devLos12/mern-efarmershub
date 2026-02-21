@@ -79,10 +79,7 @@ const Register = () => {
 
 
 
-  
-
-
-
+    
     const handleRoleSelect = (role) => {
         setSelectedRole(role);
         setFormData({ ...formData, role });

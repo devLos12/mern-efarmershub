@@ -30,7 +30,6 @@ const resend = createResendClient();
 
 
 // Email sending function using Resend
-// Email sending function using Resend
 const sendApprovalEmail = async (email, name, accountType) => {
     // Check if Resend client is available
     if (!resend) {
@@ -118,6 +117,18 @@ const sendApprovalEmail = async (email, name, accountType) => {
                                         </a>
                                     </td>
                                 </tr>
+
+                                ${accountType === 'rider' ? `
+                                    <tr>
+                                        <td style="padding-top: 15px;" align="center">
+                                            <p style="color: #666666; font-size: 14px; margin: 0 0 10px 0;">Download the Rider App:</p>
+                                            <a href="https://expo.dev/accounts/buuuu012/projects/rider-app/builds/a14fba15-e02d-40c5-a25b-356230b79ab8" 
+                                            style="display: inline-block; background-color: #ffffff; color: #28a745; text-decoration: none; padding: 14px 40px; border-radius: 6px; font-size: 16px; font-weight: 600; border: 2px solid #28a745;">
+                                                📱 Download Rider App
+                                            </a>
+                                        </td>
+                                    </tr>
+                                ` : ''}
                             </table>
                         </td>
                     </tr>
@@ -406,6 +417,9 @@ export const viewProfile = async(req, res) => {
         });
     }
 }
+
+
+
 
 export const updateVerification = async(req, res) => {
     try {

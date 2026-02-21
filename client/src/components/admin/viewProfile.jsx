@@ -409,7 +409,7 @@ const ViewProfile = () => {
     const renderRiderProfile = () => (
         <>
             {/* Basic Information */}
-            <div className="bg-white rounded shadow-sm border p-4 mb-3">
+            <div className="bg-white rounded shadow-sm border p-4 mb-3 ">
                 <SectionTitle icon="fa fa-bicycle" title="Rider Information" />
                 <div className="row g-3">
                     <div className="col-md-6">
@@ -628,6 +628,23 @@ const ViewProfile = () => {
                         >
                             <i className="fa fa-arrow-left"></i>
                         </button>
+
+                        {/* Profile Image */}
+                        {profile.imageFile ? (
+                            <img 
+                                src={profile.imageFile} 
+                                alt="Profile" 
+                                className="rounded-circle border-dark border border-opacity-25 "
+                                style={{ width: "60px", height: "60px", objectFit: "cover" }}
+                            />
+                        ) : (
+                            <div className="bg-success rounded-circle border border-white d-flex align-items-center justify-content-center text-uppercase text-white fs-2" 
+                            style={{width: "60px", height: "60px"}}
+                            >
+                                {profile.firstname?.charAt(0)}
+                            </div>
+                        )}
+
                         <div>
                             <h5 className="m-0 fw-bold">
                                 {source === 'user' ? 'Buyer' : 
@@ -658,15 +675,7 @@ const ViewProfile = () => {
                             </div>
                         )}
                         
-                        {/* Profile Image */}
-                        {profile.imageFile && (
-                            <img 
-                                src={profile.imageFile} 
-                                alt="Profile" 
-                                className="rounded-circle border-success border-2 "
-                                style={{ width: "70px", height: "70px", objectFit: "cover" }}
-                            />
-                        )}
+                   
                     </div>
                 </div>
             </div>
