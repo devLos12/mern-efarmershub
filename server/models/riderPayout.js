@@ -4,7 +4,7 @@ import mongoose from "mongoose";
 const riderPayout = new mongoose.Schema({
     riderId: { 
         type: mongoose.Schema.Types.ObjectId,
-        ref: "Seller",
+        ref: "Rider",
         required: true
     },
     riderName: { 

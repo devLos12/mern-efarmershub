@@ -9,6 +9,13 @@ import Toast from "../toastNotif.jsx";
 import html2pdf from 'html2pdf.js';
 
 
+
+
+
+
+
+
+
 const Accounts = () => {
     const {
         showToast,
@@ -216,6 +223,8 @@ const Accounts = () => {
         `);
         windowPrint.document.close();
     };
+    
+    
 
     // ── DOWNLOAD PDF ───────────────────────────────────────────────────────────
     const handleDownloadPDF = () => {
@@ -465,8 +474,9 @@ const Accounts = () => {
                                             const isAdmin = location.state?.source === "admin";
                                             const needsVerification = location.state?.source === "seller" || location.state?.source === "rider";
                                             // ✅ Pop UP for last 2 rows so menu doesn't get clipped
-                                            const popUp = i === 0 ? 0 : currentItems.length - 2;
+                                            const popUp = i === 0 ? 0 : i >= currentItems.length - 2;
 
+                                            
                                             return (
                                                 <tr key={i}>
                                                     {isAdmin ? (
@@ -516,6 +526,10 @@ const Accounts = () => {
                                 </table>
                             </div>
                         </div>
+
+                        
+
+
 
                         {/* Pagination + PDF/Print — same layout as Orders.jsx */}
                         <div className="row g-0 bg-white rounded border shadow-sm">

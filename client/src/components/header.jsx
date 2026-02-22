@@ -19,8 +19,9 @@ const MENU_ITEMS = {
         {label: 'Payout',       link: "/seller/payout", icon: 'fa-solid fa-money-bill-transfer', source: "payout"},
     ],
     admin: [
-        {label: 'Dashboard',    link: '/admin', icon: 'fa fa-table '},
-        {label: 'Inventory',    link: '/admin/inventory', icon: 'fa-solid fa-boxes-stacked'},
+        {label: 'Dashboard',    link: '/admin', icon: 'fa fa-table ', badge: true },
+        {label: 'Sales Report', link: '/admin/sales', icon: "fa fa-chart-bar"},
+        {label: 'Inventory',    link: '/admin/inventory', icon: 'fa-solid fa-boxes-stacked', badge: true},
         {label: 'Accounts',     link: '/admin/accounts', icon: 'fa fa-user', source: "user"},
         {label: 'Inbox',        link: '/admin/inbox', icon: 'fa fa-inbox', badge: true},
         {label: 'Announcement', link: '/admin/announcement', icon: 'fa-solid fa-bell'},
@@ -36,7 +37,7 @@ const MENU_ITEMS = {
 
 
 const Header = ()=> {
-    const {role} = useContext(appContext);
+    const {role, orderBadge, setOrderBadge, prodBadge, setProdBadge } = useContext(appContext);
     const admin = useContext(adminContext);
     const seller = useContext(sellerContext);
     const context =  role === "admin" ? admin : seller;
@@ -295,6 +296,33 @@ const Header = ()=> {
                                         <i className={`${data.icon} ${
                                             active ? 'text-green fw-bold' : '' // 👈 ACTIVE ICON COLOR
                                         } text-capitalize ms-2 position-relative`}>
+
+                                            {data.badge && data.label.toLowerCase() === "dashboard" && orderBadge.show && (
+                                                <p className="m-0 d-flex justify-content-center align-items-center text-white position-absolute fw-normal top-0 end-0 m-2 bg-danger"
+                                                    style={{
+                                                        fontSize: "9px",
+                                                        width:"17px", 
+                                                        height:"17px",
+                                                        borderRadius: "50%", 
+                                                    }}
+                                                >
+                                                    {orderBadge.number}
+                                                </p>
+                                            )}
+                                            
+                                            {data.badge && data.label.toLowerCase() === "inventory" && prodBadge.show && (
+                                                <p className="m-0 d-flex justify-content-center align-items-center text-white position-absolute fw-normal top-0 end-0 m-2 bg-danger"
+                                                    style={{
+                                                        fontSize: "9px",
+                                                        width:"17px", 
+                                                        height:"17px",
+                                                        borderRadius: "50%", 
+                                                    }}
+                                                >
+                                                    {prodBadge.number}
+                                                </p>
+                                            )}
+
                                             {data.badge && data.label.toLowerCase() === "inbox" && inboxBadge.show && (
                                                 <p className="m-0 d-flex justify-content-center align-items-center text-white position-absolute fw-normal top-0 end-0 m-2 bg-danger"
                                                     style={{
@@ -307,6 +335,8 @@ const Header = ()=> {
                                                     {inboxBadge.number}
                                                 </p>
                                             )}
+
+
                                         </i>
                                     </div>
                                     <div className="col-auto">
