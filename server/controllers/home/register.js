@@ -6,6 +6,9 @@ import Admin from "../../models/admin.js";
 import multer from "multer";
 import { v2 as cloudinary } from "cloudinary";
 
+
+
+
 const storage = multer.memoryStorage();
 
 export const registrationFile = multer({ storage: storage });
@@ -113,7 +116,8 @@ const register = async (req, res) => {
             });
 
             await newSeller.save();
-            
+
+            io.emit('new registered: seller', { message: "new seller registered"});
             return res.status(201).json({ message: "Successfully Registered!" });
         }
 
@@ -156,6 +160,7 @@ const register = async (req, res) => {
             });
             
             await newUser.save();
+
 
             return res.status(201).json({ message: "Successfully Registered!" });
         }
@@ -251,7 +256,7 @@ const register = async (req, res) => {
             });
 
             await newRider.save();
-
+            io.emit('new registered: rider', { message: "new rider registered"});
             return res.status(201).json({ message: "Successfully Registered!" });
         }
         

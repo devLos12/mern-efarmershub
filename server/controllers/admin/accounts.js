@@ -309,35 +309,84 @@ const sendApprovalEmail = async (email, name, accountType) => {
 // ============================================
 // CONTROLLER FUNCTIONS
 // ============================================
+export const getAccounts = async (req, res) => {
+    try {
+        // ── DATE FILTER ────────────────────────────────────
+        const { period, startDate, endDate } = req.query;
+        let dateFilter = {};
 
-export const getAccounts = async(req, res)=>{
-    try{
-        const retrieveUsers = await User.find();
-        const retrieveSellers = await Seller.find();
-        const retrieveRider = await Rider.find();
-        const retrieveAdmin = await Admin.find({ adminType: { $ne: "main" }});
+        if (period && period !== 'all') {
+            const now = new Date();
 
-        const allEmpty = retrieveUsers.length === 0 && 
-                 retrieveSellers.length === 0 && 
-                 retrieveRider.length === 0 && 
-                 retrieveAdmin.length === 0;
+            if (period === 'today') {
+                const start = new Date(now); start.setHours(0, 0, 0, 0);
+                const end   = new Date(now); end.setHours(23, 59, 59, 999);
+                dateFilter = { createdAt: { $gte: start, $lte: end } };
 
-        if(allEmpty) {
-            return res.status(404).json({message : "No accounts"})
+            } else if (period === 'thisweek') {
+                const dayOfWeek = now.getDay();
+                const daysFromMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+                const weekStart = new Date(now);
+                weekStart.setDate(now.getDate() - daysFromMonday);
+                weekStart.setHours(0, 0, 0, 0);
+                const weekEnd = new Date(now); weekEnd.setHours(23, 59, 59, 999);
+                dateFilter = { createdAt: { $gte: weekStart, $lte: weekEnd } };
+
+            } else if (period === 'thismonth') {
+                const monthStart = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
+                const monthEnd   = new Date(now); monthEnd.setHours(23, 59, 59, 999);
+                dateFilter = { createdAt: { $gte: monthStart, $lte: monthEnd } };
+
+            } else if (period === 'thisyear') {
+                const yearStart = new Date(now.getFullYear(), 0, 1, 0, 0, 0, 0);
+                const yearEnd   = new Date(now); yearEnd.setHours(23, 59, 59, 999);
+                dateFilter = { createdAt: { $gte: yearStart, $lte: yearEnd } };
+
+            } else if (period === 'custom' && startDate && endDate) {
+                const start = new Date(startDate); start.setHours(0, 0, 0, 0);
+                const end   = new Date(endDate);   end.setHours(23, 59, 59, 999);
+                dateFilter = { createdAt: { $gte: start, $lte: end } };
+            }
         }
+        // ──────────────────────────────────────────────────
 
-        const accounts = {
-            user : retrieveUsers,
-            seller : retrieveSellers,
-            rider: retrieveRider,
-            admin: retrieveAdmin
-        }
+        const [retrieveUsers, retrieveSellers, retrieveRider, retrieveAdmin] = await Promise.all([
+            User.find(dateFilter),
+            Seller.find(dateFilter),
+            Rider.find(dateFilter),
+            Admin.find({ adminType: { $ne: "main" }, ...dateFilter }),
+        ]);
 
-        res.status(200).json(accounts);
-    }catch(error){
-        res.status(500).json({message: error.message});
-    }    
-}
+        const allEmpty =
+            retrieveUsers.length === 0 &&
+            retrieveSellers.length === 0 &&
+            retrieveRider.length === 0 &&
+            retrieveAdmin.length === 0;
+
+        if (allEmpty) return res.status(404).json({ message: "No accounts" });
+
+        res.status(200).json({
+            user:   retrieveUsers,
+            seller: retrieveSellers,
+            rider:  retrieveRider,
+            admin:  retrieveAdmin,
+        });
+
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+
+
+
+
+
+
+
+
+
+
 
 export const removeAccount = async (req, res)=>{
     try{

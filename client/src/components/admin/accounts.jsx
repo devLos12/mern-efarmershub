@@ -11,9 +11,161 @@ import html2pdf from 'html2pdf.js';
 
 
 
+// ── CUSTOM DATE RANGE MODAL ────────────────────────────────────────────────────
+const CustomRangeModal = ({ 
+    show, 
+    onClose, 
+    onApply, 
+    initialStartDate = '', 
+    initialEndDate = '',
+    showNotification 
+}) => {
+    const [tempStartDate, setTempStartDate] = useState(initialStartDate);
+    const [tempEndDate, setTempEndDate] = useState(initialEndDate);
+    const [startDateError, setStartDateError] = useState('');
+    const [endDateError, setEndDateError] = useState('');
+    
+    const today = new Date().toISOString().split('T')[0];
 
+    const getDurationText = (startDate, endDate) => {
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        const today = new Date().toISOString().split('T')[0];
+        if (startDate === endDate && startDate === today) return "Today";
+        if (startDate === endDate) return "1 day";
+        const diffTime = Math.abs(end - start);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+        const monthsDiff = (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth());
+        if (monthsDiff >= 1 && start.getDate() === end.getDate()) return monthsDiff === 1 ? "1 month" : `${monthsDiff} months`;
+        if (diffDays >= 28 && diffDays <= 32 && monthsDiff === 1) return "~1 month";
+        if (diffDays % 7 === 0 && diffDays <= 28) { const w = diffDays / 7; return `${w} ${w === 1 ? 'week' : 'weeks'}`; }
+        if (diffDays <= 7) return `${diffDays} ${diffDays === 1 ? 'day' : 'days'}`;
+        const months = Math.floor(diffDays / 30);
+        if (months >= 1) return `~${months} ${months === 1 ? 'month' : 'months'} (${diffDays} days)`;
+        return `${diffDays} days`;
+    };
 
+    const validateStartDate = (dateValue = tempStartDate) => {
+        if (!dateValue) { setStartDateError(''); return true; }
+        if (new Date(dateValue) > new Date(today)) { setStartDateError('Start date cannot be in the future'); return false; }
+        setStartDateError(''); return true;
+    };
 
+    const validateEndDate = (endValue = tempEndDate, startValue = tempStartDate) => {
+        if (!endValue) { setEndDateError(''); return true; }
+        const selectedDate = new Date(endValue);
+        const startDateObj = startValue ? new Date(startValue) : null;
+        if (selectedDate > new Date(today)) { setEndDateError('End date cannot be in the future'); return false; }
+        if (startDateObj && selectedDate < startDateObj) { setEndDateError('End date must be after start date'); return false; }
+        setEndDateError(''); return true;
+    };
+
+    const handleApply = () => {
+        if (!tempStartDate || !tempEndDate) { showNotification("Please select both start and end dates", "error"); return; }
+        const isStartValid = validateStartDate(tempStartDate);
+        const isEndValid = validateEndDate(tempEndDate, tempStartDate);
+        if (!isStartValid || !isEndValid) { showNotification("Please fix the date errors before applying", "error"); return; }
+        if (tempStartDate > today) { showNotification("Start date cannot be in the future", "error"); return; }
+        if (tempEndDate > today) { showNotification("End date cannot be in the future", "error"); return; }
+        if (tempStartDate > tempEndDate) { showNotification("Start date must be before end date", "error"); return; }
+        onApply(tempStartDate, tempEndDate);
+        setStartDateError(''); setEndDateError('');
+    };
+
+    const handleCancel = () => { setStartDateError(''); setEndDateError(''); onClose(); };
+
+    if (!show) return null;
+
+    return (
+        <>
+            <div className="modal-backdrop fade show" onClick={handleCancel} />
+            <div className="modal fade show" style={{ display: 'block' }} tabIndex="-1">
+                <div className="modal-dialog modal-dialog-centered">
+                    <div className="modal-content">
+                        <div className="modal-header border-0 pb-0">
+                            <h5 className="modal-title fw-bold">
+                                <i className="fa-solid fa-calendar-days text-success me-2"></i>
+                                Custom Date Range
+                            </h5>
+                            <button type="button" className="btn-close" onClick={handleCancel} />
+                        </div>
+                        <div className="modal-body pt-2">
+                            <p className="text-muted small mb-3">Select a custom date range to filter accounts</p>
+                            <div className="mb-3">
+                                <label className="form-label small fw-semibold">
+                                    <i className="fa-regular fa-calendar me-1"></i> Start Date
+                                </label>
+                                <input
+                                    type="date"
+                                    className={`form-control ${startDateError ? 'is-invalid' : ''}`}
+                                    value={tempStartDate}
+                                    onChange={(e) => setTempStartDate(e.target.value)}
+                                    onBlur={() => { validateStartDate(tempStartDate); if (tempEndDate) validateEndDate(tempEndDate, tempStartDate); }}
+                                    max={today}
+                                />
+                                {startDateError && <div className="invalid-feedback d-block">{startDateError}</div>}
+                            </div>
+                            <div className="mb-3">
+                                <label className="form-label small fw-semibold">
+                                    <i className="fa-regular fa-calendar me-1"></i> End Date
+                                </label>
+                                <input
+                                    type="date"
+                                    className={`form-control ${endDateError ? 'is-invalid' : ''}`}
+                                    value={tempEndDate}
+                                    onChange={(e) => setTempEndDate(e.target.value)}
+                                    onBlur={() => validateEndDate(tempEndDate, tempStartDate)}
+                                    max={today}
+                                    min={tempStartDate}
+                                />
+                                {endDateError && <div className="invalid-feedback d-block">{endDateError}</div>}
+                            </div>
+                            {(startDateError || endDateError) && (
+                                <div className="alert alert-danger alert-sm py-2 px-3 mb-3">
+                                    <i className="fa-solid fa-exclamation-triangle me-2"></i>
+                                    <small><strong>Invalid dates selected.</strong> Please correct the errors above.</small>
+                                </div>
+                            )}
+                            {tempStartDate && tempEndDate && !startDateError && !endDateError && (() => {
+                                const isToday = tempStartDate === today && tempEndDate === today;
+                                return (
+                                    <div className="alert alert-success alert-sm py-2 px-3 mb-0">
+                                        <i className="fa-solid fa-check-circle me-2"></i>
+                                        <small>
+                                            <strong>Selected Range:</strong>{' '}
+                                            {isToday ? (
+                                                <strong className="text-success">Today</strong>
+                                            ) : (
+                                                <>
+                                                    {new Date(tempStartDate).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                                    {' - '}
+                                                    {new Date(tempEndDate).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                                    {' '}({getDurationText(tempStartDate, tempEndDate)})
+                                                </>
+                                            )}
+                                        </small>
+                                    </div>
+                                );
+                            })()}
+                        </div>
+                        <div className="modal-footer border-0 pt-0">
+                            <button type="button" className="btn btn-sm btn-light" onClick={handleCancel}>
+                                <i className="fa-solid fa-times me-1"></i> Cancel
+                            </button>
+                            <button
+                                type="button"
+                                className="btn btn-sm btn-success"
+                                onClick={handleApply}
+                                disabled={!tempStartDate || !tempEndDate || !!startDateError || !!endDateError}>
+                                <i className="fa-solid fa-check me-1"></i> Apply Range
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </>
+    );
+};
 
 
 const Accounts = () => {
@@ -22,10 +174,10 @@ const Accounts = () => {
         toastMessage,
         toastType,
         setShowToast,
+        showNotification
     } = useContext(appContext);
 
-    const { setText, setId, setAccountsModal, accountsData, setAccountsData } = useContext(adminContext);
-    const [error, setError] = useState(null);
+    const { setText, setId, setAccountsModal, accountsData, setAccountsData, error, setError } = useContext(adminContext);
     const { trigger } = useContext(adminContext);
     const height = useBreakpointHeight();
     const [loading, setLoading] = useState(true);
@@ -40,9 +192,24 @@ const Accounts = () => {
     const [verificationFilter, setVerificationFilter] = useState('all');
     const [isRefreshing, setIsRefreshing] = useState(false);
 
+    
+    // Date filter states
+    const [datePeriod, setDatePeriod] = useState('all');
+    const [customStartDate, setCustomStartDate] = useState('');
+    const [customEndDate, setCustomEndDate] = useState('');
+    const [isCustomRange, setIsCustomRange] = useState(false);
+    const [showCustomRangeModal, setShowCustomRangeModal] = useState(false);
+
+
+
+
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage] = useState(10);
     const printRef = useRef();
+
+
+
+
 
     const formatDate = (dateString) => {
         const date = new Date(dateString);
@@ -65,6 +232,10 @@ const Accounts = () => {
         return () => clearTimeout(result);
     }, [search]);
 
+
+
+
+    
     const filteredAccounts = useMemo(() => {
         let filtered = accountsData;
         if (debouncedSearch) {
@@ -146,17 +317,26 @@ const Accounts = () => {
         navigate(`/admin/profile`, { state: { accountId: id, source: location.state?.source } });
     };
 
+ 
+
+
     const fetchAccounts = async () => {
         try {
-            const res = await fetch(`${import.meta.env.VITE_API_URL}/api/getAccounts`, { method: "GET", credentials: "include" });
+            let url = `${import.meta.env.VITE_API_URL}/api/getAccounts?period=${datePeriod}`;
+            if (datePeriod === 'custom' && customStartDate && customEndDate) {
+                url += `&startDate=${customStartDate}&endDate=${customEndDate}`;
+            }
+
+            const res = await fetch(url, { method: "GET", credentials: "include" });
             const data = await res.json();
             if (!res.ok) throw new Error(data.message);
             setError(null);
-            if (location.state?.source === "user")   setAccountsData(data.user.reverse());
-            if (location.state?.source === "seller") setAccountsData(data.seller.reverse());
-            if (location.state?.source === "rider")  setAccountsData(data.rider.reverse());
-            if (location.state?.source === "admin")  setAccountsData(data.admin.reverse());
+            if (location.state?.source === "user")   setAccountsData([...(data.user ?? [])].reverse());
+            if (location.state?.source === "seller") setAccountsData([...(data.seller ?? [])].reverse());
+            if (location.state?.source === "rider")  setAccountsData([...(data.rider ?? [])].reverse());
+            if (location.state?.source === "admin")  setAccountsData([...(data.admin ?? [])].reverse());
         } catch (err) { setError(err.message); console.log("Error: ", err.message); }
+    
     };
 
     const handleRefresh = async () => {
@@ -281,6 +461,10 @@ const Accounts = () => {
 
     useEffect(() => { setCurrentPage(1); }, [verificationFilter, debouncedSearch, location.state?.source]);
 
+    
+    
+
+
     useEffect(() => {
         const loadInitialAccounts = async () => {
             setVerificationFilter('all');
@@ -289,7 +473,11 @@ const Accounts = () => {
             setTimeout(() => { setLoading(false); setIsRefreshing(false); }, 500);
         };
         loadInitialAccounts();
-    }, [location.state?.source]);
+    }, [location.state?.source, datePeriod, customStartDate, customEndDate]);
+
+
+
+
 
     if (loading) return (
         <div className="d-flex align-items-center justify-content-center" style={{ height: Height() }}>
@@ -351,6 +539,43 @@ const Accounts = () => {
         );
     };
 
+
+
+    const getPeriodLabel = () => {
+        const today = new Date().toISOString().split('T')[0];
+        switch (datePeriod) {
+            case 'all':       return 'All Time';
+            case 'thisweek':  return 'This Week';
+            case 'thismonth': return 'This Month';
+            case 'thisyear':  return 'This Year';
+            case 'custom':
+                if (customStartDate && customEndDate) {
+                    if (customStartDate === today && customEndDate === today) return 'Today';
+                    if (customStartDate === customEndDate)
+                        return new Date(customStartDate).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' });
+                    return `${new Date(customStartDate).toLocaleDateString('en-PH', { month: 'short', day: 'numeric' })} - ${new Date(customEndDate).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })}`;
+                }
+                return 'Custom Range';
+            default: return '';
+        }
+    };
+
+    const handleCustomRangeApply = (startDate, endDate) => {
+        setCustomStartDate(startDate);
+        setCustomEndDate(endDate);
+        setDatePeriod('custom');
+        setIsCustomRange(true);
+        setShowCustomRangeModal(false);
+    };
+
+    const handleCustomRangeClose = () => {
+        setShowCustomRangeModal(false);
+        if (!isCustomRange) setDatePeriod('all');
+    };
+
+
+
+
     return (
         <>
             <div className="p-2">
@@ -386,7 +611,9 @@ const Accounts = () => {
 
                 {/* Search and Actions Bar */}
                 <div className="row g-0 bg-white border border-success border-opacity-25 rounded p-2 px-2 px-lg-4 mt-2 shadow-sm">
-                    <div className="col-12 col-md-5">
+                    
+                    
+                    <div className="col-12 col-md-5 d-flex gap-2 flex-column">
                         <div className="position-relative">
                             <i className="fa fa-search position-absolute text-success opacity-50" style={{ left: "12px", top: "50%", transform: "translateY(-50%)" }}></i>
                             <input type="search"
@@ -396,7 +623,45 @@ const Accounts = () => {
                                 className="form-control border-success border-opacity-25 ps-5 small"
                                 style={{ outline: "none" }} />
                         </div>
+
+
+
+                        {/* Date Period Filter */}
+                        <div className="d-flex align-items-center gap-2">
+                            <div className="d-flex align-items-center gap-2">
+                                <i className="fa-solid fa-calendar small text-success"></i>
+                                <p className="fw-semibold m-0 text-capitalize small">time period</p>
+                            </div>
+
+                            <select
+                                className="form-select form-select-sm border-success border-opacity-25 small"
+                                style={{ width: "auto" }}
+                                value={datePeriod}
+                                onChange={(e) => {
+                                    if (e.target.value === 'custom') {
+                                        setShowCustomRangeModal(true);
+                                    } else {
+                                        setDatePeriod(e.target.value);
+                                        setIsCustomRange(false);
+                                    }
+                                }}>
+                                <option value="all">All Time</option>
+                                <option value="thisweek">This Week</option>
+                                <option value="thismonth">This Month</option>
+                                <option value="thisyear">This Year</option>
+                                <option value="custom">Custom</option>
+                            </select>
+                            <span className="text-muted small text-nowrap">
+                                {getPeriodLabel()}
+                            </span>
+                        </div>
                     </div>
+
+
+                 
+
+
+
                     <div className="col">
                         <div className="mt-3 mt-md-0 text-end d-flex justify-content-end gap-2">
                             {showVerificationFilter && (
@@ -425,7 +690,7 @@ const Accounts = () => {
                         </p>
                     </div>
                 </div>
-
+                            
                 {/* Table */}
                 {filteredAccounts.length > 0 ? (
                     <>
@@ -601,6 +866,16 @@ const Accounts = () => {
 
             <AddAccount isOpen={showAddModal} onClose={() => setShowAddModal(false)} onSuccess={() => handleRefresh()} />
             <Toast show={showToast} message={toastMessage} type={toastType} onClose={() => setShowToast(false)} />
+
+
+            <CustomRangeModal
+                show={showCustomRangeModal}
+                onClose={handleCustomRangeClose}
+                onApply={handleCustomRangeApply}
+                initialStartDate={customStartDate}
+                initialEndDate={customEndDate}
+                showNotification={showNotification}
+            />
         </>
     );
 };

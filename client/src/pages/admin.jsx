@@ -46,7 +46,7 @@ const Admin = ({setAdminAuth})=>{
         accountsModal, setAccountsModal, deleteOrderModal, setDeleteOrderModal,
         setAccountsData,  editProduct,
         addAnnouncement, setAddAnnouncement, announcementModal, setAnnouncementModal,
-        hasIcon
+        hasIcon, 
     } = useContext(adminContext);
     
         
@@ -55,11 +55,14 @@ const Admin = ({setAdminAuth})=>{
     const navigate = useNavigate();
     const location = useLocation();
 
-    const { setInboxBadge,  inboxBadge, 
+    const { setInboxBadge,  
+            inboxBadge, 
                 inboxList, setInboxList,
                 inboxError, setInboxError,
-                inboxLoading, setInboxLoading } = useContext(appContext)
-
+                inboxLoading, setInboxLoading, 
+            setAccBadge
+            } = useContext(appContext)
+        
 
     const getChatsInbox = async() => {
 
@@ -82,6 +85,7 @@ const Admin = ({setAdminAuth})=>{
 
             setInboxBadge({
                 number: unreadChatsCount > 9 ? `${unreadChatsCount}+`: unreadChatsCount,
+                
                 show: unreadChatsCount > 0
             });
 
@@ -157,11 +161,41 @@ const Admin = ({setAdminAuth})=>{
 
 
 
+    const fetchAccounts = async () => {
+        try {
+            const res = await fetch(`${import.meta.env.VITE_API_URL}/api/getAccounts`, 
+                { 
+                    method: "GET", 
+                    credentials: "include" 
+                });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.message);
+            
+
+            const allPendings = [...data.seller, ...data.rider].filter((acc) => {
+                return acc.verification === 'pending';
+            }).length;
+
+            setAccBadge({
+                number: allPendings > 9 ? `${allPendings}+` : allPendings,
+                show: allPendings > 0
+            })
+
+        } catch (err) { 
+            setError(err.message); 
+            console.log("Error: ", err.message); 
+        }
+    };
+
+
+    
+
     useEffect(()=>{
         const socket = io(`${import.meta.env.VITE_API_URL}`);
         getChatsInbox();
         fetchOrders();
         fetchProducts();
+        fetchAccounts();
 
         socket.on("newChatInbox", (e) => {
             getChatsInbox();
@@ -172,11 +206,21 @@ const Admin = ({setAdminAuth})=>{
 
         socket.on('product:uploaded', (e) => {
             fetchProducts();
+        });
+
+        socket.on('new registered: seller', (e) => {
+            fetchAccounts();
         })
-        
+
+        socket.on('new registered: rider', (e) => {
+            fetchAccounts();
+        });
+
         return () => {
             socket.disconnect();
         };
+
+
     }, []);
     
 
@@ -210,7 +254,6 @@ const Admin = ({setAdminAuth})=>{
             const fetchUrl = `${import.meta.env.VITE_API_URL}/api/getNotification`;
             const res = await fetch(fetchUrl, { method : "GET", credentials : "include"});
             
-            console.log("Response from admin notification", res.status);
             const data = await res.json();
             if(!res.ok) throw new Error(data.message);
 
@@ -223,6 +266,16 @@ const Admin = ({setAdminAuth})=>{
     useEffect(()=>{
         getNotification();
     },[]);
+
+
+
+
+    
+
+
+
+
+
 
 
     if(loading) return 

@@ -22,8 +22,8 @@ const MENU_ITEMS = {
         {label: 'Dashboard',    link: '/admin', icon: 'fa fa-table ', badge: true },
         {label: 'Sales Report', link: '/admin/sales', icon: "fa fa-chart-bar"},
         {label: 'Inventory',    link: '/admin/inventory', icon: 'fa-solid fa-boxes-stacked', badge: true},
-        {label: 'Accounts',     link: '/admin/accounts', icon: 'fa fa-user', source: "user"},
-        {label: 'Inbox',        link: '/admin/inbox', icon: 'fa fa-inbox', badge: true},
+        {label: 'Accounts',     link: '/admin/accounts', icon: 'fa fa-user', source: "user", badge: true},
+        {label: 'Inbox',        link: '/admin/inbox', icon: 'fa fa-inbox', badge: true, },
         {label: 'Announcement', link: '/admin/announcement', icon: 'fa-solid fa-bell'},
         {label: 'Payment',      link: "/admin/payment", icon: 'fa-solid fa-credit-card', source: "payment"},
         {label: 'Payout',       link: "/admin/payout/seller", icon: 'fa-solid fa-money-bill-transfer', source: "payout/seller"},
@@ -37,7 +37,7 @@ const MENU_ITEMS = {
 
 
 const Header = ()=> {
-    const {role, orderBadge, setOrderBadge, prodBadge, setProdBadge } = useContext(appContext);
+    const {role, orderBadge, setOrderBadge, prodBadge, setProdBadge, accBadge, setAccBadge } = useContext(appContext);
     const admin = useContext(adminContext);
     const seller = useContext(sellerContext);
     const context =  role === "admin" ? admin : seller;
@@ -120,9 +120,24 @@ const Header = ()=> {
                 console.log("Error:", err.message);
             }
         } else {
+         
+
+            if(data.label.toLowerCase() === 'dashboard'){
+                setOrderBadge((prev) => ({ ...prev, show: false }));
+            }
+
+            if(data.label.toLowerCase() === 'inventory'){
+                setProdBadge((prev) => ({ ...prev, show: false }));
+            }
+
+            if(data.label.toLowerCase() === 'accounts'){
+                setAccBadge((prev) => ({...prev, show: false }))
+            }
+
             if(data.label.toLowerCase() === "inbox"){
                 setInboxBadge((prev) => ({ ...prev, show: false }));
             }
+
             navigate(data.link, { state: { source: data.source } });
         }
     }
@@ -322,6 +337,22 @@ const Header = ()=> {
                                                     {prodBadge.number}
                                                 </p>
                                             )}
+
+                                                
+                                            {data.badge && data.label.toLowerCase() === "accounts" && accBadge.show && (
+                                                <p className="m-0 d-flex justify-content-center align-items-center text-white position-absolute fw-normal top-0 end-0 m-2 bg-danger"
+                                                    style={{
+                                                        fontSize: "9px",
+                                                        width:"17px", 
+                                                        height:"17px",
+                                                        borderRadius: "50%", 
+                                                    }}
+                                                >
+                                                    {accBadge.number}
+                                                </p>
+                                            )}
+
+
 
                                             {data.badge && data.label.toLowerCase() === "inbox" && inboxBadge.show && (
                                                 <p className="m-0 d-flex justify-content-center align-items-center text-white position-absolute fw-normal top-0 end-0 m-2 bg-danger"

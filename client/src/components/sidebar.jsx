@@ -12,7 +12,7 @@ import { useBreakpointHeight } from "./breakpoint";
 //sidebar
 const Sidebar = () => {
     const { role, 
-        inboxBadge, setInboxBadge, orderBadge, setOrderBadge, prodBadge, setProdBadge 
+        inboxBadge, setInboxBadge, orderBadge, setOrderBadge, prodBadge, setProdBadge, accBadge, setAccBadge 
      } = useContext(appContext);
     const admin = useContext(adminContext);
     const seller = useContext(sellerContext);
@@ -23,11 +23,7 @@ const Sidebar = () => {
     const height = useBreakpointHeight();
     
 
-
-    useEffect(() => {
-        console.log("numbers of Order: ", orderBadge);
-    },[orderBadge]);
-
+    
 
 
     const handleClick = ()=> {
@@ -48,7 +44,7 @@ const Sidebar = () => {
             {label: 'QR Payment',   link: '/admin/qrcodes',       icon: 'fa-solid fa-qrcode',         source: undefined},
             {label: "activity logs", link: '/admin/activity-logs', icon: 'fa-solid fa-clock-rotate-left',      source: undefined}
         ], 
-
+        
         seller : [
             {label: 'My Crops',     link: '/seller',              icon : "fa-solid fa-leaf",           source: undefined},
             {label: 'Orders',       link: '/seller/orders',       icon : "fa-solid fa-bag-shopping",  source: undefined},
@@ -59,6 +55,8 @@ const Sidebar = () => {
         ] 
     }
 
+
+    
 
     const navLinks = data[role] || [];
 
@@ -108,6 +106,13 @@ const Sidebar = () => {
                                     show: false
                                 }))
 
+                            }
+
+                            if(data.label === 'accounts'){
+                                setAccBadge((prev) => ({
+                                    ...prev, 
+                                    show: false
+                                }))
                             }
 
                             if(data.label === "inbox"){
@@ -180,6 +185,15 @@ const Sidebar = () => {
                                             style={{fontSize : "9px",
                                             width:"17px", height:"17px", borderRadius:"50%"}}
                                             >{prodBadge.number}
+                                        </p>
+                                    )}
+
+                                    {data.label === "accounts" && accBadge.show && (
+                                        <p className="position-absolute top-0 end-0  m-2 
+                                            d-flex justify-content-center align-items-center fw-normal text-white bg-danger"
+                                            style={{fontSize : "9px",
+                                            width:"17px", height:"17px", borderRadius:"50%"}}
+                                            >{accBadge.number}
                                         </p>
                                     )}
 

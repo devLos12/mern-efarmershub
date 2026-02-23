@@ -52,6 +52,10 @@ export const MyAppContext = ({children}) =>{
         }
     }, [showToast]);
 
+    const [accBadge, setAccBadge] = useState({
+        number: null,
+        show: false
+    })
 
     
     return (
@@ -73,7 +77,8 @@ export const MyAppContext = ({children}) =>{
 
             loadingStateButton, setLoadingStateButton,
             orderBadge, setOrderBadge,
-            prodBadge, setProdBadge
+            prodBadge, setProdBadge,
+            accBadge, setAccBadge
 
         }}>{children}
         </appContext.Provider>
