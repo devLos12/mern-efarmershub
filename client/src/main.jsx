@@ -5,13 +5,17 @@ import { BrowserRouter as Router } from 'react-router-dom';
 import { MyAppContext } from './context/appContext.jsx';
 import "./styles/index.css";
 import 'bootstrap/dist/css/bootstrap.min.css'; 
+import ScrollToTop from './components/scrollTop.jsx';
+
 
 
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
       <Router>
+
         <MyAppContext>
+          <ScrollToTop/>
           <App />
         </MyAppContext>
       </Router>

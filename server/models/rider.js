@@ -70,6 +70,11 @@ const riderSchema = new mongoose.Schema({
         type: String,
         enum:[ 'pending', "verified", 'rejected'],
         default: 'pending'
+    },
+
+    pushToken: {
+        type: String,
+        required: false
     }
 });
 

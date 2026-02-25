@@ -11,7 +11,7 @@ import Notification from "../../models/notification.js";
 import DamageLog from "../../models/damageLog.js";
 import { v2 as cloudinary } from "cloudinary";
 import SalesList from "../../models/salesReport.js";
-
+import Rider from "../../models/rider.js";
 
 
 
@@ -376,7 +376,16 @@ export const statusOrder = async(req, res) => {
             );
         }
 
+
+
+
+
         if(order.orderMethod === "delivery" && newStatus === "ready to deliver") {
+
+
+
+
+
             order.statusDelivery = newStatus;
             order.statusHistory.push({
                 status: newStatus,
@@ -388,7 +397,7 @@ export const statusOrder = async(req, res) => {
             order.riderName = assignRider?.name;
             await order.save();
 
-            // Log activity
+            //Log activity
             await createActivityLog(
                 adminId,
                 'ASSIGN RIDER TO ORDER',
@@ -396,9 +405,29 @@ export const statusOrder = async(req, res) => {
                 req
             );
 
-            io.emit("to rider");
-        }
+            const rider = await Rider.findById(assignRider?.id);
 
+            if(rider?.pushToken) {
+                const response = await fetch('https://exp.host/--/api/v2/push/send', {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        to: rider.pushToken,
+                        sound: 'default',
+                        title: '🚀 New Delivery Assigned!',
+                        body: `Order #${orderIdShort} is ready to deliver.`,
+                        data: { orderId: order._id.toString() }
+                    })
+                });
+                const data = await response.json();
+                console.log('Expo push response:', data);
+            }
+        }
+        
+        
         res.status(200).json({ message: `update your status as ${newStatus}`});
     } catch (error) {
         console.error('Status order error:', error);

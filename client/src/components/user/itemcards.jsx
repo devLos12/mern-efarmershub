@@ -111,14 +111,16 @@ const ItemCards = ({ products }) => {
                 justify-content-between position-relative  bg-warning bg-opacity-10 me-2 " >
                     <div className="p-1 p-md-2 z-1" 
                     >
-                        <div className="col-12 text-center bg-white rounded mt-2">
+                        <div className="overflow-hidden bg-white rounded shadow"
+                        style={{ aspectRatio: "4/3"}}
+                        >
                             <img src={data.imageFile}
                             alt={data.imageFile} 
-                            className="img-fluid rounded shadow-sm"
-                                style={{cursor : "pointer"}} 
-                                onClick={()=>{
-                                    navigate("/user/productdetails", {state : { productId : data._id}});
-                                }}/>
+                            className="img-fluid h-100 w-100"
+                            style={{cursor : "pointer", objectFit: "cover"}} 
+                            onClick={()=>{
+                                navigate("/user/productdetails", {state : { productId : data._id}});
+                            }}/>
                         </div>
                         
                         <div className="mt-2 rounded ">

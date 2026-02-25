@@ -57,6 +57,7 @@ const ProductDetails = () =>{
         }
     }, [hasError, navigate]);
 
+    
 
 
     const handleButtons = (pid, prodId, prodName, prodDisc, prodPrice, imageFile, seller, data)=>{
@@ -272,13 +273,21 @@ const ProductDetails = () =>{
                     ? "col-12 col-md-12 col-lg-11 col-xl-10 " 
                     : "col-12 "}>
                     <div className={`row`}>
+                        
+
                         <div className={role === "user" 
                             ? "col-12 col-md-6 col-lg-6 col-xl-6 " 
                             : "col-12 col-md-6 col-lg-6 col-xl-5 col-xxl-5 "}>
-                            <img 
-                            src={productDetails.imageFile} 
-                            alt={productDetails.imageFile}  
-                            className={"img-fluid rounded-5"} />
+                            
+                            <div className="rounded-5 overflow-hidden" 
+                            style={{ aspectRatio: "4/3" }}>
+                                <img 
+                                    src={productDetails.imageFile} 
+                                    alt={productDetails.imageFile}  
+                                    className="img-fluid h-100 w-100"
+                                    style={{ objectFit: "cover" }}
+                                />
+                            </div>
                         </div>
 
 

@@ -243,15 +243,20 @@ const AllProductCards = () => {
                     <div key={i} className="col-6 col-sm-6 col-md-5 col-lg-4 col-xl-3 col-xxl-3">
                         <div className="card overflow-hidden shadow-sm border-0 justify-content-between position-relative bg-warning bg-opacity-10 mt-2">
                             <div className="p-1 p-md-2 z-1">
-                                <div className="col-12 text-center bg-white rounded mt-2">
+                                <div className="rounded-2 shadow overflow-hidden"
+                                style={{ aspectRatio: "4/3"}}
+                                >
                                     <img 
                                         src={
                                             data.imageFile?.startsWith("http") 
                                             ? data.imageFile 
                                             : `${import.meta.env.VITE_API_URL}/api/uploads/${data.imageFile}`}      
                                         alt={data.imageFile} 
-                                        className="img-fluid rounded shadow-sm"
-                                        style={{cursor: "pointer"}} 
+                                        className="img-fluid h-100 w-100"
+                                        style={{
+                                            cursor: "pointer", 
+                                            objectFit: "cover"
+                                        }} 
                                         onClick={() => {
                                             navigate("/user/all-products/productdetails", {state: {productId: data._id}});
                                         }}

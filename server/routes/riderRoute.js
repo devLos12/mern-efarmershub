@@ -9,6 +9,9 @@ import { getChatId, getMessages, sendImage, sendMessage } from "../controllers/m
 import { inboxChats, markAsRead, deleteChat } from "../controllers/chats.js";
 import { riderPayout, deleteRiderPayout } from "../controllers/rider/payouts.js";
 import { getQrCodes } from "../controllers/rider/qrpayment.js";
+import savePushToken from "../controllers/rider/savePushToken.js";
+
+
 
 
 const riderRouter = express.Router();
@@ -39,6 +42,9 @@ riderRouter.get('/getPayouts', authRiderMiddleWares, riderPayout);
 riderRouter.patch('/riderDeletePayout', authRiderMiddleWares, deleteRiderPayout);
 riderRouter.get('/getRiderQrPayment', authRiderMiddleWares, getQrCodes);
 riderRouter.patch("/deleteRiderChat/:id", authRiderMiddleWares, deleteChat);
+riderRouter.post('/save-token', authRiderMiddleWares, savePushToken);
+
+
 
 
 

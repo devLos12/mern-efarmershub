@@ -69,19 +69,25 @@ const ProductCard = ({ products })=>{
             {products.map((data, i) => (
                 <div key={i} className="col-6  col-sm-4 col-md-4 col-lg-4 col-xl-3 col-xxl-3">
                     <div className="bg-white border rounded g-0 p-1 p-md-2 p-lg-3  me-1 mb-1">
-                        <div className="12">
-                            <img src={data.imageFile} alt={data.imageFile} className="img-fluid rounded " style={{cursor:"pointer"}} 
-                            
+                        <div className="rounded-2 overflow-hidden"
+                        style={{aspectRatio: '4/3'}}
+                        >
+                            <img src={data.imageFile} 
+                            alt={data.imageFile} 
+                            className="img-fluid w-100 h-100 "
+                            style={{ 
+                                objectFit: "cover", 
+                                cursor: "pointer"
+                            }} 
                             onClick={()=>{
-                                
                                 if(role === "admin"){
                                     navigate("/admin/productdetails", { state : {source: "inventory", productId : data._id}});
                                 }
-                                
                                 if(role === "seller"){
                                     navigate("/seller/productdetails", { state : {source: "inventory", productId : data._id}});
                                 }
-                            }}/>
+                            }}
+                            />
                         </div>
 
                         <div className="mt-2">
