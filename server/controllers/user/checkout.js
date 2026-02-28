@@ -115,6 +115,7 @@ const storage = multer.memoryStorage();
 
 export const upload = multer({ storage: storage });
 
+
 export const checkOut = async(req, res) => {
     try {
         const userId = req.account.id;
@@ -127,7 +128,8 @@ export const checkOut = async(req, res) => {
 
         let imageFile = null;
         let cloudinaryId = null;
-
+        
+        
         // ✅ Upload proof of payment to Cloudinary using memoryStorage buffer
         if (req.file) {
             try {

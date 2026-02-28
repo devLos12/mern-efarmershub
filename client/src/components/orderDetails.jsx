@@ -2456,13 +2456,19 @@ const OrderDetails = () => {
                                             noPaymentProof(orderData) ? "col-12" : "col-12 col-lg-6 col-md-6" :
                                             noPaymentProof(orderData) ? "col-12" : "col-12 col-lg-6 col-md-12"}>
                                             <div className="row g-0 mt-2 mt-md-4 rounded bg-beige p-2 shadow-sm border">
-                                                <div className={`col-5 col-sm-4 col-md-5 col-lg-5 col-xl-4 col-xxl-5`}>
-                                                    <div className="d-flex flex-column justify-content-between h-100 ">
-                                                        <img src={
+                                                <div className={`col-5 col-sm-4 col-md-5 col-lg-5 col-xl-4 col-xxl-4`}>
+                                                    <div className="d-flex flex-column justify-content-between h-100 rounded-2 overflow-hidden"
+                                                    style={{ aspectRatio: "4/3" }}
+                                                    >
+                                                        <img 
+                                                        src={
                                                             item.imageFile.startsWith("http") 
                                                             ? item.imageFile 
                                                             : `${import.meta.env.VITE_API_URL}/api/Uploads/${item.imageFile}`} 
-                                                        alt={item.imageFile} className="img-fluid rounded border shadow-sm " />
+                                                        alt={item.imageFile} 
+                                                        className="img-fluid w-100 h-100 "
+                                                        style={{objectFit: "cover"}} 
+                                                        />
 
                                                         {role === "user" && orderData?.statusDelivery.toLowerCase() === "delivered" && (
                                                             <button 
@@ -2554,7 +2560,7 @@ const OrderDetails = () => {
                                                             Additional Notes:
                                                         </p>
                                                         <p className="m-0 small" style={{fontSize: "12px"}}>
-                                                            {orderData?.proofOfPayment?.textMessage ?? ""}
+                                                            {orderData?.proofOfPayment?.textMessage === 'undefined' ? " " : orderData?.proofOfPayment?.textMessage}
                                                         </p>
                                                     </div>
                                                 )}

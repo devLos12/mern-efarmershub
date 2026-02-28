@@ -189,8 +189,14 @@ const Cart = () => {
                             <div key={i} className="col-12 mt-2 rounded p-2  position-relative border shadow-sm" 
                             style={{background: "#F5F5DC"}}>
                                 <div className="row ">
-                                    <div className="col-5 rounded  align-items-center">
-                                        <img src={data.imageFile} className="img-fluid rounded"/> 
+                                    <div className="col-5 align-items-center">
+                                        <div style={{aspectRatio: "4/3"}}>
+                                            <img src={data.imageFile} 
+                                            className="img-fluid rounded w-100 h-100"
+                                            style={{objectFit: "cover"}}
+                                            /> 
+                                        </div>
+
                                     </div>
                                     <div className="col-6 g-0 d-flex flex-column justify-content-between ">
                                         <div>

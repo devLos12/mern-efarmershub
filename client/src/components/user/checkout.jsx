@@ -205,12 +205,21 @@ const Checkout = () =>{
             }
 
             showNotification(data.message, 'success');
-
             // Navigate after short delay
             setTimeout(() => {
                 navigate(-1);
+
+                setCheckoutForm((prev) => ({
+                ...prev, 
+                payment: undefined,
+                orderMethod: undefined
+            }));
             }, 1500);
             
+
+            
+
+
         }catch(err){
             setSubmitting(false); // Stop loading on error
             console.log("Error: ", err.message);
@@ -285,8 +294,14 @@ const Checkout = () =>{
                         {checkoutForm.items.map((data, i)=>(
                             <div key={i} className="row g-0 p-2 rounded bg-beige shadow-sm border mt-2">
                                 <div className="col-5 col-md-4 ">
-                                    <img src={data.imageFile}
-                                    className="img-fluid rounded shadow-sm border"/>
+                                    <div className="rounded-2 overflow-hidden"
+                                    style={{aspectRatio: "4/3"}}
+                                    >
+                                        <img src={data.imageFile}
+                                        className="img-fluid w-100 h-100 shadow-sm" 
+                                        style={{objectFit:"cover"}}
+                                        />
+                                    </div>
                                 </div>
 
                                 <div className="col ms-3">
@@ -318,10 +333,12 @@ const Checkout = () =>{
                                                 </p>
                                             </div>
 
-                                            <p className="m-0 text-capitalize text-center px-2 py-1 mt-2 rounded bg-dark text-light small"
+                                            <button 
+                                            type="button"
+                                            className="m-0 text-capitalize text-center px-2 py-1 mt-2 rounded bg-dark text-light small"
                                             style={{fontSize:"12px", cursor:"pointer"}}
                                             onClick={() => navigate("/user/address")}
-                                            >change</p>
+                                            >change</button>
                                         </div>
 
                                         {[
@@ -335,9 +352,11 @@ const Checkout = () =>{
                                         ))}
                                         </>
                                     ):(
-                                        <button className="d-flex align-items-center justify-content-center gap-2 bg rounded p-2 w-100 bg-dark
+                                        <button 
+                                        className="d-flex align-items-center justify-content-center gap-2 bg rounded p-2 w-100 bg-dark
                                         border-0"
                                         onClick={()=> navigate("/user/address")}
+                                        type="button"
                                          >
                                             <i className="fa-solid fa-circle-plus text-white" 
                                            ></i>
@@ -361,6 +380,7 @@ const Checkout = () =>{
                                             value={data.value}
                                             name="orderMethod"
                                             onChange={handleChange}
+                                            checked={checkoutForm?.orderMethod === data.value}
                                             required
                                             />
                                         </div>
