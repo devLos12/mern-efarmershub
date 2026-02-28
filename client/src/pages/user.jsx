@@ -93,6 +93,10 @@ const User = ({setUserAuth}) => {
             console.log(e.message);
             getChatsInbox();
         })
+
+        return () => {
+            socket.disconnect();
+        };
     }, []);
     
 

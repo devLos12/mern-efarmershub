@@ -102,7 +102,7 @@ const OnlinePayment = () => {
             setFetchLoading(false);
         }
     };
-
+    
     const handleTextChange = (e) => {
         const {name, value} = e.target;
         setCheckoutForm((prev) => ({

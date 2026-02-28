@@ -14,7 +14,7 @@ const riderSchema = new mongoose.Schema({
         type: String, 
         required: true 
     },
-    middleName: { 
+    middlename: { 
         type: String, 
         required: false 
     },

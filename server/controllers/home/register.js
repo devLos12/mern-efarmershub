@@ -32,6 +32,7 @@ const register = async (req, res) => {
             detailAddress,
             zipCode
         } = req.body;
+        
 
 
         if(contact && !/^\d{11}$/.test(contact)) {
@@ -143,6 +144,8 @@ const register = async (req, res) => {
             const count = await User.countDocuments();
             const accountId = `${year}${month}${day}${String(count + 1).padStart(4, '0')}`;
 
+
+            
             const newUser = new User({
                 accountId,
                 firstname,

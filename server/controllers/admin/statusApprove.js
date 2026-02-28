@@ -18,6 +18,7 @@ const statusApprove = async(req, res) => {
         }
         product.statusApprove = newStatus;
 
+
         await Notification.create({
             sender : {
                 id : id,
@@ -28,7 +29,7 @@ const statusApprove = async(req, res) => {
                 id : product.seller.id,
                 role : "seller",
             },
-            message : `your product #${product._id.toString().slice(0,12)} has been ${newStatus}`,
+            message : `your product #${product?.prodId} has been ${newStatus}`,
             meta : { 
                 prodId,  
                 imageFile: product.imageFile
@@ -36,8 +37,9 @@ const statusApprove = async(req, res) => {
             type : "statusApprove",
             link : "productdetails"
         });
-
-
+        
+        
+        
         if (role === "admin") {
             const ipAddress = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || 
                               req.ip || 
@@ -58,7 +60,6 @@ const statusApprove = async(req, res) => {
                 status: 'success'
             });
         }
-
 
         await product.save();
 

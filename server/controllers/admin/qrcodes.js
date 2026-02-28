@@ -1,6 +1,7 @@
 import QrCode from "../../models/qrCodes.js";
 import multer from "multer";
 import cloudinary from "../../config/cloudinary.js";
+import { isObjectIdOrHexString } from "mongoose";
 
 
 
@@ -14,8 +15,6 @@ export const qrCodeFiles = upload.fields([
     { name: 'gcashQr', maxCount: 1 },
     { name: 'mayaQr', maxCount: 1 }
 ]);
-
-
 
 
 export const updateQr = async (req, res) => {
@@ -97,6 +96,9 @@ export const updateQr = async (req, res) => {
             }
         }
 
+
+        io.emit('qrcode:update', { message: "new qr update"});
+
         return res.status(200).json({ 
             message: "QR code updated successfully", 
             success: true 
@@ -159,6 +161,7 @@ export const deleteQrCode = async (req, res) => {
             );
         }
 
+        io.emit('qrcode:delete', { message: `${type} qr code has been deleted`});
 
         return res.status(200).json({ 
             success: true,

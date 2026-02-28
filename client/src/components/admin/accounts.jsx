@@ -767,7 +767,7 @@ const Accounts = () => {
                                                                 </td>
                                                             )}
                                                             <td className="align-middle small fw-bold">{data.accountId || "N/A"}</td>
-                                                            <td className="align-middle small text-capitalize">{`${data.firstname} ${data.lastname}`}</td>
+                                                            <td className="align-middle small text-capitalize">{`${data.lastname}, ${data.firstname} ${data.middlename === undefined? '' : `${data.middlename}.`}`}</td>
                                                             <td className="align-middle small text-lowercase">{data.email}</td>
                                                             <td className="align-middle small">{data.createdAt ? formatDate(data.createdAt) : "N/A"}</td>
                                                             <td className="align-middle text-center">

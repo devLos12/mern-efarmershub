@@ -212,6 +212,7 @@ const createOrUpdateRiderPayout = async(riderId, orderId) => {
 const storage = multer.memoryStorage();
 export const imageProof = multer({ storage: storage });
 
+
 const updateStatusDelivery = async (req, res) => {
     try {
         const riderId = req.account.id;
@@ -261,8 +262,13 @@ const updateStatusDelivery = async (req, res) => {
             })
 
             const rider = await Rider.findOne({_id: riderId });
+            rider.status = "on delivery";
+
             await sendSMS(order.firstname, order.contact, order.totalPrice, order.riderName, rider.contact );
             await order.save();
+            await rider.save();
+
+
         } 
 
         if(newStatus === "delivered"){
@@ -325,11 +331,16 @@ const updateStatusDelivery = async (req, res) => {
                     console.error('Error creating COD sales list:', salesError.message);
                 }
             }
+            
+            const rider = await Rider.findOne({_id: riderId });
+            rider.status = "available";
 
 
             // Rider payout is still created regardless (para sa delivery fee)
             await createOrUpdateRiderPayout(riderId, order._id);
             await order.save();
+            await rider.save();
+
         }
 
         const resData = {

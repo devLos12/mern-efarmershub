@@ -278,7 +278,7 @@ const AddAccount = ({ isOpen, onClose, onSuccess }) => {
 
             <div
                 className="position-fixed top-50 start-50 translate-middle"
-                style={{ zIndex: 1051, maxWidth: "600px", width: "90%", maxHeight: "90vh", overflowY: "auto" }}
+                style={{ zIndex: 1051, maxWidth: "700px", width: "90%", maxHeight: "90vh", overflowY: "auto" }}
             >
                 <div className="bg-white rounded shadow-lg">
                     {step === 1 ? (
@@ -334,10 +334,17 @@ const AddAccount = ({ isOpen, onClose, onSuccess }) => {
                                     <div className="row mt-3">
                                         {[
                                             { label: 'First name', name: 'firstname', holder: 'Enter first name' },
+                                            { label: 'Middle name', name: 'middlename', holder: 'Enter middle name', optional: true },
                                             { label: 'Last name', name: 'lastname', holder: 'Enter last name' }
                                         ].map((field, i) => (
                                             <div key={i} className="col">
-                                                <label className="text-capitalize small fw-bold" htmlFor={field.name}>{field.label}:</label>
+                                                <label className="text-capitalize small fw-bold" htmlFor={field.name}>
+                                                    {field.label}:
+                                                    {field.optional && (
+                                                        <span className="text-normal text-muted small ms-1">{'(optional)'}</span>
+                                                    )}
+                                                    
+                                                </label>
                                                 <input
                                                     className="mt-2 form-control small"
                                                     style={{ fontSize: "14px" }}
@@ -347,7 +354,7 @@ const AddAccount = ({ isOpen, onClose, onSuccess }) => {
                                                     placeholder={field.holder}
                                                     value={formData[field.name] || ''}
                                                     onChange={handleTextOnlyChange}
-                                                    required
+                                                    required={!field.optional}
                                                 />
                                             </div>
                                         ))}

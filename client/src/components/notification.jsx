@@ -223,7 +223,7 @@ const Notification = () => {
                                             return (
                                             <>
                                                 {before}
-                                                <strong className="text-success">#{id}</strong>
+                                                <strong className="text-success">{id}</strong>
                                                 {after}
                                         </>
                                         );

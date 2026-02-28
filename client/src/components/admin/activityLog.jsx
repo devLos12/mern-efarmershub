@@ -455,6 +455,7 @@ const ActivityLog = () => {
                             </p>
                         </div>
                     </div>
+                    
 
                     {/* Filters row */}
                     <div className="col-12 d-flex flex-column flex-md-row gap-2 flex-wrap align-items-center">
@@ -479,7 +480,7 @@ const ActivityLog = () => {
                                 <option value="thisweek">This Week</option>
                                 <option value="thismonth">This Month</option>
                                 <option value="thisyear">This Year</option>
-                                <option value="custom">Custom Range</option>
+                                <option value="custom">Custom</option>
                             </select>
                             {period === 'custom' && customStartDate && customEndDate && (
                                 <span className="badge bg-success-subtle text-success border border-success border-opacity-25 small text-nowrap">
@@ -489,7 +490,7 @@ const ActivityLog = () => {
                             )}
                         </div>
                         {/* ───────────────────────────────────────────────────── */}
-
+                    
                         <select
                             className="form-select form-select-sm"
                             style={{ width: "100%", maxWidth: "150px", fontSize: "14px" }}

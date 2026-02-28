@@ -6,8 +6,7 @@ import { userContext } from "../../context/userContext.jsx";
 import { useLayoutEffect } from "react";
 import { appContext } from "../../context/appContext.jsx";
 import Toast from "../toastNotif.jsx";
-
-
+import { io } from "socket.io-client";
 
 
 
@@ -37,6 +36,7 @@ const Checkout = () =>{
     const location = useLocation();
     const [isComplete, setIsComplete] = useState(false);
     const [prevCart, setPrevCart] = useState([]);
+    const [qrAvailability, setQrAvailability] = useState({ gcash: true, maya: true });
 
 
 
@@ -54,6 +54,50 @@ const Checkout = () =>{
             }))
         }   
     },[location]);
+
+
+    
+    const fetchQrCode = async() => {
+        try {
+            const res = await fetch(`${import.meta.env.VITE_API_URL}/api/getQrCodes`, {
+                credentials: "include"
+            });
+
+            const data = await res.json();
+
+            if(!res.ok) throw new Error(data.message);
+
+            if(data.success){
+                console.log(data)
+                setQrAvailability({
+                    gcash: !!data.data.gcashQr,
+                    maya: !!data.data.mayaQr
+                });
+            }
+
+        } catch (error) {
+            console.log("Error ", error.message);
+        }
+    }
+
+
+    useEffect(() => {
+        const socket = io(`${import.meta.env.VITE_API_URL}`);
+        fetchQrCode();
+        
+        socket.on('qrcode:update', (e)=> {
+            fetchQrCode();
+        })
+        
+        socket.on('qrcode:delete', (e) => {
+            fetchQrCode();
+        } )
+
+        return () => {
+            socket.disconnect();
+        }
+    }, []);
+
 
     
     useLayoutEffect(() => {
@@ -106,7 +150,6 @@ const Checkout = () =>{
             credentials : "include"
         })
         .then(async(res) => {
-            console.log("Response Status from checkout: ", res.status);
             const data = await res.json();
             if(!res.ok ) throw new Error(data.message);
             return data;
@@ -124,15 +167,12 @@ const Checkout = () =>{
         });
     },[]);
 
-    useEffect(() => {
-        console.log("Checkout Form Data: ", checkoutForm.items);
-    }, [checkoutForm]);
 
 
-
-
+    
     const handleForm = async(e)=>{
         e.preventDefault();
+
 
         setSubmitting(true); // Start loading
 
@@ -349,25 +389,33 @@ const Checkout = () =>{
                                         required
 
                                     >   
-                                    <option value=""
-                                    className="text-capitalize"
-                                    disabled hidden
-                                    >Select payment method</option>
+                                        <option value=""
+                                        className="text-capitalize"
+                                        disabled hidden
+                                        >Select payment method</option>
 
-                                    {checkoutForm?.orderMethod === "delivery" && (
-                                        ["cash on delivery", "gcash", "maya"].map((method, i) => (
-                                            <option key={i} value={method} className="text-capitalize">
-                                                {method}
-                                            </option>
-                                        ))
-                                    )}
-                                    {checkoutForm?.orderMethod === "pick up" && (
-                                        ["gcash", "maya"].map((method, i) => (
-                                            <option key={i} value={method} className="text-capitalize">
-                                                {method}
-                                            </option>
-                                        ))
-                                    )} 
+                                        {checkoutForm?.orderMethod === "delivery" && (
+                                            <>
+                                                <option value="cash on delivery">Cash on Delivery</option>
+                                                <option value="gcash" disabled={!qrAvailability.gcash}>
+                                                GCash {!qrAvailability.gcash && "(Not Available)"}
+                                                </option>
+                                                <option value="maya" disabled={!qrAvailability.maya}>
+                                                Maya {!qrAvailability.maya && "(Not Available)"}
+                                                </option>
+                                            </>
+                                        )}
+                                        
+                                        {checkoutForm?.orderMethod === "pick up" && (
+                                            <>
+                                                <option value="gcash" disabled={!qrAvailability.gcash}>
+                                                GCash {!qrAvailability.gcash && "(Not Available)"}
+                                                </option>
+                                                <option value="maya" disabled={!qrAvailability.maya}>
+                                                Maya {!qrAvailability.maya && "(Not Available)"}
+                                                </option>
+                                            </>
+                                        )}
 
                                     </select>
                                     {checkoutForm?.orderMethod === "pick up" && (

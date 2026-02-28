@@ -12,10 +12,258 @@ import DamageLog from "../../models/damageLog.js";
 import { v2 as cloudinary } from "cloudinary";
 import SalesList from "../../models/salesReport.js";
 import Rider from "../../models/rider.js";
+import { Resend } from "resend";
+
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 
+// ============================================================
+// EMAIL - ORDER STATUS NOTIFICATION
+// ============================================================
+const STATUS_CONFIG = {
+    "confirm": {
+        label: "Order Confirmed",
+        emoji: "✅",
+        color: "#28a745",
+        bgColor: "#d4edda",
+        borderColor: "#28a745",
+        message: "Great news! Your order has been confirmed and is now being reviewed for processing.",
+    },
+    "packing": {
+        label: "Order is Being Packed",
+        emoji: "📦",
+        color: "#17a2b8",
+        bgColor: "#d1ecf1",
+        borderColor: "#17a2b8",
+        message: "Your order is currently being packed and prepared with care.",
+    },
+    "ready for pick up": {
+        label: "Ready for Pick Up",
+        emoji: "🏪",
+        color: "#fd7e14",
+        bgColor: "#ffecd2",
+        borderColor: "#fd7e14",
+        message: "Your order is packed and ready for pick up at our location. Please bring your order reference number.",
+    },
+    "ready to deliver": {
+        label: "Out for Delivery",
+        emoji: "🚀",
+        color: "#007bff",
+        bgColor: "#cce5ff",
+        borderColor: "#007bff",
+        message: "Your order is on its way! Our rider will deliver it to your address shortly.",
+    },
+    "completed": {
+        label: "Order Completed",
+        emoji: "🎉",
+        color: "#28a745",
+        bgColor: "#d4edda",
+        borderColor: "#28a745",
+        message: "Your order has been completed successfully. Thank you for shopping with E-Farmers Hub!",
+    },
+    "cancelled": {
+        label: "Order Cancelled",
+        emoji: "❌",
+        color: "#dc3545",
+        bgColor: "#f8d7da",
+        borderColor: "#dc3545",
+        message: "Your order has been cancelled. If you have any concerns, please contact our support team.",
+    },
+    "replacement confirmed": {
+        label: "Replacement Approved",
+        emoji: "🔄",
+        color: "#28a745",
+        bgColor: "#d4edda",
+        borderColor: "#28a745",
+        message: "Your replacement request has been approved. We will prepare and deliver your replacement items.",
+    },
+    "replacement rejected": {
+        label: "Replacement Rejected",
+        emoji: "⚠️",
+        color: "#dc3545",
+        bgColor: "#f8d7da",
+        borderColor: "#dc3545",
+        message: "Your replacement request has been reviewed and rejected. Please see the details below.",
+    },
+};
+
+const sendOrderStatusEmail = async (
+    email,
+    firstname,
+    orderId,
+    newStatus,
+    extraNote = null,
+    orderItems = [],
+    totalPrice = null
+) => {
+    try {
+        const config = STATUS_CONFIG[newStatus] ?? {
+            label: newStatus,
+            emoji: "📋",
+            color: "#6c757d",
+            bgColor: "#e2e3e5",
+            borderColor: "#6c757d",
+            message: `Your order status has been updated to: ${newStatus}.`,
+        };
+
+        const name = firstname.charAt(0).toUpperCase() + firstname.slice(1).toLowerCase();
+        const orderIdShort = orderId ?? "N/A";
+
+        const itemsHTML = orderItems.length > 0 ? `
+            <table width="100%" cellpadding="0" cellspacing="0" style="margin: 20px 0 0 0; border-collapse: collapse;">
+                <tr>
+                    <th align="center" style="text-align: center; padding: 10px 12px; background-color: #f8f9fa; color: #333; font-size: 13px; border-bottom: 2px solid #dee2e6;">Product</th>
+                    <th align="center" style="text-align: center; padding: 10px 12px; background-color: #f8f9fa; color: #333; font-size: 13px; border-bottom: 2px solid #dee2e6;">Qty</th>
+                    <th align="center" style="text-align: center; padding: 10px 12px; background-color: #f8f9fa; color: #333; font-size: 13px; border-bottom: 2px solid #dee2e6;">Price</th>
+                </tr>
+                ${orderItems.map((item, i) => `
+                <tr style="background-color: ${i % 2 === 0 ? '#ffffff' : '#fafafa'};">
+                    <td align="center" style="padding: 10px 12px; font-size: 14px; color: #444; text-align: center; border-bottom: 1px solid #f0f0f0;">${item.prodName}</td>
+                    <td align="center" style="padding: 10px 12px; font-size: 14px; color: #444; text-align: center; border-bottom: 1px solid #f0f0f0;">${item.quantity} bundle${item.quantity > 1 ? 's' : ''}</td>
+                    <td align="center" style="padding: 10px 12px; font-size: 14px; color: #444; text-align: center; border-bottom: 1px solid #f0f0f0;">₱${(item.prodPrice * item.quantity).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</td>
+                </tr>
+                `).join('')}
+            </table>
+            ${totalPrice ? `
+            <table width="100%" cellpadding="0" cellspacing="0" style="margin: 0 0 20px 0; border-collapse: collapse; border-top: 2px solid #dee2e6;">
+                <tr>
+                    <td style="padding: 12px 12px 12px 0; font-size: 15px; font-weight: 700; color: #333; text-align: left;">Order Total</td>
+                    <td style="padding: 12px 0 12px 12px; font-size: 18px; font-weight: 700; color: #28a745; text-align: right;">₱${totalPrice.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</td>
+                </tr>
+            </table>
+            ` : ''}
+        ` : '';
+
+        const extraNoteHTML = extraNote ? `
+            <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #fff3cd; border-left: 4px solid #ffc107; border-radius: 4px; margin: 20px 0;">
+                <tr>
+                    <td style="padding: 14px 16px;">
+                        <p style="color: #856404; font-size: 14px; margin: 0; line-height: 1.5;">
+                            📝 <strong>Note:</strong> ${extraNote}
+                        </p>
+                    </td>
+                </tr>
+            </table>
+        ` : '';
+
+        const { data, error } = await resend.emails.send({
+            from: 'E-Farmers Hub <orders@efarmershub.com>',
+            to: [email],
+            subject: `${config.emoji} ${config.label} - Order #${orderIdShort} | E-Farmers Hub`,
+            html: `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${config.label} - E-Farmers Hub</title>
+    <style>
+        body { margin: 0; padding: 0; background-color: #f4f4f4; }
+        .email-wrapper { width: 100%; background-color: #f4f4f4; padding: 20px 0; }
+        .email-container { width: 100% !important; max-width: 600px !important; margin: 0 auto !important; background-color: #ffffff; border-radius: 10px; overflow: hidden; }
+        .email-container td { text-align: center !important; }
+        p, h1, h2, h3 { text-align: center !important; }
+        @media only screen and (max-width: 620px) {
+            .email-container { width: 100% !important; max-width: 100% !important; border-radius: 0 !important; }
+            .email-body-td { padding: 20px 16px 10px 16px !important; }
+            .email-badge-td { padding: 0 16px !important; }
+            h1 { font-size: 22px !important; }
+            h2 { font-size: 18px !important; }
+        }
+    </style>
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f4;">
+    <table width="100%" cellpadding="0" cellspacing="0" class="email-wrapper">
+        <tr>
+            <td align="center" valign="top">
+                <table cellpadding="0" cellspacing="0" class="email-container" style="max-width: 600px; width: 100%; background-color: #ffffff; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+
+                    <!-- Header with Logo -->
+                    <tr>
+                        <td align="center" style="padding: 40px 20px; text-align: center !important;">
+                            <img src="https://res.cloudinary.com/dtelqtkzj/image/upload/v1770440242/image-removebg-preview_sfsot1.png" alt="E-Farmers Hub Logo" style="display: block; margin: 0 auto 15px auto; max-width: 150px; height: auto;" />
+                            <h1 style="color: #28a745; margin: 0; font-size: 28px; font-weight: 600; text-align: center !important;">E-Farmers Hub</h1>
+                        </td>
+                    </tr>
+
+                    <!-- Status Badge -->
+                    <tr>
+                        <td align="center" class="email-badge-td" style="padding: 0 30px; text-align: center !important;">
+                            <table width="100%" cellpadding="0" cellspacing="0">
+                                <tr>
+                                    <td align="center" style="background-color: ${config.bgColor}; border: 2px solid ${config.borderColor}; border-radius: 8px; padding: 20px; text-align: center !important;">
+                                        <p style="margin: 0 0 6px 0; font-size: 32px; text-align: center !important;">${config.emoji}</p>
+                                        <h2 style="color: ${config.color}; margin: 0; font-size: 22px; font-weight: 700; text-align: center !important;">${config.label}</h2>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
+                    <!-- Body Content -->
+                    <tr>
+                        <td align="center" class="email-body-td" style="padding: 30px 30px 10px 30px; text-align: center !important;">
+                            <p style="color: #333333; font-size: 16px; margin: 0 0 8px 0; text-align: center !important;">Hi <strong>${name}</strong>,</p>
+                            <p style="color: #666666; font-size: 15px; line-height: 1.7; margin: 0 0 20px 0; text-align: center !important;">${config.message}</p>
+
+                            <!-- Order ID Box -->
+                            <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f8f9fa; border-radius: 6px; margin-bottom: 20px;">
+                                <tr>
+                                    <td align="center" style="padding: 14px 18px; text-align: center !important;">
+                                        <p style="margin: 0 0 4px 0; font-size: 13px; color: #6c757d; text-transform: uppercase; letter-spacing: 1px; text-align: center !important;">Order Reference</p>
+                                        <p style="margin: 0; font-size: 18px; font-weight: 700; color: #333; font-family: 'Courier New', monospace; text-align: center !important;">#${orderIdShort}</p>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            ${itemsHTML}
+                            ${extraNoteHTML}
+
+                            <p style="color: #888888; font-size: 13px; line-height: 1.6; margin: 20px 0 10px 0; text-align: center !important;">
+                                If you have any questions or concerns about your order, feel free to reach out to our support team.
+                            </p>
+                        </td>
+                    </tr>
+
+                    <!-- Footer -->
+                    <tr>
+                        <td align="center" style="background-color: #f8f9fa; padding: 20px; text-align: center !important; border-top: 1px solid #e9ecef;">
+                            <p style="color: #6c757d; font-size: 12px; margin: 0 0 4px 0; text-align: center !important;">
+                                © 2026 E-Farmers Hub. All rights reserved.
+                            </p>
+                            <p style="color: #adb5bd; font-size: 11px; margin: 0; text-align: center !important;">
+                                This is an automated notification. Please do not reply to this email.
+                            </p>
+                        </td>
+                    </tr>
+
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
+            `
+        });
+
+        if (error) {
+            console.error('Resend error (order status email):', error);
+            return { success: false, error };
+        }
+
+        console.log(`Order status email sent [${newStatus}] →`, email);
+        return { success: true, data };
+
+    } catch (error) {
+        console.error('sendOrderStatusEmail error:', error);
+        return { success: false, error };
+    }
+};
 
 
+// ============================================================
+// EXISTING HELPERS (unchanged)
+// ============================================================
 
 const sendSMS = async (contact, orderId, firstname, productList, totalAmount) => {
     const id = orderId.toString().slice(0, 12);
@@ -25,7 +273,7 @@ const sendSMS = async (contact, orderId, firstname, productList, totalAmount) =>
         maximumFractionDigits: 2
     });
 
-  const message = `Hello Seller ${seller}!, You have new order #${id}, Please prepare: ${productList}, With Total amount of Php${amount}. IMPORTANT REMINDER: Please ensure all products are fresh and good quality. Do not pack spoiled or damaged items.`;
+    const message = `Hello Seller ${seller}!, You have new order #${id}, Please prepare: ${productList}, With Total amount of Php${amount}. IMPORTANT REMINDER: Please ensure all products are fresh and good quality. Do not pack spoiled or damaged items.`;
 
     const submitData = {
         "api_token": process.env.SMS_TOKEN,
@@ -41,8 +289,6 @@ const sendSMS = async (contact, orderId, firstname, productList, totalAmount) =>
         })
         const data = await res.json();
         if(!res.ok) throw new Error(data.message);
-
-        
         console.log(data);
     } catch (error) {
         console.log("Error: ", error.message);
@@ -57,12 +303,8 @@ const formatTime = () =>
       hour12: true,
     });
 
-
-
-// Helper function to create activity log (success only)
 const createActivityLog = async (adminId, action, description, req) => {
     try {
-        // Find admin to get admin type
         const admin = await Admin.findById(adminId);
         if (!admin) {
             console.error('Admin not found for activity log');
@@ -88,9 +330,7 @@ const createActivityLog = async (adminId, action, description, req) => {
     }
 };
 
-
 const createTransaction = async(items, payment, userId, firstname, lastname, email, totalPrice, refNo, proofOfPayment) => {
-
     for (const item of items){
         const sellerId = item.seller.id;
         const amount = item.prodPrice * item.quantity;
@@ -112,7 +352,6 @@ const createTransaction = async(items, payment, userId, firstname, lastname, ema
         })
     }
 
-
     await AdminPaymentTransaction.create({
         accountId: userId,
         accountName: `${firstname} ${lastname}`,
@@ -127,46 +366,30 @@ const createTransaction = async(items, payment, userId, firstname, lastname, ema
         },
         refNo: refNo,
         imageFile: proofOfPayment,
-
     }) 
 }
 
-
-
-
 const createOrUpdatePayout = async(items, order)=>{
-    const SELLER_TAX_RATE = process.env.SELLER_TAX_RATE; // 5% tax (adjust mo if needed)
-
+    const SELLER_TAX_RATE = process.env.SELLER_TAX_RATE;
 
     for (const item of items) {
         const sellerId = item.seller.id;
-        const grossAmount = item.prodPrice * item.quantity; // GROSS
-        const taxAmount = grossAmount * SELLER_TAX_RATE; // TAX (5%)
-        const netAmount = grossAmount - taxAmount; // NET (what seller receives)
+        const grossAmount = item.prodPrice * item.quantity;
+        const taxAmount = grossAmount * SELLER_TAX_RATE;
+        const netAmount = grossAmount - taxAmount;
         
         const today = new Date().toISOString().split("T")[0];
-
         const payout = await PayoutTransaction.findOne({ sellerId, date: today, status: "pending"})
 
         if (payout){
-            // UPDATE existing payout - accumulate all amounts
-            payout.orders.push({
-                orderId: order._id,
-                amount: grossAmount // Store gross amount in order
-            })
-            
-            payout.totalAmount += grossAmount; // Accumulate GROSS
-            payout.taxAmount += taxAmount; // Accumulate TAX
-            payout.netAmount += netAmount; // Accumulate NET
+            payout.orders.push({ orderId: order._id, amount: grossAmount })
+            payout.totalAmount += grossAmount;
+            payout.taxAmount += taxAmount;
+            payout.netAmount += netAmount;
             await payout.save();
-
         } else {
-            // CREATE new payout
             const seller = await Seller.findOne({_id: sellerId});
-
-            if(!seller){
-                throw new Error("Seller not found. Product must have an active seller.");
-            }
+            if(!seller) throw new Error("Seller not found. Product must have an active seller.");
 
             await PayoutTransaction.create({
                 sellerId,
@@ -178,26 +401,24 @@ const createOrUpdatePayout = async(items, order)=>{
                 },
                 date: today,
                 orders: [{ orderId: order._id, amount: grossAmount }],
-                totalAmount: grossAmount, // GROSS total
-                taxAmount: taxAmount, // TAX total
-                netAmount: netAmount // NET total (actual payout)
+                totalAmount: grossAmount,
+                taxAmount: taxAmount,
+                netAmount: netAmount
             });
         }
     }
 }
 
 
-
-
-
-
+// ============================================================
+// STATUS ORDER
+// ============================================================
 export const statusOrder = async(req, res) => {
     try {
         const {orderId, newStatus, assignRider} = req.body;
         const adminId = req.account.id;
 
         const order = await Order.findById(orderId);
-        
 
         if(!order) {
             return res.status(404).json({ message: "Order not found" });
@@ -206,12 +427,13 @@ export const statusOrder = async(req, res) => {
         const orderIdShort = order.orderId || orderId.toString().slice(-8);
 
 
+        // ============================
+        // CONFIRM / PACKING
+        // ============================
         if(newStatus === "confirm" || newStatus === "packing") {
             const descriptionMess = newStatus === "confirm"
                 ? "order confirmed, waiting for process."
                 : "your order is now process.";
-             
-            
 
             order.statusDelivery = newStatus;
             order.statusHistory.push({
@@ -223,7 +445,6 @@ export const statusOrder = async(req, res) => {
 
             if(newStatus === "confirm") {
 
-                // CREATE PAYMENT AND PAYOUT TRANSACTIONS WHEN ORDER IS CONFIRMED
                 if(order.paymentType === "gcash" || order.paymentType === "maya") {
                     await createOrUpdatePayout(order.orderItems, order);
                     
@@ -239,18 +460,10 @@ export const statusOrder = async(req, res) => {
                         order.proofOfPayment.image,
                     );
 
-
-
-                    // ========================================
-                    // CREATE SALES LIST ENTRIES
-                    // ========================================
-                
                     try {
-
                         for (const item of order.orderItems) {
                             const product = await Product.findById(item.prodId);
                             
-                            // MANUALLY GENERATE SALEID
                             let newSaleId;
                             const lastSale = await SalesList.findOne().sort({ saleId: -1 });
                             
@@ -278,17 +491,12 @@ export const statusOrder = async(req, res) => {
 
                             await salesRecord.save();
                         }
-                        
                     } catch (salesError) {
                         return res.status(500).json({ message: "Error creating sales list" });
                     }
                 }
 
-                
-
-
-                
-                // GROUP ITEMS BY SELLER
+                // GROUP ITEMS BY SELLER & SEND SMS
                 const sellerGroups = {};
                 
                 for(const item of order.orderItems) {
@@ -311,7 +519,6 @@ export const statusOrder = async(req, res) => {
                     sellerGroups[sellerId].totalAmount += (item.prodPrice * item.quantity);
                 }
                 
-                // SEND SMS TO SELLERS (ONE MESSAGE PER SELLER)
                 for(const sellerId in sellerGroups) {
                     const seller = await Seller.findById(sellerId);
                     if(!seller) {
@@ -322,33 +529,47 @@ export const statusOrder = async(req, res) => {
                     const sellerContact = seller.e_WalletAcc?.number;
                     const { items, totalAmount } = sellerGroups[sellerId];
                     
-                    // Build product list string
                     const productList = items.map(item => 
                         `${item.prodName} (${item.quantity} bundle${item.quantity > 1 ? 's' : ''})`
                     ).join(', ');
                     
-
-                    // Send SMS with all products in one message
-                    await sendSMS(sellerContact, order.orderId, seller.firstname, productList, totalAmount);
+                    // await sendSMS(sellerContact, order.orderId, seller.firstname, productList, totalAmount);
                 }
+
+                // 📧 EMAIL - confirm (with items + total)
+                await sendOrderStatusEmail(
+                    order.email,
+                    order.firstname,
+                    order.orderId,
+                    "confirm",
+                    null,
+                    order.orderItems,
+                    order.totalPrice
+                );
+
+            } else {
+                // 📧 EMAIL - packing
+                await sendOrderStatusEmail(
+                    order.email,
+                    order.firstname,
+                    order.orderId,
+                    "packing"
+                );
             }
+
             await order.save();
             
+            const actionDesc = newStatus === "confirm" 
+                ? `Confirmed order #${orderIdShort} and notified ${order.orderItems.length} seller(s) via SMS`
+                : `Updated order #${orderIdShort} status to packing`;
 
-
-            // Log activity
-            // const actionDesc = newStatus === "confirm" 
-            //     ? `Confirmed order #${orderIdShort} and notified ${order.orderItems.length} seller(s) via SMS`
-            //     : `Updated order #${orderIdShort} status to packing`;
-
-            // await createActivityLog(
-            //     adminId,
-            //     'UPDATE ORDER STATUS',
-            //     actionDesc,
-            //     req
-            // );
+            await createActivityLog(adminId, 'UPDATE ORDER STATUS', actionDesc, req);
         }
         
+
+        // ============================
+        // READY FOR PICK UP / COMPLETED
+        // ============================
         if((order.orderMethod === "pick up" && newStatus === "ready for pick up") || newStatus === "completed") {
             const descriptionMess = newStatus === "ready for pick up"
                 ? "your order is packed and ready for pick up"
@@ -363,29 +584,26 @@ export const statusOrder = async(req, res) => {
             });
             await order.save();
 
-            // Log activity
+            // 📧 EMAIL - ready for pick up / completed
+            await sendOrderStatusEmail(
+                order.email,
+                order.firstname,
+                order.orderId,
+                newStatus
+            );
+
             const actionDesc = newStatus === "ready for pick up"
                 ? `Marked order #${orderIdShort} as ready for pick up`
                 : `Completed order #${orderIdShort} - Customer picked up`;
 
-            await createActivityLog(
-                adminId,
-                'UPDATE ORDER STATUS',
-                actionDesc,
-                req
-            );
+            await createActivityLog(adminId, 'UPDATE ORDER STATUS', actionDesc, req);
         }
 
 
-
-
-
+        // ============================
+        // READY TO DELIVER
+        // ============================
         if(order.orderMethod === "delivery" && newStatus === "ready to deliver") {
-
-
-
-
-
             order.statusDelivery = newStatus;
             order.statusHistory.push({
                 status: newStatus,
@@ -397,14 +615,13 @@ export const statusOrder = async(req, res) => {
             order.riderName = assignRider?.name;
             await order.save();
 
-            //Log activity
             await createActivityLog(
                 adminId,
                 'ASSIGN RIDER TO ORDER',
                 `Assigned rider ${assignRider?.name} to order #${orderIdShort} for delivery`,
                 req
             );
-
+            
             const rider = await Rider.findById(assignRider?.id);
 
             if(rider?.pushToken) {
@@ -425,9 +642,19 @@ export const statusOrder = async(req, res) => {
                 const data = await response.json();
                 console.log('Expo push response:', data);
             }
+
+            io.emit('to rider', { message: `new order ${orderIdShort} assigned` });
+
+            // 📧 EMAIL - ready to deliver (with rider name as note)
+            await sendOrderStatusEmail(
+                order.email,
+                order.firstname,
+                order.orderId,
+                "ready to deliver",
+                `Your rider is ${assignRider?.name}.`
+            );
         }
-        
-        
+
         res.status(200).json({ message: `update your status as ${newStatus}`});
     } catch (error) {
         console.error('Status order error:', error);
@@ -436,23 +663,18 @@ export const statusOrder = async(req, res) => {
 }
 
 
-
-
-
-
-
 const storage = multer.memoryStorage();
-
 export const cancelOrderFile = multer({ storage: storage });
 
 
+// ============================================================
+// CANCEL ORDER
+// ============================================================
 export const cancelOrder = async (req, res) => {
     try {
         const { orderId, reason, newStatus } = req.body;
         const adminId = req.account.id;
 
-
-        // Validate required fields
         if (!orderId || !reason || !reason.trim()) {
             return res.status(400).json({ message: "Order ID and reason are required" });
         }
@@ -465,7 +687,6 @@ export const cancelOrder = async (req, res) => {
 
         const orderIdShort = order.orderId || orderId.toString().slice(-8);
 
-        // ✅ CHANGE: Upload proof image to Cloudinary instead of saving locally
         let proofImageUrl = null;
         
         if (req.file) {
@@ -482,34 +703,34 @@ export const cancelOrder = async (req, res) => {
             }
         }
 
-        // Update order status to cancelled
         order.statusDelivery = newStatus;
-        
-        // Add to status history with cancellation details
         order.statusHistory.push({
             status: newStatus,
             description: `Order cancelled by admin. Reason: ${reason}`,
             location: "Admin Office",
-            imageFile: proofImageUrl, // ✅ Store Cloudinary URL instead of filename
+            imageFile: proofImageUrl,
             timestamp: formatTime()
         });
 
-        // Restore product stocks
         let restoredProducts = 0;
         for (const prod of order.orderItems) {
             const prodId = prod.prodId;
             const quantity = prod.quantity;
-
-            await Product.findByIdAndUpdate(
-                prodId,
-                { $inc: { stocks: quantity } }
-            );
+            await Product.findByIdAndUpdate(prodId, { $inc: { stocks: quantity } });
             restoredProducts++;
         }
 
         await order.save();
 
-        // Log activity (success only)
+        // 📧 EMAIL - cancelled (with reason as note)
+        await sendOrderStatusEmail(
+            order.email,
+            order.firstname,
+            order.orderId,
+            "cancelled",
+            reason
+        );
+
         const proofText = proofImageUrl ? ' with proof attached' : '';
         await createActivityLog(
             adminId,
@@ -527,28 +748,19 @@ export const cancelOrder = async (req, res) => {
 };
 
 
-
-
-
-
+// ============================================================
+// NOTIFICATION HELPER (unchanged)
+// ============================================================
 const createNotification = async(senderId, senderRole, recipientId, recipientRole, message, link, type, meta) => {
     await Notification.create({
-        sender: {
-            id: senderId,
-            role: senderRole,
-        },
-        recipient: {
-            id: recipientId,
-            role: recipientRole,
-        },
+        sender: { id: senderId, role: senderRole },
+        recipient: { id: recipientId, role: recipientRole },
         message: message,
         link: link,
         type: type,
         meta: meta
     }); 
 }
-
-
 
 const sendReplacementSMS = async (contact, firstname, orderId, productList, faultAssignedTo) => {
     const id = orderId.toString().slice(0, 12);
@@ -557,13 +769,10 @@ const sendReplacementSMS = async (contact, firstname, orderId, productList, faul
     let message = "";
     
     if (faultAssignedTo === "rider") {
-        // Neutral - no charge
         message = `E-FARMERS HUB: Hello Seller ${seller}! Replacement needed for Order #${id}: ${productList}. Please prepare the replacement. Thank you!`;
     } else if (faultAssignedTo === "seller") {
-        // With ₱30 charge
         message = `E-FARMERS HUB: Hello Seller ${seller}! Replacement approved for Order #${id}: ${productList}. Delivery Charge: ₱30 (deducted from payout). Please prepare the replacement. Thank you!`;
     }
-
 
     const submitData = {
         "api_token": process.env.SMS_TOKEN,
@@ -579,15 +788,15 @@ const sendReplacementSMS = async (contact, firstname, orderId, productList, faul
         })
         const data = await res.json();
         if(!res.ok) throw new Error(data.message);
-
     } catch (error) {
         console.log("Error: ", error.message);
     }
 }
 
 
-
-
+// ============================================================
+// REVIEW REPLACEMENT
+// ============================================================
 export const reviewReplacement = async (req, res) => {
     try {
         const { orderId, reviewItems } = req.body;
@@ -608,31 +817,19 @@ export const reviewReplacement = async (req, res) => {
         const buyerId = order.userId;
         const orderIdShort = order.orderId || orderId.toString().slice(-8);
 
-
-        // Process each item review
         for (const reviewItem of reviewItems) {
             const { itemId, decision, faultAssignedTo, faultDetails, notes } = reviewItem;
 
             const item = order.orderItems.find(i => i._id.toString() === itemId);
 
-            if (!item) {
-                continue;
-            }
+            if (!item) continue;
+            if (!item.replacement || !item.replacement.isRequested) continue;
 
-            if (!item.replacement || !item.replacement.isRequested) {
-                continue;
-            }
-
-
-            // Update replacement status
             item.replacement.status = decision === "approve" ? "approved" : "rejected";
             item.replacement.reviewedAt = new Date();
             item.replacement.reviewedBy = adminId;
             item.replacement.notes = notes || "";
 
-
-
-            // If approved
             if (decision === "approve") {
                 item.replacement.fault = {
                     assignedTo: faultAssignedTo || "none",
@@ -650,7 +847,6 @@ export const reviewReplacement = async (req, res) => {
                     });
                 }
 
-                // Check if product has enough stock
                 if (product.stocks < item.quantity) {
                     return res.status(400).json({ 
                         message: `Insufficient stock for "${item.prodName}". Available: ${product.stocks}, Needed: ${item.quantity}. Please reject this replacement request.`,
@@ -660,14 +856,10 @@ export const reviewReplacement = async (req, res) => {
                     });
                 }
 
-                // ========================================
-                // HANDLE SELLER FAULT - APPROVED
-                // ========================================
                 if (faultAssignedTo === "seller") {
                     const sellerId = item.seller.id;
                     const today = new Date().toISOString().split("T")[0];
 
-                    // Hanapin yung payout ng seller tapos bawasan ng 30
                     const payout = await PayoutTransaction.findOne({ 
                         sellerId, 
                         date: today, 
@@ -680,9 +872,6 @@ export const reviewReplacement = async (req, res) => {
                     }
                 }
 
-                // ========================================
-                // HANDLE RIDER FAULT - APPROVED
-                // ========================================
                 if (faultAssignedTo === "rider") {
                     const riderId = order.riderId;
                     
@@ -702,39 +891,23 @@ export const reviewReplacement = async (req, res) => {
                     }
                 }
 
-                // Notify BUYER about approved replacement
                 await createNotification(
-                    adminId,
-                    "admin",
-                    buyerId,
-                    "user",
+                    adminId, "admin", buyerId, "user",
                     `Your replacement request for "${item.prodName}" has been approved. Your replacement will be prepared for delivery.`,
-                    'orderdetails',
-                    "replacement approved",
-                    { 
-                        orderId, 
-                        orderIdShort, 
-                        itemId: item._id,
-                        itemName: item.prodName,
-                        faultAssignedTo
-                    }
+                    'orderdetails', "replacement approved",
+                    { orderId, orderIdShort, itemId: item._id, itemName: item.prodName, faultAssignedTo }
                 );
                 io.emit('user notif');
 
             } else {
-                // ========================================
-                // REJECTED - OUT OF STOCK / REFUND SCENARIO
-                // ========================================
                 rejectedCount++;
 
                 const refundAmount = item.prodPrice * item.quantity;
 
-                // HANDLE SELLER FAULT - REJECTED (Refund)
                 if (faultAssignedTo === "seller") {
                     const sellerId = item.seller.id;
                     const today = new Date().toISOString().split("T")[0];
 
-                    // Bawasan yung payout ng seller ng refund amount
                     const payout = await PayoutTransaction.findOne({ 
                         sellerId, 
                         date: today, 
@@ -746,7 +919,6 @@ export const reviewReplacement = async (req, res) => {
                         await payout.save();
                     }
 
-                    // Add to refund history
                     order.refundHistory.push({
                         itemId: item._id,
                         itemName: item.prodName,
@@ -760,7 +932,6 @@ export const reviewReplacement = async (req, res) => {
                     });
                 }
 
-                // HANDLE RIDER FAULT - REJECTED
                 if (faultAssignedTo === "rider") {
                     const riderId = order.riderId;
                     
@@ -792,33 +963,17 @@ export const reviewReplacement = async (req, res) => {
                     }
                 }
 
-                // Notify BUYER about rejection and refund
                 await createNotification(
-                    adminId,
-                    "admin",
-                    buyerId,
-                    "user",
+                    adminId, "admin", buyerId, "user",
                     `Your replacement request for "${item.prodName}" has been rejected.${notes ? ` Reason: ${notes}` : ''} A refund of ₱${refundAmount.toFixed(2)} is being processed.`,
-                    `orderdetails`,
-                    "replacement rejected",
-                    { 
-                        orderId, 
-                        orderIdShort, 
-                        itemId: item._id,
-                        itemName: item.prodName,
-                        reason: notes || "",
-                        refundAmount
-                    }
+                    `orderdetails`, "replacement rejected",
+                    { orderId, orderIdShort, itemId: item._id, itemName: item.prodName, reason: notes || "", refundAmount }
                 );
                 io.emit('user notif');
             }
         }
 
-
-
-        // ========================================
         // GROUP BY SELLER AND SEND SMS
-        // ========================================
         const sellerReplacementGroups = {};
 
         for (const reviewItem of reviewItems) {
@@ -843,7 +998,6 @@ export const reviewReplacement = async (req, res) => {
             });
         }
 
-        // SEND SMS TO SELLERS (ONE MESSAGE PER SELLER)
         for (const sellerId in sellerReplacementGroups) {
             const seller = await Seller.findById(sellerId);
             if (!seller) {
@@ -854,20 +1008,10 @@ export const reviewReplacement = async (req, res) => {
             const sellerContact = seller.e_WalletAcc?.number;
             const { items, faultAssignedTo } = sellerReplacementGroups[sellerId];
             
-            // Build product list string - EXACTLY like your format
             const productList = items.map(item => 
                 `${item.prodName} (${item.quantity} bundle${item.quantity > 1 ? 's' : ''})`
             ).join(', ');
-            
 
-            console.log("---------------------");
-            console.log("Seller:", seller.firstname);
-            console.log("Contact:", sellerContact);
-            console.log("Products:", productList);
-            console.log("Fault:", faultAssignedTo);
-            console.log("Order ID:", order.orderId);
-            
-            // Send SMS with all products in one message
             await sendReplacementSMS(
                 sellerContact, 
                 seller.firstname, 
@@ -877,17 +1021,7 @@ export const reviewReplacement = async (req, res) => {
             );
         }
 
-
-
-
-
-
-
-
-
-
-
-        // Check if ALL requested items are now reviewed
+        // CHECK IF ALL REVIEWED
         const allItemsReviewed = order.orderItems.every(item => {
             if (!item.replacement?.isRequested) return true;
             return item.replacement.status === "approved" || item.replacement.status === "rejected";
@@ -896,11 +1030,7 @@ export const reviewReplacement = async (req, res) => {
         const hasApprovedItem = order.orderItems.some(item => 
             item.replacement?.isRequested && item.replacement.status === "approved"
         );
-        
 
-        // ========================================
-        // UPDATE ORDER STATUS BASED ON REVIEW RESULTS
-        // ========================================
         if (allItemsReviewed) {
             if (hasApprovedItem) {
                 order.statusDelivery = "replacement confirmed";
@@ -916,22 +1046,18 @@ export const reviewReplacement = async (req, res) => {
                     status: "replacement confirmed",
                     description: statusDescription,
                     location: "Admin Office",
-                    date: new Date().toLocaleDateString("en-PH", {
-                        month: "short",
-                        day: "numeric"
-                    }),
-                    timestamp: new Date().toLocaleTimeString("en-PH", {
-                        timeZone: "Asia/Manila",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                        hour12: true
-                    }),
-                    performedBy: {
-                        id: adminId,
-                        role: "Admin",
-                        name: adminName
-                    }
+                    date: new Date().toLocaleDateString("en-PH", { month: "short", day: "numeric" }),
+                    timestamp: new Date().toLocaleTimeString("en-PH", { timeZone: "Asia/Manila", hour: "2-digit", minute: "2-digit", hour12: true }),
+                    performedBy: { id: adminId, role: "Admin", name: adminName }
                 });
+
+                // 📧 EMAIL - replacement confirmed
+                await sendOrderStatusEmail(
+                    order.email,
+                    order.firstname,
+                    order.orderId,
+                    "replacement confirmed"
+                );
 
             } else {
                 order.statusDelivery = "replacement rejected";
@@ -945,28 +1071,24 @@ export const reviewReplacement = async (req, res) => {
                     status: "replacement rejected",
                     description: `We have rejected your replacement ${rejectedCount === 1 ? 'request' : 'requests'} (${rejectedCount} ${rejectedCount === 1 ? 'item' : 'items'}). Admin Note: ${rejectionReason}`,
                     location: "Admin Office",
-                    date: new Date().toLocaleDateString("en-PH", {
-                        month: "short",
-                        day: "numeric"
-                    }),
-                    timestamp: new Date().toLocaleTimeString("en-PH", {
-                        timeZone: "Asia/Manila",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                        hour12: true
-                    }),
-                    performedBy: {
-                        id: adminId,
-                        role: "Admin",
-                        name: adminName
-                    }
+                    date: new Date().toLocaleDateString("en-PH", { month: "short", day: "numeric" }),
+                    timestamp: new Date().toLocaleTimeString("en-PH", { timeZone: "Asia/Manila", hour: "2-digit", minute: "2-digit", hour12: true }),
+                    performedBy: { id: adminId, role: "Admin", name: adminName }
                 });
+
+                // 📧 EMAIL - replacement rejected (with reason)
+                await sendOrderStatusEmail(
+                    order.email,
+                    order.firstname,
+                    order.orderId,
+                    "replacement rejected",
+                    rejectionReason
+                );
             }
         }
 
         await order.save();
 
-        // Log activity
         let activityMessage = "";
         if (approvedCount > 0 && rejectedCount > 0) {
             activityMessage = `Reviewed replacement requests in order #${orderIdShort}: ${approvedCount} approved, ${rejectedCount} rejected`;
@@ -976,12 +1098,7 @@ export const reviewReplacement = async (req, res) => {
             activityMessage = `Rejected ${rejectedCount} replacement ${rejectedCount === 1 ? 'request' : 'requests'} in order #${orderIdShort}`;
         }
 
-        await createActivityLog(
-            adminId,
-            'REVIEW REPLACEMENT REQUEST',
-            activityMessage,
-            req
-        );
+        await createActivityLog(adminId, 'REVIEW REPLACEMENT REQUEST', activityMessage, req);
 
         return res.status(200).json({ 
             message: `Successfully reviewed ${approvedCount + rejectedCount} replacement ${approvedCount + rejectedCount === 1 ? 'request' : 'requests'}`,

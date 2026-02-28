@@ -108,7 +108,6 @@ const Register = () => {
                 return;
             }
 
-
             setFormData({
                 ...formData,
                 plateImage: file
@@ -158,14 +157,7 @@ const Register = () => {
     };
 
 
-
-
-
-
-
-
-
-
+    
 
 
 
@@ -652,15 +644,18 @@ const Register = () => {
                                     <form onSubmit={handleForm}>
                                         <div className="row mt-3">
                                             {[
-                                                { label: 'First name', name: 'firstname', type: 'text', holder: 'Enter first name' },
-                                                { label: "Middle name", name: "middlename", type: "text", holder: "Enter middle"},
-                                                { label: 'Last name', name: 'lastname', type: 'text',  holder: 'Enter last name' },
+                                                { label: 'First name', name: 'firstname', type: 'text', holder: 'Enter first name', optional: false },
+                                                { label: "Middle name", name: "middlename", type: "text", holder: "Enter middle", optional: true},
+                                                { label: 'Last name', name: 'lastname', type: 'text',  holder: 'Enter last name', optional: false },
 
                                             ].map((data, i) => (
                                                 <div key={i} className="col-12 col-md-4 mt-2 mt-md-0">
                                                     <label className="text-capitalize small mt-2  fw-bold"
                                                         htmlFor={data.name}>
                                                         {data.label}:
+                                                        {data.optional && (
+                                                            <span className="text-normal text-muted small ms-1">{'(optional)'}</span>
+                                                        )}
                                                     </label>
                                                     
                                                     <input
@@ -672,7 +667,7 @@ const Register = () => {
                                                         placeholder={data.holder}
                                                         value={formData[data.name] || ''}
                                                         onChange={handleTextOnlyChange}
-                                                        required
+                                                        required={!data.optional}
                                                     />
                                                 </div>
                                             ))}
@@ -796,7 +791,8 @@ const Register = () => {
                                                 </div>
                                             </>
                                         )}
-
+                                        
+                                        
 
                                         {/* Rider Vehicle Information */}
                                         {isRider && (
@@ -1089,7 +1085,6 @@ const Register = () => {
                                             </>
                                         )}
 
-
                                         {/* Address Section - for farmers and riders */}
 
                                         {!needsEWallet && (
@@ -1264,8 +1259,8 @@ const Register = () => {
                                                     </p>
                                                 </div>
                                             )}
-
                                             
+
                                             <button
                                                 type="submit"
                                                 className="p-2 shadow-sm text-light rounded w-100 border-0 text-capitalize"
@@ -1386,9 +1381,6 @@ const Register = () => {
                     </div>
                 </div>
             )}
-
-
-
 
         {showTermsModal && (
             <RiderTermsModal
@@ -1883,7 +1875,6 @@ const SellerTermsModal = ({ show, onClose, agreedToTerms, setAgreedToTerms, onAc
         </div>
     );
 };
-
 
 
 

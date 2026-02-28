@@ -124,8 +124,9 @@ const addAccount = async (req, res) => {
     try {
         const { role } = req.params;
         const { 
-            firstname, 
-            lastname, 
+            firstname,
+            middlename, 
+            lastname,
             contact, 
             email, 
             password, 
@@ -140,13 +141,7 @@ const addAccount = async (req, res) => {
             zipCode
         } = req.body;
 
-
-        
-        
-        
-        
-
-        
+                
         // Validate role
         const validRoles = ['admin', 'seller', 'rider'];
         if (!role || !validRoles.includes(role.toLowerCase())) {
@@ -273,6 +268,7 @@ const addAccount = async (req, res) => {
             const newSeller = new Seller({
                 accountId,
                 firstname,
+                middlename,
                 lastname,
                 contact: wallet_number,
                 email,
@@ -331,6 +327,7 @@ const addAccount = async (req, res) => {
             const newRider = new Rider({
                 accountId,
                 firstname,
+                middlename,
                 lastname,
                 contact: wallet_number,
                 email,

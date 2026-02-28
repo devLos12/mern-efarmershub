@@ -707,12 +707,6 @@ const OrderDetails = () => {
 
 
 
-
-
-
-
-
-
     // Fetch riders
     useEffect(() => {
         if (role === "admin") {
@@ -731,13 +725,6 @@ const OrderDetails = () => {
                 .catch((error) => console.log("Error: ", error.message));
         }
     }, [role]);
-
-
-
-
-
-
-
 
     
     const fetchOrderDetails = () => {
@@ -777,9 +764,7 @@ const OrderDetails = () => {
         fetchOrderDetails();
     }, [orderId, role, navigate]);
 
-
-
-
+    
 
     const handleStatusUpdate = async (newStatus) => {
         // Validate rider assignment for delivery orders
@@ -2593,7 +2578,7 @@ const OrderDetails = () => {
                                 </div>
                                 <div className="mt-2">
                                     {[orderData.contact, orderData.email, orderData.address].map((data, i) => (
-                                        <p key={i} className="m-0 text-capitalize text-capitalize">{data}</p>
+                                        <p key={i} className={`m-0 ${i === 1 ? "text-normal" : "text-capitalize"}`}>{data}</p>
                                     ))}
                                 </div>
                             </div>

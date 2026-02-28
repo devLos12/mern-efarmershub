@@ -357,11 +357,27 @@ const Messages = () => {
 
     
     // Handler para mag-open ng image viewer
-    const openImageViewer = (imageUrl, allImagesInMessage, index) => {
+
+    const allChatImages = useMemo(() => {
+        return chat
+            .filter(msg => msg.imageFiles?.length > 0)
+            .flatMap(msg => msg.imageFiles.map(filename => {
+                if (filename.startsWith('blob:') || filename.startsWith('data:') || filename.startsWith('https')) {
+                    return filename;
+                }
+                return `${import.meta.env.VITE_API_URL}/api/uploads/${filename}`;
+            }));
+    }, [chat]);
+
+    const openImageViewer = (imageUrl) => {
+        const index = allChatImages.indexOf(imageUrl);
         setViewImage(imageUrl);
-        setAllImages(allImagesInMessage);
-        setCurrentImageIndex(index);
+        setAllImages(allChatImages);
+        setCurrentImageIndex(index !== -1 ? index : 0);
     };
+
+
+
 
     // Handler para sa close
     const closeImageViewer = () => {
@@ -376,6 +392,13 @@ const Messages = () => {
             setCurrentImageIndex(currentImageIndex + 1);
             setViewImage(allImages[currentImageIndex + 1]);
         }
+    };
+
+
+    // Dagdag na handler
+    const selectImage = (index) => {
+        setCurrentImageIndex(index);
+        setViewImage(allImages[index]);
     };
 
     // Handler para sa previous image
@@ -424,7 +447,7 @@ const Messages = () => {
                         <button 
                             className="btn btn-outline-success d-flex align-items-center justify-content-center p-0"
                             style={{ width: "40px", height: "40px" }}
-                            onClick={() => navigate(`/${role}/inbox`)}
+                            onClick={() => navigate(-1)}
                         >
                             <i className="fa fa-arrow-left"></i>
                         </button>
@@ -440,11 +463,12 @@ const Messages = () => {
                                     {location.state?.credentials?.name}
                                 </p>
                                 <p className="m-0 text-capitalize ms-2 small opacity-75">
-                                    {`(${location.state?.credentials.role === "User" ? 
-                                        "buyer" : location.state?.credentials.role === "Seller" ?
-                                        "farmer" : 
-                                        location.state?.credentials.role 
-                                    })`}
+                                    {(() => {
+                                        const role = location.state?.credentials?.role?.toLowerCase();
+                                        if (role === "user") return "(buyer)";
+                                        if (role === "seller") return "(farmer)";
+                                        return `(${role})`;
+                                    })()}
                                 </p>
                             </div>
                             <p className="m-0 small opacity-75">{`${location.state?.credentials.email}`}</p>
@@ -626,8 +650,9 @@ const Messages = () => {
                             onChange={handleFile}
                             id="inputFile"
                             name="images"
+                            accept="image/jpeg,image/png"
                             multiple
-                            /> 
+                            />
 
                             <textarea 
                                 ref={textArea}
@@ -673,6 +698,7 @@ const Messages = () => {
                 onClose={closeImageViewer}
                 onNext={nextImage}
                 onPrev={prevImage}
+                onSelect={selectImage}
             />
         </div>
     );
@@ -680,21 +706,22 @@ const Messages = () => {
 
 export default Messages;
 
-const ImageViewerModal = ({ image, images, currentIndex, onClose, onNext, onPrev }) => {
+
+
+
+
+const ImageViewerModal = ({ image, images, currentIndex, onClose, onNext, onPrev, onSelect }) => {
     if (!image) return null;
 
     return (
         <div 
-            className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
-            style={{
-                backgroundColor: 'rgba(0, 0, 0, 0.9)',
-                zIndex: 9999
-            }}
+            className="position-fixed top-0 start-0 w-100 h-100 d-flex flex-column align-items-center justify-content-center"
+            style={{ backgroundColor: 'rgba(0, 0, 0, 0.95)', zIndex: 9999 }}
             onClick={onClose}
         >
             {/* Close Button */}
             <button 
-                className="btn btn-light  position-absolute top-0 end-0 m-3 rounded-circle d-flex align-items-center justify-content-center"
+                className="btn btn-light position-absolute top-0 end-0 m-3 rounded-circle d-flex align-items-center justify-content-center"
                 style={{ width: "40px", height: "40px", zIndex: 10000 }}
                 onClick={onClose}
             >
@@ -711,49 +738,88 @@ const ImageViewerModal = ({ image, images, currentIndex, onClose, onNext, onPrev
                 </div>
             )}
 
-            {/* Previous Button */}
-            {images.length > 1 && currentIndex > 0 && (
-                <button 
-                    className="btn btn-light position-absolute start-0 ms-3 rounded-circle"
-                    style={{ width: "50px", height: "50px", zIndex: 10000 }}
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        onPrev();
-                    }}
-                >
-                    <i className="bx bx-chevron-left fs-3"></i>
-                </button>
-            )}
+            {/* Main Image Area */}
+            <div 
+                className="position-relative d-flex align-items-center justify-content-center w-100"
+                style={{ flex: 1, minHeight: 0 }}
+                onClick={onClose}
+            >
+                {/* Previous Button */}
+                {images.length > 1 && currentIndex > 0 && (
+                    <button 
+                        className="btn btn-light rounded-circle position-absolute start-0 ms-3"
+                        style={{ width: "50px", height: "50px", zIndex: 10000 }}
+                        onClick={(e) => { e.stopPropagation(); onPrev(); }}
+                    >
+                        <i className="bx bx-chevron-left fs-3"></i>
+                    </button>
+                )}
 
-            {/* Image */}
-            <img 
-                src={image}
-                alt="Full view"
-                className="img-fluid"
-                style={{ 
-                    maxHeight: '90vh', 
-                    maxWidth: '90vw',
-                    objectFit: 'contain'
-                }}
-                onClick={(e) => e.stopPropagation()}
-            />
-
-            {/* Next Button */}
-            {images.length > 1 && currentIndex < images.length - 1 && (
-                <button 
-                    className="btn btn-light position-absolute end-0 me-3 rounded-circle"
-                    style={{ width: "50px", height: "50px", zIndex: 10000 }}
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        onNext();
+                <img 
+                    src={image}
+                    alt="Full view"
+                    className="img-fluid mx-3"
+                    style={{ 
+                        maxHeight: '75vh', 
+                        maxWidth: '85vw',
+                        objectFit: 'contain'
                     }}
+                    onClick={(e) => e.stopPropagation()}
+                />
+
+                {/* Next Button */}
+                {images.length > 1 && currentIndex < images.length - 1 && (
+                    <button 
+                        className="btn btn-light rounded-circle position-absolute end-0 me-3"
+                        style={{ width: "50px", height: "50px", zIndex: 10000 }}
+                        onClick={(e) => { e.stopPropagation(); onNext(); }}
+                    >
+                        <i className="bx bx-chevron-right fs-3"></i>
+                    </button>
+                )}
+            </div>
+
+            {/* Thumbnail Strip */}
+            {images.length > 1 && (
+                <div 
+                    className="d-flex gap-2 px-3 pb-3 overflow-auto"
+                    style={{ maxWidth: "100vw" }}
+                    onClick={(e) => e.stopPropagation()}
                 >
-                    <i className="bx bx-chevron-right fs-3"></i>
-                </button>
+                    {images.map((img, idx) => (
+                        <div
+                            key={idx}
+                            onClick={() => onSelect(idx)}
+                            style={{
+                                width: "60px",
+                                height: "60px",
+                                flexShrink: 0,
+                                cursor: "pointer",
+                                border: idx === currentIndex 
+                                    ? "3px solid #28a745" 
+                                    : "3px solid transparent",
+                                borderRadius: "8px",
+                                overflow: "hidden",
+                                opacity: idx === currentIndex ? 1 : 0.5,
+                                transition: "all 0.2s"
+                            }}
+                        >
+                            <img 
+                                src={img} 
+                                alt={`thumb-${idx}`}
+                                style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                            />
+                        </div>
+                    ))}
+                </div>
             )}
         </div>
     );
 };
+
+
+
+
 
 const ImageLayout = ({ location, hasText, msg, onImageClick }) => {
     
@@ -817,20 +883,23 @@ const ImageLayout = ({ location, hasText, msg, onImageClick }) => {
                             return `${import.meta.env.VITE_API_URL}/api/uploads/${filename}`;
                         })();
 
-                        return (
-                            <div key={index} className={colSize}>
+                    return (
+                        <div key={index} className={colSize}>
+                            <div 
+                                className="rounded border shadow-sm overflow-hidden"
+                                style={{ aspectRatio: "4/3", cursor: "pointer" }}
+                                onClick={() => onImageClick(imageUrl)}
+                            >
                                 <img
                                     src={imageUrl}
                                     alt={filename}
-                                    className="img-fluid w-100 rounded border shadow-sm"
-                                    style={{
-                                        objectFit: "cover",
-                                        cursor: "pointer"  // dagdag to para halata na clickable
-                                    }}
-                                    onClick={() => onImageClick(imageUrl, allImageUrls, index)}  // dagdag to
+                                    className="w-100 h-100"
+                                    style={{ objectFit: "cover" }}
                                 />
                             </div>
-                        );
+                        </div>
+                    );
+
                     })}
                 </div>
 
