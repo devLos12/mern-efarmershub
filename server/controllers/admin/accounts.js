@@ -122,7 +122,7 @@ const sendApprovalEmail = async (email, name, accountType) => {
                                     <tr>
                                         <td style="padding-top: 15px;" align="center">
                                             <p style="color: #666666; font-size: 14px; margin: 0 0 10px 0;">Download the Rider App:</p>
-                                            <a href="https://expo.dev/accounts/buuuu012/projects/rider-app/builds/a14fba15-e02d-40c5-a25b-356230b79ab8" 
+                                            <a href="https://expo.dev/accounts/buuuu012/projects/rider-app/builds/c1814f8d-fcf6-4d7d-aa36-f8332bd95bef" 
                                             style="display: inline-block; background-color: #ffffff; color: #28a745; text-decoration: none; padding: 14px 40px; border-radius: 6px; font-size: 16px; font-weight: 600; border: 2px solid #28a745;">
                                                 📱 Download Rider App
                                             </a>
