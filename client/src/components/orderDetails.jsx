@@ -338,6 +338,9 @@ const OrderDetails = () => {
     
     // Submit replacement request
     const handleSubmitReplacementRequest = async () => {
+
+
+
         // Validate
         for (let itemId of selectedItemsForReplacement) {
             if (!replacementData[itemId]?.reason?.trim()) {
@@ -378,7 +381,7 @@ const OrderDetails = () => {
             
             // Success
             setShowReplacementModal(false);
-            alert("Replacement request submitted successfully!");
+            showNotification("Replacement request submitted successfully!", "success");
 
 
 
@@ -391,7 +394,8 @@ const OrderDetails = () => {
             
         } catch (error) {
             console.log(error.message);
-            alert("Failed to submit replacement request: " + error.message);
+            showNotification(`Failed to submit replacement request: ${error.message}`, "error");
+
         } finally {
             setIsSubmittingReplacement(false);
         }
@@ -401,6 +405,7 @@ const OrderDetails = () => {
 
     // NEW function - add after handleSubmitReplacementRequest
     const handleSubmitReplacementReview = async () => {
+
 
         
         // Validate that all items have decisions
@@ -449,7 +454,7 @@ const OrderDetails = () => {
 
             setShowReplacementModal(false);
             showNotification("Replacement request submitted successfully!", "success");
-
+            
 
             // Reset states
             setReplacementReview({});
@@ -464,8 +469,6 @@ const OrderDetails = () => {
             setIsSubmittingReview(false);
         }
     };
-
-
 
 
 

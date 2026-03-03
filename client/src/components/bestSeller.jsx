@@ -10,7 +10,7 @@ const BestSellerProducts = ({signIn}) => {
     const navigate = useNavigate();
     const { role } = useContext(appContext);
     const user = useContext(userContext);
-    const { bestSellers, setBestSellers } = useContext(appContext);
+    const { bestSellers, setBestSellers } = useContext(appContext); 
 
 
     // ✅ FIX: Conditional destructuring - only when user is logged in
@@ -19,7 +19,7 @@ const BestSellerProducts = ({signIn}) => {
     const setOpenCart = role === "user" ? user?.setOpenCart : null;
     const setProducts = role === "user" ? user?.setProducts : null;
 
-    
+
 
     // Auto scroll to top when component mounts
     useEffect(() => {
