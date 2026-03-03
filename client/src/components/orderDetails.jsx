@@ -1134,6 +1134,7 @@ const OrderDetails = () => {
                                     <i className={`fa ${isViewMode ? 'fa-eye' : 'fa-exchange'} me-2`}></i>
                                     {isViewMode ? 'Replacement Request Details' : 'Request Product Replacement'}
                                 </h5>
+
                                 <button
                                     type="button"
                                     className="btn-close"
@@ -1166,13 +1167,19 @@ const OrderDetails = () => {
                                                 return (
                                                     <div key={idx} className="col-12">
                                                         <div className={`border rounded p-3 ${isSelected ? 'bg-warning bg-opacity-10 border-warning' : 'bg-light'}`}>
-                                                            <div className="d-flex align-items-start gap-3">
-                                                                <img 
-                                                                    src={item.imageFile}
-                                                                    alt={item.prodName}
-                                                                    className="rounded border"
-                                                                    style={{width: "80px", height: "80px", objectFit: "cover"}}
-                                                                />
+                                                            <div className="d-flex align-items-start gap-3 "
+                                                            >
+                                                                <div className="rounded-2 shadow-sm overflow-hidden"
+                                                                style={{aspectRatio: "4/3"}}
+                                                                >
+                                                                    <img 
+                                                                        src={item.imageFile}
+                                                                        alt={item.prodName}
+                                                                        className="image-fluid  "
+                                                                        style={{width: "80px", height: "80px", objectFit: "cover"}}
+                                                                    />
+                                                                </div>
+
                                                                 
                                                                 <div className="flex-grow-1">
                                                                     <p className="m-0 fw-bold">{item.prodName}</p>
@@ -1203,22 +1210,16 @@ const OrderDetails = () => {
                                                                             onChange={(e) => handleReplacementDataChange(itemId, 'reason', e.target.value)}
                                                                         >
                                                                             <option value="">Select reason...</option>
-                                                                            <option value="Rotten/Spoiled Produce">Rotten/Spoiled Produce</option>
-                                                                            <option value="Wilted/Not Fresh">Wilted/Not Fresh</option>
-                                                                            <option value="Bruised/Damaged">Bruised/Damaged</option>
-                                                                            <option value="Wrong Item">Wrong Item</option>
-                                                                            <option value="Incomplete Bundle">Incomplete Bundle</option>
-                                                                            <option value="Poor Quality">Poor Quality</option>
-                                                                            <option value="Pest/Insect Damage">Pest/Insect Damage</option>
-                                                                            <option value="Underweight/Short Measure">Underweight/Short Measure</option>
-                                                                            <option value="Overripe">Overripe</option>
-                                                                            <option value="Underripe">Underripe</option>
-                                                                            <option value="Contaminated/Dirty">Contaminated/Dirty</option>
-                                                                            <option value="Mixed/Wrong Variety">Mixed/Wrong Variety</option>
-                                                                            <option value="Expired Product">Expired Product</option>
-                                                                            <option value="Packaging Issue">Packaging Issue</option>
-                                                                            <option value="Late Delivery">Late Delivery</option>
-                                                                            <option value="Temperature Issue">Temperature Issue</option>
+                                                                            <option value="Damaged During Delivery">Damaged During Delivery</option>
+                                                                            <option value="Dropped/Mishandled Package">Dropped/Mishandled Package</option>
+                                                                            <option value="Crushed/Squashed Item">Crushed/Squashed Item</option>
+                                                                            <option value="Packaging Broken by Rider">Packaging Broken by Rider</option>
+                                                                            <option value="Spilled/Leaked During Transit">Spilled/Leaked During Transit</option>
+                                                                            <option value="Wrong Item Delivered by Rider">Wrong Item Delivered by Rider</option>
+                                                                            <option value="Missing Item Upon Delivery">Missing Item Upon Delivery</option>
+                                                                            <option value="Late Delivery Caused Spoilage">Late Delivery Caused Spoilage</option>
+                                                                            <option value="Temperature Mishandling by Rider">Temperature Mishandling by Rider</option>
+                                                                            <option value="Other Rider-Related Issue">Other Rider-Related Issue</option>
                                                                             <option value="Other">Other</option>
                                                                         </select>
                                                                     </div>
@@ -1291,7 +1292,11 @@ const OrderDetails = () => {
                                     <>
                                         <p className="text-muted small mb-3">
                                             <i className="fa fa-info-circle me-1"></i>
-                                            Review replacement requests. Select items and provide your decision.
+                                            {
+                                                role === "admin" 
+                                                ? "Review replacement requests. Select items and provide your decision."
+                                                : "Review your replacement requests."
+                                            }
                                         </p>
                                         
                                         {/* Select All / Deselect All */}
@@ -1347,12 +1352,17 @@ const OrderDetails = () => {
                                                                     <div className="row g-3 ">
                                                                         {/* Product Image */}
                                                                         <div className="col-3 ">
-                                                                            <img 
-                                                                                src={item.imageFile}
-                                                                                alt={item.prodName}
-                                                                                className="rounded border img-fluid"
-                                                                                style={{objectFit: "cover"}}
-                                                                            />
+                                                                            <div className="overflow-hidden rounded-2 shadow-sm"
+                                                                            style={{ aspectRatio: "4/3"}}
+                                                                            >
+                                                                                <img 
+                                                                                    src={item.imageFile}
+                                                                                    alt={item.prodName}
+                                                                                    className="img-fluid h-100 w-100 "
+                                                                                    style={{objectFit: "cover"}}
+                                                                                />
+                                                                            </div>
+
                                                                             
                                                                         </div>
                                                                         
@@ -1449,7 +1459,7 @@ const OrderDetails = () => {
                                                                                         key={imgIdx}
                                                                                         src={imgFilename}
                                                                                         alt={`Evidence ${imgIdx + 1}`}
-                                                                                        className="rounded border shadow-sm"
+                                                                                        className="rounded border shadow-sm p-2"
                                                                                         style={{width: "80px", height: "80px", objectFit: "cover", cursor: "pointer"}}
                                                                                         onClick={() => window.open(imgFilename, '_blank')}
                                                                                     />
@@ -1693,18 +1703,32 @@ const OrderDetails = () => {
                     <div className={`row ${role === "user" ? "justify-content-center py-5" : "justify-content-start py-4 p-md-4 "}`}>
                         <div className={`col-12 ${role === "user" ? "col-lg-10" : "col-lg-12 "} `}>
                             {/* Header */}
-                            <div className="d-flex align-items-center gap-3">
-                                <button 
-                                    className="btn btn-outline-success"
-                                    onClick={() => navigate(-1)}
-                                >
-                                    <i className="fa fa-arrow-left"></i>
-                                </button>
-                                <div>
-                                    <h5 className="m-0 fw-bold text-capitalize text-success">order details</h5>
-                                    <p className="m-0 small text-muted">View order information</p>
+                            <div className="d-flex flex-column align-items-start justify-content-between 
+                            align-items-md-center flex-md-row
+                            gap-3">
+                                
+                                <div className="d-flex align-items-center gap-4">
+                                    <button 
+                                        className="btn btn-outline-success"
+                                        onClick={() => navigate(-1)}
+                                    >
+                                        <i className="fa fa-arrow-left"></i>
+                                    </button>
+                                    <div>
+                                        <h5 className="m-0 fw-bold text-capitalize text-success">order details</h5>
+                                        <p className="m-0 small text-muted">View order information</p>
+                                    </div>
+                                </div>
+
+                                
+                                <div className="">
+                                    <p className="m-0 fs-5 fw-semibold text-muted">
+                                        {orderData?.orderId}
+                                    </p>
                                 </div>
                             </div>
+
+                        
                         </div>
 
                         <div className={`col-12 mt-3 ${role === "user" ? "col-lg-10 " : "col-lg-12"}`}>
@@ -1782,6 +1806,7 @@ const OrderDetails = () => {
                                 </div>
                             </div>
                         )}
+
 
 
                         {/* Refund Information - Visible to Admin and User */}
@@ -2440,7 +2465,6 @@ const OrderDetails = () => {
                                 </div>
                             </div>
                         )}
-
 
 
                         <div className={`${role === "user"

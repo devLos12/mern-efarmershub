@@ -19,8 +19,7 @@ const BestSellerProducts = ({signIn}) => {
     const setOpenCart = role === "user" ? user?.setOpenCart : null;
     const setProducts = role === "user" ? user?.setProducts : null;
 
-
-
+    
 
     // Auto scroll to top when component mounts
     useEffect(() => {
@@ -178,6 +177,7 @@ const BestSellerProducts = ({signIn}) => {
             </div>
         );
     }
+    
 
     if (error) {
         return (
@@ -225,12 +225,14 @@ const BestSellerProducts = ({signIn}) => {
                                 </div>
 
                                 <div className="p-1 p-md-2 z-1">
-                                    <div className="col-12 text-center bg-white rounded mt-2">
+                                    <div className="rounded-2 overflow-hidden shadow-sm"
+                                    style={{aspectRatio: "4/3"}}
+                                    >
                                         <img 
                                             src={data.imageFile}  
                                             alt={data.imageFile} 
-                                            className="img-fluid rounded shadow-sm"
-                                            style={{cursor: "pointer"}} 
+                                            className="img-fluid w-100 h-100"
+                                            style={{cursor: "pointer", objectFit: "cover"}} 
                                             onClick={() => {
                                                 if(role === "user"){
                                                     navigate("/user/all-products/productdetails", {state: {productId: data._id}});

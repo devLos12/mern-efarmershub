@@ -164,6 +164,10 @@ const Order = () => {
 
     const isCashOnDelivery = selectedOrder?.paymentType?.toLowerCase() === "cash on delivery";
 
+    useEffect(() => {
+        console.log(orders[0]);
+    },[orders[0]]);
+
     return (
         <>
             {orders.data?.length > 0 ? (
@@ -180,24 +184,35 @@ const Order = () => {
 
                             return (
                                 <div key={i} className="py-4 px-3 border-top border-2">
-                                    <div className="row g-0 bg p-2 rounded px-3">
+                                    <div className="row g-0 bg py-3 rounded px-3">
                                         <div className="d-flex align-items-center">
                                             <div className="fa fa-truck me-2 small"></div>
+                                            <div className="d-flex align-items-center justify-content-between w-100">
                                             <p className="fw-bold m-0 text-capitalize small">{currentStatus.status}</p>
+                                            <p className="m-0 px-2 small bg-success text-success fw-bold rounded-2 bg-opacity-10"
+                                            >{data.orderId}</p>
+                                            </div>
                                         </div>
-                                        <span className="m-0 text-capitalize opacity-75 small">{currentStatus.description}</span>
+                                        <span className="m-0 text-capitalize opacity-75 small mt-2 ">{currentStatus.description}</span>
                                     </div>
 
                                     {data.orderItems.map((item, i) => {
                                         if (i === 0) {
                                             return (
                                                 <div key={i} className="row position-relative mt-4">
-                                                    <div className="col-5">
-                                                        <img
-                                                            src={item.imageFile}
-                                                            alt={item.imageFile}
-                                                            className="rounded img-fluid shadow-sm border"
-                                                        />
+                                                    <div className="col-5 "
+                                                    >
+                                                        <div className="rounded-2 shadow-sm overflow-hidden"
+                                                        style={{aspectRatio: "4/3"}}
+                                                        >
+                                                            <img
+                                                                src={item.imageFile}
+                                                                alt={item.imageFile}
+                                                                className="img-fluid h-100 w-100"
+                                                                style={{objectFit: "cover"}}
+                                                            />
+                                                        </div>
+
                                                     </div>
 
                                                     <div className="col">

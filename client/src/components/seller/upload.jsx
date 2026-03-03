@@ -154,6 +154,7 @@ const Upload = () => {
 
 
 
+        
 
     const handleFileRemove = () => {
         if (isUpdate) {
@@ -486,19 +487,28 @@ const Upload = () => {
                                                         onClick={handleFileRemove}
                                                     ></i>
                                                 )}
-                                                <img 
-                                                    src={
-                                                        isUpdate 
-                                                            ? imgPreview || formData.image
-                                                            : imgPreview
-                                                    } 
-                                                    alt={imgPreview}
-                                                    className="img-fluid rounded border border-success border-opacity-25 shadow-sm"
-                                                    style={{ 
-                                                        maxHeight: '150px',
-                                                        backgroundColor: '#ffffff'
-                                                    }}
-                                                />
+
+                                                <div className="overflow-hidden rounded-2 shadow-sm"
+                                                style={{aspectRatio: "4/3"}}
+                                                >
+
+                                                    <img 
+                                                        src={
+                                                            isUpdate 
+                                                                ? imgPreview || formData.image
+                                                                : imgPreview
+                                                        } 
+                                                        alt={imgPreview}
+                                                        className="img-fluid w-100 h-100"
+                                                        style={{
+                                                            objectFit: "cover", 
+                                                            maxHeight: '150px',
+                                                            
+                                                            backgroundColor: '#ffffff'
+                                                        }}
+                                                    />
+                                                </div>
+
                                             </div>
                                         </div>
                                     )}
