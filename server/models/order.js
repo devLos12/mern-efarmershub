@@ -57,8 +57,21 @@ const orderSchema = new mongoose.Schema({
                 },
                 reviewedAt: { type: Date, required: false },
                 notes: { type: String, required: false }
-            }
+            },
+
+            // itemStatus: {
+            //     type: String,
+            //     enum: [
+            //         "waiting for seller ",
+            //         "sent to kubol",
+            //         "admin received",
+            //         "out of stock",
+            //     ],
+            //     default: "waiting for seller"
+            // },
         }
+
+
     ],
     
     firstname  : {type : String, required : true},

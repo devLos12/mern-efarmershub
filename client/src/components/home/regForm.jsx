@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect, useContext, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Toast from "../toastNotif.jsx";
 import { appContext } from "../../context/appContext.jsx";
@@ -1423,13 +1423,28 @@ export default Register;
 
 
 
-
-
-
 // Buyer Terms Modal Component
 const BuyerTermsModal = ({ show, onClose, agreedToTerms, setAgreedToTerms, onAccept }) => {
     if (!show) return null;
+
+    const scrollRef = useRef(null);
+    const [hasScrolledToBottom, setHasScrolledToBottom] = useState(false);
     
+
+   
+
+
+
+    const handleScroll = () => {
+        const el = scrollRef.current;
+        if (!el) return;
+        const isAtBottom = el.scrollHeight - el.scrollTop <= el.clientHeight + 10; // +10 tolerance
+        if (isAtBottom) setHasScrolledToBottom(true);
+    };
+
+
+
+
     const termsData = [
         {
             number: '1',
@@ -1559,7 +1574,10 @@ const BuyerTermsModal = ({ show, onClose, agreedToTerms, setAgreedToTerms, onAcc
         <div
             className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
             style={{ backgroundColor: "rgba(0,0,0,0.5)", zIndex: 9999 }}
-            onClick={onClose}
+            onClick={() => {
+                setAgreedToTerms(false);
+                onClose();
+            }}
         >
             <div
                 className="bg-white rounded shadow-lg"
@@ -1574,7 +1592,11 @@ const BuyerTermsModal = ({ show, onClose, agreedToTerms, setAgreedToTerms, onAcc
                             <p className="mb-0 text-white" style={{ fontSize: "14px" }}>Buyer Terms and Conditions</p>
                         </div>
                         <button
-                            onClick={onClose}
+
+                            onClick={() => {
+                                setAgreedToTerms(false);
+                                onClose();
+                            }}
                             className="btn-close btn-close-white"
                             aria-label="Close"
                         ></button>
@@ -1582,7 +1604,13 @@ const BuyerTermsModal = ({ show, onClose, agreedToTerms, setAgreedToTerms, onAcc
                 </div>
 
                 {/* Scrollable Content */}
-                <div className="p-4" style={{ overflowY: "auto", flex: 1 }}>
+
+                <div 
+                    ref={scrollRef}
+                    onScroll={handleScroll}
+                    className="p-4" 
+                    style={{ overflowY: "auto", flex: 1 }}
+                >
                     <p className="mb-4" style={{ fontSize: "13px", lineHeight: "1.6" }}>
                         These Terms and Conditions govern the registration and participation of buyers 
                         in E-FARMERS' HUB: A Web-Based E-Commerce Platform for Crop Products in Lupang Ramos, 
@@ -1618,35 +1646,41 @@ const BuyerTermsModal = ({ show, onClose, agreedToTerms, setAgreedToTerms, onAcc
                     <div 
                         className="d-flex align-items-center gap-2 mb-3 p-3 rounded" 
                         style={{ 
-                            backgroundColor: agreedToTerms ? "#d4edda" : "#fff3cd",
-                            cursor: "pointer"
+                            backgroundColor: !hasScrolledToBottom ? "#f0f0f0" : agreedToTerms ? "#d4edda" : "#fff3cd",
+                            cursor: hasScrolledToBottom ? "pointer" : "not-allowed",
+                            opacity: hasScrolledToBottom ? 1 : 0.5
                         }}
-                        onClick={() => setAgreedToTerms(!agreedToTerms)}
+                        onClick={() => hasScrolledToBottom && setAgreedToTerms(!agreedToTerms)}
                     >
                         <input
                             type="checkbox"
-                            id="buyer-final-agreement"
                             checked={agreedToTerms}
-                            onChange={() => setAgreedToTerms(!agreedToTerms)}
-                            style={{ cursor: "pointer" }}
+                            onChange={() => hasScrolledToBottom && setAgreedToTerms(!agreedToTerms)}
+                            disabled={!hasScrolledToBottom}  // ✅ DISABLED hanggang hindi pa naka-scroll
+                            style={{ cursor: hasScrolledToBottom ? "pointer" : "not-allowed" }}
                         />
-                        <label 
-                            htmlFor="buyer-final-agreement" 
-                            className="mb-0 small" 
-                            style={{ cursor: "pointer" }}
-                        >
-                            by checking this box, I agree that I have read and accepted the terms and conditions
+                        <label className="mb-0 small" style={{ cursor: hasScrolledToBottom ? "pointer" : "not-allowed" }}>
+                            {!hasScrolledToBottom 
+                                ? "Please scroll down to read all terms before agreeing" // ✅ hint message
+                                : "by checking this box, I agree that I have read and accepted the terms and conditions"
+                            }
                         </label>
                     </div>
                     
                     <div className="d-flex gap-2">
                         <button
-                            onClick={onClose}
+                            onClick={() => {
+                                setAgreedToTerms(false);  // ✅ i-reset pag cancel
+                                onClose();
+                            }} 
+
                             className="btn btn-secondary flex-fill"
                             style={{ fontSize: "14px" }}
                         >
                             Cancel
                         </button>
+
+                        
                         <button
                             onClick={() => {
                                 if (agreedToTerms) {
@@ -1673,14 +1707,28 @@ const BuyerTermsModal = ({ show, onClose, agreedToTerms, setAgreedToTerms, onAcc
 };
 
 
-
-
-
-
 // Seller Terms Modal Component
 const SellerTermsModal = ({ show, onClose, agreedToTerms, setAgreedToTerms, onAccept }) => {
     if (!show) return null;
     
+    
+    
+    const scrollRef = useRef(null);
+    const [hasScrolledToBottom, setHasScrolledToBottom] = useState(false);
+    
+ 
+
+
+    const handleScroll = () => {
+        const el = scrollRef.current;
+        if (!el) return;
+        const isAtBottom = el.scrollHeight - el.scrollTop <= el.clientHeight + 10; // +10 tolerance
+        if (isAtBottom) setHasScrolledToBottom(true);
+    };
+
+
+
+
     const termsData = [
         {
             number: '1',
@@ -1763,7 +1811,11 @@ const SellerTermsModal = ({ show, onClose, agreedToTerms, setAgreedToTerms, onAc
         <div
             className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
             style={{ backgroundColor: "rgba(0,0,0,0.5)", zIndex: 9999 }}
-            onClick={onClose}
+            onClick={() => {
+                setAgreedToTerms(false);
+                onClose();
+            }}
+
         >
             <div
                 className="bg-white rounded shadow-lg"
@@ -1778,7 +1830,11 @@ const SellerTermsModal = ({ show, onClose, agreedToTerms, setAgreedToTerms, onAc
                             <p className="mb-0 text-white" style={{ fontSize: "14px" }}>Seller Terms and Conditions</p>
                         </div>
                         <button
-                            onClick={onClose}
+
+                            onClick={() => {
+                                setAgreedToTerms(false);
+                                onClose();
+                            }}
                             className="btn-close btn-close-white"
                             aria-label="Close"
                         ></button>
@@ -1786,7 +1842,12 @@ const SellerTermsModal = ({ show, onClose, agreedToTerms, setAgreedToTerms, onAc
                 </div>
 
                 {/* Scrollable Content */}
-                <div className="p-4" style={{ overflowY: "auto", flex: 1 }}>
+                <div 
+                    ref={scrollRef}
+                    onScroll={handleScroll}
+                    className="p-4" 
+                    style={{ overflowY: "auto", flex: 1 }}
+                >
                     <p className="mb-4" style={{ fontSize: "13px", lineHeight: "1.6" }}>
                         These Terms and Conditions govern the registration and participation of sellers 
                         in E-FARMERS' HUB: A Web-Based E-Commerce Platform for Crop Products in Lupang Ramos, 
@@ -1822,30 +1883,35 @@ const SellerTermsModal = ({ show, onClose, agreedToTerms, setAgreedToTerms, onAc
                     <div 
                         className="d-flex align-items-center gap-2 mb-3 p-3 rounded" 
                         style={{ 
-                            backgroundColor: agreedToTerms ? "#d4edda" : "#fff3cd",
-                            cursor: "pointer"
+                            backgroundColor: !hasScrolledToBottom ? "#f0f0f0" : agreedToTerms ? "#d4edda" : "#fff3cd",
+                            cursor: hasScrolledToBottom ? "pointer" : "not-allowed",
+                            opacity: hasScrolledToBottom ? 1 : 0.5
                         }}
-                        onClick={() => setAgreedToTerms(!agreedToTerms)}
+                        onClick={() => hasScrolledToBottom && setAgreedToTerms(!agreedToTerms)}
                     >
                         <input
                             type="checkbox"
-                            id="seller-final-agreement"
                             checked={agreedToTerms}
-                            onChange={() => setAgreedToTerms(!agreedToTerms)}
-                            style={{ cursor: "pointer" }}
+                            onChange={() => hasScrolledToBottom && setAgreedToTerms(!agreedToTerms)}
+                            disabled={!hasScrolledToBottom}  // ✅ DISABLED hanggang hindi pa naka-scroll
+                            style={{ cursor: hasScrolledToBottom ? "pointer" : "not-allowed" }}
                         />
-                        <label 
-                            htmlFor="seller-final-agreement" 
-                            className="mb-0 small" 
-                            style={{ cursor: "pointer" }}
-                        >
-                            by checking this box, I agree that I have read and accepted the terms and conditions
+                        <label className="mb-0 small" style={{ cursor: hasScrolledToBottom ? "pointer" : "not-allowed" }}>
+                            {!hasScrolledToBottom 
+                                ? "Please scroll down to read all terms before agreeing" // ✅ hint message
+                                : "by checking this box, I agree that I have read and accepted the terms and conditions"
+                            }
                         </label>
                     </div>
                     
                     <div className="d-flex gap-2">
                         <button
-                            onClick={onClose}
+                            onClick={() => {
+                                setAgreedToTerms(false);  // ✅ i-reset pag cancel
+                                onClose();
+                            }} 
+
+
                             className="btn btn-secondary flex-fill"
                             style={{ fontSize: "14px" }}
                         >
@@ -1877,13 +1943,28 @@ const SellerTermsModal = ({ show, onClose, agreedToTerms, setAgreedToTerms, onAc
 };
 
 
-
-
-
 // Separate Terms Modal Component
 const RiderTermsModal = ({ show, onClose, agreedToTerms, setAgreedToTerms, onAccept }) => {
     if (!show) return null;
     
+
+
+
+    const scrollRef = useRef(null);
+    const [hasScrolledToBottom, setHasScrolledToBottom] = useState(false);
+
+
+
+
+    const handleScroll = () => {
+        const el = scrollRef.current;
+        if (!el) return;
+        const isAtBottom = el.scrollHeight - el.scrollTop <= el.clientHeight + 10; // +10 tolerance
+        if (isAtBottom) setHasScrolledToBottom(true);
+    };
+
+
+
     const termsData = [
         {
             number: '1',
@@ -2023,7 +2104,13 @@ const RiderTermsModal = ({ show, onClose, agreedToTerms, setAgreedToTerms, onAcc
         <div
             className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
             style={{ backgroundColor: "rgba(0,0,0,0.5)", zIndex: 9999 }}
-            onClick={onClose}
+            
+            onClick={() => {
+                setAgreedToTerms(false);  // ✅ i-reset pag cancel
+                onClose();
+            }} 
+
+
         >
             <div
                 className="bg-white rounded shadow-lg"
@@ -2038,7 +2125,10 @@ const RiderTermsModal = ({ show, onClose, agreedToTerms, setAgreedToTerms, onAcc
                             <p className="mb-0 text-white" style={{ fontSize: "14px" }}>Rider Terms and Conditions</p>
                         </div>
                         <button
-                            onClick={onClose}
+                            onClick={() => {
+                                setAgreedToTerms(false);  // ✅ i-reset pag cancel
+                                onClose();
+                            }} 
                             className="btn-close btn-close-white"
                             aria-label="Close"
                         ></button>
@@ -2048,7 +2138,13 @@ const RiderTermsModal = ({ show, onClose, agreedToTerms, setAgreedToTerms, onAcc
 
 
                 {/* Scrollable Content */}
-                <div className="p-4" style={{ overflowY: "auto", flex: 1 }}>
+
+                <div 
+                    ref={scrollRef}
+                    onScroll={handleScroll}
+                    className="p-4" 
+                    style={{ overflowY: "auto", flex: 1 }}
+                >
                     <p className="mb-4" style={{ fontSize: "13px", lineHeight: "1.6" }}>
                         These Terms and Conditions govern the registration and participation of riders in E-FARMERS' HUB: 
                         A Web-Based E-Commerce Platform for Crop Products in Lupang Ramos, Langkaan I, Dasmariñas, Cavite. 
@@ -2084,30 +2180,37 @@ const RiderTermsModal = ({ show, onClose, agreedToTerms, setAgreedToTerms, onAcc
                     <div 
                         className="d-flex align-items-center gap-2 mb-3 p-3 rounded" 
                         style={{ 
-                            backgroundColor: agreedToTerms ? "#d4edda" : "#fff3cd",
-                            cursor: "pointer"
+                            backgroundColor: !hasScrolledToBottom ? "#f0f0f0" : agreedToTerms ? "#d4edda" : "#fff3cd",
+                            cursor: hasScrolledToBottom ? "pointer" : "not-allowed",
+                            opacity: hasScrolledToBottom ? 1 : 0.5
                         }}
-                        onClick={() => setAgreedToTerms(!agreedToTerms)}
+                        onClick={() => hasScrolledToBottom && setAgreedToTerms(!agreedToTerms)}
                     >
                         <input
                             type="checkbox"
-                            id="final-agreement"
                             checked={agreedToTerms}
-                            onChange={() => setAgreedToTerms(!agreedToTerms)}
-                            style={{ cursor: "pointer" }}
+                            onChange={() => hasScrolledToBottom && setAgreedToTerms(!agreedToTerms)}
+                            disabled={!hasScrolledToBottom}  // ✅ DISABLED hanggang hindi pa naka-scroll
+                            style={{ cursor: hasScrolledToBottom ? "pointer" : "not-allowed" }}
                         />
-                        <label 
-                            htmlFor="final-agreement" 
-                            className="mb-0 small" 
-                            style={{ cursor: "pointer" }}
-                        >
-                            by checking this box, I agree that I have read and accepted the terms and condition
+                        <label className="mb-0 small" style={{ cursor: hasScrolledToBottom ? "pointer" : "not-allowed" }}>
+                            {!hasScrolledToBottom 
+                                ? "Please scroll down to read all terms before agreeing" // ✅ hint message
+                                : "by checking this box, I agree that I have read and accepted the terms and conditions"
+                            }
                         </label>
                     </div>
+
                     
                     <div className="d-flex gap-2">
                         <button
-                            onClick={onClose}
+                            
+                            onClick={() => {
+                                setAgreedToTerms(false);
+                                onClose();
+                            }}
+
+
                             className="btn btn-secondary flex-fill"
                             style={{ fontSize: "14px" }}
                         >

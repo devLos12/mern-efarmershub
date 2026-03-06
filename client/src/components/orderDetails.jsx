@@ -400,8 +400,7 @@ const OrderDetails = () => {
             setIsSubmittingReplacement(false);
         }
     };
-
-
+    
 
     // NEW function - add after handleSubmitReplacementRequest
     const handleSubmitReplacementReview = async () => {
@@ -469,8 +468,6 @@ const OrderDetails = () => {
             setIsSubmittingReview(false);
         }
     };
-
-
 
 
 

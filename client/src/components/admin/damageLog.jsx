@@ -7,7 +7,8 @@ const DamageLog = () => {
     const [selectedIds, setSelectedIds] = useState(new Set());
     const [isAllSelected, setIsAllSelected] = useState(false);
     const [isSelect, setIsSelect] = useState(false);
-    const [refresh, setRefresh] = useState(false);
+    const [loading, setLoading] = useState(false);
+    
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage] = useState(10);
     
@@ -46,25 +47,30 @@ const DamageLog = () => {
     }, [search]);
 
     // Fetch damage logs
-    useEffect(() => {
-        fetch(`${import.meta.env.VITE_API_URL}/api/getDamageLogs`, {
-            method: "GET",
-            credentials: "include"
-        })
-        .then(async(res) => {
+    const fetchDamageLogs = async () => {
+        setLoading(true);
+        try {
+            const res = await fetch(`${import.meta.env.VITE_API_URL}/api/getDamageLogs`, {
+                method: "GET",
+                credentials: "include"
+            });
             const data = await res.json();
-            if(!res.ok) throw new Error(data.message);
-            return data;
-        })
-        .then((data) => {
+            if (!res.ok) throw new Error(data.message);
             setDamageLogs(data.damageLogs || []);
-        })
-        .catch((err) => {
+        } catch (err) {
             console.log("Error:", err.message);
             setErrorMessage("Failed to fetch damage logs: " + err.message);
             setShowErrorModal(true);
-        });
-    }, [refresh]);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchDamageLogs();
+    }, []);  // ✅ once lang sa mount
+
+
 
     // Filter damage logs
     const filteredDamageLogs = useMemo(() => {
@@ -311,10 +317,11 @@ const DamageLog = () => {
 
                             <button 
                                 className="bg-hover d-flex border rounded align-items-center px-2 shadow-sm gap-2 border-1"
-                                onClick={() => setRefresh((prev) => !prev)}
+                                onClick={fetchDamageLogs}
+                                disabled={loading}
                             >
-                                <i className="fa fa-sync small text-dark"></i>
-                                <p className="m-0 small text-capitalize">refresh</p>
+                                <i className={`fa fa-sync small text-dark ${loading ? "fa-spin" : ""}`}></i>
+                                <p className="m-0 small text-capitalize">{loading ? "loading..." : "refresh"}</p>
                             </button>
 
                             <button 
@@ -339,7 +346,14 @@ const DamageLog = () => {
                                 
             {/* Table */}
             <div className="bg-white rounded shadow-sm border" style={{height: "calc(100vh - 250px)", overflow: "auto"}}>
-                {filteredDamageLogs.length === 0 ? (
+                {loading ? (
+                    <div className="d-flex flex-column gap-3 justify-content-center align-items-center" style={{height: "200px"}}>
+                        <div className="spinner-border text-success" role="status">
+                            <span className="visually-hidden"></span>
+                        </div>
+                        <p className=' small text-muted'>Loading damage log...</p>
+                    </div>
+                ) : filteredDamageLogs.length === 0 ? (
                     <div className="mt-5">
                         <p className="m-0 text-capitalize text-center small opacity-75">no damage logs found</p>
                     </div>

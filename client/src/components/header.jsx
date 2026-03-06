@@ -1,4 +1,4 @@
-import { useContext, useEffect, useLayoutEffect, useState } from "react";
+import { useContext, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useBreakpoint } from "./breakpoint.jsx"
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { adminContext } from "../context/adminContext.jsx";
@@ -28,7 +28,6 @@ const MENU_ITEMS = {
         {label: 'Payment',      link: "/admin/payment", icon: 'fa-solid fa-credit-card', source: "payment"},
         {label: 'Payout',       link: "/admin/payout/seller", icon: 'fa-solid fa-money-bill-transfer', source: "payout/seller"},
         {label: 'QR Payment',   link: '/admin/qrcodes',       icon: 'fa-solid fa-qrcode',         source: undefined},
-
         {label: 'Activity Logs', link: '/admin/activity-logs', icon: 'fa-solid fa-clock-rotate-left'},
     ]
 };
@@ -52,6 +51,36 @@ const Header = ()=> {
     const navigate = useNavigate();
     const location = useLocation();
     const { inboxBadge, setInboxBadge } = useContext(appContext);
+    const headerRef = useRef(null);
+
+    // ✅ Close all overlays/modals
+    const closeAllModals = () => {
+        setOpenNotif(false);
+        setOpenProfile(false);
+        setOpenViewProfile(false);
+        setOpenSettings(false);
+    };
+
+    // ✅ Click outside detection — same pattern sa reference
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            const isAnyModalOpen = role === "admin"
+                ? openProfile || openViewProfile || openSettings
+                : openNotif || openProfile || openViewProfile || openSettings;
+
+            if (!isAnyModalOpen) return;
+
+            const bgDarkenElement = event.target.closest('.bg-darken');
+            const isClickOnCard = event.target.closest('.bg-light');
+
+            if (bgDarkenElement && !isClickOnCard) {
+                closeAllModals();
+            }
+        };
+
+        document.addEventListener('click', handleClickOutside);
+        return () => document.removeEventListener('click', handleClickOutside);
+    }, [openNotif, openProfile, openViewProfile, openSettings, role]);
 
     useLayoutEffect(() => {
         const overlayActive = role === "admin" 
@@ -184,7 +213,7 @@ const Header = ()=> {
             transition: 'all 0.3s ease'
         }}
         >
-            <header className={`bg-white d-flex align-items-center justify-content-between p-2 px-md-5 border-bottom border z-2`} 
+            <header ref={headerRef} className={`bg-white d-flex align-items-center justify-content-between p-2 px-md-5 border-bottom border z-2`} 
             style={{ transition: 'all 0.3s ease' }}
             >
                 <div className="d-flex align-items-center gap-2">
@@ -295,7 +324,7 @@ const Header = ()=> {
                 <nav className="w-100 d-md-none" style={{maxHeight: 'calc(100vh - 70px)', overflowY: 'auto'}}>
                     <div className={`d-flex flex-column p-0 ${role === "seller" ? "bg-white" : "bg-dark"}`}>
                         {MENU_ITEMS[role]?.map((data, i) => {
-                            const active = isActive(data.link); // 👈 CHECK IF ACTIVE
+                            const active = isActive(data.link);
                             
                             return (
                                 <div 
@@ -309,17 +338,12 @@ const Header = ()=> {
                                 >   
                                     <div className="col-1">
                                         <i className={`${data.icon} ${
-                                            active ? 'text-green fw-bold' : '' // 👈 ACTIVE ICON COLOR
+                                            active ? 'text-green fw-bold' : ''
                                         } text-capitalize ms-2 position-relative`}>
 
                                             {data.badge && data.label.toLowerCase() === "dashboard" && orderBadge.show && (
                                                 <p className="m-0 d-flex justify-content-center align-items-center text-white position-absolute fw-normal top-0 end-0 m-2 bg-danger"
-                                                    style={{
-                                                        fontSize: "9px",
-                                                        width:"17px", 
-                                                        height:"17px",
-                                                        borderRadius: "50%", 
-                                                    }}
+                                                    style={{ fontSize: "9px", width:"17px", height:"17px", borderRadius: "50%" }}
                                                 >
                                                     {orderBadge.number}
                                                 </p>
@@ -327,52 +351,32 @@ const Header = ()=> {
                                             
                                             {data.badge && data.label.toLowerCase() === "inventory" && prodBadge.show && (
                                                 <p className="m-0 d-flex justify-content-center align-items-center text-white position-absolute fw-normal top-0 end-0 m-2 bg-danger"
-                                                    style={{
-                                                        fontSize: "9px",
-                                                        width:"17px", 
-                                                        height:"17px",
-                                                        borderRadius: "50%", 
-                                                    }}
+                                                    style={{ fontSize: "9px", width:"17px", height:"17px", borderRadius: "50%" }}
                                                 >
                                                     {prodBadge.number}
                                                 </p>
                                             )}
 
-                                                
                                             {data.badge && data.label.toLowerCase() === "accounts" && accBadge.show && (
                                                 <p className="m-0 d-flex justify-content-center align-items-center text-white position-absolute fw-normal top-0 end-0 m-2 bg-danger"
-                                                    style={{
-                                                        fontSize: "9px",
-                                                        width:"17px", 
-                                                        height:"17px",
-                                                        borderRadius: "50%", 
-                                                    }}
+                                                    style={{ fontSize: "9px", width:"17px", height:"17px", borderRadius: "50%" }}
                                                 >
                                                     {accBadge.number}
                                                 </p>
                                             )}
 
-
-
                                             {data.badge && data.label.toLowerCase() === "inbox" && inboxBadge.show && (
                                                 <p className="m-0 d-flex justify-content-center align-items-center text-white position-absolute fw-normal top-0 end-0 m-2 bg-danger"
-                                                    style={{
-                                                        fontSize: "9px",
-                                                        width:"17px", 
-                                                        height:"17px",
-                                                        borderRadius: "50%", 
-                                                    }}
+                                                    style={{ fontSize: "9px", width:"17px", height:"17px", borderRadius: "50%" }}
                                                 >
                                                     {inboxBadge.number}
                                                 </p>
                                             )}
-
-
                                         </i>
                                     </div>
                                     <div className="col-auto">
                                         <span className={`text-capitalize ${
-                                            active ? 'fw-bold text-green' : 'fw-500' // 👈 ACTIVE TEXT
+                                            active ? 'fw-bold text-green' : 'fw-500'
                                         }`}>
                                             {data.label}
                                         </span>
