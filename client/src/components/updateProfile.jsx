@@ -4,7 +4,7 @@ import { adminContext } from "../context/adminContext";
 import { sellerContext } from "../context/sellerContext";
 import { userContext } from "../context/userContext";
 import { useBreakpoint, useBreakpointHeight } from "./breakpoint";
-import philippineLocations from "../data/philippinesAddress.json";
+import philippineLocations from "../data/philippinesAddress.js";
 import imageCompression from 'browser-image-compression';
 
 

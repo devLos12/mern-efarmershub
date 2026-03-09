@@ -51,6 +51,21 @@ const sendSMS = async (firstname, contact, totalAmount, riderName, riderContact)
 
 
 
+const getPHTime = () => {
+    const now = new Date();
+    const phTime = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Manila" }));
+    
+    return {
+        date: phTime.toISOString().split("T")[0], // YYYY-MM-DD
+        time: phTime.toLocaleTimeString("en-PH", { 
+            hour: "2-digit", 
+            minute: "2-digit", 
+            hour12: true 
+        })
+    };
+};
+
+
 const createTransaction = async(order, receiptFIle) => {
 
     for (const item of order.orderItems){
@@ -66,15 +81,13 @@ const createTransaction = async(order, receiptFIle) => {
             paymentMethod: "cash on delivery",
             totalAmount: amount,
             status: "paid",
-            paidAt: { 
-                date: new Date().toISOString().split("T")[0],
-                time: new Date().toLocaleTimeString("en-PH", { hour: "2-digit", minute: "2-digit", hour12: true })
-            },
+            paidAt: getPHTime(),
             refNo: order.refNo
         })
     }
 
-    
+
+
     await AdminPaymentTransaction.create({
         accountId: order.userId,
         accountName: `${order.firstname} ${order.lastname}`,
@@ -83,10 +96,7 @@ const createTransaction = async(order, receiptFIle) => {
         paymentMethod: "cash on delivery",
         totalAmount: order.totalPrice,
         status: "paid",
-        paidAt: { 
-            date: new Date().toISOString().split("T")[0],
-            time: new Date().toLocaleTimeString("en-PH", { hour: "2-digit", minute: "2-digit", hour12: true })
-        },
+        paidAt: getPHTime(),
         refNo: order.refNo,
         imageFile: receiptFIle
     })

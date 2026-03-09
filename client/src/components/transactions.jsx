@@ -1075,10 +1075,11 @@ const Transactions = () => {
                                                             { data: { date: data.paidAt.date, time: data.paidAt.time } },
                                                             { data: data.type },
                                                         ].map((info, i) => (
-                                                            <td key={i} className={`text-capitalize p-3 small ${i === 0 && "text-center"}`}>
+                                                            <td key={i} className={`text-capitalize p-3 small `}>
                                                                 {i === 1 ? (<>{info.data.name}<p className="m-0 text-lowercase opacity-75 small">{info.data.email}</p></>)
                                                                     : i === 5 ? (<><p className="m-0 small">{new Date(info.data.date).toLocaleDateString('en-PH', { year: 'numeric', month: 'short', day: 'numeric' })}</p><p className="m-0 small">{info.data.time}</p></>)
-                                                                        : info.data}
+                                                                        : info.data
+                                                                }
                                                             </td>
                                                         ))
                                                     )}

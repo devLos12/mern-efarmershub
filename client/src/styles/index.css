@@ -61,3 +61,18 @@
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
     background: rgba(255, 255, 255, 0.8); /* Slightly transparent on hover */
 }
+
+
+.show-scrollbar {
+  scrollbar-width: thin !important;
+  scrollbar-color: #4CAF50 transparent !important;
+}
+
+.show-scrollbar::-webkit-scrollbar {
+  width: 6px !important;
+}
+
+.show-scrollbar::-webkit-scrollbar-thumb {
+  background: #4CAF50;
+  border-radius: 10px;
+}

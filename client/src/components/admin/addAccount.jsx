@@ -3,7 +3,7 @@ import imageCompression from "browser-image-compression";
 import { appContext } from "../../context/appContext";
 import { useContext } from "react";
 import Toast from "../toastNotif.jsx";
-import philippinesAddress from "../../data/philippinesAddress.json";
+import philippinesAddress from "../../data/philippinesAddress.js";
 
 const AddAccount = ({ isOpen, onClose, onSuccess }) => {
     const {

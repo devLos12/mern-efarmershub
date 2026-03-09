@@ -1,10 +1,9 @@
 import React, { useContext, useEffect, useState } from "react";
 import img from "../../assets/images/home_bg.png";
 import { useNavigate } from "react-router-dom";
-import philippineLocations from "../../data/philippinesAddress.json";
+import philippineLocations from "../../data/philippinesAddress.js";
 import Toast from "../toastNotif.jsx";
 import { appContext} from "../../context/appContext.jsx";
-
 
 
 

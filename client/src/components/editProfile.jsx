@@ -4,7 +4,7 @@ import { appContext } from "../context/appContext";
 import { adminContext } from "../context/adminContext";
 import { sellerContext } from "../context/sellerContext";
 import { userContext } from "../context/userContext";
-import philippineLocations from "../data/philippinesAddress.json";
+import philippineLocations from "../data/philippinesAddress.js";
 import img from "../assets/images/home_bg.png";
 import imageCompression from 'browser-image-compression';
 import Toast from "./toastNotif";

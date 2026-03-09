@@ -2,9 +2,7 @@ import React, { useState, useEffect, useContext, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Toast from "../toastNotif.jsx";
 import { appContext } from "../../context/appContext.jsx";
-import philippinesAddress from "../../data/philippinesAddress.json";
-
-
+import philippinesAddress from "../../data/philippinesAddress.js";
 
 
 const Register = () => {
@@ -1425,15 +1423,12 @@ export default Register;
 
 // Buyer Terms Modal Component
 const BuyerTermsModal = ({ show, onClose, agreedToTerms, setAgreedToTerms, onAccept }) => {
-    if (!show) return null;
 
     const scrollRef = useRef(null);
     const [hasScrolledToBottom, setHasScrolledToBottom] = useState(false);
     
-
-   
-
-
+    
+    if (!show) return null;
 
     const handleScroll = () => {
         const el = scrollRef.current;
@@ -1581,7 +1576,14 @@ const BuyerTermsModal = ({ show, onClose, agreedToTerms, setAgreedToTerms, onAcc
         >
             <div
                 className="bg-white rounded shadow-lg"
-                style={{ maxWidth: "800px", width: "90%", maxHeight: "90vh", display: "flex", flexDirection: "column" }}
+                style={{ 
+                    maxWidth: "800px", 
+                    width: "90%", 
+                    height: "90vh", 
+                    display: "flex", 
+                    flexDirection: "column", 
+                    overflow: "hidden"
+                }}
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* Header */}
@@ -1589,7 +1591,7 @@ const BuyerTermsModal = ({ show, onClose, agreedToTerms, setAgreedToTerms, onAcc
                     <div className="d-flex justify-content-between align-items-center">
                         <div>
                             <h4 className="mb-1 fw-bold text-white">E-FARMERS' HUB</h4>
-                            <p className="mb-0 text-white" style={{ fontSize: "14px" }}>Buyer Terms and Conditions</p>
+                            <p className="mb-0 text-white">Buyer Terms and Conditions</p>
                         </div>
                         <button
 
@@ -1608,10 +1610,14 @@ const BuyerTermsModal = ({ show, onClose, agreedToTerms, setAgreedToTerms, onAcc
                 <div 
                     ref={scrollRef}
                     onScroll={handleScroll}
-                    className="p-4" 
-                    style={{ overflowY: "auto", flex: 1 }}
+                    className="p-4 show-scrollbar" 
+                    style={{ 
+                        overflowY: "scroll",
+                        flex: "1 1 0",
+                        minHeight: 0,
+                    }}
                 >
-                    <p className="mb-4" style={{ fontSize: "13px", lineHeight: "1.6" }}>
+                    <p className="mb-4" style={{ lineHeight: "1.6" }}>
                         These Terms and Conditions govern the registration and participation of buyers 
                         in E-FARMERS' HUB: A Web-Based E-Commerce Platform for Crop Products in Lupang Ramos, 
                         Langkaan I, Dasmariñas, Cavite. By registering as a buyer, you acknowledge that you 
@@ -1621,10 +1627,10 @@ const BuyerTermsModal = ({ show, onClose, agreedToTerms, setAgreedToTerms, onAcc
                     {termsData.map((term, index) => (
                         <div key={index} className="mb-4">
                             <div className="mb-2">
-                                <h6 className="fw-bold mb-2" style={{ fontSize: "14px" }}>
+                                <h6 className="fw-bold mb-2">
                                     {term.number}. {term.title}
                                 </h6>
-                                <div style={{ fontSize: "13px", lineHeight: "1.6", color: "#555" }}>
+                                <div style={{ lineHeight: "1.6", color: "#555" }}>
                                     {term.content.map((line, i) => (
                                         <p key={i} className="mb-2">{line}</p>
                                     ))}
@@ -1635,7 +1641,7 @@ const BuyerTermsModal = ({ show, onClose, agreedToTerms, setAgreedToTerms, onAcc
                     ))}
 
                     <div className="mt-4 p-3 rounded" style={{ backgroundColor: "#f0f0f0" }}>
-                        <p className="mb-0 small text-center fw-semibold">
+                        <p className="mb-0 text-center fw-semibold">
                             By proceeding with registration, you fully agree to these Buyer Terms and Conditions.
                         </p>
                     </div>
@@ -1659,10 +1665,10 @@ const BuyerTermsModal = ({ show, onClose, agreedToTerms, setAgreedToTerms, onAcc
                             disabled={!hasScrolledToBottom}  // ✅ DISABLED hanggang hindi pa naka-scroll
                             style={{ cursor: hasScrolledToBottom ? "pointer" : "not-allowed" }}
                         />
-                        <label className="mb-0 small" style={{ cursor: hasScrolledToBottom ? "pointer" : "not-allowed" }}>
+                        <label className="mb-0 " style={{ cursor: hasScrolledToBottom ? "pointer" : "not-allowed" }}>
                             {!hasScrolledToBottom 
                                 ? "Please scroll down to read all terms before agreeing" // ✅ hint message
-                                : "by checking this box, I agree that I have read and accepted the terms and conditions"
+                                : "By checking this box, I agree that I have read and accepted the terms and conditions"
                             }
                         </label>
                     </div>
@@ -1707,27 +1713,19 @@ const BuyerTermsModal = ({ show, onClose, agreedToTerms, setAgreedToTerms, onAcc
 };
 
 
-// Seller Terms Modal Component
+
 const SellerTermsModal = ({ show, onClose, agreedToTerms, setAgreedToTerms, onAccept }) => {
-    if (!show) return null;
-    
-    
-    
     const scrollRef = useRef(null);
     const [hasScrolledToBottom, setHasScrolledToBottom] = useState(false);
-    
- 
 
+    if (!show) return null;
 
     const handleScroll = () => {
         const el = scrollRef.current;
         if (!el) return;
-        const isAtBottom = el.scrollHeight - el.scrollTop <= el.clientHeight + 10; // +10 tolerance
+        const isAtBottom = el.scrollHeight - el.scrollTop <= el.clientHeight + 10;
         if (isAtBottom) setHasScrolledToBottom(true);
     };
-
-
-
 
     const termsData = [
         {
@@ -1735,21 +1733,22 @@ const SellerTermsModal = ({ show, onClose, agreedToTerms, setAgreedToTerms, onAc
             title: 'Product Quality Responsibility',
             content: [
                 'Sellers are strictly prohibited from packing and shipping spoiled, expired, damaged, or low-quality products.',
-                'All products shipped must be fresh, safe, and in good condition.'
+                'All products shipped must be fresh, safe, and in good condition before dispatch.'
             ]
         },
         {
             number: '2',
             title: 'Seller Accountability',
             content: [
-                'The seller is responsible for the quality of the product until it is received by the buyer.'
+                'The seller is responsible for ensuring the product is in good condition before it is handed to the delivery rider.',
+                'Proper packaging must be used to protect products during transport.'
             ]
         },
         {
             number: '3',
             title: 'Compliance',
             content: [
-                'Sellers are required to comply with platform standards for proper packaging and handling of products.'
+                'Sellers are required to comply with platform standards for proper packaging, labeling, and handling of products.'
             ]
         },
         {
@@ -1757,7 +1756,7 @@ const SellerTermsModal = ({ show, onClose, agreedToTerms, setAgreedToTerms, onAc
             title: 'Accurate Product Information',
             content: [
                 'Sellers must provide accurate product details, actual photos, prices, and available stocks.',
-                'Misleading or false information is prohibited.'
+                'Misleading, incorrect, or false product information is strictly prohibited.'
             ]
         },
         {
@@ -1765,22 +1764,25 @@ const SellerTermsModal = ({ show, onClose, agreedToTerms, setAgreedToTerms, onAc
             title: 'Order Processing',
             content: [
                 'Sellers must process orders within 24-48 hours and update buyers on shipping status.',
-                'Cancellations without valid reason are prohibited.'
+                'Order cancellations without a valid reason may result in platform penalties.'
             ]
         },
         {
             number: '6',
-            title: 'Returns and Refunds',
+            title: 'Replacement and Refund Policy',
             content: [
-                'Sellers must accept legitimate returns for defective or mismatched items.',
-                'Process refunds within 3-5 business days.'
+                'Buyers may request a product replacement if the item received is defective, spoiled, or significantly different from the listed product.',
+                'Sellers must provide a replacement item of the same product if the issue is confirmed.',
+                'If the damage occurred during delivery, the platform administrator will investigate and determine the responsible party.',
+                'Refund requests are not directly processed within the platform since payments are handled externally between buyer and seller.',
+                'Any refund arrangements must be settled outside the platform between the involved parties.'
             ]
         },
         {
             number: '7',
             title: 'Prohibited Practices',
             content: [
-                'Selling fake products, spam messaging, manipulation of reviews, and transactions outside the platform are prohibited.'
+                'Selling fake products, manipulating reviews, spam messaging, and conducting transactions outside the platform are strictly prohibited.'
             ]
         },
         {
@@ -1788,21 +1790,21 @@ const SellerTermsModal = ({ show, onClose, agreedToTerms, setAgreedToTerms, onAc
             title: 'Communication',
             content: [
                 'Sellers must respond to buyer inquiries within 24 hours.',
-                'Maintain professional communication at all times.'
+                'Professional and respectful communication must always be maintained.'
             ]
         },
         {
             number: '9',
             title: 'Penalties',
             content: [
-                'Repeated violations may result in warnings, suspension, or termination of account.'
+                'Repeated violations of platform policies may result in warnings, temporary suspension of payouts, or permanent termination of the seller account.'
             ]
         },
         {
             number: '10',
             title: 'Agreement',
             content: [
-                'By using the platform, the seller agrees to all of these Seller Terms & Conditions.'
+                'By registering and using the platform, the seller agrees to comply with all Seller Terms & Conditions stated above.'
             ]
         }
     ];
@@ -1815,22 +1817,30 @@ const SellerTermsModal = ({ show, onClose, agreedToTerms, setAgreedToTerms, onAc
                 setAgreedToTerms(false);
                 onClose();
             }}
-
         >
             <div
                 className="bg-white rounded shadow-lg"
-                style={{ maxWidth: "800px", width: "90%", maxHeight: "90vh", display: "flex", flexDirection: "column" }}
+                style={{
+                    maxWidth: "800px",
+                    width: "90%",
+                    height: "90vh",        // ✅ FIXED: height, hindi lang maxHeight
+                    display: "flex",
+                    flexDirection: "column",
+                    overflow: "hidden",    // ✅ Clips ang content sa loob ng modal
+                }}
                 onClick={(e) => e.stopPropagation()}
             >
-                {/* Header */}
-                <div className="p-4 border-bottom" style={{ backgroundColor: "#4CAF50" }}>
+                {/* Header - hindi mag-shrink */}
+                <div
+                    className="p-4 border-bottom"
+                    style={{ backgroundColor: "#4CAF50", flexShrink: 0 }}
+                >
                     <div className="d-flex justify-content-between align-items-center">
                         <div>
                             <h4 className="mb-1 fw-bold text-white">E-FARMERS' HUB</h4>
-                            <p className="mb-0 text-white" style={{ fontSize: "14px" }}>Seller Terms and Conditions</p>
+                            <p className="mb-0 text-white">Seller Terms and Conditions</p>
                         </div>
                         <button
-
                             onClick={() => {
                                 setAgreedToTerms(false);
                                 onClose();
@@ -1842,26 +1852,30 @@ const SellerTermsModal = ({ show, onClose, agreedToTerms, setAgreedToTerms, onAc
                 </div>
 
                 {/* Scrollable Content */}
-                <div 
+                <div
                     ref={scrollRef}
                     onScroll={handleScroll}
-                    className="p-4" 
-                    style={{ overflowY: "auto", flex: 1 }}
+                    className="p-4 show-scrollbar"
+                    style={{
+                        overflowY: "scroll",
+                        flex: "1 1 0",
+                        minHeight: 0,
+                    }}  
                 >
-                    <p className="mb-4" style={{ fontSize: "13px", lineHeight: "1.6" }}>
-                        These Terms and Conditions govern the registration and participation of sellers 
-                        in E-FARMERS' HUB: A Web-Based E-Commerce Platform for Crop Products in Lupang Ramos, 
-                        Langkaan I, Dasmariñas, Cavite. By registering as a seller, you acknowledge that you 
+                    <p className="mb-4" style={{ lineHeight: "1.6" }}>
+                        These Terms and Conditions govern the registration and participation of sellers
+                        in E-FARMERS' HUB: A Web-Based E-Commerce Platform for Crop Products in Lupang Ramos,
+                        Langkaan I, Dasmariñas, Cavite. By registering as a seller, you acknowledge that you
                         have read, understood, and agreed to comply with all provisions stated below.
                     </p>
 
                     {termsData.map((term, index) => (
                         <div key={index} className="mb-4">
                             <div className="mb-2">
-                                <h6 className="fw-bold mb-2" style={{ fontSize: "14px" }}>
+                                <h6 className="fw-bold mb-2">
                                     {term.number}. {term.title}
                                 </h6>
-                                <div style={{ fontSize: "13px", lineHeight: "1.6", color: "#555" }}>
+                                <div>
                                     {term.content.map((line, i) => (
                                         <p key={i} className="mb-2">{line}</p>
                                     ))}
@@ -1878,11 +1892,14 @@ const SellerTermsModal = ({ show, onClose, agreedToTerms, setAgreedToTerms, onAc
                     </div>
                 </div>
 
-                {/* Footer */}
-                <div className="p-4 border-top">
-                    <div 
-                        className="d-flex align-items-center gap-2 mb-3 p-3 rounded" 
-                        style={{ 
+                {/* Footer - hindi mag-shrink */}
+                <div
+                    className="p-4 border-top"
+                    style={{ flexShrink: 0 }}
+                >
+                    <div
+                        className="d-flex align-items-center gap-2 mb-3 p-3 rounded"
+                        style={{
                             backgroundColor: !hasScrolledToBottom ? "#f0f0f0" : agreedToTerms ? "#d4edda" : "#fff3cd",
                             cursor: hasScrolledToBottom ? "pointer" : "not-allowed",
                             opacity: hasScrolledToBottom ? 1 : 0.5
@@ -1893,25 +1910,23 @@ const SellerTermsModal = ({ show, onClose, agreedToTerms, setAgreedToTerms, onAc
                             type="checkbox"
                             checked={agreedToTerms}
                             onChange={() => hasScrolledToBottom && setAgreedToTerms(!agreedToTerms)}
-                            disabled={!hasScrolledToBottom}  // ✅ DISABLED hanggang hindi pa naka-scroll
+                            disabled={!hasScrolledToBottom}
                             style={{ cursor: hasScrolledToBottom ? "pointer" : "not-allowed" }}
                         />
-                        <label className="mb-0 small" style={{ cursor: hasScrolledToBottom ? "pointer" : "not-allowed" }}>
-                            {!hasScrolledToBottom 
-                                ? "Please scroll down to read all terms before agreeing" // ✅ hint message
-                                : "by checking this box, I agree that I have read and accepted the terms and conditions"
+                        <label className="mb-0" style={{ cursor: hasScrolledToBottom ? "pointer" : "not-allowed" }}>
+                            {!hasScrolledToBottom
+                                ? "Please scroll down to read all terms before agreeing"
+                                : "By checking this box, I agree that I have read and accepted the terms and conditions"
                             }
                         </label>
                     </div>
-                    
+
                     <div className="d-flex gap-2">
                         <button
                             onClick={() => {
-                                setAgreedToTerms(false);  // ✅ i-reset pag cancel
+                                setAgreedToTerms(false);
                                 onClose();
-                            }} 
-
-
+                            }}
                             className="btn btn-secondary flex-fill"
                             style={{ fontSize: "14px" }}
                         >
@@ -1919,13 +1934,11 @@ const SellerTermsModal = ({ show, onClose, agreedToTerms, setAgreedToTerms, onAc
                         </button>
                         <button
                             onClick={() => {
-                                if (agreedToTerms) {
-                                    onAccept();
-                                }
+                                if (agreedToTerms) onAccept();
                             }}
                             disabled={!agreedToTerms}
                             className="btn flex-fill"
-                            style={{ 
+                            style={{
                                 fontSize: "14px",
                                 backgroundColor: agreedToTerms ? "#4CAF50" : "#cccccc",
                                 color: "white",
@@ -1943,18 +1956,19 @@ const SellerTermsModal = ({ show, onClose, agreedToTerms, setAgreedToTerms, onAc
 };
 
 
+
 // Separate Terms Modal Component
 const RiderTermsModal = ({ show, onClose, agreedToTerms, setAgreedToTerms, onAccept }) => {
-    if (!show) return null;
+    
+    
+    
+    const scrollRef = useRef(null);
+    const [hasScrolledToBottom, setHasScrolledToBottom] = useState(false);
     
 
 
-
-    const scrollRef = useRef(null);
-    const [hasScrolledToBottom, setHasScrolledToBottom] = useState(false);
-
-
-
+    if (!show) return null;
+    
 
     const handleScroll = () => {
         const el = scrollRef.current;
@@ -2114,7 +2128,15 @@ const RiderTermsModal = ({ show, onClose, agreedToTerms, setAgreedToTerms, onAcc
         >
             <div
                 className="bg-white rounded shadow-lg"
-                style={{ maxWidth: "800px", width: "90%", maxHeight: "90vh", display: "flex", flexDirection: "column" }}
+                style={{ 
+                    maxWidth: "800px", 
+                    width: "90%", 
+                    height: "90vh", 
+                    display: "flex", 
+                    flexDirection: "column", 
+                    overflow: "hidden"
+                
+                }}
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* Header */}
@@ -2122,7 +2144,7 @@ const RiderTermsModal = ({ show, onClose, agreedToTerms, setAgreedToTerms, onAcc
                     <div className="d-flex justify-content-between align-items-center">
                         <div>
                             <h4 className="mb-1 fw-bold text-white">E-FARMERS' HUB</h4>
-                            <p className="mb-0 text-white" style={{ fontSize: "14px" }}>Rider Terms and Conditions</p>
+                            <p className="mb-0 text-white" >Rider Terms and Conditions</p>
                         </div>
                         <button
                             onClick={() => {
@@ -2139,13 +2161,17 @@ const RiderTermsModal = ({ show, onClose, agreedToTerms, setAgreedToTerms, onAcc
 
                 {/* Scrollable Content */}
 
-                <div 
+                <div
                     ref={scrollRef}
                     onScroll={handleScroll}
-                    className="p-4" 
-                    style={{ overflowY: "auto", flex: 1 }}
+                    className="p-4 show-scrollbar"
+                    style={{
+                        overflowY: "scroll",
+                        flex: "1 1 0",
+                        minHeight: 0,
+                    }}
                 >
-                    <p className="mb-4" style={{ fontSize: "13px", lineHeight: "1.6" }}>
+                    <p className="mb-4" style={{ lineHeight: "1.6" }}>
                         These Terms and Conditions govern the registration and participation of riders in E-FARMERS' HUB: 
                         A Web-Based E-Commerce Platform for Crop Products in Lupang Ramos, Langkaan I, Dasmariñas, Cavite. 
                         By registering as a rider, you acknowledge that you have read, understood, and agreed to comply with 
@@ -2155,10 +2181,10 @@ const RiderTermsModal = ({ show, onClose, agreedToTerms, setAgreedToTerms, onAcc
                     {termsData.map((term, index) => (
                         <div key={index} className="mb-4">
                             <div className="mb-2">
-                                <h6 className="fw-bold mb-2" style={{ fontSize: "14px" }}>
+                                <h6 className="fw-bold mb-2">
                                     {term.number}. {term.title}
                                 </h6>
-                                <div style={{ fontSize: "13px", lineHeight: "1.6", color: "#555" }}>
+                                <div style={{ lineHeight: "1.6", color: "#555" }}>
                                     {term.content.map((line, i) => (
                                         <p key={i} className="mb-2">{line}</p>
                                     ))}
@@ -2193,10 +2219,10 @@ const RiderTermsModal = ({ show, onClose, agreedToTerms, setAgreedToTerms, onAcc
                             disabled={!hasScrolledToBottom}  // ✅ DISABLED hanggang hindi pa naka-scroll
                             style={{ cursor: hasScrolledToBottom ? "pointer" : "not-allowed" }}
                         />
-                        <label className="mb-0 small" style={{ cursor: hasScrolledToBottom ? "pointer" : "not-allowed" }}>
+                        <label className="mb-0" style={{ cursor: hasScrolledToBottom ? "pointer" : "not-allowed" }}>
                             {!hasScrolledToBottom 
                                 ? "Please scroll down to read all terms before agreeing" // ✅ hint message
-                                : "by checking this box, I agree that I have read and accepted the terms and conditions"
+                                : "By checking this box, I agree that I have read and accepted the terms and conditions"
                             }
                         </label>
                     </div>
