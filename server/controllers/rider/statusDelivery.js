@@ -165,7 +165,6 @@ const createOrUpdatePayout = async(items, orderId) => {
 
 
 
-
 // NEW: Rider Payout Function with TAX
 const createOrUpdateRiderPayout = async(riderId, orderId) => {
     const RIDER_TAX_RATE = parseFloat(process.env.RIDER_TAX_RATE) || 0.05; // 5% tax

@@ -528,7 +528,7 @@ const Orders = () => {
                 )}
 
                 <div ref={printRef} className="table-responsive" style={{ overflow: "auto" }}>
-                    <table className="table table-hover">
+                    <table className="table table-hover mb-5">
                         <thead className="bg-light">
                             <tr>
                                 <th className="text-uppercase small text-success">#</th>
@@ -545,7 +545,9 @@ const Orders = () => {
                             {currentItems.map((data, i) => {
                                 const isMenuOpen = openMenuId === data._id;
                                 const rowNumber = indexOfFirstItem + i + 1;
-                                const popUp = i >= currentItems.length - 2;
+                                const popUp = i === currentItems.length - 1;
+                                const oneItem = currentItems.length === 1;
+
 
                                 return (
                                     <tr key={i}>
@@ -587,8 +589,8 @@ const Orders = () => {
                                                             width: "220px", cursor: "default",
                                                             boxShadow: "0px 2px 10px rgba(0,0,0,0.25)",
                                                             right: 0,
-                                                            top: popUp ? "auto" : "100%",
-                                                            bottom: popUp ? "100%" : "auto",
+                                                            top: oneItem ? "100%" : popUp ? "auto" : "100%",
+                                                            bottom: oneItem ? "auto" : popUp ? "100%" : "auto",
                                                         }}
                                                         onClick={(e) => e.stopPropagation()}
                                                     >
