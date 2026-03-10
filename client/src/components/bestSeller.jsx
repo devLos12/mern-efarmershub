@@ -235,7 +235,7 @@ const BestSellerProducts = ({signIn}) => {
                                             style={{cursor: "pointer", objectFit: "cover"}} 
                                             onClick={() => {
                                                 if(role === "user"){
-                                                    navigate("/user/all-products/productdetails", {state: {productId: data._id}});
+                                                    navigate("/user/productdetails", {state: {productId: data._id}});
                                                 } else {
                                                     signIn(true);
                                                 }

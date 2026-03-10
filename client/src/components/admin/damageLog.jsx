@@ -345,9 +345,12 @@ const DamageLog = () => {
 
                                 
             {/* Table */}
-            <div className="bg-white rounded shadow-sm border" style={{height: "calc(100vh - 250px)", overflow: "auto"}}>
+            <div className="table-responsive rounded border bg-white" 
+            
+            >
                 {loading ? (
-                    <div className="d-flex flex-column gap-3 justify-content-center align-items-center" style={{height: "200px"}}>
+                    <div className="d-flex bg-white flex-column gap-3 justify-content-center align-items-center vh-100" 
+                    >
                         <div className="spinner-border text-success" role="status">
                             <span className="visually-hidden"></span>
                         </div>
@@ -358,7 +361,8 @@ const DamageLog = () => {
                         <p className="m-0 text-capitalize text-center small opacity-75">no damage logs found</p>
                     </div>
                 ) : (
-                    <table className="w-100">
+            
+                    <table className="table table-hover w-100">
                         <thead className="position-sticky top-0 z-1 bg-white">
                             <tr>
                                 {["#", "Rider Name", "Order ID", "Item Damaged", "Damage Value", "Rider Liability", 
@@ -368,6 +372,11 @@ const DamageLog = () => {
                                         className={`text-capitalize p-3 text-success small ${i === 0 && "text-center"}`}
                                     >
                                         {header}
+                                        {
+                                            i === 5 && (
+                                                <small className='ms-2'>(30%)</small>
+                                            )
+                                        }
                                     </th>
                                 ))}
                                 {isSelect && (
@@ -418,10 +427,9 @@ const DamageLog = () => {
                                             {log.status}
                                         </span>
                                     </td> */}
-                                    <td className="p-3 small" style={{maxWidth: "200px"}}>
-                                        <p className="m-0 text-truncate" title={log.notes}>
-                                            {log.notes || "-"}
-                                        </p>
+                                    <td className="p-3 small" 
+                                    >
+                                        {log.notes || "-"}
                                     </td>
                                     <td className="p-3 small">
                                         {new Date(log.createdAt).toLocaleDateString('en-PH', {
@@ -446,12 +454,13 @@ const DamageLog = () => {
                             ))}
                         </tbody>
                     </table>
+
                 )}
             </div>
 
             {/* Pagination */}
             {filteredDamageLogs.length > 0 && (
-                <div className="d-flex justify-content-between align-items-center border-top p-3 bg-white mt-2">
+                <div className="d-flex justify-content-between align-items-center border-top p-3 bg-white ">
                     <div className="text-muted small">
                         Showing {indexOfFirstItem + 1} to {Math.min(indexOfLastItem, filteredDamageLogs.length)} of {filteredDamageLogs.length} damage logs
                     </div>

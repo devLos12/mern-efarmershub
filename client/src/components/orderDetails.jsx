@@ -52,6 +52,7 @@ const OrderDetails = () => {
             toastType,
             showNotification,
             setShowToast,
+            shippingFee
 
     } = useContext(appContext);
     const location = useLocation();
@@ -110,6 +111,8 @@ const OrderDetails = () => {
             navigate("/", { replace: true });
         }
     }, [orderId, navigate]);
+
+
 
 
 
@@ -405,8 +408,8 @@ const OrderDetails = () => {
     // NEW function - add after handleSubmitReplacementRequest
     const handleSubmitReplacementReview = async () => {
 
-
         
+
         // Validate that all items have decisions
         for (let itemId of selectedItemsForReplacement) {
             if (!replacementReview[itemId]?.decision) {
@@ -847,7 +850,8 @@ const OrderDetails = () => {
     if (!orderId) return null;
     if (loading) return <p></p>;
 
-    const shippingFee = orderData?.orderMethod === "delivery" ? 30 : 0;
+    const shippingFeeVar = orderData?.orderMethod === "delivery" ? shippingFee?.amount : 0;
+
     const currentStatus = orderData.statusHistory.find((item) => item.status === orderData.statusDelivery) || "";
 
 
@@ -2481,20 +2485,25 @@ const OrderDetails = () => {
                                             noPaymentProof(orderData) ? "col-12" : "col-12 col-lg-6 col-md-12"}>
                                             <div className="row g-0 mt-2 mt-md-4 rounded bg-beige p-2 shadow-sm border">
                                                 <div className={`col-5 col-sm-4 col-md-5 col-lg-5 col-xl-4 col-xxl-4`}>
-                                                    <div className="d-flex flex-column justify-content-between h-100 rounded-2 overflow-hidden"
-                                                    style={{ aspectRatio: "4/3" }}
+                                                    
+                                                    <div className="d-flex flex-column justify-content-between "
                                                     >
-                                                        <img 
-                                                        src={
-                                                            item.imageFile.startsWith("http") 
-                                                            ? item.imageFile 
-                                                            : `${import.meta.env.VITE_API_URL}/api/Uploads/${item.imageFile}`} 
-                                                        alt={item.imageFile} 
-                                                        className="img-fluid w-100 h-100 "
-                                                        style={{objectFit: "cover"}} 
-                                                        />
+                                                        <div className="rounded-2 overflow-hidden"
+                                                        style={{ aspectRatio: "4/3"}}
+                                                        >
+                                                            <img 
+                                                            src={
+                                                                item.imageFile.startsWith("http") 
+                                                                ? item.imageFile 
+                                                                : `${import.meta.env.VITE_API_URL}/api/Uploads/${item.imageFile}`} 
+                                                            alt={item.imageFile} 
+                                                            className="img-fluid w-100 h-100 "
+                                                            style={{objectFit: "cover"}} 
+                                                            />
+                                                        </div>
 
-                                                        {role === "user" && orderData?.statusDelivery.toLowerCase() === "delivered" && (
+
+                                                        {role === "user" && orderData?.statusDelivery.toLowerCase() === "delivered"  && (
                                                             <button 
                                                                 className={`text-capitalize p-2 border-0 bg-dark text-white rounded shadow-sm w-100 mt-3 ${item.isReviewed ? "opacity-50" : "opacity-100"}`}
                                                                 style={{ fontSize: "12px" }}
@@ -2505,6 +2514,7 @@ const OrderDetails = () => {
                                                             </button>
                                                         )}
                                                     </div>
+
                                                 </div>
                                                 <div className="col ms-3">
                                                     <div className="d-flex flex-column justify-content-between h-100">
@@ -2626,9 +2636,10 @@ const OrderDetails = () => {
                                         hour12: true      // PM
                                         })
                                     },
-                                    {
-                                        label: "Shipping fee", value: orderData.orderMethod === "delivery"
-                                            ? `₱${shippingFee}.00` : "free"
+                                    { label: "Shipping Fee", 
+                                        value: orderData.shippingFee === 0 
+                                        ? "free" 
+                                        : `₱${orderData.shippingFee.toFixed(2)}` || 30
                                     },
                                     { label: "Method of order", value: orderData.orderMethod },
                                     { label: "Mode of payment", value: orderData.paymentType },

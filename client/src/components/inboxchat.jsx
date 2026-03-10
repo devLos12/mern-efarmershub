@@ -17,7 +17,8 @@ const InboxChat = () =>{
     const { setInboxBadge,  inboxBadge, 
             inboxList, setInboxList,
             inboxError, setInboxError,
-            inboxLoading, setInboxLoading } = useContext(appContext);
+            inboxLoading, setInboxLoading 
+    } = useContext(appContext);
 
 
     useEffect(() => {
@@ -66,13 +67,20 @@ const InboxChat = () =>{
     const randomColor = useMemo(() => colors[Math.floor(Math.random() * colors.length)], []);
 
     
+
+
     if(inboxLoading) return <p>
         <div className="d-flex align-items-center justify-content-center vh-100">
-            <div className="spinner-border text-success" role="status">
-                <span className="visually-hidden">Loading...</span>
+            <div className="text-center">
+                <div className="spinner-border text-success" role="status">     
+                    <span className="visually-hidden">Loading...</span>
+                </div>
+                <p className="small text-muted mt-2">Loading Inbox chats...</p>
             </div>
         </div>
     </p>
+
+
 
     return (
         <div className={"mx-2 d-flex vh-100"} style={{ height : role ==="user" ? height : height-68}}>

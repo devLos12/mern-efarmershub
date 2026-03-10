@@ -61,7 +61,7 @@ const Reviews = () => {
         // Navigate after short delay
         setTimeout(() => {
             navigate(-1);
-        }, 1500);
+        }, 2500);
                      
       }catch(err){
         console.log("Error: ", err.message);
@@ -169,12 +169,21 @@ const Reviews = () => {
 
             <div className="row justify-content-center mb-5">
               <div className="col-12 col-md-6 col-lg-5 col-xl-4 ">
-                <div className="d-flex flex-column justify-content-between h-100 p-3 bg-beige">
-                  <img src={data.imageFile} 
-                  alt={data.imageFile} className="img-fluid rounded shadow-sm border"/>
+                <div className="d-flex flex-column justify-content-between p-3 h-100 rounded-3 shadow bg-beige "
+                >
+                  <div 
+                  className="overflow-hidden rounded-3"
+                  style={{ aspectRatio: "4/3"}}>
+                    <img src={data.imageFile} 
+                    alt={data.imageFile} 
+                    className="img-fluid h-100 w-100"
+                    style={{ objectFit: "cover" }}
+                    />
+                  </div>
+
                   <div className="mt-3">
-                    <p className="m-0 text-capitalize fw-bold fs-4">{data.prodName}</p>
-                    <p className="m-0 text-capitalize opacity-75">{data.prodDisc}</p>
+                    <p className="m-0 text-capitalize fw-bold fs-5 text-success">{data.prodName}</p>
+                    <p className="m-0 text-capitalize opacity-75 small">{data.prodDisc}</p>
                   </div>
                 </div>  
               </div>
@@ -287,7 +296,7 @@ const Reviews = () => {
                       }}>skip</button>
                     </div>
                     <div className="col ">
-                      <button className={`text-capitalize p-2 mt-4 mt-md-0 w-100 bg-dark text-white border-0 rounded shadow d-flex align-items-center justify-content-center gap-2 ${!isDisabled ? "opacity-75" : "opacity-100"}`}
+                      <button className={`text-capitalize p-2 mt-4 mt-md-0 w-100 bg-dark text-white border-0 rounded shadow d-flex align-items-center justify-content-center gap-2 ${!isDisabled || isSubmitting ? "opacity-75" : "opacity-100"}`}
                       disabled = {!isDisabled || isSubmitting}
                       onClick={submitReview}
                       style={{

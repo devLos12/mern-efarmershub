@@ -12,7 +12,7 @@ export const MyAppContext = ({children}) =>{
     })
     const [inboxList, setInboxList] = useState([]);
     const [inboxError, setInboxError] = useState(null);
-    const [inboxLoading, setInboxLoading] = useState(null);
+    const [inboxLoading, setInboxLoading] = useState(false);
     const [bestSellers, setBestSellers] = useState([]);
     
     // ✅ ADD THESE - Toast states
@@ -57,7 +57,38 @@ export const MyAppContext = ({children}) =>{
         show: false
     })
 
-    
+
+
+    const [shippingFee, setShippingFee ] = useState({
+        amount: 30,
+        updatedBy: "admin",
+        updatedAt: null,
+        isLoading: true
+    });
+
+
+
+    useEffect(() => {
+
+        fetch(`${import.meta.env.VITE_API_URL}/api/getShippingFee`, {
+            method: "GET",
+            credentials: "include"
+        })
+        .then(res => res.json())
+        .then(data => setShippingFee({
+            ...data,
+            isLoading: false
+        }))
+        .catch(err => {
+                console.log("Error: ", err.message)
+                setShippingFee(prev => ({...prev, isLoading: false }))
+            } 
+        )
+
+    },[]);
+
+
+
     return (
         <appContext.Provider 
         value={{
@@ -78,7 +109,8 @@ export const MyAppContext = ({children}) =>{
             loadingStateButton, setLoadingStateButton,
             orderBadge, setOrderBadge,
             prodBadge, setProdBadge,
-            accBadge, setAccBadge
+            accBadge, setAccBadge,
+            shippingFee, setShippingFee
 
         }}>{children}
         </appContext.Provider>

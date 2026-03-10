@@ -132,7 +132,8 @@ const SeasonAnnouncement = () => {
           {loading ? (
             // Minimalist loading spinner
             <div className="d-flex justify-content-center align-items-center" style={{height: "400px"}} >
-              <div className="spinner-border" role="status" style={{ width: "40px", height: "40px", borderWidth: "3px", color: "#22c55e" }}>
+              <div className="spinner-border text-success" role="status" 
+              >
                 <span className="visually-hidden">Loading...</span>
               </div>
             </div>

@@ -1,5 +1,9 @@
 import mongoose, { Schema } from "mongoose";
 
+
+
+
+
 const orderSchema = new mongoose.Schema({
     orderId: { type: String, required: true },
     userId : {
@@ -78,7 +82,8 @@ const orderSchema = new mongoose.Schema({
     lastname   : {type : String, required : true},
     email      : {type : String, required : true },
     contact    : {type : String, required : true}, 
-    address    : {type : String, required : true},     
+    address    : {type : String, required : true},
+    shippingFee: {type:  Number, required: true},     
     totalPrice : {type : Number, required : true},
     paymentType : {type : String, required : true},
     paymentStatus : {type : String, required : true},

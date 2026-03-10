@@ -239,7 +239,7 @@ const QrCodes = () => {
                                         </div>
                                         <div>
                                             <h5 className="mb-0 fw-bold text-dark">GCash</h5>
-                                            <small className="text-muted">E-Wallet Payment</small>
+                                            <small className="text-muted">E-Wallet Proof of Payment</small>
                                         </div>
                                     </div>
 
@@ -297,7 +297,7 @@ const QrCodes = () => {
                                         </div>
                                         <div>
                                             <h5 className="mb-0 fw-bold text-dark">Maya</h5>
-                                            <small className="text-muted">E-Wallet Payment</small>
+                                            <small className="text-muted ">E-Wallet Proof of Payment</small>
                                         </div>
                                     </div>
 

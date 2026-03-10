@@ -287,7 +287,6 @@ const User = ({setUserAuth}) => {
             }/>
             <Route path="productdetails"   element={<ProductDetails/>}/>
             <Route path="all-products"     element={<AllProductCards/>}/>
-            <Route path="all-products/productdetails"   element={<ProductDetails/>}/>
             <Route path="*"                element={<Navigate to="/user" /> }/>
           </Routes>
 
@@ -316,9 +315,7 @@ const User = ({setUserAuth}) => {
         </>}
       />
 
-      <Route path="checkout"                  element={<Checkout />}/> 
-      <Route path="productdetails/checkout"   element={<Checkout />}/> 
-      <Route path="all-products/checkout"   element={<Checkout />}/> 
+      <Route path="checkout"         element={<Checkout />}/> 
       <Route path="orderdetails"     element={<OrderDetails/>}/>
       <Route path="trackorder"       element={<TrackOrder/>}/>
       <Route path="address"          element={<Address />}/>

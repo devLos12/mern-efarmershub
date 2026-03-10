@@ -20,6 +20,7 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 // ============================================================
 // EMAIL - ORDER STATUS NOTIFICATION
 // ============================================================
+
 const STATUS_CONFIG = {
     "confirm": {
         label: "Order Confirmed",
@@ -266,7 +267,7 @@ const sendOrderStatusEmail = async (
 // ============================================================
 
 const sendSMS = async (contact, orderId, firstname, productList, totalAmount) => {
-    const id = orderId.toString().slice(0, 12);
+    const id = orderId;
     const seller = firstname.charAt(0).toUpperCase() + firstname.slice(1).toLowerCase();
     const amount = totalAmount.toLocaleString('en-PH', {
         minimumFractionDigits: 2,
@@ -294,6 +295,7 @@ const sendSMS = async (contact, orderId, firstname, productList, totalAmount) =>
         console.log("Error: ", error.message);
     }
 }
+
 
 const formatTime = () =>
     new Date().toLocaleTimeString("en-PH", {
@@ -329,6 +331,7 @@ const createActivityLog = async (adminId, action, description, req) => {
         console.error('Failed to create activity log:', error);
     }
 };
+
 
 const createTransaction = async(items, payment, userId, firstname, lastname, email, totalPrice, refNo, proofOfPayment) => {
     for (const item of items){
@@ -369,6 +372,8 @@ const createTransaction = async(items, payment, userId, firstname, lastname, ema
     }) 
 }
 
+
+
 const createOrUpdatePayout = async(items, order)=>{
     const SELLER_TAX_RATE = process.env.SELLER_TAX_RATE;
 
@@ -408,6 +413,7 @@ const createOrUpdatePayout = async(items, order)=>{
         }
     }
 }
+
 
 
 // ============================================================
@@ -533,7 +539,7 @@ export const statusOrder = async(req, res) => {
                         `${item.prodName} (${item.quantity} bundle${item.quantity > 1 ? 's' : ''})`
                     ).join(', ');
                     
-                    // await sendSMS(sellerContact, order.orderId, seller.firstname, productList, totalAmount);
+                    await sendSMS(sellerContact, order.orderId, seller.firstname, productList, totalAmount);
                 }
 
                 // 📧 EMAIL - confirm (with items + total)
@@ -663,6 +669,14 @@ export const statusOrder = async(req, res) => {
 }
 
 
+
+
+
+
+
+
+
+
 const storage = multer.memoryStorage();
 export const cancelOrderFile = multer({ storage: storage });
 
@@ -762,8 +776,10 @@ const createNotification = async(senderId, senderRole, recipientId, recipientRol
     }); 
 }
 
+
+
 const sendReplacementSMS = async (contact, firstname, orderId, productList, faultAssignedTo) => {
-    const id = orderId.toString().slice(0, 12);
+    const id = orderId;
     const seller = firstname.charAt(0).toUpperCase() + firstname.slice(1).toLowerCase();
     
     let message = "";
@@ -877,8 +893,9 @@ export const reviewReplacement = async (req, res) => {
                     
                     if (riderId) {
                         const damageValue = item.prodPrice * item.quantity;
-                        const riderLiability = damageValue * 0.30;
+                        const riderLiability = damageValue * process.env.RIDER_LIABILITY || 0.30;
                         
+
                         await DamageLog.create({
                             rider: riderId,
                             order: order.orderId,
@@ -1006,6 +1023,7 @@ export const reviewReplacement = async (req, res) => {
             }
             
             const sellerContact = seller.e_WalletAcc?.number;
+            
             const { items, faultAssignedTo } = sellerReplacementGroups[sellerId];
             
             const productList = items.map(item => 

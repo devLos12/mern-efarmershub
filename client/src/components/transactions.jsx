@@ -256,6 +256,9 @@ const Transactions = () => {
     const fileUploadRef = useRef({});
     const printRef = useRef();
     const [isProcessingPayout, setIsProcessingPayout] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+
+
 
 
     // ── Period Label ────────────────────────────────────────────────────────────
@@ -525,6 +528,7 @@ const Transactions = () => {
         }
     };
 
+
     const handleDelete = async () => {
         if (selectedIds.size === 0) {
             showNotification("No transactions selected yet", "error");
@@ -555,16 +559,26 @@ const Transactions = () => {
         }
     };
 
+
+
     // ── Fetch Transactions (with period + custom date query params) ──────────────
     useEffect(() => {
         const fetchTransactions = async () => {
+
+
+
             const endPoint = role === "admin" ? "getTransactions" : "getSellerTransactions";
+
 
             // Build query string with period filter
             let queryParams = `period=${period}`;
             if (period === 'custom' && customStartDate && customEndDate) {
                 queryParams += `&startDate=${customStartDate}&endDate=${customEndDate}`;
             }
+
+
+
+            setIsLoading(true);
 
             try {
                 const res = await fetch(`${import.meta.env.VITE_API_URL}/api/${endPoint}?${queryParams}`, {
@@ -592,8 +606,12 @@ const Transactions = () => {
                 setTransactions(transactions);
             } catch (err) {
                 console.log("Error:", err.message);
+            } finally {
+                setIsLoading(false);
             }
         };
+
+
         fetchTransactions();
     }, [location?.state?.source, refresh, period, customStartDate, customEndDate]);
     // ───────────────────────────────────────────────────────────────────────────
@@ -606,6 +624,21 @@ const Transactions = () => {
     const taxPercentage = selectedTransaction?.totalAmount > 0
         ? ((selectedTransaction?.taxAmount / selectedTransaction?.totalAmount) * 100).toFixed(0)
         : 0;
+
+    
+
+    if(isLoading) return (
+        <div className="d-flex align-items-center justify-content-center vh-100">
+            <div className="text-center">
+                <div className="spinner-border text-success" role="status">     
+                    <span className="visually-hidden">Loading...</span>
+                </div>
+                <p className="small text-muted mt-2">Loading transactions...</p>
+            </div>
+        </div>
+    )
+
+
 
     return (
         <>

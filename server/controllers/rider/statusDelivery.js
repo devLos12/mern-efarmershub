@@ -9,6 +9,8 @@ import RiderPayout from "../../models/riderPayout.js";
 import { v2 as cloudinary } from "cloudinary";
 import SalesList from "../../models/salesReport.js";
 import Product from "../../models/products.js";
+import ShippingFee from "../../models/shippingFee.js";
+
 
 
 
@@ -103,6 +105,7 @@ const createTransaction = async(order, receiptFIle) => {
 
 }
 
+
 const createOrUpdatePayout = async(items, orderId) => {
     // ✅ ADD: Get seller tax rate from environment
     const SELLER_TAX_RATE = parseFloat(process.env.SELLER_TAX_RATE) || 0.05; // 5% tax default
@@ -168,8 +171,12 @@ const createOrUpdatePayout = async(items, orderId) => {
 // NEW: Rider Payout Function with TAX
 const createOrUpdateRiderPayout = async(riderId, orderId) => {
     const RIDER_TAX_RATE = parseFloat(process.env.RIDER_TAX_RATE) || 0.05; // 5% tax
-    const deliveryFee = parseFloat(process.env.RIDER_GROSS_RATE) || 30; // Fixed ₱30 per delivery (GROSS)
+    // const deliveryFee = parseFloat(process.env.RIDER_GROSS_RATE) || 30; // Fixed ₱30 per delivery (GROSS)
     
+
+    const shippingFeeRecord = await ShippingFee.findOne();
+    const deliveryFee = shippingFeeRecord?.amount || 30;
+
     const today = new Date().toISOString().split("T")[0];
 
     // Check if rider has existing payout for today

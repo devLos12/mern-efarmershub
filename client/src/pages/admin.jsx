@@ -26,6 +26,7 @@ import ViewProfile from "../components/admin/viewProfile.jsx";
 import TrackReplacementProduct from "../components/trackProduct.jsx";
 import ActivityLog from "../components/admin/activityLog.jsx";
 import SalesReport from "../components/admin/salesReport.jsx";
+import ShippingFee from "../components/admin/shippingFee.jsx";
 
 
 
@@ -66,6 +67,8 @@ const Admin = ({setAdminAuth})=>{
 
     const getChatsInbox = async() => {
 
+        setInboxLoading(true);
+
         try{
             const res = await fetch(`${import.meta.env.VITE_API_URL}/api/getAdminInboxChat` , { 
                 method : "GET", 
@@ -74,7 +77,6 @@ const Admin = ({setAdminAuth})=>{
             const data = await res.json();
             if(!res.ok) throw new Error(data.message);
             
-            setInboxLoading(false);
             setInboxError(null);
             setInboxList(data);
 
@@ -91,9 +93,10 @@ const Admin = ({setAdminAuth})=>{
 
 
         }catch(err){
-            setInboxLoading(false);
             setInboxError(err.message);
             console.log("Error", err.message);
+        } finally {
+            setInboxLoading(false);
         }
     }
 
@@ -292,13 +295,13 @@ const Admin = ({setAdminAuth})=>{
         {path: 'inventory',         element: <Inventory/>, source: "pendings"}, 
 
 
-
         {path: 'announcement',      element: <Announcement/>},
         // {path: 'transactions',      element: <Transactions/>},
         {path: 'payment',           element: <Transactions/>},
         {path: 'payout/seller',     element: <Transactions/>},
         {path: 'payout/rider',      element: <Transactions/>},
         {path: 'qrcodes',           element: <QrCodes/>},
+        {path: 'shipping-fee',      element: <ShippingFee/>},
         {path: 'profile',           element: <ViewProfile/>},
         {path: "track-replacement", element: <TrackReplacementProduct/>},
         {path: 'activity-logs',     element: <ActivityLog/>},

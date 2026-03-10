@@ -22,7 +22,7 @@ const Announcement = () => {
     const [announcement, setAnnouncement] = useState([]);
     const height = useBreakpointHeight();
     const [openMenuId, setOpenMenuId] = useState(null);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false);
     
     // Pagination states
     const [currentPage, setCurrentPage] = useState(1);
@@ -56,23 +56,33 @@ const Announcement = () => {
 
 
     useEffect(() => {
-        fetch(`${import.meta.env.VITE_API_URL}/api/getAnnouncement`, {
-            method: "GET",
-            credentials: "include"
-        })
-        .then(async(res) => {
-            const data = await res.json();
-            if(!res.ok) throw new Error(data.message);
-            return data;
-        })
-        .then((data) => {
-            setLoading(false);
-            setAnnouncement(data);
-        })
-        .catch((err) => {
-            setLoading(false);
-            console.log("Error: ", err.message)
-        });
+
+        const getAnnouncement = () => {
+
+
+            setLoading(true);
+
+            fetch(`${import.meta.env.VITE_API_URL}/api/getAnnouncement`, {
+                method: "GET",
+                credentials: "include"
+            })
+            .then(async(res) => {
+                const data = await res.json();
+                if(!res.ok) throw new Error(data.message);
+                return data;
+            })
+            .then((data) => {
+                setAnnouncement(data);
+            })
+            .catch((err) => {
+                setLoading(false);
+                console.log("Error: ", err.message)
+            })
+            .finally(() => setLoading(false));
+        }
+
+        getAnnouncement();
+
     },[addAnnouncement?.trigger]);
 
 
@@ -88,7 +98,18 @@ const Announcement = () => {
         setCurrentPage(1);
     }, [announcement.length]);
 
-    if(loading) return null;
+
+    if(loading) return (
+        <div className="d-flex align-items-center justify-content-center vh-100">
+            <div className="text-center">
+                <div className="spinner-border text-success" role="status">     
+                    <span className="visually-hidden">Loading...</span>
+                </div>
+                <p className="small text-muted mt-2">Loading transactions...</p>
+            </div>
+        </div>
+    )
+
 
     return (
         <>

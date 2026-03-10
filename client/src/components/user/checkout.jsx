@@ -18,8 +18,9 @@ const Checkout = () =>{
             toastMessage,
             toastType,
             showNotification,
-            setShowToast, } = useContext(appContext);
-
+            setShowToast, 
+            shippingFee
+    } = useContext(appContext);
 
     const {viewQr, setOpenCart, cart, setCart, setCartBadge} = useContext(userContext);
     const [enableSubmit,  setEnableSubmit] = useState(false);
@@ -68,7 +69,6 @@ const Checkout = () =>{
             if(!res.ok) throw new Error(data.message);
 
             if(data.success){
-                console.log(data)
                 setQrAvailability({
                     gcash: !!data.data.gcashQr,
                     maya: !!data.data.mayaQr
@@ -133,16 +133,18 @@ const Checkout = () =>{
     },[checkoutForm]);
 
     // Shipping fee calculation
-    const shippingFee = useMemo(() => {
-        return checkoutForm.orderMethod === "delivery" ? 30 : 0;
+    const shippingFeeVar = useMemo(() => {
+        return checkoutForm.orderMethod === "delivery" ? shippingFee?.amount : 0;
     }, [checkoutForm.orderMethod]);
 
     // Final total with shipping
     const finalTotal = useMemo(() => {
-        return totalPrice + shippingFee;
-    }, [totalPrice, shippingFee]);
+        return totalPrice + shippingFeeVar;
+    }, [totalPrice, shippingFeeVar]);
 
     
+    
+
     useEffect(() => {
         fetch(`${import.meta.env.VITE_API_URL}/api/getBillingAddress`,{
             method:"GET",
@@ -185,8 +187,11 @@ const Checkout = () =>{
         sendData.append("image", checkoutForm.image);
         sendData.append("text", checkoutForm.text);
         sendData.append("totalPrice", totalPrice);
-        sendData.append("shippingFee", shippingFee);
+        sendData.append("shippingFee", shippingFeeVar);
         sendData.append("finalTotal", finalTotal);
+
+
+
 
         try{
             const res = await fetch(`${import.meta.env.VITE_API_URL}/api/checkout`,{
@@ -474,7 +479,7 @@ const Checkout = () =>{
                                     <div className="mt-1 d-flex justify-content-between align-items-center">
                                         <p className="m-0 text-capitalize small">shipping fee:</p>
                                         <p className="m-0 text-capitalize small">
-                                            {checkoutForm.orderMethod === "delivery" ? "₱30.00" : "Free"}
+                                            {checkoutForm.orderMethod === "delivery" ? `₱${shippingFeeVar}.00` : "Free"}
                                         </p>
                                     </div>
 

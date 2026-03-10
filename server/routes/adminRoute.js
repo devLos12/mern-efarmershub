@@ -29,6 +29,7 @@ import { cancelOrder, statusOrder, cancelOrderFile, reviewReplacement } from "..
 import { getDamageLogs, createDamageLog, updateDamageLog, deleteDamageLogs } from "../controllers/damageLog.js";
 import { deleteActivityLogs, getActivityLogs } from "../controllers/admin/activityLogs.js";
 import { deleteSales, getSalesData, getSalesGraphData } from "../controllers/admin/salesReport.js";
+import { getShippingFee, updateShippingFee } from "../controllers/admin/shippingFee.js";
 
 
 
@@ -113,7 +114,8 @@ adminRouter.delete('/deleteActivityLogs', authMiddleware, deleteActivityLogs);
 adminRouter.get('/getSalesData', authMiddleware, getSalesData);
 adminRouter.delete('/deleteSales',authMiddleware, deleteSales);
 adminRouter.get('/getSalesGraphData', authMiddleware, getSalesGraphData);
-
+adminRouter.get('/getShippingFee', authMiddleware, getShippingFee);
+adminRouter.patch('/updateShippingFee', authMiddleware, updateShippingFee);
 adminRouter.get("/logoutAdmin", authMiddleware, Logout);
 
 

@@ -405,7 +405,7 @@ const Orders = () => {
     useEffect(() => { setCurrentPage(1); }, [statusFilter, orderMethodFilter, searchQuery, period]);
 
     if (loading) return <p></p>;
-
+    
     return (
         <>
         <div className={role === "seller" ? "p-2" : "p-0"}>
@@ -562,11 +562,11 @@ const Orders = () => {
                                         </td>
                                         <td className="align-middle small text-center">
                                             {data.orderMethod === "pick up" ? (
-                                                <span className="text-muted fst-italic">N/A</span>
+                                                <span className="text-muted fst-italic text-capitalize ">no rider for pick up</span>
                                             ) : data.riderName && data.riderName.trim() ? (
-                                                <span className="fw-semibold">{data.riderName}</span>
+                                                <span className="fw-semibold text-capitalize">{data.riderName}</span>
                                             ) : (
-                                                <span className="text-muted fst-italic">Not assigned</span>
+                                                <span className="text-muted fst-italic text-capitalize">Not assigned</span>
                                             )}
                                         </td>
                                         <td className="align-middle small">

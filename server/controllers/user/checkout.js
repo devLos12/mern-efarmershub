@@ -110,6 +110,10 @@ const createOrUpdatePayout = async(items, newOrder) => {
 }
 
 
+
+
+
+
 // Temporary storage - deleted after Cloudinary upload
 const storage = multer.memoryStorage();
 
@@ -125,6 +129,7 @@ export const checkOut = async(req, res) => {
 
         const {firstname, lastname, contact, email, province, city, barangay, detailAddress, zipCode} = 
         billingAddress;
+
 
         let imageFile = null;
         let cloudinaryId = null;
@@ -188,6 +193,7 @@ export const checkOut = async(req, res) => {
 
         
         if(orderMethod === "delivery" && payment === "cash on delivery" ){
+
             const newOrder = new Order({
                 orderId: newOrderId,
                 userId, 
@@ -197,6 +203,7 @@ export const checkOut = async(req, res) => {
                 email, 
                 contact, 
                 address: `${province}, ${city}, ${barangay}, ${detailAddress}, ${zipCode}`,
+                shippingFee,
                 totalPrice: finalTotal, 
                 orderMethod,
                 paymentType: payment,
@@ -228,6 +235,7 @@ export const checkOut = async(req, res) => {
                 email, 
                 contact, 
                 address: `${province}, ${city}, ${barangay}, ${detailAddress}, ${zipCode}`,
+                shippingFee,
                 totalPrice: finalTotal, 
                 orderMethod,
                 paymentType: payment,

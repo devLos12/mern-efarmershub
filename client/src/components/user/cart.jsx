@@ -243,9 +243,9 @@ const Cart = () => {
                             
                             onClick={()=> {
                                 // setOrderForm(true);
-                                navigate("checkout", { state : { source : "cart", items : cart}});
+                                navigate("/user/checkout", { state : { source : "cart", items : cart}});
                             }}
-                            >place order</button>
+                            >checkout</button>
                         </div>
                     </div>
                     </>

@@ -258,7 +258,7 @@ const AllProductCards = () => {
                                             objectFit: "cover"
                                         }} 
                                         onClick={() => {
-                                            navigate("/user/all-products/productdetails", {state: {productId: data._id}});
+                                            navigate("/user/productdetails", {state: {productId: data._id}});
                                         }}
                                     />
                                 </div>
