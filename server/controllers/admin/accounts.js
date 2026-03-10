@@ -120,12 +120,40 @@ const sendApprovalEmail = async (email, name, accountType) => {
 
                                 ${accountType === 'rider' ? `
                                     <tr>
-                                        <td style="padding-top: 15px;" align="center">
-                                            <p style="color: #666666; font-size: 14px; margin: 0 0 10px 0;">Download the Rider App:</p>
-                                            <a href="https://expo.dev/accounts/buuuu012/projects/rider-app/builds/c1814f8d-fcf6-4d7d-aa36-f8332bd95bef" 
-                                            style="display: inline-block; background-color: #ffffff; color: #28a745; text-decoration: none; padding: 14px 40px; border-radius: 6px; font-size: 16px; font-weight: 600; border: 2px solid #28a745;">
-                                                📱 Download Rider App
-                                            </a>
+                                        <td style="padding-top: 15px;">
+                                            
+                                            <!-- Step by step instructions -->
+                                            <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f0faf3; border-radius: 8px; margin-bottom: 15px;">
+                                                <tr>
+                                                    <td style="padding: 20px;">
+                                                        <p style="color: #333333; font-size: 14px; font-weight: 600; margin: 0 0 12px 0;"> How to Install the Rider App:</p>
+                                                        <p style="color: #555555; font-size: 13px; line-height: 1.8; margin: 0 0 6px 0;">
+                                                            <strong>Step 1:</strong> Tap the <strong>"Download Rider App"</strong> button below.
+                                                        </p>
+                                                        <p style="color: #555555; font-size: 13px; line-height: 1.8; margin: 0 0 6px 0;">
+                                                            <strong>Step 2:</strong> You will be redirected to a page — tap the <strong>"Install"</strong> button.
+                                                        </p>
+                                                        <p style="color: #555555; font-size: 13px; line-height: 1.8; margin: 0 0 6px 0;">
+                                                            <strong>Step 3:</strong> If Chrome shows a warning, don't worry — the app is safe. Tap <strong>"Download anyway"</strong> to continue.
+                                                        </p>
+                                                        <p style="color: #555555; font-size: 13px; line-height: 1.8; margin: 0;">
+                                                            <strong>Step 4:</strong> Once downloaded, open the file to install. You're all set! 
+                                                        </p>
+                                                    </td>
+                                                </tr>
+                                            </table>
+
+                                            <!-- Download Button -->
+                                            <table width="100%" cellpadding="0" cellspacing="0">
+                                                <tr>
+                                                    <td align="center">
+                                                        <a href="https://expo.dev/accounts/buuuu012/projects/rider-app/builds/ec8f574a-d2c7-48ab-a3af-2a2eb125fe01" 
+                                                        style="display: inline-block; background-color: #ffffff; color: #28a745; text-decoration: none; padding: 14px 40px; border-radius: 6px; font-size: 16px; font-weight: 600; border: 2px solid #28a745;">
+                                                            📱 Download Rider App
+                                                        </a>
+                                                    </td>
+                                                </tr>
+                                            </table>
                                         </td>
                                     </tr>
                                 ` : ''}
@@ -475,7 +503,7 @@ export const updateVerification = async(req, res) => {
         const accountId = req.params.id;
         const { verification } = req.body;
 
-
+        
 
         // Validate verification value
         if (!['verified', 'rejected', 'pending'].includes(verification)) {
