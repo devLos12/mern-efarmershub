@@ -110,6 +110,8 @@ const createOrUpdatePayout = async(items, orderId) => {
     // ✅ ADD: Get seller tax rate from environment
     const SELLER_TAX_RATE = parseFloat(process.env.SELLER_TAX_RATE) || 0.05; // 5% tax default
     
+    
+
     for (const item of items) {
         const sellerId = item.seller.id;
         

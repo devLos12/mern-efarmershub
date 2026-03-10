@@ -893,9 +893,10 @@ export const reviewReplacement = async (req, res) => {
                     
                     if (riderId) {
                         const damageValue = item.prodPrice * item.quantity;
-                        const riderLiability = damageValue * process.env.RIDER_LIABILITY || 0.30;
+                        const riderLiability = damageValue * (parseFloat(process.env.RIDER_LIABILITY) || 0.30);
                         
-
+                        
+                        
                         await DamageLog.create({
                             rider: riderId,
                             order: order.orderId,
