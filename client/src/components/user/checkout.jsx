@@ -19,7 +19,6 @@ const Checkout = () =>{
             toastType,
             showNotification,
             setShowToast, 
-            shippingFee
     } = useContext(appContext);
 
     const {viewQr, setOpenCart, cart, setCart, setCartBadge} = useContext(userContext);
@@ -38,6 +37,41 @@ const Checkout = () =>{
     const [isComplete, setIsComplete] = useState(false);
     const [prevCart, setPrevCart] = useState([]);
     const [qrAvailability, setQrAvailability] = useState({ gcash: true, maya: true });
+
+    
+
+    const [shippingFee, setShippingFee ] = useState({
+        amount: 30,
+        updatedBy: "admin",
+        updatedAt: null,
+    });
+
+    
+
+    
+
+    useEffect(() => {
+        getShippingFee();
+    },[]);
+
+
+    const getShippingFee = async() => {
+
+
+        try {
+            const res = await fetch(`${import.meta.env.VITE_API_URL}/api/getShippingFee`, {
+                method: "GET",
+                credentials: "include"
+            })
+            const data  = await res.json();
+            if(!res.ok) throw new Error(data.message);
+
+            setShippingFee(data);
+        
+        } catch (error) {
+            console.log("Error: ", error.message);    
+        } 
+    }
 
 
 
@@ -134,8 +168,8 @@ const Checkout = () =>{
 
     // Shipping fee calculation
     const shippingFeeVar = useMemo(() => {
-        return checkoutForm.orderMethod === "delivery" ? shippingFee?.amount : 0;
-    }, [checkoutForm.orderMethod]);
+        return checkoutForm.orderMethod === "delivery" ? shippingFee.amount : 0;
+    }, [checkoutForm.orderMethod, shippingFee.amount]);
 
     // Final total with shipping
     const finalTotal = useMemo(() => {
@@ -189,7 +223,6 @@ const Checkout = () =>{
         sendData.append("totalPrice", totalPrice);
         sendData.append("shippingFee", shippingFeeVar);
         sendData.append("finalTotal", finalTotal);
-
 
 
 
@@ -271,7 +304,19 @@ const Checkout = () =>{
         }))
     }
 
-    if(loading) return <p></p>
+
+    if (loading) {
+        return (
+            <div className="d-flex align-items-center justify-content-center vh-100">
+                <div className="text-center">
+                    <div className="spinner-border text-success" role="status">     
+                        <span className="visually-hidden">Loading...</span>
+                    </div>
+                    <p className="small text-muted mt-2">Loading Checkout...</p>
+                </div>
+            </div>
+        );
+    }
 
     return ( 
         <>

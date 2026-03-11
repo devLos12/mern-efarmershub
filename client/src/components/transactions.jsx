@@ -516,17 +516,7 @@ const Transactions = () => {
         }
     };
 
-    const handleRefresh = async () => {
-        setIsRefreshing(true);
-        try {
-            setRefresh((prev) => !prev);
-            await new Promise(resolve => setTimeout(resolve, 500));
-        } catch (error) {
-            console.log("Refresh error:", error.message);
-        } finally {
-            setIsRefreshing(false);
-        }
-    };
+
 
 
     const handleDelete = async () => {
@@ -563,57 +553,81 @@ const Transactions = () => {
 
     // ── Fetch Transactions (with period + custom date query params) ──────────────
     useEffect(() => {
-        const fetchTransactions = async () => {
+        handleLoading();
+    }, [location?.state?.source, period, customStartDate, customEndDate]);
 
 
 
-            const endPoint = role === "admin" ? "getTransactions" : "getSellerTransactions";
+    const handleRefresh = async () => {
+        setIsRefreshing(true);
+        try {
+            
+            await fetchTransactions();
+        } catch (error) {
+            console.log("Refresh error:", error.message);
+        } finally {
+            setIsRefreshing(false);
+        }
+    };
 
 
-            // Build query string with period filter
-            let queryParams = `period=${period}`;
-            if (period === 'custom' && customStartDate && customEndDate) {
-                queryParams += `&startDate=${customStartDate}&endDate=${customEndDate}`;
+    const handleLoading= async() => {
+        setIsLoading(true);
+        try {
+            await fetchTransactions();
+        } catch (error) {
+            console.log("Loading: ", error.message);
+        } finally {
+            setIsLoading(false);
+        }
+    }
+
+
+    const fetchTransactions = async () => {
+
+        const endPoint = role === "admin" ? "getTransactions" : "getSellerTransactions";
+
+        // Build query string with period filter
+        let queryParams = `period=${period}`;
+        if (period === 'custom' && customStartDate && customEndDate) {
+            queryParams += `&startDate=${customStartDate}&endDate=${customEndDate}`;
+        }
+
+        try {
+            const res = await fetch(`${import.meta.env.VITE_API_URL}/api/${endPoint}?${queryParams}`, {
+                method: "GET",
+                credentials: "include"
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.message);
+
+            let transactions = [];
+
+            if (location?.state?.source === `payout${role === "admin" ? "/seller" : ""}`) {
+                transactions = data.payout?.reverse() || [];
+                setSource(`payout${role === "admin" ? "/seller" : ""}`);
+            }
+            if (location?.state?.source === `payout/rider`) {
+                transactions = data.riderPayout?.reverse() || [];
+                setSource(`payout${role === "admin" ? "/rider" : ""}`);
+            }
+            if (location?.state?.source === "payment") {
+                transactions = data.payment?.reverse() || [];
+                setSource("payment");
             }
 
+            setTransactions(transactions);
+        } catch (err) {
+            console.log("Error:", err.message);
+        } 
+    };
 
 
-            setIsLoading(true);
-
-            try {
-                const res = await fetch(`${import.meta.env.VITE_API_URL}/api/${endPoint}?${queryParams}`, {
-                    method: "GET",
-                    credentials: "include"
-                });
-                const data = await res.json();
-                if (!res.ok) throw new Error(data.message);
-
-                let transactions = [];
-
-                if (location?.state?.source === `payout${role === "admin" ? "/seller" : ""}`) {
-                    transactions = data.payout?.reverse() || [];
-                    setSource(`payout${role === "admin" ? "/seller" : ""}`);
-                }
-                if (location?.state?.source === `payout/rider`) {
-                    transactions = data.riderPayout?.reverse() || [];
-                    setSource(`payout${role === "admin" ? "/rider" : ""}`);
-                }
-                if (location?.state?.source === "payment") {
-                    transactions = data.payment?.reverse() || [];
-                    setSource("payment");
-                }
-
-                setTransactions(transactions);
-            } catch (err) {
-                console.log("Error:", err.message);
-            } finally {
-                setIsLoading(false);
-            }
-        };
 
 
-        fetchTransactions();
-    }, [location?.state?.source, refresh, period, customStartDate, customEndDate]);
+
+
+
     // ───────────────────────────────────────────────────────────────────────────
 
     const Height = () => {
@@ -633,7 +647,11 @@ const Transactions = () => {
                 <div className="spinner-border text-success" role="status">     
                     <span className="visually-hidden">Loading...</span>
                 </div>
-                <p className="small text-muted mt-2">Loading transactions...</p>
+                <p className="small text-muted mt-2">{
+                location?.state?.source === "payment"
+                ? "Loading Payment..."
+                : "Loading Payout..."
+                }</p>
             </div>
         </div>
     )
@@ -878,6 +896,7 @@ const Transactions = () => {
                                     )}
                                 </div>
                             </div>
+
                             {/* ────────────────────────────────────────────────────────────────── */}
 
                             <div className="col-12 col-md-4 d-flex flex-column justify-content-center">
@@ -898,7 +917,8 @@ const Transactions = () => {
                                                 <i className="bx bx-trash fs-6"></i> delete
                                             </button>
                                         )}
-                                        <button className="bg-hover d-flex border rounded align-items-center px-2 shadow-sm gap-2 border-1" onClick={handleRefresh}>
+                                        <button className="bg-hover d-flex border rounded align-items-center px-2 shadow-sm gap-2 border-1" 
+                                        onClick={handleRefresh}>
                                             <i className={`fa fa-sync small text-dark ${isRefreshing ? 'fa-spin' : ''}`}></i>
                                             <p className="m-0 small text-capitalize">refresh</p>
                                         </button>

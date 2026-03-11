@@ -1,11 +1,11 @@
-import { useContext, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { appContext } from "../../context/appContext.jsx";
 import Toast from "../toastNotif.jsx";
 
 
 
 const ShippingFee = () => {
-    const { shippingFee, setShippingFee, 
+    const { 
             showToast,
             toastMessage,
             toastType,
@@ -15,6 +15,53 @@ const ShippingFee = () => {
     const [isEditing, setIsEditing] = useState(false);
     const [inputValue, setInputValue] = useState("");
     const [isLoading, setIsLoading] = useState(false);
+
+
+     
+    const [shippingFee, setShippingFee ] = useState({
+        amount: 30,
+        updatedBy: "admin",
+        updatedAt: null,
+        isLoading: false
+    });
+
+
+
+
+    useEffect(() => {
+        getShippingFee();
+    },[]);
+
+
+
+    const getShippingFee = async() => {
+
+        setShippingFee((prev) => ({
+            ...prev, isLoading: true
+        }))
+
+        try {
+            const res = await fetch(`${import.meta.env.VITE_API_URL}/api/getShippingFee`, {
+                method: "GET",
+                credentials: "include"
+            })
+            const data  = await res.json();
+            if(!res.ok) throw new Error(data.message);
+
+            setShippingFee(data);
+        
+        } catch (error) {
+            console.log("Error: ", error.message);    
+        } finally {
+
+            setShippingFee((prev) => ({
+                ...prev, isLoading: false
+            }))
+        }
+    }
+
+
+
 
     const handleEdit = () => {
         setInputValue(shippingFee.amount);

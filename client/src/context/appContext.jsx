@@ -59,35 +59,8 @@ export const MyAppContext = ({children}) =>{
 
 
 
-    const [shippingFee, setShippingFee ] = useState({
-        amount: 30,
-        updatedBy: "admin",
-        updatedAt: null,
-        isLoading: true
-    });
 
-
-
-    useEffect(() => {
-
-        fetch(`${import.meta.env.VITE_API_URL}/api/getShippingFee`, {
-            method: "GET",
-            credentials: "include"
-        })
-        .then(res => res.json())
-        .then(data => setShippingFee({
-            ...data,
-            isLoading: false
-        }))
-        .catch(err => {
-                console.log("Error: ", err.message)
-                setShippingFee(prev => ({...prev, isLoading: false }))
-            } 
-        )
-
-    },[]);
-
-
+    
 
     return (
         <appContext.Provider 
@@ -110,7 +83,6 @@ export const MyAppContext = ({children}) =>{
             orderBadge, setOrderBadge,
             prodBadge, setProdBadge,
             accBadge, setAccBadge,
-            shippingFee, setShippingFee
 
         }}>{children}
         </appContext.Provider>

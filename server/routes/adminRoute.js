@@ -1,5 +1,5 @@
 import express from "express";
-import { getAccounts, removeAccount, viewProfile, updateVerification } from "../controllers/admin/accounts.js"
+import { getAccounts, removeAccount, viewProfile, updateVerification, upload, adminUpdateProfile } from "../controllers/admin/accounts.js"
 import { getProducts, removeProducts } from "../controllers/admin/displayProduct.js";
 import {getOrders, removeOrders, archiveOrder, unarchiveOrder, getArchivedOrders} from "../controllers/admin/displayOrder.js";
 import updateOrderStatus from "../controllers/admin/updateStatus.js";
@@ -39,6 +39,18 @@ const adminRouter = express.Router();
 adminRouter.get('/getAdminInfo', authMiddleware, AdminInfo);
 adminRouter.get('/getAccounts', authMiddleware, getAccounts);
 adminRouter.get('/viewProfile/:id', authMiddleware, viewProfile);
+adminRouter.put(
+    "/updateProfile/:accountId",
+    authMiddleware,
+    upload.fields([
+        { name: "imagePlateNumber", maxCount: 1 },
+        { name: "licenseImage",     maxCount: 1 },
+    ]),
+    adminUpdateProfile
+);
+
+
+
 adminRouter.put('/updateVerification/:id', authMiddleware, updateVerification);
 adminRouter.delete('/removeAccounts/:id', authMiddleware, removeAccount);
 adminRouter.get('/getProducts', authMiddleware, getProducts);

@@ -105,12 +105,12 @@ const Announcement = () => {
                 <div className="spinner-border text-success" role="status">     
                     <span className="visually-hidden">Loading...</span>
                 </div>
-                <p className="small text-muted mt-2">Loading transactions...</p>
+                <p className="small text-muted mt-2">Loading announcement...</p>
             </div>
         </div>
     )
 
-
+    
     return (
         <>
         <div className="p-2">

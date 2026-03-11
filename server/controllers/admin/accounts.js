@@ -4,6 +4,8 @@ import Rider from "../../models/rider.js";
 import Product from "../../models/products.js";
 import Admin from "../../models/admin.js";
 import { Resend } from 'resend';
+import cloudinary from "../../config/cloudinary.js";
+import multer from "multer";
 
 
 
@@ -193,8 +195,6 @@ const sendApprovalEmail = async (email, name, accountType) => {
         return { success: false, error: error.message };
     }
 };
-
-
 
 
 
@@ -411,11 +411,6 @@ export const getAccounts = async (req, res) => {
 
 
 
-
-
-
-
-
 export const removeAccount = async (req, res)=>{
     try{
         const id  = req.params.id;
@@ -437,6 +432,11 @@ export const removeAccount = async (req, res)=>{
         res.status(500).json({ message : error.message});
     }
 }
+
+
+
+
+
 
 
 export const viewProfile = async(req, res) => {
@@ -494,6 +494,188 @@ export const viewProfile = async(req, res) => {
         });
     }
 }
+
+
+
+
+// ── Upload buffer to Cloudinary ───────────────────────────────────────────────
+const uploadToCloudinary = async (file, folder) => {
+    const base64  = file.buffer.toString("base64");
+    const dataURI = `data:${file.mimetype};base64,${base64}`;
+    const result  = await cloudinary.uploader.upload(dataURI, { folder });
+    return result.secure_url;
+};
+
+// ── Build explicit $set fields per source ─────────────────────────────────────
+const buildUpdateFields = (source, profileData) => {
+    
+    if (source === "user") {
+        return {
+            firstname:                      profileData.firstname,
+            lastname:                       profileData.lastname,
+            middlename:                     profileData.middlename,
+            email:                          profileData.email,
+            "billingAddress.firstname":     profileData.billingAddress?.firstname,
+            "billingAddress.lastname":      profileData.billingAddress?.lastname,
+            "billingAddress.email":         profileData.billingAddress?.email,
+            "billingAddress.contact":       profileData.billingAddress?.contact,
+            "billingAddress.province":      profileData.billingAddress?.province,
+            "billingAddress.city":          profileData.billingAddress?.city,
+            "billingAddress.barangay":      profileData.billingAddress?.barangay,
+            "billingAddress.detailAddress": profileData.billingAddress?.detailAddress,
+            "billingAddress.zipCode":       profileData.billingAddress?.zipCode,
+        };
+    }
+
+    if (source === "seller") {
+        return {
+            firstname:                      profileData.firstname,
+            lastname:                       profileData.lastname,
+            middlename:                     profileData.middlename, 
+            email:                          profileData.email,
+            contact:                        profileData.contact,
+            "e_WalletAcc.type":             profileData.e_WalletAcc?.type,
+            "e_WalletAcc.number":           profileData.e_WalletAcc?.number,
+            "sellerAddress.province":       profileData.sellerAddress?.province,
+            "sellerAddress.city":           profileData.sellerAddress?.city,
+            "sellerAddress.barangay":       profileData.sellerAddress?.barangay,
+            "sellerAddress.detailAddress":  profileData.sellerAddress?.detailAddress,
+            "sellerAddress.zipCode":        profileData.sellerAddress?.zipCode,
+        };
+    }
+
+    if (source === "rider") {
+        return {
+            firstname:                      profileData.firstname,
+            lastname:                       profileData.lastname,
+            middlename:                     profileData.middlename, 
+            email:                          profileData.email,
+            contact:                        profileData.contact,
+            plateNumber:                    profileData.plateNumber,
+            "e_WalletAcc.type":             profileData.e_WalletAcc?.type,
+            "e_WalletAcc.number":           profileData.e_WalletAcc?.number,
+            "riderAddress.province":        profileData.riderAddress?.province,
+            "riderAddress.city":            profileData.riderAddress?.city,
+            "riderAddress.barangay":        profileData.riderAddress?.barangay,
+            "riderAddress.detailAddress":   profileData.riderAddress?.detailAddress,
+            "riderAddress.zipCode":         profileData.riderAddress?.zipCode,
+        };
+    }
+
+    if (source === "admin") {
+        return {
+            email:   profileData.email,
+            contact: profileData.contact,
+        };
+    }
+
+    return null;
+};
+
+
+export const upload  = multer({ storage: multer.memoryStorage() });
+
+// ── Controller ────────────────────────────────────────────────────────────────
+export const adminUpdateProfile = async (req, res) => {
+    try {
+        const { accountId } = req.params;
+
+        // Supports both multipart/form-data (with files) and application/json (no files)
+        const source      = req.body.source;
+        const profileData = typeof req.body.profileData === "string"
+            ? JSON.parse(req.body.profileData)
+            : req.body.profileData;
+
+
+
+
+        if (!source || !profileData) {
+            return res.status(400).json({ message: "Missing source or profileData." });
+        }
+
+        // ── Pick model ────────────────────────────────────────────────
+        const modelMap = { user: User, seller: Seller, rider: Rider, admin: Admin };
+        
+        const Model = modelMap[source];
+
+        if (!Model) {
+            return res.status(400).json({ message: `Invalid source: ${source}` });
+        }
+
+        // ── Build explicit $set fields based on source ────────────────
+        const updateFields = buildUpdateFields(source, profileData);
+        
+        if (!updateFields) {
+            return res.status(400).json({ message: "Could not build update fields." });
+        }
+
+        // ── Upload images to Cloudinary if provided (rider only) ──────
+        if (req.files?.imagePlateNumber?.[0]) {
+            try {
+                updateFields.imagePlateNumber = await uploadToCloudinary(
+                    req.files.imagePlateNumber[0],
+                    "rider-plates"
+                );
+            } catch {
+                return res.status(400).json({ message: "Failed to upload plate number image." });
+            }
+        }
+        
+        if (req.files?.licenseImage?.[0]) {
+            try {
+                updateFields.licenseImage = await uploadToCloudinary(
+                    req.files.licenseImage[0],
+                    "rider-licenses"
+                );
+            } catch {
+                return res.status(400).json({ message: "Failed to upload license image." });
+            }
+        }
+
+        // ── Remove undefined values para hindi ma-overwrite ng undefined ──
+        Object.keys(updateFields).forEach(
+            (key) => updateFields[key] === undefined && delete updateFields[key]
+        );
+
+
+        if (profileData.email) {
+            const existingEmail = await Model.findOne({ 
+                email: profileData.email,
+                _id: { $ne: accountId }  // ibang account lang, hindi yung sarili niya
+            });
+            
+            if (existingEmail) {
+                return res.status(400).json({ message: "Email is already in use by another account." });
+            }
+        }
+
+
+        // ── Persist ───────────────────────────────────────────────────
+        const updated = await Model.findOneAndUpdate(
+            { _id: accountId },
+            { $set: updateFields },
+            { new: true, runValidators: true }
+        );
+
+
+        if (!updated) {
+            return res.status(404).json({ message: "Account not found." });
+        }
+
+        return res.status(200).json({ message: "Profile updated successfully." });
+
+    } catch (err) {
+        console.error("[adminUpdateProfile]", err);
+        return res.status(500).json({ message: err.message || "Server error." });
+    }
+};
+
+
+
+
+
+
+
 
 
 
