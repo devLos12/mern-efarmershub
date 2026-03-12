@@ -1488,10 +1488,9 @@ const BuyerTermsModal = ({ show, onClose, agreedToTerms, setAgreedToTerms, onAcc
         },
         {
             number: '6',
-            title: 'Product Condition, Delivery, and Replacement',
+            title: 'Delivery, and Replacement',
             content: [
-                'Buyers have the right to inspect products upon delivery.',
-                'Replacement or refund requests will only be processed if the damage or error is caused by the delivery rider or seller.',
+                'Replacement or refund requests will only be processed if the damage or error is caused by the delivery rider ',
                 'Buyers are required to provide evidence supporting their claim, such as photos or descriptions of the issue.'
             ]
         }
