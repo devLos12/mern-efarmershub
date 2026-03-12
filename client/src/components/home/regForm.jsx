@@ -1439,7 +1439,6 @@ const BuyerTermsModal = ({ show, onClose, agreedToTerms, setAgreedToTerms, onAcc
 
 
 
-
     const termsData = [
         {
             number: '1',
@@ -1489,78 +1488,11 @@ const BuyerTermsModal = ({ show, onClose, agreedToTerms, setAgreedToTerms, onAcc
         },
         {
             number: '6',
-            title: 'Product Condition and Delivery',
+            title: 'Product Condition, Delivery, and Replacement',
             content: [
                 'Buyers have the right to inspect products upon delivery.',
-                'If a product is confirmed to have been damaged by the rider during delivery, buyers may file a complaint through the system.',
-                'Complaints must be supported by evidence such as photos or descriptions of the damage.'
-            ]
-        },
-        {
-            number: '7',
-            title: 'Returns and Refunds',
-            content: [
-                'Returns are only accepted for defective, spoiled, or incorrect products.',
-                'Buyers must report issues within 24 hours of delivery.',
-                'Refund processing will follow platform policies and timelines.'
-            ]
-        },
-        {
-            number: '8',
-            title: 'Prohibited Activities',
-            content: [
-                'Buyers are prohibited from:',
-                '• Providing false or misleading information',
-                '• Making fraudulent claims or chargebacks',
-                '• Harassing sellers, riders, or platform staff',
-                '• Conducting transactions outside the platform',
-                'Violations may result in account suspension or termination.'
-            ]
-        },
-        {
-            number: '9',
-            title: 'Buyer Complaints and Dispute Resolution',
-            content: [
-                'Buyers may file complaints regarding product quality, delivery issues, or rider misconduct.',
-                'All complaints must be submitted through the platform\'s official channels.',
-                'The platform will investigate and resolve disputes in accordance with established policies.'
-            ]
-        },
-        {
-            number: '10',
-            title: 'Limitation of Liability',
-            content: [
-                'The platform acts as an intermediary between buyers, sellers, and riders.',
-                'The platform is not liable for product quality issues, delivery delays caused by external factors, or disputes arising from buyer negligence.',
-                'Buyers are encouraged to communicate directly with sellers or contact platform support for assistance.'
-            ]
-        },
-        {
-            number: '11',
-            title: 'Privacy and Data Protection',
-            content: [
-                'Buyers\' personal information will be used solely for order processing and platform operations.',
-                'The platform is committed to protecting buyer data in accordance with applicable privacy laws.',
-                'Buyers\' information will not be shared with third parties without consent, except as required by law.'
-            ]
-        },
-        {
-            number: '12',
-            title: 'Communication and Support',
-            content: [
-                'Buyers may contact platform support for inquiries, complaints, or assistance.',
-                'Response times may vary depending on the nature and complexity of the issue.'
-            ]
-        },
-        {
-            number: '13',
-            title: 'Buyer Acknowledgment and Agreement',
-            content: [
-                'By registering as a buyer, you confirm that:',
-                '• You have read and understood these Buyer Terms and Conditions.',
-                '• You agree to comply with all payment and order placement procedures.',
-                '• You accept responsibility for the accuracy of payment amounts and transaction details.',
-                '• You understand your rights regarding product inspection, complaints, and refunds.'
+                'Replacement or refund requests will only be processed if the damage or error is caused by the delivery rider or seller.',
+                'Buyers are required to provide evidence supporting their claim, such as photos or descriptions of the issue.'
             ]
         }
     ];
