@@ -8,7 +8,7 @@ const startSchedule = () => {
 
 
      // ✅ Expiry checker — every hour
-    cron.schedule("0 * * * *", async () => {
+    cron.schedule("0 0 * * *", async () => {
         try {
             const now = new Date();
 
