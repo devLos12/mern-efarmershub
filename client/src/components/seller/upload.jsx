@@ -18,7 +18,7 @@ const Upload = () => {
     
     const [formData, setFormData] = useState({});
     const [imgPreview, setImgPreview] = useState(null);
-    
+        
 
 
     const [isUploading, setIsUploading] = useState(false); // ✅ NEW: Loading state
@@ -378,6 +378,16 @@ const Upload = () => {
                                             max="999"
                                             disabled={isUploading}
                                             required
+                                            onKeyDown={(e) => {
+                                                if (e.key === "-" || e.key === "e" || e.key === "E" || e.key === "+") {
+                                                    e.preventDefault();
+                                                }
+                                            }}
+                                            onInput={(e) => {
+                                                if (e.target.value.length > 3) {
+                                                    e.target.value = e.target.value.slice(0, 3);
+                                                }
+                                            }}
                                         />
                                     </div>
                                     <div className="col-md-6">

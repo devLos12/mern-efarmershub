@@ -16,29 +16,31 @@ const startSchedule = () => {
             console.log("no products under system notice.");
         }
 
-        for ( const product of products){
-            
-            const created = new Date(product.createdAt);
-            const elapsedDays = (now - created) / (1000 * 60 * 60 * 24);
-            const halfLife = product.lifeSpan / 2;
+        for (const product of products) {
 
-            if (
-                elapsedDays >= halfLife && !product.notified 
-            ){
+            // ✅ Based sa expiryDate, hindi createdAt
+            const halfLifeDate = new Date(
+                new Date(product.expiryDate).getTime() - 
+                (product.lifeSpan / 2) * 24 * 60 * 60 * 1000
+            );
+
+            if (now >= halfLifeDate) {
                 await Notification.create({
-                    sender: { role: "system"},
+                    sender: { role: "system" },
                     recipient: { role: "all" },
-                    message: `Hurry! Fresh ${[product.name]} is halfway through its best freshness — grab yours before it’s gone!`,
+                    message: `Hurry! Fresh ${product.name} is halfway through its best freshness — grab yours before it's gone!`,
                     type: "system notice",
                     link: "productDetails",
                     meta: { 
                         prodId: product._id,
                         imageFile: product.imageFile  
                     }
-                })
+                });
+
                 product.notified = true;
                 await product.save();
-                io.emit("user notif", { message: "new user notification."});
+                io.emit("user notif", { message: "new user notification." });
+                console.log(`Notified: ${product.name}`);
             }
         }
     });

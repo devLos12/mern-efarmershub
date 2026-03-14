@@ -69,15 +69,17 @@ const ProductCard = ({ products })=>{
             {products.map((data, i) => (
                 <div key={i} className="col-6  col-sm-4 col-md-4 col-lg-4 col-xl-3 col-xxl-3">
                     <div className="bg-white border rounded g-0 p-1 p-md-2 p-lg-3  me-1 mb-1">
-                        <div className="rounded-2 overflow-hidden"
+                        
+                        <div className="rounded-2 overflow-hidden position-relative"
                         style={{aspectRatio: '4/3'}}
                         >
                             <img src={data.imageFile} 
                             alt={data.imageFile} 
-                            className="img-fluid w-100 h-100 "
+                            className="img-fluid w-100 h-100"
                             style={{ 
                                 objectFit: "cover", 
-                                cursor: "pointer"
+                                cursor: "pointer",
+                                filter: data.status === "expired" ? "grayscale(100%)" : "none"
                             }} 
                             onClick={()=>{
                                 if(role === "admin"){
@@ -88,7 +90,35 @@ const ProductCard = ({ products })=>{
                                 }
                             }}
                             />
+
+                            {/* Expired Overlay */}
+                            {data.status === "expired" && (
+                            <div className="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
+                                style={{ 
+                                    backgroundColor: "rgba(0,0,0,0.35)",
+                                    pointerEvents: "none"   // ← hindi na naka-block yung click
+                                }}>
+                                <span className="text-white text-uppercase fw-bold"
+                                    style={{ 
+                                        fontSize: "18px", 
+                                        letterSpacing: "4px",
+                                        transform: "rotate(-35deg)",
+                                        opacity: 0.9,
+                                        textShadow: "1px 1px 4px rgba(0,0,0,0.8)",
+                                        border: "2px solid white",
+                                        padding: "2px 10px",
+                                        borderRadius: "4px"
+                                    }}>
+                                    Expired
+                                </span>
+                            </div>
+                        )}
                         </div>
+
+
+
+
+
 
                         <div className="mt-2">
                             <p className="m-0 text-capitalize text-center fw-bold  small text-success" 

@@ -474,6 +474,11 @@ const OrderDetails = () => {
 
 
 
+
+
+
+
+
     // Get replacement status label
     const getReplacementStatusLabel = (status) => {
         const labels = {
@@ -595,8 +600,6 @@ const OrderDetails = () => {
             setIsUpdatingReplacement(false);
         }
     };
-
-
 
 
 
@@ -1509,7 +1512,7 @@ const OrderDetails = () => {
                                                                                             <option value="">Select who is at fault...</option>
                                                                                             {/* <option value="seller">Seller</option> */}
                                                                                             <option value="rider">Rider</option>
-                                                                                            {/* <option value="none">None (Unreasonable Request)</option> */}
+                                                                                            <option value="none">None (Unreasonable Request)</option>
                                                                                         </select>
                                                                                         <small className="text-muted d-block mt-1">
                                                                                             <i className="fa fa-info-circle me-1"></i>
@@ -1586,11 +1589,12 @@ const OrderDetails = () => {
                                                                                     {/* Admin Notes */}
                                                                                     <div className="mb-0">
                                                                                         <label className="form-label fw-bold small">
-                                                                                            Admin Notes {isRejected && <span className="text-danger">*</span>}
+                                                                                            Admin Notes {<span className="text-danger">*</span>}
                                                                                         </label>
                                                                                         <textarea
                                                                                             style={{fontSize: "14px"}}
                                                                                             className="form-control"
+
                                                                                             rows="3"
                                                                                             placeholder={isRejected ? "Explain why replacement is rejected..." : "Additional notes or instructions..."}
                                                                                             value={reviewData.notes || ''}
@@ -1600,7 +1604,7 @@ const OrderDetails = () => {
                                                                                             <i className="fa fa-info-circle me-1"></i>
                                                                                             {isRejected 
                                                                                                 ? "Required: Explain rejection reason to customer" 
-                                                                                                : "Add any additional information or instructions"
+                                                                                                : "Required: Add any additional information or instructions"
                                                                                             }
                                                                                         </small>
                                                                                     </div>
@@ -1613,8 +1617,16 @@ const OrderDetails = () => {
                                                                 {/* Already Reviewed Badge */}
                                                                 {isAlreadyReviewed && (
                                                                     <div className="alert alert-info mb-0 py-2 px-3 small d-flex align-items-center" >
-                                                                        <i className="fa fa-info-circle me-1"></i>
-                                                                        <p className="m-0 text-capitalize small text-muted">{item.replacement?.notes}</p>
+                                                                        <div className="d-flex flex-column ">
+                                                                            <div className="d-flex align-items-center">
+                                                                                <i className="fa fa-info-circle me-1"></i>
+                                                                                <p className="m-0 small fw-semibold">Admin Note: </p>
+                                                                            </div>
+
+
+                                                                            <p className="m-0 text-capitalize small text-muted">{item.replacement?.notes}</p>
+                                                                        </div>
+
                                                                     </div>
                                                                 )}
                                                             </div>
@@ -1675,7 +1687,16 @@ const OrderDetails = () => {
                                         disabled={
                                             isSubmittingReview ||
                                             selectedItemsForReplacement.length === 0 ||
-                                            selectedItemsForReplacement.some(itemId => !replacementReview[itemId]?.decision)
+                                            selectedItemsForReplacement.some(itemId => {
+                                                const review = replacementReview[itemId];
+                                                if (!review?.decision) return true; // walang decision
+                                                if (!review?.faultAssignedTo) return true; // walang fault
+                                                // kung reject, required ang notes
+                                                if (!review?.notes?.trim()) return true;
+                                                // kung rider fault, required ang faultDetails
+                                                if (review.faultAssignedTo === 'rider' && !review?.faultDetails?.trim()) return true;
+                                                return false;
+                                            })
                                         }
                                     >
                                         {isSubmittingReview ? (
@@ -1699,9 +1720,8 @@ const OrderDetails = () => {
                     </div>
                 </div>
             )}
-
-
-
+            
+            
             <div className={role === "user" ? "bg min-vh-100 d-flex" : "d-flex min-vh-100 px-md-2"}>
                 <div className={role === "user" ? "container bg-white" : "container-fluid bg-white"}>
                     <div className={`row ${role === "user" ? "justify-content-center py-5" : "justify-content-start py-4 p-md-4 "}`}>
@@ -1768,6 +1788,7 @@ const OrderDetails = () => {
                                     <div className="d-flex align-items-center justify-content-between flex-wrap gap-2">
                                         <div>
                                             <i className={`fa ${hasReplacementRequest ? 'fa-clipboard-check' : 'fa-exclamation-circle'} me-2`}></i>
+                                                
                                             <strong>
                                                 {role === "admin" 
                                                     ? "Review Replacement Requests" 
@@ -1782,7 +1803,7 @@ const OrderDetails = () => {
                                                     : hasReplacementRequest 
                                                         ? 'You have submitted a replacement request. Click to view details.'
                                                         : isWithin24Hours()
-                                                            ? 'You have 24 hours from delivery to request a product replacement.'
+                                                            ? 'You have 24 hours from delivery to request a product replacement. This replacement is for rider liability only.'
                                                             : 'The 24-hour window for replacement requests has expired.'
                                                 }
                                             </p>

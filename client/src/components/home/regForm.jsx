@@ -1490,12 +1490,13 @@ const BuyerTermsModal = ({ show, onClose, agreedToTerms, setAgreedToTerms, onAcc
             number: '6',
             title: 'Delivery, and Replacement',
             content: [
-                'Replacement or refund requests will only be processed if the damage or error is caused by the delivery rider ',
+                'Replacement requests will only be processed if the damage is caused by the delivery rider ',
                 'Buyers are required to provide evidence supporting their claim, such as photos or descriptions of the issue.'
             ]
         }
     ];
-
+    
+        
     return (
         <div
             className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"

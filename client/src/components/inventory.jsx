@@ -35,14 +35,14 @@ const Inventory = () => {
 
 
 
-
-
     // Get current view from location state (products or list-report)
     const currentView = location.state?.view || "products";
     
     // Get unique categories from products
     // const uniqueCategories = [...new Set(products.map(p => p.category?.toLowerCase()).filter(Boolean))];
     const uniqueCategories = ["all", "grains", "root crops", "fruits", "fruit vegetables", "leafy vegetables", "legumes"];;
+
+
 
 
 
@@ -146,7 +146,9 @@ const Inventory = () => {
         approvalStatus = location?.state?.source;
         
         // Filter by approval status
-        if (approvalStatus === "pending") {
+        if (approvalStatus === "expired") {
+            filteredProducts = products.filter((p) => p.status === "expired");
+        } else if (approvalStatus === "pending") {
             filteredProducts = products.filter((p) => p.statusApprove === "pending");
         } else if (approvalStatus === "approved") {
             filteredProducts = products.filter((p) => p.statusApprove === "approved");
@@ -155,6 +157,7 @@ const Inventory = () => {
         } else {
             filteredProducts = products;
         }
+
 
         // Filter by category - dynamic matching
         if (categoryFilter !== "all") {
@@ -275,7 +278,7 @@ const Inventory = () => {
                             {/* Category Tabs */}
                             <div className="col-12">
                                 <div className="d-flex my-2"
-                                    style={{ overflowX: "auto", maxWidth: "420px" }}
+                                    style={{ overflowX: "auto", maxWidth: "520px" }}
                                 >
                                     {role === "admin" ? (
                                         [
@@ -285,7 +288,11 @@ const Inventory = () => {
                                                 color: "text-success bg-success border-success", source: "approved" },
                                             { label: "rejected", icon: "fa-solid fa-ban", 
                                                 color: "text-danger bg-danger border-danger", source: "rejected" },
-                                        ].map((data, i) => (
+                                            { label: "expired", icon: "fa-solid fa-triangle-exclamation", 
+                                                color: "text-secondary bg-secondary border-secondary", source: "expired" },
+                                        ]
+                                        
+                                        .map((data, i) => (
                                             <div
                                                 key={i}
                                                 className={`d-flex align-items-center p-1 px-3 bg-opacity-10 rounded gap-1
@@ -312,7 +319,11 @@ const Inventory = () => {
                                                 color: "text-success bg-success border-success", source: "approved" },
                                             { label: "rejected", icon: "fa-solid fa-ban", 
                                                 color: "text-danger bg-danger border-danger", source: "rejected" },
-                                        ].map((data, i) => (
+                                            { label: "expired", icon: "fa-solid fa-triangle-exclamation", 
+                                                color: "text-secondary bg-secondary border-secondary", source: "expired" },
+                                        ]
+                                                                                
+                                        .map((data, i) => (
                                             <div
                                                 key={i}
                                                 className={`d-flex align-items-center p-1 px-3 bg-opacity-10 rounded gap-1
@@ -455,7 +466,9 @@ const Inventory = () => {
                                                     <i className="fa-solid fa-square-check text-success"></i> :
                                                     location.state?.source === "rejected" ?
                                                         <i className="fa-solid fa-ban text-danger"></i> :
-                                                        <i className="fa-solid fa-border-all text-primary"></i>
+                                                        location.state?.source === "expired" ?
+                                                            <i className="fa-solid fa-triangle-exclamation text-secondary"></i> :
+                                                            <i className="fa-solid fa-border-all text-primary"></i>
                                             }
                                         </div>
 
@@ -477,7 +490,9 @@ const Inventory = () => {
                                                     "No products have been approved yet." :
                                                     location.state?.source === "rejected" ?
                                                         "No products have been rejected." :
-                                                        role === "seller" && "no product available. upload all products now."
+                                                        location.state?.source === "expired" ?
+                                                            "No products have expired yet." :
+                                                            role === "seller" && "no product available. upload all products now."
                                             }
                                         </p>
                                     </div>

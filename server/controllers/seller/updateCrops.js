@@ -59,6 +59,17 @@ export const updateCrops = async(req, res) => {
             imageFile
         };
 
+
+        if (lifeSpan) {
+            updateData.expiryDate = new Date(
+                Date.now() + Number(lifeSpan) * 24 * 60 * 60 * 1000
+            );
+            updateData.notified = false; // reset notification
+            updateData.status = "active"; // reset status kung expired na dati
+        }
+
+        
+
         if (newCloudinaryId) {
             updateData.cloudinaryId = newCloudinaryId;
         }

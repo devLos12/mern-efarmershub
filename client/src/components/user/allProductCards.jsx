@@ -16,6 +16,7 @@ const AllProductCards = () => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }, []);
 
+        
     // Add to cart function
     const addToCart = async(pid, prodId, prodName, prodDisc, prodPrice, imageFile, seller) => {
         setCartBadge((prev) => ({

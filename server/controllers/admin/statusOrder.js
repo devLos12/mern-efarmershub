@@ -981,12 +981,18 @@ export const reviewReplacement = async (req, res) => {
                     }
                 }
 
+                const rejectionMessage = faultAssignedTo === "rider"
+                ? `Your replacement request for "${item.prodName}" has been rejected.${notes ? ` Reason: ${notes}` : ''} A refund of ₱${refundAmount.toFixed(2)} is being processed.`
+                : `Your replacement request for "${item.prodName}" has been rejected.${notes ? ` Reason: ${notes}` : ''} For more concerns, please contact our chat support. Thank you!`;
+                
+                                
                 await createNotification(
                     adminId, "admin", buyerId, "user",
-                    `Your replacement request for "${item.prodName}" has been rejected.${notes ? ` Reason: ${notes}` : ''} A refund of ₱${refundAmount.toFixed(2)} is being processed.`,
+                    rejectionMessage,
                     `orderdetails`, "replacement rejected",
                     { orderId, orderIdShort, itemId: item._id, itemName: item.prodName, reason: notes || "", refundAmount }
                 );
+
                 io.emit('user notif');
             }
         }

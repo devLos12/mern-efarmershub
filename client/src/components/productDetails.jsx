@@ -203,22 +203,16 @@ const ProductDetails = () =>{
     };
 
     // Function to calculate remaining days before expiration
-    const getRemainingDays = (createdAt, lifeSpan) => {
-        if (!createdAt || !lifeSpan) return 0;
+    const getRemainingDays = (expiryDate) => {
+        if (!expiryDate) return 0;
 
-        const created = new Date(createdAt);
-        if (isNaN(created.getTime())) return 0;
+        const expiry = new Date(expiryDate);
+        if (isNaN(expiry.getTime())) return 0;
 
-        const expirationDate = new Date(created);
-        expirationDate.setDate(expirationDate.getDate() + lifeSpan);
-
-        const now = new Date();
-        const diffTime = expirationDate - now;
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-        return diffDays > 0 ? diffDays : 0;
+        const diff = expiry - new Date();
+        const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
+        return days > 0 ? days : 0;
     };
-
 
 
    if(loading) return (
@@ -299,7 +293,13 @@ const ProductDetails = () =>{
                             : "d-flex flex-column justify-content-between h-100 "}>
                                 <div className="">
                                     <div className="d-flex flex-column align-items-center align-items-md-start"> 
-                                        <p className="m-0 text-capitalize fw-bold text-success fs-1">{productDetails.name}</p>
+
+                                        <div className="d-flex align-items-center gap-2">
+                                            <p className="m-0 text-capitalize fw-bold 
+                                            text-success fs-1">{productDetails.name}</p>
+                                            <p className="m-0 text-muted  fw-semibold">{`(${productDetails.prodId})`}</p>
+                                        </div>                                        
+
 
                                         <div className="d-flex">
                                             <div className="d-flex bg align-items-center gap-1 p-1 px-3 rounded-pill
@@ -323,16 +323,19 @@ const ProductDetails = () =>{
                                             >
                                                 <p className="m-0  text-success small fw-bold text-capitalize">expires in:</p>
                                                 <p className="m-0 small fw-bold text-muted">
-                                                    {`${getRemainingDays(productDetails.createdAt, productDetails.lifeSpan)} ${getRemainingDays(productDetails.createdAt, productDetails.lifeSpan) === 1 ? 'day' : 'days'}`}
+                                                    {
+                                                        (() => {
+                                                            const days = getRemainingDays(productDetails.expiryDate);
+                                                            if (days === 0) return <p className="m-0 fw-bold text-danger text-capitalize">expired</p>;
+                                                            
+                                                            return <p className="m-0 fw-bold text-muted">{`${days} ${days === 1 ? 'day' : 'days'}`}</p>;
+                                                        })()
+                                                    }
                                                 </p>
                                             </div>
-                                         
                                         </div>
                                         
-
-
-
-
+                                                    
                                         <p className="m-0 text-capitalize text-muted
                                         small">{`${productDetails.disc}`}</p>
                                     </div>

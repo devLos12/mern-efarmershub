@@ -384,7 +384,7 @@ const Header = () => {
                                 })}
 
                                 {/* Exit Button */}
-                                <div className="p-3 border-top">
+                                <div className="p-3 border-top mb-5">
                                     <button
                                         className={`w-100 border-0 p-2 text-capitalize d-flex align-items-center gap-2 justify-content-center rounded ${role === "seller" ? "bg-dark text-white" : "bg-light text-dark"}`}
                                         style={{ outline: "none", transition: 'all 0.2s ease', fontWeight: '600' }}
@@ -394,7 +394,7 @@ const Header = () => {
                                         }}
                                     >
                                         <i className="fa-solid fa-right-from-bracket" />
-                                        <span>Exit</span>
+                                        <span>Log out</span>
                                     </button>
                                 </div>
                             </div>

@@ -10,12 +10,15 @@ export const getBestSellers = async (req, res) => {
         const { limit = 20 } = req.query;
         
         // Get all approved products with seller info
-        const products = await Product.find({ statusApprove: "approved" })
+        const products = await Product.find({ 
+            statusApprove: "approved", 
+            status: { $ne: "expired" }
+        })
             .populate('seller.id', 'name email')
             .sort({ createdAt: -1 })
             .lean();
 
-    
+        
         // Get ALL delivered/completed orders (all-time, no date filter)
         const orders = await Order.find({
             // statusDelivery: { $in: ["delivered", "completed", "complete"] },
@@ -64,6 +67,12 @@ export const getBestSellers = async (req, res) => {
         });
     }
 };
+
+
+
+
+
+
 
 
 

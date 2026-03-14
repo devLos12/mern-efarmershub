@@ -38,7 +38,6 @@ import trackReplacementProduct from "../controllers/trackReplacement.js";
 const userRouter = express.Router();
 
 
-
 userRouter.get('/getInfo', authMiddleware, getUserInfo);
 userRouter.patch('/userUpdateProfile', authMiddleware, updateProfile.single("image"), UpdateProfile);
 userRouter.get('/getAllproducts', authMiddleware, AllProducts);

@@ -221,16 +221,19 @@ const Sidebar = () => {
                     })
                 }
             </nav>
+            
+            {role === "admin" && (
+                <div className="p-2">
+                    <button className={`w-100 mt-4 border-0 p-1 d-flex align-items-center justify-content-center rounded-3
+                    shadow-lg ${role === "seller" ? "bg-dark text-white" : "bg-white text-dark"}`}
+                        onClick={handleClick}
+                        style={{ cursor: "pointer" }}>
+                        <div className="fa-solid fa-right-from-bracket small"></div>
+                        <p className="m-0 ms-2 small">Log out</p>
+                    </button>
+                </div>
+            )}
 
-            <div className="p-2">
-                <button className={`w-100 mt-4 border-0 p-1 d-flex align-items-center justify-content-center rounded-3
-                shadow-lg ${role === "seller" ? "bg-dark text-white" : "bg-white text-dark"}`}
-                    onClick={handleClick}
-                    style={{ cursor: "pointer" }}>
-                    <div className="fa-solid fa-right-from-bracket small"></div>
-                    <p className="m-0 ms-2 small">Exit</p>
-                </button>
-            </div>
         </>
     );
 };
