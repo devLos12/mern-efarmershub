@@ -111,7 +111,7 @@ const ItemCards = ({ products }) => {
                 justify-content-between position-relative  bg-warning bg-opacity-10 me-2 " >
                     <div className="p-1 p-md-2 z-1" 
                     >
-                        <div className="overflow-hidden bg-white rounded shadow"
+                        <div className="overflow-hidden bg-white rounded shadow-sm p-4"
                         style={{ aspectRatio: "4/3"}}
                         >
                             <img src={data.imageFile}

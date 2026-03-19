@@ -14,7 +14,7 @@ const Header = ({signIn, isUserAuthenticated, setAuth})=> {
         {id: 'about',        label: 'about'},
         {id: 'best-seller',  label: 'best seller'},
         {id: 'seasonal-product',  label: 'seasonal product'},
-        {id: 'faqs',         label: "faq's"}
+        // {id: 'faqs',         label: "faq's"}
     ];
 
     const handleNavClick = (e, sectionId) => {

@@ -21,7 +21,6 @@ import BestSellerProducts from "../components/bestSeller.jsx";
 
 
 
-
 // Loading Component
 const LoadingScreen = () => {
   return (

@@ -225,7 +225,7 @@ const BestSellerProducts = ({signIn}) => {
                                 </div>
 
                                 <div className="p-1 p-md-2 z-1">
-                                    <div className="rounded-2 overflow-hidden shadow-sm"
+                                    <div className="rounded-2 overflow-hidden shadow-sm bg-white p-4"
                                     style={{aspectRatio: "4/3"}}
                                     >
                                         <img 
