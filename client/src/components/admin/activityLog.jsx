@@ -429,7 +429,7 @@ const ActivityLog = () => {
                             style={{ outline: "none", fontSize: "14px" }}
                         />
                     </div>
-
+                                        
                     {/* Action buttons */}
                     <div className="col">
                         <div>
@@ -456,16 +456,13 @@ const ActivityLog = () => {
                         </div>
                     </div>
                     
-
                     {/* Filters row */}
-                    <div className="col-12 d-flex flex-column flex-md-row gap-2 flex-wrap align-items-center">
-
+                    <div className="row g-0 gap-2">
                         {/* ── Date Period Filter ────────────────────────────── */}
-                        <div className="d-flex align-items-center gap-2">
-                            <i className="fa fa-calendar text-success small"></i>
+                        <div className="col-12 col-md-3 col-lg-2 d-flex align-items-center gap-2">
+                            <i className="fa fa-calendar text-success small d-md-block d-none"></i>
                             <select
-                                className="form-select form-select-sm"
-                                style={{ width: "100%", maxWidth: "150px", fontSize: "14px" }}
+                                className="form-select form-select-sm w-100"
                                 value={period}
                                 onChange={(e) => {
                                     if (e.target.value === 'custom') {
@@ -490,28 +487,32 @@ const ActivityLog = () => {
                             )}
                         </div>
                         {/* ───────────────────────────────────────────────────── */}
-                    
-                        <select
-                            className="form-select form-select-sm"
-                            style={{ width: "100%", maxWidth: "150px", fontSize: "14px" }}
-                            value={statusFilter}
-                            onChange={(e) => setStatusFilter(e.target.value)}
-                        >
-                            <option value="all">All Status</option>
-                            <option value="success">Success</option>
-                            <option value="failed">Failed</option>
-                        </select>
+                        
+                        <div className="col-12 col-md-3 col-lg-2">
+                            <select
+                                className="form-select form-select-sm "
+                                value={statusFilter}
+                                onChange={(e) => setStatusFilter(e.target.value)}
+                            >
+                                <option value="all">All Status</option>
+                                <option value="success">Success</option>
+                                <option value="failed">Failed</option>
+                            </select>
+                        </div>
 
-                        <select
-                            className="form-select form-select-sm"
-                            style={{ width: "100%", maxWidth: "150px", fontSize: "14px" }}
-                            value={adminTypeFilter}
-                            onChange={(e) => setAdminTypeFilter(e.target.value)}
-                        >
-                            <option value="all">All Admin Types</option>
-                            <option value="main">Main Admin</option>
-                            <option value="sub">Sub Admin</option>
-                        </select>
+                        
+                        <div className="col-12 col-md-3 col-lg-2">
+                            <select
+                                className="form-select form-select-sm "
+                                value={adminTypeFilter}
+                                onChange={(e) => setAdminTypeFilter(e.target.value)}
+                            >
+                                <option value="all">All Admin Types</option>
+                                <option value="main">Main Admin</option>
+                                <option value="sub">Sub Admin</option>
+                            </select>
+                        </div>
+
                     </div>
                 </div>
 
