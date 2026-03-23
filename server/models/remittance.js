@@ -25,7 +25,6 @@ const remittanceSchema = new mongoose.Schema({
     
     imageFile: {
         type: String, 
-        required: true,
     },
 
     cloudinaryId: {

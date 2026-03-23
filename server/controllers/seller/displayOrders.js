@@ -6,39 +6,69 @@ import Order from "../../models/order.js";
 const getDateFilter = (period, startDate, endDate) => {
     const now = new Date();
 
+    // ── Helper: get today's boundaries in PHT (UTC+8) ──────────────────────
+    const getPHTDayBounds = () => {
+        const PHT_OFFSET_MS = 8 * 60 * 60 * 1000;
+        const nowPHT = new Date(now.getTime() + PHT_OFFSET_MS);
+
+        const todayStart = new Date(Date.UTC(
+            nowPHT.getUTCFullYear(),
+            nowPHT.getUTCMonth(),
+            nowPHT.getUTCDate(),
+            0, 0, 0, 0
+        ) - PHT_OFFSET_MS);  // convert back to UTC for MongoDB
+
+        const todayEnd = new Date(Date.UTC(
+            nowPHT.getUTCFullYear(),
+            nowPHT.getUTCMonth(),
+            nowPHT.getUTCDate(),
+            23, 59, 59, 999
+        ) - PHT_OFFSET_MS);
+
+        return { todayStart, todayEnd };
+    };
+    // ───────────────────────────────────────────────────────────────────────
+
     switch (period) {
-
-
-
-        case "today": 
+        case "today":
         case undefined:
         case null:
-        case "": {  // ← dagdag mo ito, default to today
-            const todayStart = new Date(now);
-            todayStart.setHours(0, 0, 0, 0);
-            const todayEnd = new Date(now);
-            todayEnd.setHours(23, 59, 59, 999);
+        case "": {
+            const { todayStart, todayEnd } = getPHTDayBounds();
             return { $gte: todayStart, $lte: todayEnd };
         }
 
-
-
         case "thisweek": {
-            const dayOfWeek = now.getDay();
-            const daysFromMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Monday-based
-            const weekStart = new Date(now);
-            weekStart.setDate(now.getDate() - daysFromMonday);
-            weekStart.setHours(0, 0, 0, 0);
+            const { todayStart } = getPHTDayBounds();
+            const PHT_OFFSET_MS = 8 * 60 * 60 * 1000;
+            const nowPHT = new Date(now.getTime() + PHT_OFFSET_MS);
+            const dayOfWeek = nowPHT.getUTCDay();
+            const daysFromMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+            const weekStart = new Date(todayStart.getTime() - daysFromMonday * 86400000);
             return { $gte: weekStart, $lte: now };
         }
+
         case "thismonth": {
-            const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+            const PHT_OFFSET_MS = 8 * 60 * 60 * 1000;
+            const nowPHT = new Date(now.getTime() + PHT_OFFSET_MS);
+            const monthStart = new Date(Date.UTC(
+                nowPHT.getUTCFullYear(),
+                nowPHT.getUTCMonth(),
+                1, 0, 0, 0, 0
+            ) - PHT_OFFSET_MS);
             return { $gte: monthStart, $lte: now };
         }
+
         case "thisyear": {
-            const yearStart = new Date(now.getFullYear(), 0, 1);
+            const PHT_OFFSET_MS = 8 * 60 * 60 * 1000;
+            const nowPHT = new Date(now.getTime() + PHT_OFFSET_MS);
+            const yearStart = new Date(Date.UTC(
+                nowPHT.getUTCFullYear(),
+                0, 1, 0, 0, 0, 0
+            ) - PHT_OFFSET_MS);
             return { $gte: yearStart, $lte: now };
         }
+
         case "custom": {
             if (startDate && endDate) {
                 const start = new Date(startDate);
@@ -49,8 +79,9 @@ const getDateFilter = (period, startDate, endDate) => {
             }
             return null;
         }
+
         default:
-            return null; // "all" or undefined — no date filter
+            return null;
     }
 };
 // ─────────────────────────────────────────────────────────────────────────────
