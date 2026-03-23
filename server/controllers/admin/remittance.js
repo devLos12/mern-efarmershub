@@ -6,45 +6,67 @@ import multer from "multer";
 export const uploadRemit = multer({ storage: multer.memoryStorage() });
 
 
+// ─── PHT Timezone Helpers ─────────────────────────────────────────────────────
+const PHT_OFFSET_MS = 8 * 60 * 60 * 1000;
+
+const getPHTNow = () => {
+    const now = new Date();
+    const nowPHT = new Date(now.getTime() + PHT_OFFSET_MS);
+    return { now, nowPHT };
+};
+
+const phtDayStart = (nowPHT) => new Date(
+    Date.UTC(nowPHT.getUTCFullYear(), nowPHT.getUTCMonth(), nowPHT.getUTCDate(), 0, 0, 0, 0)
+    - PHT_OFFSET_MS
+);
+
+const phtDayEnd = (nowPHT) => new Date(
+    Date.UTC(nowPHT.getUTCFullYear(), nowPHT.getUTCMonth(), nowPHT.getUTCDate(), 23, 59, 59, 999)
+    - PHT_OFFSET_MS
+);
+// ─────────────────────────────────────────────────────────────────────────────
+
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const getPeriodDateRange = (period) => {
-    const now = new Date();
-    let startDate = null;
-    let endDate = null;
+    const { now, nowPHT } = getPHTNow();
+
     switch (period) {
         case "today": {
-            startDate = new Date();
-            startDate.setHours(0, 0, 0, 0);
-            endDate = new Date();
-            endDate.setHours(23, 59, 59, 999);
-            break;
+            return {
+                startDate: phtDayStart(nowPHT),
+                endDate: phtDayEnd(nowPHT)
+            };
         }
         case "thisweek": {
-            const day = now.getDay();
-            const diffToMonday = (day === 0 ? -6 : 1 - day);
-            startDate = new Date(now);
-            startDate.setDate(now.getDate() + diffToMonday);
-            startDate.setHours(0, 0, 0, 0);
-            endDate = new Date(now);
-            endDate.setHours(23, 59, 59, 999);
-            break;
+            const dayOfWeek = nowPHT.getUTCDay();
+            const daysFromMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+            return {
+                startDate: new Date(phtDayStart(nowPHT).getTime() - daysFromMonday * 86400000),
+                endDate: phtDayEnd(nowPHT)
+            };
         }
         case "thismonth": {
-            startDate = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
-            endDate = new Date(now);
-            endDate.setHours(23, 59, 59, 999);
-            break;
+            return {
+                startDate: new Date(
+                    Date.UTC(nowPHT.getUTCFullYear(), nowPHT.getUTCMonth(), 1, 0, 0, 0, 0)
+                    - PHT_OFFSET_MS
+                ),
+                endDate: phtDayEnd(nowPHT)
+            };
         }
         case "thisyear": {
-            startDate = new Date(now.getFullYear(), 0, 1, 0, 0, 0, 0);
-            endDate = new Date(now);
-            endDate.setHours(23, 59, 59, 999);
-            break;
+            return {
+                startDate: new Date(
+                    Date.UTC(nowPHT.getUTCFullYear(), 0, 1, 0, 0, 0, 0)
+                    - PHT_OFFSET_MS
+                ),
+                endDate: phtDayEnd(nowPHT)
+            };
         }
         default:
-            break;
+            return { startDate: null, endDate: null };
     }
-    return { startDate, endDate };
 };
 // ──────────────────────────────────────────────────────────────────────────────
 
@@ -54,16 +76,24 @@ export const getRemittances = async (req, res) => {
     try {
         const { period = "all", startDate, endDate } = req.query;
         let dateFilter = {};
+
         if (period === "custom" && startDate && endDate) {
-            const start = new Date(startDate);
-            start.setHours(0, 0, 0, 0);
-            const end = new Date(endDate);
-            end.setHours(23, 59, 59, 999);
+            const startPHT = new Date(startDate);
+            const endPHT = new Date(endDate);
+            const start = new Date(
+                Date.UTC(startPHT.getUTCFullYear(), startPHT.getUTCMonth(), startPHT.getUTCDate(), 0, 0, 0, 0)
+                - PHT_OFFSET_MS
+            );
+            const end = new Date(
+                Date.UTC(endPHT.getUTCFullYear(), endPHT.getUTCMonth(), endPHT.getUTCDate(), 23, 59, 59, 999)
+                - PHT_OFFSET_MS
+            );
             dateFilter = { createdAt: { $gte: start, $lte: end } };
         } else if (period !== "all") {
             const { startDate: s, endDate: e } = getPeriodDateRange(period);
             if (s && e) dateFilter = { createdAt: { $gte: s, $lte: e } };
         }
+
         const remittances = await Remit.find(dateFilter)
             .populate("orderId", "orderId")
             .populate("riderId", "firstname lastname email")
@@ -89,11 +119,9 @@ export const updateRemittanceStatus = async (req, res) => {
         const { id } = req.params;
         const { status } = req.body;
 
-
         if (!status) {
             return res.status(400).json({ success: false, message: "Status is required." });
         }
-
 
         const allowedStatuses = ["pending", "remitted", "failed", "processing"];
         if (!allowedStatuses.includes(status)) {
