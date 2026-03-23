@@ -112,7 +112,6 @@ const Admin = ({setAdminAuth})=>{
             setError((prev) => ({ ...prev, orders: null }));
             setOrders(data.reverse());
 
-
             const totalOrderPending = data.filter(order => {
                 return order.statusDelivery === 'pending'
             }).length;
@@ -121,8 +120,7 @@ const Admin = ({setAdminAuth})=>{
                 number: totalOrderPending > 9 ? `${totalOrderPending}+` : totalOrderPending,
                 show: totalOrderPending > 0
             });
-            
-                        
+                                    
         } catch (err) {
             setOrders([]);
             setError((prev) => ({ ...prev, orders: err.message }));
@@ -333,7 +331,7 @@ const Admin = ({setAdminAuth})=>{
 
         {editProduct?.isShow && <Upload/>}
         {addAnnouncement?.isShow && <AddAnnouncement/>}
-
+                        
         
         {/*delete order with api call */}                 
         {deleteOrderModal?.isShow && <Modal 

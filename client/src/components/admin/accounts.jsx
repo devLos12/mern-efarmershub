@@ -478,7 +478,6 @@ const Accounts = () => {
 
 
 
-
     if (loading) return (
         <div className="d-flex align-items-center justify-content-center" style={{ height: Height() }}>
             <div className="text-center">

@@ -30,6 +30,7 @@ import { getDamageLogs, createDamageLog, updateDamageLog, deleteDamageLogs } fro
 import { deleteActivityLogs, getActivityLogs } from "../controllers/admin/activityLogs.js";
 import { deleteSales, getSalesData, getSalesGraphData } from "../controllers/admin/salesReport.js";
 import { getShippingFee, updateShippingFee } from "../controllers/admin/shippingFee.js";
+import { deleteRemittances, getRemittances, updateRemittanceStatus, uploadRemit } from "../controllers/admin/remittance.js";
 
 
 
@@ -128,7 +129,22 @@ adminRouter.delete('/deleteSales',authMiddleware, deleteSales);
 adminRouter.get('/getSalesGraphData', authMiddleware, getSalesGraphData);
 adminRouter.get('/getShippingFee', authMiddleware, getShippingFee);
 adminRouter.patch('/updateShippingFee', authMiddleware, updateShippingFee);
+
+
+
+
+adminRouter.get("/getRemittances", authMiddleware, getRemittances);
+adminRouter.patch("/updateRemittanceStatus/:id", authMiddleware, uploadRemit.single('image'), updateRemittanceStatus);
+adminRouter.delete("/deleteRemittances", authMiddleware, deleteRemittances);
+
+
+
+
 adminRouter.get("/logoutAdmin", authMiddleware, Logout);
+
+
+
+
 
 
 export default adminRouter;

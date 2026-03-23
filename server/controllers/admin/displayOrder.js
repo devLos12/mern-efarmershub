@@ -1,13 +1,24 @@
 import Order from "../../models/order.js";
 
 
-
 // ─── Helper: Build createdAt date filter from period query params ──────────────
 // createdAt is a proper Date object in MongoDB — so we use Date comparison directly
 const getDateFilter = (period, startDate, endDate) => {
     const now = new Date();
 
     switch (period) {
+        
+        case "today": 
+        case undefined:
+        case null:
+        case "": {  // ← dagdag mo ito, default to today
+            const todayStart = new Date(now);
+            todayStart.setHours(0, 0, 0, 0);
+            const todayEnd = new Date(now);
+            todayEnd.setHours(23, 59, 59, 999);
+            return { $gte: todayStart, $lte: todayEnd };
+        }
+
         case "thisweek": {
             const dayOfWeek = now.getDay();
             const daysFromMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Monday-based

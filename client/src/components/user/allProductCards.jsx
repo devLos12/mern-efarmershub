@@ -325,7 +325,7 @@ const AllProductCards = () => {
                                                 disabled={data.stocks <= 0}
                                                 style={{outline: "none"}}
                                                 onClick={() => {
-                                                    navigate("/user/all-products/checkout", {
+                                                    navigate("/user/checkout", {
                                                         state: {
                                                             source: "buy",
                                                             products: [{

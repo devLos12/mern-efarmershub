@@ -13,6 +13,11 @@ import { v2 as cloudinary } from "cloudinary";
 import SalesList from "../../models/salesReport.js";
 import Rider from "../../models/rider.js";
 import { Resend } from "resend";
+import Remit from "../../models/remittance.js";
+
+
+
+
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -610,6 +615,9 @@ export const statusOrder = async(req, res) => {
         // READY TO DELIVER
         // ============================
         if(order.orderMethod === "delivery" && newStatus === "ready to deliver") {
+
+
+
             order.statusDelivery = newStatus;
             order.statusHistory.push({
                 status: newStatus,
@@ -648,6 +656,17 @@ export const statusOrder = async(req, res) => {
                 const data = await response.json();
                 console.log('Expo push response:', data);
             }
+
+
+            if(order.paymentType === "cash on delivery"){
+                // create for remiitance for rider.
+                await Remit.create({
+                    orderId: order._id,
+                    riderId: rider._id,
+                    expectedAmount: order.totalPrice
+                });
+            }
+
 
             io.emit('to rider', { message: `new order ${orderIdShort} assigned` });
 

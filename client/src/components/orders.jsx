@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState, useRef, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import img from "../assets/images/nodata.png";
 import { useBreakpointHeight } from "./breakpoint";
 import { appContext } from "../context/appContext";
@@ -139,7 +139,6 @@ const Orders = () => {
     const seller = useContext(sellerContext);
     const context = role === "admin" ? admin : seller;
     const { orders, loading, error, setError, setDeleteOrderModal, setText, setOrders, setLoading } = context;
-    const navigate = useNavigate();
     const height = useBreakpointHeight();
     const [openMenuId, setOpenMenuId] = useState(null);
     const menuRefs = useRef({});
@@ -156,11 +155,20 @@ const Orders = () => {
     const [archiveOrderModal, setArchiveOrderModal] = useState({ isShow: false, id: null });
 
     // ── Date Filter States ──────────────────────────────────────────────────────
-    const [period, setPeriod] = useState('all');
+    const [period, setPeriod] = useState('today');
     const [customStartDate, setCustomStartDate] = useState('');
     const [customEndDate, setCustomEndDate] = useState('');
     const [isCustomRange, setIsCustomRange] = useState(false);
     const [showCustomRangeModal, setShowCustomRangeModal] = useState(false);
+
+
+    const navigate = useNavigate();
+    const location = useLocation();
+
+    const [isLoading, setIsLoading] = useState(true);
+
+
+
     // ───────────────────────────────────────────────────────────────────────────
 
     const availableStatuses = useMemo(() => {
@@ -178,7 +186,8 @@ const Orders = () => {
     // ── Period label ────────────────────────────────────────────────────────────
     const getPeriodLabel = () => {
         switch (period) {
-            case "all": return "All Time";
+            // case "all": return "All Time";
+            case "today": return "Today";
             case "thisweek": return "This Week";
             case "thismonth": return "This Month";
             case "thisyear": return "This Year";
@@ -205,8 +214,9 @@ const Orders = () => {
 
     const handleCustomRangeClose = () => {
         setShowCustomRangeModal(false);
-        if (!isCustomRange) setPeriod('all');
+        if (!isCustomRange) setPeriod('today');
     };
+
     // ───────────────────────────────────────────────────────────────────────────
 
     useEffect(() => {
@@ -291,8 +301,13 @@ const Orders = () => {
         return () => { document.removeEventListener("mousedown", handleClickOutside); };
     }, [openMenuId]);
 
+
+
+
+
     // ── fetchOrders — now passes period query params to backend ─────────────────
     const fetchOrders = async () => {
+
         const endPoint = role === "admin"
             ? (showArchived ? "getArchivedOrders" : "getOrders")
             : (showArchived ? "getArchivedSellerOrders" : "getSellerOrders");
@@ -320,14 +335,20 @@ const Orders = () => {
     };
     // ───────────────────────────────────────────────────────────────────────────
 
+
+
     // Re-fetch when showArchived, period, or custom dates change
     useEffect(() => {
         const loadInitialOrders = async () => {
+            setIsLoading(true);
             await fetchOrders();
-            setTimeout(() => { setLoading(false); }, 500);
+            setTimeout(() => { setIsLoading(false) }, 500);
         };
         loadInitialOrders();
     }, [showArchived, period, customStartDate, customEndDate]);
+
+
+
 
     const handleRefresh = async () => {
         setIsRefreshing(true);
@@ -404,15 +425,34 @@ const Orders = () => {
 
     useEffect(() => { setCurrentPage(1); }, [statusFilter, orderMethodFilter, searchQuery, period]);
 
-    if (loading) return <p></p>;
+
     
+
+    if (isLoading) return (
+        <div className="d-flex align-items-center justify-content-center vh-100" >
+            <div className="text-center">
+                <div className="spinner-border text-success mb-2" role="status">
+                    <span className="visually-hidden">Loading...</span>
+                </div>
+                <p className="small text-muted mb-0 text-capitalize">Loading order...</p>
+            </div>
+        </div>
+    );
+    
+
+
+
+
     return (
         <>
         <div className={role === "seller" ? "p-2" : "p-0"}>
         <div className="border row g-0 bg-white rounded shadow-sm justify-content-center">
+            
             <div className="col-12">
-                <p className="text-capitalize fw-bold py-2 text-center m-0">order summary</p>
+                <p className="text-capitalize fw-semibold py-2 text-center m-0">order summary</p>
             </div>
+            
+            
             <div className="col-12">
                 <div className="d-flex flex-column gap-2 p-2 flex-md-row justify-content-md-between flex-wrap">
 
@@ -448,7 +488,8 @@ const Orders = () => {
                                     }
                                 }}
                             >
-                                <option value="all">All Time</option>
+                                <option value="today">Today</option>
+                                {/* <option value="all">All Time</option> */}
                                 <option value="thisweek">This Week</option>
                                 <option value="thismonth">This Month</option>
                                 <option value="thisyear">This Year</option>
