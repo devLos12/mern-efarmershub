@@ -10,8 +10,7 @@
   import { Server } from "socket.io";
   import cookieParser from "cookie-parser";
   import "./cron/index.js";
-
-  
+  import validateReceiptRouter from "./routes/validateReceipt.js";  
   
 
   const startServer = async () => {
@@ -53,6 +52,8 @@
       app.use("/api", userRouter);
       app.use("/api", sellerRouter);
       app.use("/api", riderRouter);
+      app.use('/api', validateReceiptRouter);
+
       
 
       const server = app.listen(port, "0.0.0.0", () => {

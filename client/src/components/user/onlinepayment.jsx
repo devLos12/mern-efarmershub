@@ -7,10 +7,9 @@ const ViewModal = ({ isOpen, onClose, imageSrc, title, source }) => {
     if (!isOpen) return null;
 
     const handleDownload = () => {
-        const url = imageSrc;
         const fileName = source === "gcash" ? "gcash-qr.png" : "maya-qr.png";
         const link = document.createElement("a");
-        link.href = url;
+        link.href = imageSrc;
         link.download = fileName;
         document.body.appendChild(link);
         link.click();
@@ -23,48 +22,27 @@ const ViewModal = ({ isOpen, onClose, imageSrc, title, source }) => {
             style={{backgroundColor: "rgba(0,0,0,0.85)", zIndex: 9999}}
             onClick={onClose}
         >
-            <div className="position-relative w-100" 
-            style={{maxHeight: "90vh"}} 
-            onClick={(e) => e.stopPropagation()}>
-                <div className="d-flex justify-content-between px-5 align-items-center mb-3 ">
+            <div className="position-relative w-100" style={{maxHeight: "90vh"}} onClick={(e) => e.stopPropagation()}>
+                <div className="d-flex justify-content-between px-5 align-items-center mb-3">
                     <h5 className="text-white m-0">{title}</h5>
-
-                    <div className="d-flex align-items-center gap-2 ">
+                    <div className="d-flex align-items-center gap-2">
                         {source && (
-                            <button
-                                type="button"
-                                className="btn btn-dark rounded-circle"
-                                onClick={handleDownload}
-                                style={{width: "40px", height: "40px"}}
-                            >
+                            <button type="button" className="btn btn-dark rounded-circle" onClick={handleDownload} style={{width: "40px", height: "40px"}}>
                                 <i className="fa-solid fa-download text-white"></i>
                             </button>
                         )}
-
-                        <button
-                            className="btn btn-light rounded-circle"
-                            onClick={onClose}
-                            style={{width: "40px", height: "40px"}}
-                        >
+                        <button className="btn btn-light rounded-circle" onClick={onClose} style={{width: "40px", height: "40px"}}>
                             <i className="fa-solid fa-xmark"></i>
                         </button>
                     </div>
                 </div>
                 <div className="d-flex w-100 justify-content-center">
-
-                    <img 
-                        src={imageSrc} 
-                        alt={title}
-                        className="img-fluid rounded shadow-lg bg-white"
-                        style={{maxHeight: "80vh", width: "auto"}}
-                    />
+                    <img src={imageSrc} alt={title} className="img-fluid rounded shadow-lg bg-white" style={{maxHeight: "80vh", width: "auto"}}/>
                 </div>
-
             </div>
         </div>
     );
 };
-
 
 
 const OnlinePayment = () => {
@@ -75,13 +53,18 @@ const OnlinePayment = () => {
     const [gcashQr, setGcashQr] = useState(null);
     const [mayaQr, setMayaQr] = useState(null);
     const [fetchLoading, setFetchLoading] = useState(true);
+
+    // ✅ BAGONG STATES PARA SA AI VALIDATION
+    const [validating, setValidating] = useState(false);
+    const [validationResult, setValidationResult] = useState(null); // { isValid, reason }
+
     const fileUploadRef = useRef(null);
     const width = useBreakpoint();
 
     useEffect(() => {
         fetchQrCodes();
     }, []);
-    
+
     const fetchQrCodes = async () => {
         try {
             setFetchLoading(true);
@@ -90,7 +73,6 @@ const OnlinePayment = () => {
                 credentials: "include"
             });
             const data = await response.json();
-            
             if (data.success) {
                 const { gcashQr, mayaQr } = data.data;
                 if (gcashQr) setGcashQr(gcashQr.startsWith("https") ? gcashQr : `${import.meta.env.VITE_API_URL}/api/uploads/${gcashQr}`);
@@ -102,76 +84,87 @@ const OnlinePayment = () => {
             setFetchLoading(false);
         }
     };
-    
+
     const handleTextChange = (e) => {
         const {name, value} = e.target;
-        setCheckoutForm((prev) => ({
-           ...prev,
-           [name]: value 
-        }))
-    }
+        setCheckoutForm((prev) => ({ ...prev, [name]: value }));
+    };
 
-    const handleFileChange = (e) => {
-        const {name} = e.target;
+    // ✅ AI VALIDATION — i-call ang backend route
+    const validateReceipt = async (file) => {
+        const formData = new FormData();
+        formData.append("image", file);
+
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/validate-receipt`, {
+            method: "POST",
+            credentials: "include",
+            body: formData // walang Content-Type header — auto-set ng browser
+        });
+
+        return await response.json(); // { success, isValid, reason }
+    };
+
+    // ✅ UPDATED handleFileChange — may AI validation na
+    const handleFileChange = async (e) => {
+        const { name } = e.target;
         const file = e.target.files[0];
-        
-        if(file){
-            // Check file type - only allow PNG and JPG
-            const allowedTypes = ['image/png', 'image/jpg', 'image/jpeg'];
-            
-            if (!allowedTypes.includes(file.type)) {
-                alert('Invalid file type! Please upload PNG or JPG only.');
-                
-                // Clear the input
-                if(fileUploadRef.current){
-                    fileUploadRef.current.value = null;
-                }
-                return;
-            }
-            
-            // Optional: Check file size (e.g., max 5MB)
-            const maxSize = 5 * 1024 * 1024; // 5MB in bytes
-            if (file.size > maxSize) {
-                alert('File size too large! Maximum size is 5MB.');
-                
-                if(fileUploadRef.current){
-                    fileUploadRef.current.value = null;
-                }
-                return;
-            }
-            
-            // Set form data
-            setCheckoutForm({
-                ...checkoutForm,
-                [name]: file
-            });
-            
-            // Create preview
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                setImgPreview(e.target.result);
-            }
-            reader.readAsDataURL(file);
+        if (!file) return;
+
+        // File type check
+        const allowedTypes = ['image/png', 'image/jpg', 'image/jpeg'];
+        if (!allowedTypes.includes(file.type)) {
+            alert('Invalid file type! Please upload PNG or JPG only.');
+            if (fileUploadRef.current) fileUploadRef.current.value = null;
+            return;
         }
-    }
+
+        // File size check
+        const maxSize = 5 * 1024 * 1024;
+        if (file.size > maxSize) {
+            alert('File size too large! Maximum size is 5MB.');
+            if (fileUploadRef.current) fileUploadRef.current.value = null;
+            return;
+        }
+
+        // Show preview agad habang nagva-validate
+        const reader = new FileReader();
+        reader.onload = (ev) => setImgPreview(ev.target.result);
+        reader.readAsDataURL(file);
+
+        // Start AI validation
+        setValidating(true);
+        setValidationResult(null);
+
+        try {
+            const result = await validateReceipt(file);
+
+            if (!result.isValid) {
+                // ❌ Hindi valid — i-reject at i-clear
+                setValidationResult({ isValid: false, reason: result.reason });
+                setImgPreview(null);
+                setCheckoutForm((prev) => ({ ...prev, image: "" }));
+                if (fileUploadRef.current) fileUploadRef.current.value = null;
+            } else {
+                // ✅ Valid receipt — i-accept
+                setValidationResult({ isValid: true, reason: result.reason });
+                setCheckoutForm((prev) => ({ ...prev, [name]: file }));
+            }
+        } catch (error) {
+            // Kung mag-error ang AI (network issue etc.), i-allow na lang
+            console.error("AI Validation error:", error);
+            setValidationResult(null);
+            setCheckoutForm((prev) => ({ ...prev, [name]: file }));
+        } finally {
+            setValidating(false);
+        }
+    };
 
     const handleFileRemove = () => {
         setImgPreview(null);
-        setCheckoutForm((prev) => ({
-            ...prev,
-            image: ""
-        }));
-        
-        if(fileUploadRef.current){
-            fileUploadRef.current.value = null;
-        }
-    }
-
-    const handleFileClick = () => {
-        if(imgPreview){
-            setViewFilePreview(true);
-        }
-    }
+        setValidationResult(null);
+        setCheckoutForm((prev) => ({ ...prev, image: "" }));
+        if (fileUploadRef.current) fileUploadRef.current.value = null;
+    };
 
     const paymentName = checkoutForm.payment === "gcash" ? "GCash" : "Maya";
     const paymentColor = checkoutForm.payment === "gcash" ? "primary" : "success";
@@ -215,19 +208,16 @@ const OnlinePayment = () => {
                                 "Upload screenshot as proof"
                             ].map((step, i) => (
                                 <div key={i} className="d-flex align-items-start mb-2">
-                                    <span className={`badge bg-${paymentColor} me-2`} style={{fontSize: "10px", minWidth: "20px"}}>
-                                        {i + 1}
-                                    </span>
+                                    <span className={`badge bg-${paymentColor} me-2`} style={{fontSize: "10px", minWidth: "20px"}}>{i + 1}</span>
                                     <span style={{fontSize: "13px"}}>{step}</span>
                                 </div>
                             ))}
-                            
                             <div className="alert alert-warning py-2 px-3 mb-0 mt-3" style={{fontSize: "11px"}}>
                                 <i className="fa-solid fa-circle-info me-1"></i>
                                 <strong>Tip:</strong> Click the QR code to view in full screen. You can also download it for easier scanning.
                             </div>
                         </div>
-                        
+
                         <div className="col-6 col-md-5 text-center">
                             {currentQr ? (
                                 <div className="position-relative d-inline-block">
@@ -263,63 +253,87 @@ const OnlinePayment = () => {
                         <i className="fa-solid fa-file-arrow-up me-2"></i>
                         Proof of Payment:
                     </p>
-                    
-                    {/* Upload Section */}
+
+                    {/* ✅ AI VALIDATING INDICATOR */}
+                    {validating && (
+                        <div className="alert alert-info py-2 px-3 mb-3 d-flex align-items-center gap-2" style={{fontSize: "12px"}}>
+                            <div className="spinner-border spinner-border-sm text-info" role="status">
+                                <span className="visually-hidden">Validating...</span>
+                            </div>
+                            <span>Validating your receipt via AI, please wait...</span>
+                        </div>
+                    )}
+
+                    {/* ✅ VALIDATION RESULT — success or error badge */}
+                    {!validating && validationResult && (
+                        <div
+                            className={`alert py-2 px-3 mb-3 d-flex align-items-center gap-2 ${validationResult.isValid ? "alert-success" : "alert-danger"}`}
+                            style={{fontSize: "12px"}}
+                        >
+                            <i className={`fa-solid ${validationResult.isValid ? "fa-circle-check" : "fa-circle-xmark"}`}></i>
+                            <span>
+                                <strong>{validationResult.isValid ? "Valid receipt!" : "Invalid image!"}</strong>
+                                {" "}{validationResult.reason}
+                            </span>
+                        </div>
+                    )}
+
+                    {/* Upload area */}
                     {!imgPreview ? (
                         <div className="text-center mb-3">
                             <div className="card p-4 bg-light shadow-sm rounded">
                                 <p className="m-0 text-capitalize opacity-75" style={{fontSize: "13px"}}>
                                     Upload your file
                                 </p>
-                                <div className="fa-solid fa-cloud-arrow-up opacity-75 w-100 mt-2" 
-                                style={{fontSize: "32px"}}></div>
-                                
+                                <div className="fa-solid fa-cloud-arrow-up opacity-75 w-100 mt-2" style={{fontSize: "32px"}}></div>
                                 <label 
                                     htmlFor="inputFile" 
-                                    className={`m-0 mt-2 rounded p-1 px-2 text-capitalize text-light bg-${paymentColor}`}
-                                    style={{fontSize: "13px", cursor: "pointer"}}
+                                    className={`m-0 mt-2 rounded p-1 px-2 text-capitalize text-light bg-${paymentColor} ${validating ? "opacity-50 pe-none" : ""}`}
+                                    style={{fontSize: "13px", cursor: validating ? "not-allowed" : "pointer"}}
                                 >
-                                    Browse file
+                                    {validating ? "Validating..." : "Browse file"}
                                 </label>
                             </div>
                         </div>
                     ) : (
-                        <div 
-                            className="d-flex align-items-center justify-content-between bg-light rounded p-3 mb-3 shadow-sm"
-                            onClick={handleFileClick}
+                        /* Preview card — thumbnail + filename */
+                        <div
+                            className="d-flex align-items-center gap-3 bg-light rounded p-2 mb-3 shadow-sm border"
                             style={{cursor: "pointer"}}
+                            onClick={() => setViewFilePreview(true)}
                             title="Click to view"
                         >
-                            <div className="d-flex align-items-center flex-grow-1">
-                                <i className="fa-solid fa-file-image text-success me-3" style={{fontSize: "24px"}}></i>
-                                <div className="flex-grow-1">
-                                    <p className="m-0 fw-semibold text-break" 
-                                        style={{
-                                            fontSize: "12px",
-                                            wordBreak: "break-word",
-                                            overflowWrap: "break-word"
-                                        }}>
-                                        {checkoutForm.image?.name || "payment-proof.jpg"}
-                                    </p>
-                                    <p className="m-0 text-muted small" style={{fontSize: "11px"}}>
-                                        Click to view • Ready to submit
-                                    </p>
-                                </div>
+                            {/* Thumbnail */}
+                            <div className="rounded overflow-hidden flex-shrink-0 border" style={{width: "56px", height: "56px"}}>
+                                <img
+                                    src={imgPreview}
+                                    alt="receipt preview"
+                                    style={{width: "100%", height: "100%", objectFit: "cover"}}
+                                />
                             </div>
+
+                            {/* Filename + hint */}
+                            <div className="flex-grow-1 overflow-hidden">
+                                <p className="m-0 fw-semibold text-truncate" style={{fontSize: "12px"}}>
+                                    {checkoutForm.image?.name || "payment-proof.jpg"}
+                                </p>
+                                <p className="m-0 text-muted" style={{fontSize: "11px"}}>
+                                    Click to view • Ready to submit
+                                </p>
+                            </div>
+
+                            {/* Remove */}
                             <button
-                                className="btn btn-sm btn-outline-danger rounded-circle p-0"
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleFileRemove();
-                                }}
-                                style={{width: "32px", height: "32px"}}
-                                title="Remove file"
+                                className="btn btn-sm btn-outline-danger rounded-circle p-0 flex-shrink-0"
+                                onClick={(e) => { e.stopPropagation(); handleFileRemove(); }}
+                                style={{width: "30px", height: "30px"}}
+                                title="Remove"
                             >
-                                <i className="fa-solid fa-xmark"></i>
+                                <i className="fa-solid fa-xmark" style={{fontSize: "12px"}}></i>
                             </button>
                         </div>
                     )}
-                    
+
                     <input 
                         className="d-none"
                         ref={fileUploadRef} 
@@ -327,10 +341,11 @@ const OnlinePayment = () => {
                         type="file"
                         id="inputFile" 
                         name="image"
-                        accept="image/png, image/jpg, image/jpeg"  // ← Updated to
+                        accept="image/png, image/jpg, image/jpeg"
+                        disabled={validating}
                     />
 
-                    {/* Notes Section */}
+                    {/* Notes */}
                     <div>
                         <label className="form-label fw-semibold mb-2" style={{fontSize: "12px"}}>
                             <i className="fa-solid fa-note-sticky me-1"></i>
@@ -367,7 +382,7 @@ const OnlinePayment = () => {
                 title="Payment Proof Preview"
             />
         </div>
-    )
-}
+    );
+};
 
 export default OnlinePayment;
