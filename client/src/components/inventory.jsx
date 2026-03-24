@@ -149,11 +149,12 @@ const Inventory = () => {
         if (approvalStatus === "expired") {
             filteredProducts = products.filter((p) => p.status === "expired");
         } else if (approvalStatus === "pending") {
-            filteredProducts = products.filter((p) => p.statusApprove === "pending");
+            filteredProducts = products.filter((p) => p.statusApprove === "pending" && p.status !== "expired");
         } else if (approvalStatus === "approved") {
-            filteredProducts = products.filter((p) => p.statusApprove === "approved");
+            // ✅ i-exclude ang expired kahit statusApprove === "approved"
+            filteredProducts = products.filter((p) => p.statusApprove === "approved" && p.status !== "expired");
         } else if (approvalStatus === "rejected") {
-            filteredProducts = products.filter((p) => p.statusApprove === "rejected");
+            filteredProducts = products.filter((p) => p.statusApprove === "rejected" && p.status !== "expired");
         } else {
             filteredProducts = products;
         }
@@ -185,12 +186,15 @@ const Inventory = () => {
         approvalStatus = location?.state?.source;
 
         // Filter by approval status
-        if (approvalStatus === "pending") {
-            filteredProducts = products.filter((p) => p.statusApprove === "pending");
+        if (approvalStatus === "expired") {
+            // ✅ dagdag na ang expired case para sa seller
+            filteredProducts = products.filter((p) => p.status === "expired");
+        } else if (approvalStatus === "pending") {
+            filteredProducts = products.filter((p) => p.statusApprove === "pending" && p.status !== "expired");
         } else if (approvalStatus === "approved") {
-            filteredProducts = products.filter((p) => p.statusApprove === "approved");
+            filteredProducts = products.filter((p) => p.statusApprove === "approved" && p.status !== "expired");
         } else if (approvalStatus === "rejected") {
-            filteredProducts = products.filter((p) => p.statusApprove === "rejected");
+            filteredProducts = products.filter((p) => p.statusApprove === "rejected" && p.status !== "expired");
         } else {
             filteredProducts = products;
         }
