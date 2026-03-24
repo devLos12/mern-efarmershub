@@ -90,19 +90,23 @@ const OnlinePayment = () => {
         setCheckoutForm((prev) => ({ ...prev, [name]: value }));
     };
 
+
+    
     // ✅ AI VALIDATION — i-call ang backend route
     const validateReceipt = async (file) => {
         const formData = new FormData();
         formData.append("image", file);
+        formData.append("paymentMethod", checkoutForm.payment); // ← dagdag ito — "gcash" or "maya"
 
         const response = await fetch(`${import.meta.env.VITE_API_URL}/api/validate-receipt`, {
             method: "POST",
             credentials: "include",
-            body: formData // walang Content-Type header — auto-set ng browser
+            body: formData
         });
 
-        return await response.json(); // { success, isValid, reason }
+        return await response.json();
     };
+
 
     // ✅ UPDATED handleFileChange — may AI validation na
     const handleFileChange = async (e) => {

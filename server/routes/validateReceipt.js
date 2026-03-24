@@ -2,7 +2,7 @@ import express from "express";
 import multer from "multer";
 import Tesseract from "tesseract.js";
 import sharp from "sharp";
-import jsQR from "jsqr"; // para ma-detect kung may QR code
+import jsQR from "jsqr";
 
 const router = express.Router();
 const upload = multer({ storage: multer.memoryStorage() });
@@ -14,10 +14,13 @@ router.post("/validate-receipt", upload.single("image"), async (req, res) => {
       return res.status(400).json({ success: false, message: "No image uploaded." });
     }
 
-    // ── STEP 1: QR CODE DETECTION via jsQR ──────────────────────
+    // ── Kunin ang payment method na pinili ng user ───────────────
+    const paymentMethod = req.body.paymentMethod?.toLowerCase(); // "gcash" or "maya"
+
+    // ── STEP 1: QR CODE DETECTION ────────────────────────────────
     const { data: pixels, info } = await sharp(file.buffer)
-      .resize(500)         // i-resize para mas mabilis
-      .ensureAlpha()       // kailangan ng jsQR ang RGBA
+      .resize(500)
+      .ensureAlpha()
       .raw()
       .toBuffer({ resolveWithObject: true });
 
@@ -32,9 +35,8 @@ router.post("/validate-receipt", upload.single("image"), async (req, res) => {
       });
     }
 
-    // ── STEP 2: OCR via Tesseract ────────────────────────────────
+    // ── STEP 2: OCR ──────────────────────────────────────────────
     const pngBuffer = await sharp(file.buffer).png().toBuffer();
-
     const { data: { text } } = await Tesseract.recognize(pngBuffer, "eng", {
       logger: () => {}
     });
@@ -44,6 +46,7 @@ router.post("/validate-receipt", upload.single("image"), async (req, res) => {
     const hasBranding = hasGCash || hasMaya;
     const detectedApp = hasGCash ? "GCash" : hasMaya ? "Maya" : null;
 
+    // ── STEP 3: BRANDING CHECK ───────────────────────────────────
     if (!hasBranding) {
       return res.status(200).json({
         success: true,
@@ -53,6 +56,26 @@ router.post("/validate-receipt", upload.single("image"), async (req, res) => {
       });
     }
 
+    // ── STEP 4: CROSS-CHECK — tama ba ang payment method? ────────
+    if (paymentMethod === "gcash" && !hasGCash) {
+      return res.status(200).json({
+        success: true,
+        isValid: false,
+        detectedApp,
+        reason: `Invalid. You selected GCash but uploaded a ${detectedApp} receipt.`
+      });
+    }
+
+    if (paymentMethod === "maya" && !hasMaya) {
+      return res.status(200).json({
+        success: true,
+        isValid: false,
+        detectedApp,
+        reason: `Invalid. You selected Maya but uploaded a ${detectedApp} receipt.`
+      });
+    }
+
+    // ── STEP 5: AMOUNT + REF NO CHECK ───────────────────────────
     const hasAmount = /[₱p]\s?\d+[\.,]\d{2}/i.test(text)
                    || /total amount|amount sent/i.test(text);
 

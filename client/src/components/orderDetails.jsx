@@ -2565,7 +2565,7 @@ const OrderDetails = () => {
 
                         {noPaymentProof(orderData) ? undefined : (
                             <div className={`col-12 mt-2 mt-md-4 
-                            ${role === "user" ? "col-md-6 col-lg-5" : "col-md-5 col-lg-6"}  `}>
+                            ${role === "user" ? "col-md-6 col-lg-5" : "col-md-12 col-lg-6"}  `}>
                                 <p className="m-0 text-capitalize fw-bold opacity-75 my-4">proof of payment:</p>
                                 
                                 {/* Improved Proof of Payment Card */}
