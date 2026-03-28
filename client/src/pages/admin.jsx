@@ -27,6 +27,8 @@ import TrackReplacementProduct from "../components/trackProduct.jsx";
 import ActivityLog from "../components/admin/activityLog.jsx";
 import SalesReport from "../components/admin/salesReport.jsx";
 import ShippingFee from "../components/admin/shippingFee.jsx";
+import OfflineFarmerPaymentTransactions from "../components/admin/offline-farmer-payment-transactions.jsx";
+import SellerPaymentTransactions from "../components/admin/online-farmer-payment-transasctions.jsx";
 
 
 
@@ -303,6 +305,10 @@ const Admin = ({setAdminAuth})=>{
         {path: 'profile',           element: <ViewProfile/>},
         {path: "track-replacement", element: <TrackReplacementProduct/>},
         {path: 'activity-logs',     element: <ActivityLog/>},
+
+        {path: 'transactions',      element: <OfflineFarmerPaymentTransactions/>},
+        {path: 'with-device-transactions', element: <SellerPaymentTransactions/>},
+
         {path: '*',                 element: <Navigate to="/admin"/>},
     ]
 

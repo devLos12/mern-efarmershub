@@ -3,7 +3,13 @@ import AdminPaymentTransaction from "../../models/adminPaymentTrans.js";
 import multer from "multer";
 import SellerPaymentTransaction from "../../models/sellerPaymentTrans.js";
 import RiderPayout from "../../models/riderPayout.js";
+import OfflineFarmerPayout from "../../models/offlineFarmerPayout.js";
 import { v2 as cloudinary } from "cloudinary";
+import OfflineFarmerPaymentTransaction from "../../models/offlineFarmerPaymentTrans.js";
+
+
+
+
 
 
 // ─── Helper: Build date range filter ─────────────────────────────────────────
@@ -54,6 +60,7 @@ export const transaction = async (req, res) => {
         // so we use string $gte/$lte — works correctly for ISO format
         const payoutQuery   = dateRange ? { date: { $gte: dateRange.start, $lte: dateRange.end } } : {};
         const riderQuery    = dateRange ? { date: { $gte: dateRange.start, $lte: dateRange.end } } : {};
+        const offlineFarmerQuery = dateRange ? { date: { $gte: dateRange.start, $lte: dateRange.end } } : {};
         const paymentQuery  = dateRange ? { 'paidAt.date': { $gte: dateRange.start, $lte: dateRange.end } } : {};
 
         // ── Payout (Seller) ───────────────────────────────────────────────────
@@ -74,13 +81,17 @@ export const transaction = async (req, res) => {
             return !deleted;
         });
 
+        // ── Offline Farmer Payout (No Device) ─────────────────────────────────
+        const offlineFarmerPayout = await OfflineFarmerPayout.find(offlineFarmerQuery);
+
         // ── Payment ───────────────────────────────────────────────────────────
         const payment = await AdminPaymentTransaction.find(paymentQuery);
 
         const resData = {
             payout: filteredPayouts,
             payment,
-            riderPayout: filteredRiderPayouts
+            riderPayout: filteredRiderPayouts,
+            offlineFarmerPayout: offlineFarmerPayout
         };
 
         res.status(200).json(resData);
@@ -101,6 +112,7 @@ export const deletePayout = async (req, res) => {
             return res.status(400).json({ message: "Invalid items array." });
         }
 
+        // Soft delete for PayoutTransaction & RiderPayout (shared with seller/rider)
         await PayoutTransaction.updateMany(
             { _id: { $in: items } },
             { $addToSet: { deletedBy: { id, role } } }
@@ -110,6 +122,9 @@ export const deletePayout = async (req, res) => {
             { _id: { $in: items } },
             { $addToSet: { deletedBy: { id, role } } }
         );
+
+        // Hard delete for OfflineFarmerPayout (admin-only, no sharing)
+        await OfflineFarmerPayout.deleteMany({ _id: { $in: items } });
 
         const doubleDeletedPayout = await PayoutTransaction.find({
             _id: { $in: items },
@@ -172,21 +187,23 @@ export const updatePayout = async (req, res) => {
 
         await PayoutTransaction.findByIdAndUpdate(id, { $set: { status: "paid", imageFile } });
         await RiderPayout.findByIdAndUpdate(id, { $set: { status: "paid", imageFile } });
+        await OfflineFarmerPayout.findByIdAndUpdate(id, { $set: { status: "paid", imageFile } });
 
         const seller = await PayoutTransaction.findOne({ _id: id });
         const rider = await RiderPayout.findOne({ _id: id });
+        const offlineFarmer = await OfflineFarmerPayout.findOne({ _id: id });
 
         const date = new Date().toISOString().split("T")[0].replace(/-/g, "");
         const random = Math.floor(10000 + Math.random() * 90000);
         const refNo = `REF${date}-${random}`;
 
         await AdminPaymentTransaction.create({
-            accountId: seller?.sellerId ?? rider?.riderId,
-            accountName: seller?.sellerName ?? rider?.riderName,
-            accountEmail: seller?.sellerEmail ?? rider?.riderEmail,
-            type: seller ? "seller payout" : "rider payout",
+            accountId: seller?.sellerId ?? rider?.riderId ?? offlineFarmer?.farmerId,
+            accountName: seller?.sellerName ?? rider?.riderName ?? offlineFarmer?.farmerName,
+            accountEmail: seller?.sellerEmail ?? rider?.riderEmail ?? offlineFarmer?.farmerEmail,
+            type: seller ? "seller payout" : rider ? "rider payout" : "offline farmer payout",
             paymentMethod: "gcash",
-            totalAmount: seller?.totalAmount ?? rider?.totalAmount,
+            totalAmount: seller?.totalAmount ?? rider?.totalAmount ?? offlineFarmer?.totalAmount,
             status: "paid",
             paidAt: {
                 date: new Date().toISOString().split("T")[0],
@@ -215,6 +232,59 @@ export const updatePayout = async (req, res) => {
         }
 
         res.status(200).json({ message: `Payout receipt successfully sent.` });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+
+
+
+export const getOfflineFarmerPaymentTransactions = async (req, res) => {
+    try {
+        const { farmerId, payoutDate } = req.query;
+
+        if (!farmerId || !payoutDate) {
+            return res.status(400).json({ message: "farmerId and payoutDate are required" });
+        }
+        
+        // Query payment transactions by farmerId and payment date
+        // payoutDate format: YYYY-MM-DD
+        const transactions = await OfflineFarmerPaymentTransaction.find({
+            farmerId: farmerId,
+            'paidAt.date': payoutDate
+        }).sort({ createdAt: -1 });
+
+
+        res.status(200).json({
+            transactions: transactions,
+            total: transactions.length,
+            totalAmount: transactions.reduce((sum, t) => sum + t.totalAmount, 0)
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+
+export const getSellerPaymentTransactions = async (req, res) => {
+    try {
+        const { sellerId, payoutDate } = req.query;
+
+        if (!sellerId || !payoutDate) {
+            return res.status(400).json({ message: "sellerId and payoutDate are required" });
+        }
+
+        const transactions = await SellerPaymentTransaction.find({
+            sellerId: sellerId,
+            'paidAt.date': payoutDate
+        }).sort({ createdAt: -1 });
+
+        res.status(200).json({
+            transactions,
+            total: transactions.length,
+            totalAmount: transactions.reduce((sum, t) => sum + t.totalAmount, 0)
+        });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }

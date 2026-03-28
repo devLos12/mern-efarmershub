@@ -134,7 +134,7 @@ const createOrUpdatePayout = async(items, orderId) => {
     // ✅ ADD: Get seller tax rate from environment
     const SELLER_TAX_RATE = parseFloat(process.env.SELLER_TAX_RATE) || 0.05; // 5% tax default
     
-    
+
     for (const item of items) {
         const sellerId = item.seller.id;
         
@@ -202,7 +202,7 @@ const createOrUpdateRiderPayout = async(riderId, orderId) => {
     const RIDER_TAX_RATE = parseFloat(process.env.RIDER_TAX_RATE) || 0.05; // 5% tax
     // const deliveryFee = parseFloat(process.env.RIDER_GROSS_RATE) || 30; // Fixed ₱30 per delivery (GROSS)
     
-
+    
     const shippingFeeRecord = await ShippingFee.findOne();
     const deliveryFee = shippingFeeRecord?.amount || 30;
 

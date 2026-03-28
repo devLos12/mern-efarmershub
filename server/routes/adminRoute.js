@@ -17,7 +17,11 @@ import { inboxChats, markAsRead, deleteChat } from "../controllers/chats.js";
 import getRiders from "../controllers/admin/getAvailableRider.js";
 import AdminInfo from "../controllers/admin/adminInfo.js";
 import { updateCrops, update } from "../controllers/admin/updateCrops.js";
-import { deletePayment, deletePayout, payout, transaction, updatePayout } from "../controllers/admin/transaction.js";
+import { 
+    deletePayment, 
+    deletePayout, payout, transaction, updatePayout,
+    getOfflineFarmerPaymentTransactions, getSellerPaymentTransactions
+ } from "../controllers/admin/transaction.js";
 import { addAnnouncement, deleteAnnouncement, editAnnouncement, 
 getAnnouncement, uploadAnnouncement } from "../controllers/admin/announcement.js";
 import trackOrder from "../controllers/trackorder.js";
@@ -32,6 +36,9 @@ import { deleteSales, getSalesData, getSalesGraphData } from "../controllers/adm
 import { getShippingFee, updateShippingFee } from "../controllers/admin/shippingFee.js";
 import { deleteRemittances, getRemittances, updateRemittanceStatus, uploadRemit } from "../controllers/admin/remittance.js";
 import { adminUploadOfflineFarmerProduct, uploadOfflineFarmer, searchOfflineFarmers } from "../controllers/admin/offline-farmer-upload.js";
+
+
+
 
 const adminRouter = express.Router();
 
@@ -140,6 +147,9 @@ adminRouter.delete("/deleteRemittances", authMiddleware, deleteRemittances);
 // Sa adminRouter
 adminRouter.post('/offline-farmer/upload', authMiddleware, uploadOfflineFarmer.single("image"), adminUploadOfflineFarmerProduct);
 adminRouter.get('/offline-farmers/search', authMiddleware, searchOfflineFarmers);
+adminRouter.get('/offline-farmer/payment-transactions', authMiddleware, getOfflineFarmerPaymentTransactions);
+adminRouter.get('/seller/payment-transactions', authMiddleware, getSellerPaymentTransactions);
+
 
 adminRouter.get("/logoutAdmin", authMiddleware, Logout);
 

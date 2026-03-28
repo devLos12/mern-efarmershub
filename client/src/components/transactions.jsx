@@ -228,6 +228,7 @@ const Transactions = () => {
     const [isSelect, setIsSelect] = useState(false);
     const [refresh, setRefresh] = useState(false);
     const [isRefreshing, setIsRefreshing] = useState(false);
+    const [isInitialLoad, setIsInitialLoad] = useState(true);
 
     const [imageFile, setImageFile] = useState({});
     const [imagePrev, setImagePrev] = useState({});
@@ -337,7 +338,7 @@ const Transactions = () => {
                         <h2>Transaction Report</h2>
                         <p>Date: ${new Date().toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
                         <p>Period: ${getPeriodLabel()}</p>
-                        <p>Type: ${source === 'payout/seller' ? 'Farmer Payout' : source === 'payout/rider' ? 'Rider Payout' : source === 'payout' ? 'Payout' : 'Payment'}</p>
+                        <p>Type: ${source === 'payout/seller' ? 'Farmer Payout (With Device)' : source === 'payout/offlineFarmer' ? 'Farmer Payout (No Device)' : source === 'payout/rider' ? 'Rider Payout' : source === 'payout' ? 'Payout' : 'Payment'}</p>
                         <p>Total Records: ${filteredTransactions.length}</p>
                     </div>
                     ${printContent.innerHTML}
@@ -370,7 +371,7 @@ const Transactions = () => {
                 <h2 style="margin: 0; color: #198754;">Transaction Report</h2>
                 <p style="margin: 5px 0; color: #666;">Period: ${getPeriodLabel()}</p>
                 <p style="margin: 5px 0; color: #666;">Date: ${new Date().toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
-                <p style="margin: 5px 0; color: #666;">Type: ${source === 'payout/seller' ? 'Farmer Payout' : source === 'payout/rider' ? 'Rider Payout' : source === 'payout' ? 'Payout' : 'Payment'}</p>
+                <p style="margin: 5px 0; color: #666;">Type: ${source === 'payout/seller' ? 'Farmer Payout (With Device)' : source === 'payout/offlineFarmer' ? 'Farmer Payout (No Device)' : source === 'payout/rider' ? 'Rider Payout' : source === 'payout' ? 'Payout' : 'Payment'}</p>
                 <p style="margin: 5px 0; color: #666;">Total Records: ${filteredTransactions.length}</p>
             </div>
         `;
@@ -412,11 +413,14 @@ const Transactions = () => {
     const filteredTransactions = useMemo(() => {
         if (!debouncedSearch) return transactions;
         return transactions.filter((t) => {
-            const name = (t.sellerName || t.riderName || "").toLowerCase();
-            const email = (t.sellerEmail || t.riderEmail || "").toLowerCase();
+            const name = (t.sellerName || t.riderName || t.farmerName || "").toLowerCase();
+            const email = (t.sellerEmail || t.riderEmail || t.farmerContact || "").toLowerCase();
             return name.includes(debouncedSearch) || email.includes(debouncedSearch);
         });
     }, [transactions, debouncedSearch]);
+
+
+
 
     useEffect(() => {
         const result = setTimeout(() => {
@@ -431,6 +435,9 @@ const Transactions = () => {
     const totalPages = Math.ceil(filteredTransactions.length / itemsPerPage);
 
     const riderTab = location.state?.riderTab || 'delivered';
+
+    // ── Farmer Payout Tabs (With Device / No Device) ───────────────────────────
+    const farmerTab = location.state?.farmerTab || 'with-device';
 
     useEffect(() => {
         setCurrentPage(1);
@@ -527,13 +534,13 @@ const Transactions = () => {
         const sendData = [...selectedIds];
         let endPoint = '';
         if (role === "admin") {
-            endPoint = source === "payout/seller" || source === "payout/rider" ? "deletePayout" : "deletePayment";
+            endPoint = source === "payout/seller" || source === "payout/rider" || source === "payout/offlineFarmer" ? "deletePayout" : "deletePayment";
         } else {
             endPoint = source === "payout" ? "sellerDeletePayout" : "sellerDeletePayment";
         }
         try {
             const res = await fetch(`${import.meta.env.VITE_API_URL}/api/${endPoint}`, {
-                method: source === "payout/seller" || source === "payout/rider" || source === "payout" ? "PATCH" : "DELETE",
+                method: source === "payout/seller" || source === "payout/rider" || source === "payout/offlineFarmer" || source === "payout" ? "PATCH" : "DELETE",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ items: sendData }),
                 credentials: "include"
@@ -553,8 +560,13 @@ const Transactions = () => {
 
     // ── Fetch Transactions (with period + custom date query params) ──────────────
     useEffect(() => {
-        handleLoading();
-    }, [location?.state?.source, period, customStartDate, customEndDate]);
+        if (isInitialLoad) {
+            handleLoading();
+            setIsInitialLoad(false);
+        } else {
+            handleTabChange();
+        }
+    }, [location?.state?.source, period, customStartDate, customEndDate, location?.state?.farmerTab, location?.state?.riderTab]);
 
 
 
@@ -570,6 +582,16 @@ const Transactions = () => {
         }
     };
 
+    const handleTabChange = async () => {
+        setIsRefreshing(true);
+        try {
+            await fetchTransactions();
+        } catch (error) {
+            console.log("Tab change error:", error.message);
+        } finally {
+            setIsRefreshing(false);
+        }
+    };
 
     const handleLoading= async() => {
         setIsLoading(true);
@@ -604,8 +626,20 @@ const Transactions = () => {
             let transactions = [];
 
             if (location?.state?.source === `payout${role === "admin" ? "/seller" : ""}`) {
-                transactions = data.payout?.reverse() || [];
-                setSource(`payout${role === "admin" ? "/seller" : ""}`);
+                // ── Farmer Payout with Device ─────────────────────────────────
+                if (role === "admin" && farmerTab === 'with-device') {
+                    transactions = data.payout?.reverse() || [];
+                    setSource(`payout/seller`);
+                }
+                // ── Farmer Payout No Device (Offline Farmer) ──────────────────
+                else if (role === "admin" && farmerTab === 'no-device') {
+                    transactions = data.offlineFarmerPayout?.reverse() || [];
+                    setSource(`payout/offlineFarmer`);
+                }
+                else {
+                    transactions = data.payout?.reverse() || [];
+                    setSource(`payout${role === "admin" ? "/seller" : ""}`);
+                }
             }
             if (location?.state?.source === `payout/rider`) {
                 transactions = data.riderPayout?.reverse() || [];
@@ -827,20 +861,33 @@ const Transactions = () => {
 
             <div className="p-2 mb-5">
                 <div className="row g-0 bg-white border rounded p-2 px-2 px-lg-4 mt-1 gap-2">
-                    {(source === "payout/seller" || source === "payout/rider") && role === "admin" && (
+                    {(source === "payout/seller" || source === "payout/rider" || source === "payout/offlineFarmer") && role === "admin" && (
                         <>
                             <div className="col-12">
                                 <div className="d-flex align-items-center gap-2">
-                                    <div className={`text-capitalize rounded p-2 px-3 d-flex align-items-center transition-all ${location.state?.source === "payout/seller" ? "bg-success text-white shadow-sm" : "bg-white text-success border border-success border-opacity-25"}`} style={{ cursor: "pointer", transition: "all 0.2s ease" }} onClick={() => navigate('/admin/payout/seller', { state: { source: 'payout/seller' } })}>
+                                    <div className={`text-capitalize rounded p-2 px-3 d-flex align-items-center transition-all ${location.state?.source === "payout/seller" || location.state?.source === "payout/offlineFarmer" ? "bg-success text-white shadow-sm" : "bg-white text-success border border-success border-opacity-25"}`} style={{ cursor: "pointer", transition: "all 0.2s ease" }} 
+                                    onClick={() => navigate('/admin/payout/seller', { state: { source: 'payout/seller', farmerTab: 'with-device' } })}>
                                         <i className="fa fa-store me-2 small"></i>
                                         <p className="m-0 small fw-bold">Farmer</p>
                                     </div>
-                                    <div className={`text-capitalize rounded p-2 px-3 d-flex align-items-center transition-all ${location.state?.source === "payout/rider" ? "bg-success text-white shadow-sm" : "bg-white text-success border border-success border-opacity-25"}`} style={{ cursor: "pointer", transition: "all 0.2s ease" }} onClick={() => navigate('/admin/payout/rider', { state: { source: 'payout/rider' } })}>
+                                    <div className={`text-capitalize rounded p-2 px-3 d-flex align-items-center transition-all ${location.state?.source === "payout/rider" ? "bg-success text-white shadow-sm" : "bg-white text-success border border-success border-opacity-25"}`} style={{ cursor: "pointer", transition: "all 0.2s ease" }} 
+                                    onClick={() => navigate('/admin/payout/rider', { state: { source: 'payout/rider' } })}>
                                         <i className="fa fa-bicycle me-2 small"></i>
                                         <p className="m-0 small fw-bold">rider</p>
                                     </div>
                                 </div>
                             </div>
+
+                            {(source === "payout/seller" || source === "payout/offlineFarmer") && (
+                                <div className="d-flex align-items-center gap-4 mt-3 border-bottom">
+                                    <div className={`pb-2 ${farmerTab === "with-device" ? "border-bottom border-success border-3 text-success" : "text-muted"}`} style={{ cursor: "pointer", transition: "all 0.2s ease" }} onClick={() => navigate('/admin/payout/seller', { state: { source: 'payout/seller', farmerTab: 'with-device' } })}>
+                                        <p className="m-0 small">With Device</p>
+                                    </div>
+                                    <div className={`pb-2 ${farmerTab === "no-device" ? "border-bottom border-success border-3 text-success" : "text-muted"}`} style={{ cursor: "pointer", transition: "all 0.2s ease" }} onClick={() => navigate('/admin/payout/seller', { state: { source: 'payout/seller', farmerTab: 'no-device' } })}>
+                                        <p className="m-0 small">No Device</p>
+                                    </div>
+                                </div>
+                            )}
 
                             {source === "payout/rider" && (
                                 <div className="d-flex align-items-center gap-4 mt-3 border-bottom">
@@ -975,6 +1022,15 @@ const Transactions = () => {
                                                             </th>
                                                         ))}
 
+                                                {role === "admin" && source === "payout/offlineFarmer"
+                                                    && ["#", "farmer name", "total orders", "gross amount", "tax amount", "status", "date payout", "actions"]
+                                                        .map((data, i) => (
+                                                            <th key={i} className={`text-capitalize p-3 text-success ${i === 7 && "text-center"} ${i === 6 && "text-center"} ${i === 0 && "text-center"} small`}>
+                                                                {data}
+                                                                {i === 4 && <span className="small ms-2">(5%)</span>}
+                                                            </th>
+                                                        ))}
+
                                                 {role === "seller" && source === "payout"
                                                     && ["#", "sellers name", "total orders", "gross amount", "tax amount", "e-wallet", "status", "date payout", "actions"]
                                                         .map((data, i) => (
@@ -1024,10 +1080,27 @@ const Transactions = () => {
                                                                 {i === 1 ? (<>{info.data.name}<p className="m-0 text-lowercase opacity-75 small">{info.data.email}</p></>)
                                                                     : i === 5 ? (<>{info.data.number}<p className="m-0 text-capitalize opacity-75 small">{info.data.type}</p></>)
                                                                         : i === 8 ? (
-                                                                            <div className="d-flex align-items-center justify-content-center">
-                                                                                <button className={`btn btn-sm d-flex align-items-center justify-content-center ${info.data.transaction.status === 'paid' ? 'btn-outline-success' : 'btn-success'}`} onClick={() => openPayoutModal(info.data.transaction)} style={{ width: "120px" }}>
+                                                                            <div className="d-flex align-items-center justify-content-center gap-1 flex-wrap">
+                                                                                {/* Process / View Details */}
+                                                                                <button
+                                                                                    className={`btn btn-sm d-flex align-items-center justify-content-center ${info.data.transaction.status === 'paid' ? 'btn-outline-success' : 'btn-success'}`}
+                                                                                    onClick={() => openPayoutModal(info.data.transaction)}
+                                                                                    style={{ width: "120px" }}
+                                                                                >
                                                                                     <i className={`fa ${info.data.transaction.status === 'paid' ? 'fa-eye' : 'fa-edit'} me-1`}></i>
                                                                                     {info.data.transaction.status === 'paid' ? 'View Details' : 'Process'}
+                                                                                </button>
+
+                                                                                {/* View Transactions */}
+                                                                                <button
+                                                                                    className="btn btn-sm btn-outline-success d-flex align-items-center justify-content-center"
+                                                                                    onClick={() => navigate("/admin/with-device-transactions", {
+                                                                                        state: { sellerId: info.data.transaction.sellerId, payoutDate: info.data.transaction.date }
+                                                                                    })}
+                                                                                    style={{ width: "120px" }}
+                                                                                >
+                                                                                    <i className="fa fa-list me-1"></i>
+                                                                                    View Trans.
                                                                                 </button>
                                                                             </div>
                                                                         ) : info.data}
@@ -1084,6 +1157,35 @@ const Transactions = () => {
                                                                         ) : info.data}
                                                             </td>
                                                         ))}
+
+                                                    {role === "admin" && source === "payout/offlineFarmer" &&
+                                                        [
+                                                            { data: indexOfFirstItem + i + 1 },
+                                                            { data: { name: data.farmerName, contact: data.farmerContact } },
+                                                            { data: data.totalOrders || data.orders?.length || 0 },
+                                                            { data: `₱${data.totalAmount.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` },
+                                                            { data: `₱${data.taxAmount?.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` ?? 0 },
+                                                            { data: data.status },
+                                                            { data: new Date(data.date).toLocaleDateString('en-PH', { year: 'numeric', month: 'short', day: 'numeric' }) },
+                                                            { data: { transaction: data } }
+                                                        ].map((info, i) => (
+                                                            <td key={i} className={`text-capitalize p-3 small ${i === 0 && "text-center"}`}>
+                                                                {i === 1 ? (<>{info.data.name}<p className="m-0 text-uppercase opacity-75 small" style={{fontSize: "10px"}}>{info.data.contact || "N/A"}</p></>)
+                                                                    : i === 7 ? (
+                                                                        <div className="d-flex align-items-center justify-content-center">
+                                                                            <button className="btn btn-sm btn-outline-success"
+                                                                            onClick={() => {
+                                                                                navigate("/admin/transactions", { 
+                                                                                    state: { farmerId: data.farmerId, payoutDate: data.date }});
+                                                                                }}>
+                                                                                    <i className="fa fa-list me-1"></i>
+                                                                                    View Trans.
+                                                                            </button>
+                                                                        </div>
+                                                                    ) : info.data}
+                                                            </td>
+                                                        ))}
+
 
                                                     {source === "payment" && role === "admin" && (
                                                         [
