@@ -9,9 +9,14 @@ export const getListProducts = async (req, res) => {
         
         // Get all approved products with seller info
         const products = await Product.find({ statusApprove: "approved" })
-            .populate('seller', 'name')
+            .populate({
+                path: "seller.id",
+                select: 'firstname lastname'
+            })
             .sort({ createdAt: -1 })
             .lean();
+        
+        
 
         // Calculate date range based on period (in UTC)
         const now = new Date();

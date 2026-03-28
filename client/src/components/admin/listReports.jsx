@@ -322,6 +322,7 @@ const ListReports = () => {
     const [customDateTo, setCustomDateTo] = useState("");
     const [productTypeFilter, setProductTypeFilter] = useState("all");
     const [categoryFilter, setCategoryFilter] = useState("all");
+    const [farmerTypeFilter, setFarmerTypeFilter] = useState("all");
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage] = useState(10);
     const [sortOrder, setSortOrder] = useState(null);
@@ -396,8 +397,9 @@ const ListReports = () => {
                             product.category?.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesProductType = productTypeFilter === "all" || product.productType?.toLowerCase() === productTypeFilter.toLowerCase();
         const matchesCategory = categoryFilter === "all" || product.category?.toLowerCase() === categoryFilter.toLowerCase();
+        const matchesFarmerType = farmerTypeFilter === "all" || product.farmerType === farmerTypeFilter;
         
-        return matchesSearch && matchesProductType && matchesCategory;
+        return matchesSearch && matchesProductType && matchesCategory && matchesFarmerType;
 
     }).sort((a, b) => {
         if (sortOrder === 'asc') {
@@ -423,6 +425,7 @@ const ListReports = () => {
 
     const uniqueProductTypes = [...new Set(listProducts.map(p => p.productType))];
     const unuqueProductCategories = [...new Set(listProducts.map(p => p.category))];
+    const uniqueFarmerTypes = [...new Set(listProducts.map(p => p.farmerType).filter(Boolean))];
 
 
 
@@ -436,7 +439,7 @@ const ListReports = () => {
 
     useEffect(() => {
         setCurrentPage(1);
-    }, [searchTerm, timePeriod, productTypeFilter, categoryFilter, customDateFrom, customDateTo, sortOrder, priceSortOrder, stocksSortOrder]);
+    }, [searchTerm, timePeriod, productTypeFilter, categoryFilter, farmerTypeFilter, customDateFrom, customDateTo, sortOrder, priceSortOrder, stocksSortOrder]);
 
     const handlePrint = () => {
         const printContent = printRef.current.cloneNode(true);
@@ -946,6 +949,21 @@ const ListReports = () => {
                             ))}
                         </select>
                     </div>
+
+                    <div className="col-6 col-lg-3">
+                        <select
+                            className="form-select form-select-sm text-capitalize"
+                            value={farmerTypeFilter}
+                            onChange={(e) => setFarmerTypeFilter(e.target.value)}
+                        >
+                            <option value="all">All Farmer Types</option>
+                            {uniqueFarmerTypes.map((type, i) => (
+                                <option key={i} value={type}>
+                                    {type === 'with-device' ? 'With Device' : 'No Device'}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
                 </div>
                 
                 <div ref={printRef} style={{overflow: "auto"}}>
@@ -1048,6 +1066,7 @@ const ListReports = () => {
                                         </div>
                                     </div>
                                 </th>
+                                <th className="text-uppercase small text-success text-capitalize">Farmer Type</th>
                                 <th className="text-uppercase small text-muted text-capitalize">Created At</th>
                             </tr>
                         </thead>
@@ -1134,13 +1153,26 @@ const ListReports = () => {
 
                                             <td className="align-middle small text-capitalize">
                                                 <span className="text-truncate" style={{ maxWidth: "120px" }}>
-                                                    {product.seller?.name || "N/A"}
+                                                    {/* Kapag nag-populate, ang seller.id ay nagiging object na */}
+                                                    {product.seller?.id?.firstname 
+                                                        ? `${product.seller.id.firstname} ${product.seller.id.lastname}`
+                                                        : product.seller?.name || "N/A"   // ← fallback sa embedded name
+                                                    }
                                                 </span>
                                             </td>
 
                                             <td className="align-middle small">
                                                 <span className="text-success fw-semibold">
                                                     {product.soldToday || 0}
+                                                </span>
+                                            </td>
+
+                                            <td className="align-middle small text-capitalize">
+                                                <span className="badge" style={{
+                                                    backgroundColor: product.farmerType === 'with-device' ? '#10b981' : '#f59e0b',
+                                                    color: '#fff'
+                                                }}>
+                                                    {product.farmerType === 'with-device' ? 'With Device' : 'No Device'}
                                                 </span>
                                             </td>
 
@@ -1152,7 +1184,7 @@ const ListReports = () => {
                                 })
                             ) : (
                                 <tr>
-                                    <td colSpan="8" className="text-center py-5">
+                                    <td colSpan="9" className="text-center py-5">
                                         <i className="fa-solid fa-inbox text-muted mb-3" style={{ fontSize: "3rem" }}></i>
                                         <p className="text-muted">No products found</p>
                                     </td>

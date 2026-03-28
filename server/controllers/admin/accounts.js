@@ -6,6 +6,11 @@ import Admin from "../../models/admin.js";
 import { Resend } from 'resend';
 import cloudinary from "../../config/cloudinary.js";
 import multer from "multer";
+import OfflineFarmer from "../../models/offline-farmer.js";
+
+
+
+
 
 
 
@@ -200,7 +205,6 @@ const sendApprovalEmail = async (email, name, accountType) => {
 
 
 
-
 // ============================================
 // COMMENTED OUT - NODEMAILER CONFIGURATION
 // ============================================
@@ -333,7 +337,6 @@ const sendApprovalEmail = async (email, name, accountType) => {
 
 
 
-
 // ============================================
 // CONTROLLER FUNCTIONS
 // ============================================
@@ -378,11 +381,13 @@ export const getAccounts = async (req, res) => {
         }
         // ──────────────────────────────────────────────────
 
-        const [retrieveUsers, retrieveSellers, retrieveRider, retrieveAdmin] = await Promise.all([
+        const [retrieveUsers, retrieveSellers, retrieveRider, retrieveAdmin, retrieveOfflineFarmers] = await Promise.all([
             User.find(dateFilter),
             Seller.find(dateFilter),
             Rider.find(dateFilter),
             Admin.find({ adminType: { $ne: "main" }, ...dateFilter }),
+            OfflineFarmer.find(dateFilter),
+
         ]);
 
         const allEmpty =
@@ -398,6 +403,7 @@ export const getAccounts = async (req, res) => {
             seller: retrieveSellers,
             rider:  retrieveRider,
             admin:  retrieveAdmin,
+            offlineFarmer:  retrieveOfflineFarmers
         });
 
     } catch (error) {
@@ -437,61 +443,30 @@ export const removeAccount = async (req, res)=>{
 
 
 
-
-
 export const viewProfile = async(req, res) => {
     try {
-        const accountId  = req.params.id;
+        const accountId = req.params.id;
 
-        const [userAccount, sellerAccount, riderAccount, adminAccount] = await Promise.all([
+        const [userAccount, sellerAccount, riderAccount, adminAccount, offlineFarmerAccount] = await Promise.all([
             User.findById(accountId).select('-password').catch(() => null),
             Seller.findById(accountId).select('-password').catch(() => null),
             Rider.findById(accountId).select('-password').catch(() => null),
-            Admin.findById(accountId).select('-password').catch(() => null)
+            Admin.findById(accountId).select('-password').catch(() => null),
+            OfflineFarmer.findById(accountId).catch(() => null), // ✅ walang password field
         ]);
 
-        if (userAccount) {
-            return res.status(200).json({ 
-                success: true,
-                accountType: 'user',
-                profile: userAccount 
-            });
-        }
+        if (userAccount) return res.status(200).json({ success: true, accountType: 'user', profile: userAccount });
+        if (sellerAccount) return res.status(200).json({ success: true, accountType: 'seller', profile: sellerAccount });
+        if (riderAccount) return res.status(200).json({ success: true, accountType: 'rider', profile: riderAccount });
+        if (adminAccount) return res.status(200).json({ success: true, accountType: 'admin', profile: adminAccount });
+        
+        // ✅ OfflineFarmer — sariling accountType para makilala sa frontend
+        if (offlineFarmerAccount) return res.status(200).json({ success: true, accountType: 'offlineFarmer', profile: offlineFarmerAccount });
 
-        if (sellerAccount) {
-            return res.status(200).json({ 
-                success: true,
-                accountType: 'seller',
-                profile: sellerAccount 
-            });
-        }
-
-        if (riderAccount) {
-            return res.status(200).json({ 
-                success: true,
-                accountType: 'rider',
-                profile: riderAccount 
-            });
-        }
-
-        if (adminAccount) {
-            return res.status(200).json({ 
-                success: true,
-                accountType: 'admin',
-                profile: adminAccount 
-            });
-        }
-
-        return res.status(404).json({ 
-            success: false,
-            message: "Account not found" 
-        });
+        return res.status(404).json({ success: false, message: "Account not found" });
 
     } catch (error) {
-        return res.status(500).json({ 
-            success: false,
-            message: error.message 
-        });
+        return res.status(500).json({ success: false, message: error.message });
     }
 }
 
@@ -508,6 +483,18 @@ const uploadToCloudinary = async (file, folder) => {
 
 // ── Build explicit $set fields per source ─────────────────────────────────────
 const buildUpdateFields = (source, profileData) => {
+
+
+    if (source === "offlineFarmer") {
+        return {
+            firstname:  profileData.firstname,
+            lastname:   profileData.lastname,
+            middlename: profileData.middlename,
+            contact:    profileData.contact,
+        };
+    }
+
+
     
     if (source === "user") {
         return {
@@ -594,8 +581,17 @@ export const adminUpdateProfile = async (req, res) => {
         }
 
         // ── Pick model ────────────────────────────────────────────────
-        const modelMap = { user: User, seller: Seller, rider: Rider, admin: Admin };
         
+
+        const modelMap = { 
+            user: User, 
+            seller: Seller, 
+            rider: Rider, 
+            admin: Admin,
+            offlineFarmer: OfflineFarmer  // ✅
+        };
+
+
         const Model = modelMap[source];
 
         if (!Model) {
@@ -605,6 +601,11 @@ export const adminUpdateProfile = async (req, res) => {
         // ── Build explicit $set fields based on source ────────────────
         const updateFields = buildUpdateFields(source, profileData);
         
+
+
+
+
+
         if (!updateFields) {
             return res.status(400).json({ message: "Could not build update fields." });
         }

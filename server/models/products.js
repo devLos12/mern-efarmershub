@@ -2,15 +2,29 @@ import mongoose from "mongoose";
 
 const productSchema = new mongoose.Schema({
     prodId: { type: String, required: true },
+
     seller: {   
         imageFile: { type: String, required: false},
         id: { 
             type: mongoose.Schema.Types.ObjectId, 
-            ref: "Seller",
+            refPath: "seller.sellerType",
             required: true     
         },
-        email: { type: String, required: true},
-        name: { type: String, required: true}
+        email: { type: String, required: false},
+        name: { type: String, required: true},
+        
+        sellerType: {
+            type: String,
+            enum: ['Seller', 'OfflineFarmer'],
+            required: true,
+            default: 'Seller'
+        }
+    },
+
+    farmerType: {
+        type: String,
+        enum: ['with-device', 'none-device'],
+        default: 'with-device'
     },
     
     name: { type: String, required: true },

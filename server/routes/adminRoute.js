@@ -31,8 +31,7 @@ import { deleteActivityLogs, getActivityLogs } from "../controllers/admin/activi
 import { deleteSales, getSalesData, getSalesGraphData } from "../controllers/admin/salesReport.js";
 import { getShippingFee, updateShippingFee } from "../controllers/admin/shippingFee.js";
 import { deleteRemittances, getRemittances, updateRemittanceStatus, uploadRemit } from "../controllers/admin/remittance.js";
-
-
+import { adminUploadOfflineFarmerProduct, uploadOfflineFarmer, searchOfflineFarmers } from "../controllers/admin/offline-farmer-upload.js";
 
 const adminRouter = express.Router();
 
@@ -138,7 +137,9 @@ adminRouter.patch("/updateRemittanceStatus/:id", authMiddleware, uploadRemit.sin
 adminRouter.delete("/deleteRemittances", authMiddleware, deleteRemittances);
 
 
-
+// Sa adminRouter
+adminRouter.post('/offline-farmer/upload', authMiddleware, uploadOfflineFarmer.single("image"), adminUploadOfflineFarmerProduct);
+adminRouter.get('/offline-farmers/search', authMiddleware, searchOfflineFarmers);
 
 adminRouter.get("/logoutAdmin", authMiddleware, Logout);
 

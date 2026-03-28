@@ -54,7 +54,8 @@ export const updateCrops = async (req, res) => {
         const updateData = { 
             name, 
             price, 
-            stocks, 
+            stocks,
+            totalStocks: stocks, 
             kg, 
             lifeSpan, 
             category, 
@@ -81,9 +82,9 @@ export const updateCrops = async (req, res) => {
         await Product.findByIdAndUpdate(id, updateData);
 
         // Update totalStocks if needed
-        if (stocks > oldProduct.totalStocks) {
-            await Product.findByIdAndUpdate(id, { totalStocks: stocks });
-        }
+        // if (stocks > oldProduct.totalStocks) {
+        //     await Product.findByIdAndUpdate(id, { totalStocks: stocks });
+        // }
 
         // Activity Logging for Admin
         if (req.account?.role === "admin") {

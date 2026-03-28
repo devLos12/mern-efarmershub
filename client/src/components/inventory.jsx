@@ -10,7 +10,7 @@ import { useBreakpointHeight } from "./breakpoint.jsx";
 import ListReports from "./admin/listReports.jsx";
 import { io } from "socket.io-client";
 import Toast from "./toastNotif.jsx";
-
+import OfflineFarmerUpload from "./seller/offline-farmer-upload.jsx";
 
 
 
@@ -34,10 +34,16 @@ const Inventory = () => {
     const location = useLocation();
 
 
+    const [showOfflineUpload, setShowOfflineUpload] = useState(false);
+
 
     // Get current view from location state (products or list-report)
     const currentView = location.state?.view || "products";
+    const currentApproved = location.state?.source === "approved";
     
+
+
+
     // Get unique categories from products
     // const uniqueCategories = [...new Set(products.map(p => p.category?.toLowerCase()).filter(Boolean))];
     const uniqueCategories = ["all", "grains", "root crops", "fruits", "fruit vegetables", "leafy vegetables", "legumes"];;
@@ -424,19 +430,30 @@ const Inventory = () => {
                         </div>
 
                         {/* Add Product Button - Seller Only */}
-                        {role === "seller" && (
+                        { ((role === 'admin' && currentApproved ) || role === "seller"  ) && (
                             <div className="position-fixed z-1 bottom-0 end-0 p-4">
                                 <div className="col text-md-start">
                                     <button
                                         className="border-0 text-light rounded-circle fs-2 shadow"
                                         style={{ width: "50px", height: "50px", backgroundColor: "#FFD700" }}
-                                        onClick={() => setSellerUpload({ isShow: true })}
+                                        onClick={() => {
+                                            if(role === "seller"){
+                                                setSellerUpload({ isShow: true })
+                                            } 
+
+                                            if(role === 'admin') {
+                                                setShowOfflineUpload(true);
+                                            }
+
+
+                                        }}
                                     >
                                         +
                                     </button>
                                 </div>
                             </div>
-                        )}
+                            )
+                        }
 
                         {/* Products Display with Refresh Overlay */}
                         <div className="position-relative">
@@ -527,6 +544,10 @@ const Inventory = () => {
                 type={toastType}
                 onClose={() => setShowToast(false)}
             />
+
+            {role === "admin" && showOfflineUpload && (
+                <OfflineFarmerUpload onClose={() => setShowOfflineUpload(false)} />
+            )}
         </>
     );
 };

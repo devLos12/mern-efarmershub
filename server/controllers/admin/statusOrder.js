@@ -1,12 +1,15 @@
 import Order from "../../models/order.js";
 import Seller from "../../models/seller.js";
+import OfflineFarmer from "../../models/offline-farmer.js";
 import Product from "../../models/products.js";
 import ActivityLog from "../../models/activityLogs.js";
 import Admin from "../../models/admin.js";
 import multer from "multer";
 import PayoutTransaction from "../../models/payoutTransaction.js";
+import OfflineFarmerPayout from "../../models/offlineFarmerPayout.js";
 import AdminPaymentTransaction from "../../models/adminPaymentTrans.js";
 import SellerPaymentTransaction from "../../models/sellerPaymentTrans.js";
+import OfflineFarmerPaymentTransaction from "../../models/offlineFarmerPaymentTrans.js";
 import Notification from "../../models/notification.js";
 import DamageLog from "../../models/damageLog.js";
 import { v2 as cloudinary } from "cloudinary";
@@ -342,22 +345,47 @@ const createTransaction = async(items, payment, userId, firstname, lastname, ema
     for (const item of items){
         const sellerId = item.seller.id;
         const amount = item.prodPrice * item.quantity;
-
-        await SellerPaymentTransaction.create({
-            sellerId: sellerId,
-            accountId: userId,
-            accountName: `${firstname} ${lastname}`,
-            accountEmail: email,
-            type: "customer payment",
-            paymentMethod: payment,
-            totalAmount: amount,
-            status: "paid",
-            paidAt: { 
-                date: new Date().toISOString().split("T")[0],
-                time: new Date().toLocaleTimeString("en-PH", { hour: "2-digit", minute: "2-digit", hour12: true })
-            },
-            refNo: refNo,
-        })
+        
+        // Check if this seller is an OfflineFarmer
+        const isOfflineFarmer = await OfflineFarmer.findById(sellerId);
+        
+        if (isOfflineFarmer) {
+            // Create OfflineFarmerPaymentTransaction for offline farmers
+            await OfflineFarmerPaymentTransaction.create({
+                farmerId: sellerId,
+                farmerName: `${isOfflineFarmer.firstname} ${isOfflineFarmer.lastname}`,
+                farmerContact: isOfflineFarmer.contact || "",
+                accountId: userId,
+                accountName: `${firstname} ${lastname}`,
+                accountEmail: email,
+                type: "customer payment",
+                paymentMethod: payment,
+                totalAmount: amount,
+                status: "paid",
+                paidAt: { 
+                    date: new Date().toISOString().split("T")[0],
+                    time: new Date().toLocaleTimeString("en-PH", { hour: "2-digit", minute: "2-digit", hour12: true })
+                },
+                refNo: refNo,
+            });
+        } else {
+            // Create SellerPaymentTransaction for regular sellers
+            await SellerPaymentTransaction.create({
+                sellerId: sellerId,
+                accountId: userId,
+                accountName: `${firstname} ${lastname}`,
+                accountEmail: email,
+                type: "customer payment",
+                paymentMethod: payment,
+                totalAmount: amount,
+                status: "paid",
+                paidAt: { 
+                    date: new Date().toISOString().split("T")[0],
+                    time: new Date().toLocaleTimeString("en-PH", { hour: "2-digit", minute: "2-digit", hour12: true })
+                },
+                refNo: refNo,
+            });
+        }
     }
 
     await AdminPaymentTransaction.create({
@@ -384,6 +412,11 @@ const createOrUpdatePayout = async(items, order)=>{
 
     for (const item of items) {
         const sellerId = item.seller.id;
+        
+        // Check if this seller is an OfflineFarmer - if so, skip it
+        const isOfflineFarmer = await OfflineFarmer.findById(sellerId);
+        if (isOfflineFarmer) continue;
+
         const grossAmount = item.prodPrice * item.quantity;
         const taxAmount = grossAmount * SELLER_TAX_RATE;
         const netAmount = grossAmount - taxAmount;
@@ -418,6 +451,52 @@ const createOrUpdatePayout = async(items, order)=>{
         }
     }
 }
+
+
+
+const createOrUpdateOfflineFarmerPayout = async(items, order) => {
+    const SELLER_TAX_RATE = process.env.SELLER_TAX_RATE;
+
+    for (const item of items) {
+        const farmerId = item.seller.id;
+        
+        // Check if this seller ID is actually an OfflineFarmer
+        const farmer = await OfflineFarmer.findById(farmerId);
+        if (!farmer) continue; // Skip if not an offline farmer
+
+        const grossAmount = item.prodPrice * item.quantity;
+        const taxAmount = grossAmount * SELLER_TAX_RATE;
+        const netAmount = grossAmount - taxAmount;
+        const today = new Date().toISOString().split("T")[0];
+
+        const payout = await OfflineFarmerPayout.findOne({ 
+            farmerId, 
+            date: today, 
+            status: "pending" 
+        });
+
+        if (payout) {
+            payout.orders.push({ orderId: order._id, amount: grossAmount });
+            payout.totalAmount += grossAmount;
+            payout.taxAmount += taxAmount;
+            payout.netAmount += netAmount;
+            payout.totalOrders = payout.orders.length;
+            await payout.save();
+        } else {
+            await OfflineFarmerPayout.create({
+                farmerId,
+                farmerName: `${farmer.firstname} ${farmer.lastname}`,
+                farmerContact: farmer.contact || "",
+                date: today,
+                orders: [{ orderId: order._id, amount: grossAmount }],
+                totalAmount: grossAmount,
+                taxAmount: taxAmount,
+                netAmount: netAmount,
+                totalOrders: 1
+            });
+        }
+    }
+};
 
 
 
@@ -458,6 +537,7 @@ export const statusOrder = async(req, res) => {
 
                 if(order.paymentType === "gcash" || order.paymentType === "maya") {
                     await createOrUpdatePayout(order.orderItems, order);
+                    await createOrUpdateOfflineFarmerPayout(order.orderItems, order);
                     
                     await createTransaction(
                         order.orderItems, 

@@ -215,6 +215,14 @@ const ProductDetails = () =>{
     };
 
 
+
+    useEffect(() => {
+        console.log(productDetails);
+    },[productDetails]);
+
+
+
+
    if(loading) return (
     <div className="d-flex justify-content-center flex-column gap-2 align-items-center vh-100" 
     >
@@ -592,12 +600,12 @@ const ProductDetails = () =>{
 
 
                                     <div>
-                                        <p className="m-0 text-capitalize fw-bold text-muted small">{productDetails.seller.name}</p>
-                                        <p className="m-0 text-capitalize small text-muted">{"(seller)"}</p>
+                                        <p className="m-0 text-capitalize fw-bold text-muted small">{`${productDetails.seller?.id?.firstname || ""} ${productDetails.seller?.id?.lastname || "" }`}</p>
+                                        <p className="m-0 text-capitalize small text-muted">{"(farmer)"}</p>
                                     </div>
                                 </div>
 
-                                {role !== "seller" && (
+                                {role !== "seller" && productDetails.farmerType === 'with-device' && (
                                     <button className="border-0 text-capitalize small rounded-pill p-1 px-3 shadow bg-primary text-light d-flex align-items-center gap-2"
                                     style={{outline : "none"}}
                                     onClick={()=> {
@@ -622,8 +630,8 @@ const ProductDetails = () =>{
                                                 chatId : data.chatId,
                                                 senderId : data.senderId,
                                                 credentials : {
-                                                    id : productDetails.seller.id,
-                                                    name : productDetails.seller.name,
+                                                    id : productDetails.seller.id._id,
+                                                    name : productDetails.seller.id.firstname,
                                                     email : productDetails.seller.email,
                                                     role : "seller"
                                                 }

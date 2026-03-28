@@ -191,8 +191,8 @@ const Accounts = () => {
     const [showAddModal, setShowAddModal] = useState(false);
     const [verificationFilter, setVerificationFilter] = useState('all');
     const [isRefreshing, setIsRefreshing] = useState(false);
+    const [farmerTypeFilter, setFarmerTypeFilter] = useState('all'); // ✅ With Device / No Device filter
 
-    
     // Date filter states
     const [datePeriod, setDatePeriod] = useState('all');
     const [customStartDate, setCustomStartDate] = useState('');
@@ -200,16 +200,9 @@ const Accounts = () => {
     const [isCustomRange, setIsCustomRange] = useState(false);
     const [showCustomRangeModal, setShowCustomRangeModal] = useState(false);
 
-
-
-
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage] = useState(10);
     const printRef = useRef();
-
-
-
-
 
     const formatDate = (dateString) => {
         const date = new Date(dateString);
@@ -232,12 +225,10 @@ const Accounts = () => {
         return () => clearTimeout(result);
     }, [search]);
 
-
-
-
-    
+    // ✅ filteredAccounts — farmerTypeFilter included in deps
     const filteredAccounts = useMemo(() => {
         let filtered = accountsData;
+
         if (debouncedSearch) {
             filtered = filtered.filter((account) => {
                 const firstname = (account.firstname || "").toLowerCase();
@@ -250,11 +241,18 @@ const Accounts = () => {
                     accountId.includes(debouncedSearch);
             });
         }
+
+        // ✅ Farmer type filter — With Device / No Device
+        if (location.state?.source === "seller" && farmerTypeFilter !== 'all') {
+            filtered = filtered.filter((account) => account._farmerType === farmerTypeFilter);
+        }
+
         if ((location.state?.source === "seller" || location.state?.source === "rider") && verificationFilter !== 'all') {
             filtered = filtered.filter((account) => account.verification === verificationFilter);
         }
+
         return filtered;
-    }, [accountsData, debouncedSearch, verificationFilter, location.state?.source]);
+    }, [accountsData, debouncedSearch, verificationFilter, farmerTypeFilter, location.state?.source]); // ✅ farmerTypeFilter sa deps
 
     const indexOfLastItem = currentPage * itemsPerPage;
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
@@ -314,11 +312,12 @@ const Accounts = () => {
     };
 
     const handleViewProfile = (id) => {
-        navigate(`/admin/profile`, { state: { accountId: id, source: location.state?.source } });
+        const account = accountsData.find(a => a._id === id);
+        const resolvedSource = account?._farmerType === "offlineFarmer" 
+            ? "offlineFarmer" 
+            : location.state?.source;
+        navigate(`/admin/profile`, { state: { accountId: id, source: resolvedSource } });
     };
-
- 
-
 
     const fetchAccounts = async () => {
         try {
@@ -331,12 +330,22 @@ const Accounts = () => {
             const data = await res.json();
             if (!res.ok) throw new Error(data.message);
             setError(null);
-            if (location.state?.source === "user")   setAccountsData([...(data.user ?? [])].reverse());
-            if (location.state?.source === "seller") setAccountsData([...(data.seller ?? [])].reverse());
-            if (location.state?.source === "rider")  setAccountsData([...(data.rider ?? [])].reverse());
-            if (location.state?.source === "admin")  setAccountsData([...(data.admin ?? [])].reverse());
+
+            if (location.state?.source === "user")  setAccountsData([...(data.user ?? [])].reverse());
+
+            if (location.state?.source === "seller") {
+                // ✅ Merge seller + offlineFarmer, sorted by createdAt descending
+                const merged = [
+                    ...(data.seller ?? []).map(s => ({ ...s, _farmerType: "seller" })),
+                    ...(data.offlineFarmer ?? []).map(f => ({ ...f, _farmerType: "offlineFarmer" })),
+                ].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                setAccountsData(merged);
+            }
+
+            if (location.state?.source === "rider") setAccountsData([...(data.rider ?? [])].reverse());
+            if (location.state?.source === "admin") setAccountsData([...(data.admin ?? [])].reverse());
+
         } catch (err) { setError(err.message); console.log("Error: ", err.message); }
-    
     };
 
     const handleRefresh = async () => {
@@ -403,8 +412,6 @@ const Accounts = () => {
         `);
         windowPrint.document.close();
     };
-    
-    
 
     // ── DOWNLOAD PDF ───────────────────────────────────────────────────────────
     const handleDownloadPDF = () => {
@@ -459,11 +466,11 @@ const Accounts = () => {
 
     const Height = () => { return height < 574 ? height : height - 152; };
 
-    useEffect(() => { setCurrentPage(1); }, [verificationFilter, debouncedSearch, location.state?.source]);
-
-    
-    
-
+    // ✅ Reset page + farmerTypeFilter on tab/search/filter change
+    useEffect(() => {
+        setCurrentPage(1);
+        setFarmerTypeFilter('all');
+    }, [verificationFilter, debouncedSearch, location.state?.source]);
 
     useEffect(() => {
         const loadInitialAccounts = async () => {
@@ -475,9 +482,6 @@ const Accounts = () => {
         loadInitialAccounts();
     }, [location.state?.source, datePeriod, customStartDate, customEndDate]);
 
-
-
-
     if (loading) return (
         <div className="d-flex align-items-center justify-content-center" style={{ height: Height() }}>
             <div className="text-center">
@@ -488,7 +492,6 @@ const Accounts = () => {
     );
 
     // ── REUSABLE ACTION MENU ───────────────────────────────────────────────────
-    // popUp: opens the dropdown ABOVE the button (for last rows to avoid cutoff)
     const ActionMenu = ({ data, popUp }) => {
         const isMenuOpen = openMenuId === data._id;
         return (
@@ -509,7 +512,6 @@ const Accounts = () => {
                             position: "absolute",
                             right: 0,
                             zIndex: 99,
-                            // ✅ Pop UP for last rows, DOWN for everything else
                             top:    popUp ? "auto"  : "110%",
                             bottom: popUp ? "110%"  : "auto",
                         }}
@@ -519,7 +521,10 @@ const Accounts = () => {
                             style={{ cursor: "pointer" }}
                             onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f3f4f6'}
                             onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                            onClick={() => { handleViewProfile(data._id); setOpenMenuId(null); }}>
+                            onClick={() => {
+                                handleViewProfile(data._id); 
+                                setOpenMenuId(null); 
+                                }}>
                             <i className="fa fa-user text-primary"></i>
                             <p className="m-0 small text-primary">view profile</p>
                         </div>
@@ -537,8 +542,6 @@ const Accounts = () => {
             </div>
         );
     };
-
-
 
     const getPeriodLabel = () => {
         const today = new Date().toISOString().split('T')[0];
@@ -571,9 +574,6 @@ const Accounts = () => {
         setShowCustomRangeModal(false);
         if (!isCustomRange) setDatePeriod('all');
     };
-
-
-
 
     return (
         <>
@@ -610,8 +610,6 @@ const Accounts = () => {
 
                 {/* Search and Actions Bar */}
                 <div className="row g-0 bg-white border border-success border-opacity-25 rounded p-2 px-2 px-lg-4 mt-2 shadow-sm">
-                    
-                    
                     <div className="col-12 col-md-5 d-flex gap-2 flex-column">
                         <div className="position-relative">
                             <i className="fa fa-search position-absolute text-success opacity-50" style={{ left: "12px", top: "50%", transform: "translateY(-50%)" }}></i>
@@ -623,15 +621,12 @@ const Accounts = () => {
                                 style={{ outline: "none" }} />
                         </div>
 
-
-
                         {/* Date Period Filter */}
                         <div className="d-flex align-items-center gap-2">
                             <div className="d-flex align-items-center gap-2">
                                 <i className="fa-solid fa-calendar small text-success"></i>
                                 <p className="fw-semibold m-0 text-capitalize small">time period</p>
                             </div>
-
                             <select
                                 className="form-select form-select-sm border-success border-opacity-25 small"
                                 style={{ width: "auto" }}
@@ -656,13 +651,23 @@ const Accounts = () => {
                         </div>
                     </div>
 
-
-                 
-
-
-
                     <div className="col">
-                        <div className="mt-3 mt-md-0 text-end d-flex justify-content-end gap-2">
+                        <div className="mt-3 mt-md-0 text-end d-flex justify-content-end gap-2 flex-wrap">
+
+                            {/* ✅ Farmer Type Filter — seller tab only */}
+                            {location.state?.source === "seller" && (
+                                <select
+                                    className="form-select form-select-sm border-success border-opacity-25 small"
+                                    style={{ width: "auto" }}
+                                    value={farmerTypeFilter}
+                                    onChange={(e) => setFarmerTypeFilter(e.target.value)}>
+                                    <option value="all">All Farmers</option>
+                                    <option value="seller">With Device</option>
+                                    <option value="offlineFarmer">No Device</option>
+                                </select>
+                            )}
+
+                            {/* Verification Status Filter */}
                             {showVerificationFilter && (
                                 <select
                                     className="form-select form-select-sm border-success border-opacity-25 small"
@@ -675,6 +680,7 @@ const Accounts = () => {
                                     <option value="rejected">Rejected</option>
                                 </select>
                             )}
+
                             <button
                                 className="d-flex align-items-center px-3 py-1 shadow-sm border gap-2 rounded"
                                 onClick={handleRefresh}
@@ -689,12 +695,12 @@ const Accounts = () => {
                         </p>
                     </div>
                 </div>
-                            
+
                 {/* Table */}
                 {filteredAccounts.length > 0 ? (
                     <>
                         <div className="mt-2 bg-white rounded shadow-sm border border-success border-opacity-25 position-relative"
-                            style={{ overflowY: "auto"}}>
+                            style={{ overflowY: "auto" }}>
                             {isRefreshing && (
                                 <div className="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center bg-white bg-opacity-100" style={{ zIndex: 10 }}>
                                     <div className="text-center">
@@ -704,11 +710,9 @@ const Accounts = () => {
                                 </div>
                             )}
 
-                            <div ref={printRef} className="table-responsive " 
-                            style={{height: filteredAccounts.length <= 9 ? "320px" : "" }}
-                            >
-                                <table className="table table-hover" 
-                                style={{ minWidth: "800px"}}>
+                            <div ref={printRef} className="table-responsive"
+                                style={{ height: filteredAccounts.length <= 9 ? "320px" : "" }}>
+                                <table className="table table-hover" style={{ minWidth: "800px" }}>
                                     <thead className="bg-light">
                                         <tr>
                                             {location.state?.source === "admin" &&
@@ -737,10 +741,9 @@ const Accounts = () => {
                                         {currentItems.map((data, i) => {
                                             const isAdmin = location.state?.source === "admin";
                                             const needsVerification = location.state?.source === "seller" || location.state?.source === "rider";
-                                            // ✅ Pop UP for last 2 rows so menu doesn't get clipped
+                                            const isOfflineFarmer = data._farmerType === "offlineFarmer";
                                             const popUp = i === 0 ? 0 : i >= currentItems.length - 2;
 
-                                            
                                             return (
                                                 <tr key={i}>
                                                     {isAdmin ? (
@@ -766,18 +769,31 @@ const Accounts = () => {
                                                                 </td>
                                                             )}
                                                             <td className="align-middle small fw-bold">{data.accountId || "N/A"}</td>
-                                                            <td className="align-middle small text-capitalize">{`${data.lastname}, ${data.firstname} ${data.middlename === undefined? '' : `${data.middlename}.`}`}</td>
-                                                            <td className="align-middle small text-lowercase">{data.email}</td>
-                                                            <td className="align-middle small">{data.createdAt ? formatDate(data.createdAt) : "N/A"}</td>
-                                                            <td className="align-middle text-center">
-                                                                <button
-                                                                    className="text-capitalize px-3 py-1 bg-primary shadow-sm border-0 text-white small text-nowrap"
-                                                                    style={{ outline: "none", borderRadius: "20px", transition: "all 0.2s ease" }}
-                                                                    onClick={() => handleChat(data)}>
-                                                                    <i className="fa fa-comment me-1 small"></i>
-                                                                    chat
-                                                                </button>
+
+                                                            {/* Farmer name — no badge here */}
+                                                            <td className="align-middle small text-capitalize">
+                                                                {`${data.lastname}, ${data.firstname} ${data.middlename === undefined ? '' : `${data.middlename}.`}`}
                                                             </td>
+
+                                                            {/* ✅ Email — no text-lowercase para hindi ma-lowercase ang N/A */}
+                                                            <td className="align-middle small">{data.email || "N/A"}</td>
+                                                            <td className="align-middle small">{data.createdAt ? formatDate(data.createdAt) : "N/A"}</td>
+
+                                                            {/* ✅ No Device badge sa Message column */}
+                                                            <td className="align-middle text-center">
+                                                                {isOfflineFarmer ? (
+                                                                    <span className="badge bg-secondary" style={{ fontSize: "10px" }}>No Device</span>
+                                                                ) : (
+                                                                    <button
+                                                                        className="text-capitalize px-3 py-1 bg-primary shadow-sm border-0 text-white small text-nowrap"
+                                                                        style={{ outline: "none", borderRadius: "20px", transition: "all 0.2s ease" }}
+                                                                        onClick={() => handleChat(data)}>
+                                                                        <i className="fa fa-comment me-1 small"></i>
+                                                                        chat
+                                                                    </button>
+                                                                )}
+                                                            </td>
+
                                                             <td className="align-middle text-center">
                                                                 <ActionMenu data={data} popUp={popUp} />
                                                             </td>
@@ -791,11 +807,7 @@ const Accounts = () => {
                             </div>
                         </div>
 
-                        
-
-
-
-                        {/* Pagination + PDF/Print — same layout as Orders.jsx */}
+                        {/* Pagination + PDF/Print */}
                         <div className="row g-0 bg-white rounded border shadow-sm">
                             <div className="col-12 col-lg-4 p-3 d-flex align-items-center justify-content-center justify-content-lg-start">
                                 <div className="text-muted small">
@@ -866,7 +878,6 @@ const Accounts = () => {
             <AddAccount isOpen={showAddModal} onClose={() => setShowAddModal(false)} onSuccess={() => handleRefresh()} />
             <Toast show={showToast} message={toastMessage} type={toastType} onClose={() => setShowToast(false)} />
 
-
             <CustomRangeModal
                 show={showCustomRangeModal}
                 onClose={handleCustomRangeClose}
@@ -879,4 +890,4 @@ const Accounts = () => {
     );
 };
 
-export default Accounts;
+export default Accounts;3

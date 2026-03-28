@@ -130,6 +130,7 @@ const ViewProfile = () => {
     const source    = location?.state?.source;
 
     const [profile, setProfile]                   = useState(null);
+    const [accountType, setAccountType]           = useState(null); // ✅ track actual accountType from API
     const [loading, setLoading]                   = useState(true);
     const [error, setError]                       = useState(null);
     const [showImageModal, setShowImageModal]     = useState(false);
@@ -163,6 +164,7 @@ const ViewProfile = () => {
             const data = await res.json();
             if (!res.ok) throw new Error(data.message);
             setProfile(data.profile);
+            setAccountType(data.accountType); // ✅ store accountType from API
             setError(null);
         } catch (err) {
             setError(err.message);
@@ -201,18 +203,22 @@ const ViewProfile = () => {
         if (source === "user")   return "billingAddress";
         if (source === "seller") return "sellerAddress";
         if (source === "rider")  return "riderAddress";
-        return null;
+        return null; // ✅ offlineFarmer — walang address
     };
 
     const handleEnableEdit = () => {
         setEditForm({ ...profile });
-        const addrKey  = getAddressKey();
-        const addrData = addrKey ? (profile[addrKey] ?? {}) : {};
-        const provData = philippinesAddress[addrData.province];
-        if (provData?.cities) {
-            setAvailableCities(Object.keys(provData.cities));
-            const cityData = provData.cities[addrData.city];
-            if (cityData?.barangays) setAvailableBarangays(cityData.barangays);
+        const addrKey = getAddressKey();
+
+        // ✅ Skip address setup kung walang address (offlineFarmer)
+        if (addrKey) {
+            const addrData = profile[addrKey] ?? {};
+            const provData = philippinesAddress[addrData.province];
+            if (provData?.cities) {
+                setAvailableCities(Object.keys(provData.cities));
+                const cityData = provData.cities[addrData.city];
+                if (cityData?.barangays) setAvailableBarangays(cityData.barangays);
+            }
         }
         setIsEditMode(true);
     };
@@ -301,8 +307,6 @@ const ViewProfile = () => {
         }
     };
 
-
-
     const handleSaveEdit = async () => {
         try {
             setIsSaving(true);
@@ -331,20 +335,16 @@ const ViewProfile = () => {
             };
 
             const formData = new FormData();
-            formData.append("source", source);
+            formData.append("source", accountType || source);
             formData.append("profileData", JSON.stringify(normalizedForm));
             if (newPlateImage)   formData.append("imagePlateNumber", newPlateImage);
             if (newLicenseImage) formData.append("licenseImage", newLicenseImage);
 
-
-            
             const res = await fetch(`${import.meta.env.VITE_API_URL}/api/updateProfile/${accountId}`, {
                 method: "PUT",
                 credentials: "include",
                 body: formData
             });
-
-
 
             const data = await res.json();
             if (!res.ok) throw new Error(data.message);
@@ -561,7 +561,7 @@ const ViewProfile = () => {
             </div>
         </div>
     ) : null;
-
+    
     const LicenseModal = () => showLicenseModal ? (
         <div className="modal fade show d-block" tabIndex="-1"
             style={{ backgroundColor: "rgba(0,0,0,0.8)" }}
@@ -832,7 +832,6 @@ const ViewProfile = () => {
                             </div>
                         )}
                     </div>
-
                 </div>
             </div>
         </>
@@ -857,6 +856,59 @@ const ViewProfile = () => {
             </div>
         </div>
     );
+
+    // ─── Offline Farmer ───────────────────────────────────────────────
+    const renderOfflineFarmerProfile = () => (
+        <div className="bg-white rounded shadow-sm border p-4 mb-3">
+            <SectionTitle icon="fa fa-user" title="Offline Farmer Information" />
+            <div className="row g-3">
+                <div className="col-md-6"><ReadOnlyField label="Account ID" value={profile.accountId} /></div>
+                <div className="col-md-6">
+                    <ReadOnlyField label="Verification Status">
+                        <span className="badge bg-success">VERIFIED</span>
+                    </ReadOnlyField>
+                </div>
+                <div className="col-md-6">
+                    <EditableField label="First Name" name="firstname" value={profile.firstname} capitalize {...editableProps} />
+                </div>
+                <div className="col-md-6">
+                    <EditableField label="Last Name" name="lastname" value={profile.lastname} capitalize {...editableProps} />
+                </div>
+                <div className="col-md-6">
+                    <EditableField label="Middle Name" name="middlename" value={profile.middlename} capitalize {...editableProps} />
+                </div>
+                <div className="col-md-6">
+                    <ReadOnlyField label="Suffix" value={profile.suffix && profile.suffix !== "N/A" ? profile.suffix : "—"} />
+                </div>
+                <div className="col-md-6">
+                    <EditableField label="Contact" name="contact" value={profile.contact} {...editableProps} />
+                </div>
+                <div className="col-md-6">
+                    <ReadOnlyField label="Created At" value={formatDate(profile.createdAt)} />
+                </div>
+                <div className="col-12">
+                    <ReadOnlyField label="Device">
+                        <span className="badge bg-secondary">No Device</span>
+                    </ReadOnlyField>
+                </div>
+            </div>
+        </div>
+    );
+
+    // ✅ Use accountType from API, fallback to source
+    const resolvedType = accountType || source;
+
+    // ✅ Profile title label
+    const profileLabel = {
+        user:          "Buyer",
+        seller:        "Farmer",
+        rider:         "Rider",
+        admin:         "Admin",
+        offlineFarmer: "Offline Farmer",
+    }[resolvedType] || "Profile";
+
+    // ✅ Hide edit button for offlineFarmer (read-only profile) or show with limited fields
+    const canEdit = true;
 
     return (
         <>
@@ -884,13 +936,10 @@ const ViewProfile = () => {
                         )}
 
                         <div>
-                            <h5 className="m-0 fw-bold">
-                                {source === "user" ? "Buyer" : source === "seller" ? "Farmer" : source === "rider" ? "Rider" : "Admin"} Profile
-                            </h5>
+                            <h5 className="m-0 fw-bold">{profileLabel} Profile</h5>
                             <p className="m-0 small text-muted">
                                 {isEditMode
-                                    ? <span className="text-muted">
-                                        <i className="fa fa-pencil me-1 small"></i>Edit Mode</span>
+                                    ? <span className="text-muted"><i className="fa fa-pencil me-1 small"></i>Edit Mode</span>
                                     : "View account information"
                                 }
                             </p>
@@ -898,7 +947,8 @@ const ViewProfile = () => {
                     </div>
 
                     <div className="d-flex align-items-center gap-2 flex-wrap">
-                        {!isEditMode && (source === "seller" || source === "rider") && profile.verification === "pending" && (
+                        {/* ✅ Approve/Reject — seller only (not offlineFarmer) */}
+                        {!isEditMode && source === "seller" && resolvedType !== "offlineFarmer" && profile.verification === "pending" && (
                             <div className="d-flex gap-2">
                                 <button className="btn btn-success btn-sm" onClick={() => openActionModal("approve")}>
                                     <i className="fa fa-check me-2"></i>Approve
@@ -909,28 +959,33 @@ const ViewProfile = () => {
                             </div>
                         )}
 
-                        {!isEditMode ? (
-                            <button className="btn btn-dark btn-sm" onClick={handleEnableEdit}>
-                                <i className="fa fa-pencil me-2"></i>Edit Profile
-                            </button>
-                        ) : (
-                            <div className="d-flex gap-2">
-                                <button className="btn btn-success btn-sm" onClick={() => setShowSaveModal(true)} disabled={isSaving}>
-                                    <i className="fa fa-save me-2"></i>Save Changes
+                        {/* ✅ Edit button — hidden for offlineFarmer */}
+                        {canEdit && (
+                            !isEditMode ? (
+                                <button className="btn btn-dark btn-sm" onClick={handleEnableEdit}>
+                                    <i className="fa fa-pencil me-2"></i>Edit Profile
                                 </button>
-                                <button className="btn btn-outline-secondary btn-sm" onClick={handleCancelEdit} disabled={isSaving}>
-                                    <i className="fa fa-times me-2"></i>Cancel
-                                </button>
-                            </div>
+                            ) : (
+                                <div className="d-flex gap-2">
+                                    <button className="btn btn-success btn-sm" onClick={() => setShowSaveModal(true)} disabled={isSaving}>
+                                        <i className="fa fa-save me-2"></i>Save Changes
+                                    </button>
+                                    <button className="btn btn-outline-secondary btn-sm" onClick={handleCancelEdit} disabled={isSaving}>
+                                        <i className="fa fa-times me-2"></i>Cancel
+                                    </button>
+                                </div>
+                            )
                         )}
                     </div>
                 </div>
             </div>
 
-            {source === "user"   && renderUserProfile()}
-            {source === "seller" && renderSellerProfile()}
-            {source === "rider"  && renderRiderProfile()}
-            {source === "admin"  && renderAdminProfile()}
+            {/* ✅ Render correct profile based on resolvedType */}
+            {resolvedType === "user"          && renderUserProfile()}
+            {resolvedType === "seller"        && renderSellerProfile()}
+            {resolvedType === "rider"         && renderRiderProfile()}
+            {resolvedType === "admin"         && renderAdminProfile()}
+            {resolvedType === "offlineFarmer" && renderOfflineFarmerProfile()}
 
             <ImageModal />
             <LicenseModal />

@@ -111,12 +111,79 @@ const Upload = () => {
     }, [formData]);
 
     
+    // ✅ Letters only — product name and product type (allow hyphen + apostrophe)
+    const handleProductNameChange = (e) => {
+        const { name, value } = e.target;
+        const cleaned = value.replace(/[^a-zA-Z\s\-']/g, "");
+        setFormData({ ...formData, [name]: cleaned });
+    };
+
+    // ✅ Numbers only for price — prevent negative, scientific notation, decimals beyond 2 places
+    const handlePriceChange = (e) => {
+        let value = e.target.value.replace(/[^0-9.]/g, "");
+        
+        // Remove leading zeros but keep single zero
+        if (value.startsWith("0") && value.length > 1 && value[1] !== ".") {
+            value = value.replace(/^0+/, "0");
+        }
+        
+        // Prevent multiple decimal points
+        const parts = value.split(".");
+        if (parts.length > 2) {
+            value = parts[0] + "." + parts.slice(1).join("");
+        }
+        
+        // Limit to 2 decimal places
+        if (parts.length === 2 && parts[1].length > 2) {
+            value = parts[0] + "." + parts[1].slice(0, 2);
+        }
+
+        setFormData({ ...formData, price: value });
+    };
+
+    // ✅ Positive integers only for stocks (1-999)
+    const handleStocksChange = (e) => {
+        let value = e.target.value.replace(/[^0-9]/g, "");
+        
+        // Prevent negative or -1
+        if (value === "" || value === "-") {
+            value = "";
+        } else if (parseInt(value, 10) < 1) {
+            value = "";
+        } else if (value.length > 3) {
+            value = value.slice(0, 3);
+        }
+
+        setFormData({ ...formData, stocks: value });
+    };
+
+    // ✅ Positive numbers only for kg — prevent negative
+    const handleKgChange = (e) => {
+        let value = e.target.value.replace(/[^0-9.]/g, "");
+        
+        // If starts with 0, handle properly
+        if (value.startsWith("0") && value.length > 1 && value[1] !== ".") {
+            value = value.replace(/^0+/, "0");
+        }
+        
+        // Prevent multiple decimal points
+        const parts = value.split(".");
+        if (parts.length > 2) {
+            value = parts[0] + "." + parts.slice(1).join("");
+        }
+        
+        // Limit to 2 decimal places
+        if (parts.length === 2 && parts[1].length > 2) {
+            value = parts[0] + "." + parts[1].slice(0, 2);
+        }
+
+        setFormData({ ...formData, kg: value });
+    };
+
+    // ✅ General handler for other fields
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setFormData({
-            ...formData,
-            [name]: value
-        });
+        setFormData({ ...formData, [name]: value });
     };
 
     const handleFile = async (e) => {
@@ -151,7 +218,6 @@ const Upload = () => {
             alert('Failed to compress image');
         }
     };
-
 
 
         
@@ -286,7 +352,7 @@ const Upload = () => {
                                             style={{ backgroundColor: '#ffffff' }}
                                             name="name"
                                             value={formData.name || ""}
-                                            onChange={handleChange}
+                                            onChange={handleProductNameChange}
                                             placeholder="e.g., Lakatan, Red Tomato, Saba"
                                             disabled={isUploading}
                                             required
@@ -303,7 +369,7 @@ const Upload = () => {
                                             style={{ backgroundColor: '#ffffff' }}
                                             name="price"
                                             value={formData.price || ""}
-                                            onChange={handleChange}
+                                            onChange={handlePriceChange}
                                             placeholder="Enter price"
                                             disabled={isUploading}
                                             required
@@ -324,7 +390,7 @@ const Upload = () => {
                                             style={{ backgroundColor: '#ffffff' }}
                                             name="productType"
                                             value={formData.productType || ""}
-                                            onChange={handleChange}
+                                            onChange={handleProductNameChange}
                                             placeholder="e.g., Banana, Tomato, Potato"
                                             disabled={isUploading}
                                             required
@@ -367,27 +433,15 @@ const Upload = () => {
                                             stocks (bundles)
                                         </label>
                                         <input 
-                                            type="number"
+                                            type="text"
                                             className="form-control border-success border-opacity-25"
                                             style={{ backgroundColor: '#ffffff' }}
                                             name="stocks"
                                             value={formData.stocks || ""}
-                                            onChange={handleChange}
+                                            onChange={handleStocksChange}
                                             placeholder="Enter number of bundles"
-                                            min="1"
-                                            max="999"
                                             disabled={isUploading}
                                             required
-                                            onKeyDown={(e) => {
-                                                if (e.key === "-" || e.key === "e" || e.key === "E" || e.key === "+") {
-                                                    e.preventDefault();
-                                                }
-                                            }}
-                                            onInput={(e) => {
-                                                if (e.target.value.length > 3) {
-                                                    e.target.value = e.target.value.slice(0, 3);
-                                                }
-                                            }}
                                         />
                                     </div>
                                     <div className="col-md-6">

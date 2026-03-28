@@ -7,7 +7,11 @@ const getProductDetails = async(req, res)=> {
     try{    
         const prodId = req.params.id;
 
-        const product =  await Product.findOne({_id : prodId});
+        const product =  await Product.findOne({_id : prodId})
+        .populate({
+            path: 'seller.id',
+            select: "firstname lastname"
+        });
 
         if(!product){
             return res.status(404).json({ message : "no data"});

@@ -1,9 +1,12 @@
 import Order from "../../models/order.js";
 import multer from "multer";
 import PayoutTransaction from "../../models/payoutTransaction.js";
+import OfflineFarmerPayout from "../../models/offlineFarmerPayout.js";
 import AdminPaymentTransaction from "../../models/adminPaymentTrans.js"; 
 import Seller from "../../models/seller.js";
+import OfflineFarmer from "../../models/offline-farmer.js";
 import SellerPaymentTransaction from "../../models/sellerPaymentTrans.js";
+import OfflineFarmerPaymentTransaction from "../../models/offlineFarmerPaymentTrans.js";
 import Rider from "../../models/rider.js";
 import RiderPayout from "../../models/riderPayout.js";
 import { v2 as cloudinary } from "cloudinary";
@@ -73,21 +76,42 @@ const createTransaction = async(order, receiptFIle) => {
     for (const item of order.orderItems){
         const sellerId = item.seller.id;
         const amount = item.prodPrice * item.quantity;
-            
-        await SellerPaymentTransaction.create({
-            sellerId: sellerId,
-            accountId: order.userId,
-            accountName: `${order.firstname} ${order.lastname}`,
-            accountEmail: order.email,
-            type: "customer payment",
-            paymentMethod: "cash on delivery",
-            totalAmount: amount,
-            status: "paid",
-            paidAt: getPHTime(),
-            refNo: order.refNo
-        })
-    }
 
+        // Check if this seller is an OfflineFarmer
+        const isOfflineFarmer = await OfflineFarmer.findById(sellerId);
+        
+        if (isOfflineFarmer) {
+            // Create OfflineFarmerPaymentTransaction for offline farmers
+            await OfflineFarmerPaymentTransaction.create({
+                farmerId: sellerId,
+                farmerName: `${isOfflineFarmer.firstname} ${isOfflineFarmer.lastname}`,
+                farmerContact: isOfflineFarmer.contact || "",
+                accountId: order.userId,
+                accountName: `${order.firstname} ${order.lastname}`,
+                accountEmail: order.email,
+                type: "customer payment",
+                paymentMethod: "cash on delivery",
+                totalAmount: amount,
+                status: "paid",
+                paidAt: getPHTime(),
+                refNo: order.refNo
+            });
+        } else {
+            // Create SellerPaymentTransaction for regular sellers
+            await SellerPaymentTransaction.create({
+                sellerId: sellerId,
+                accountId: order.userId,
+                accountName: `${order.firstname} ${order.lastname}`,
+                accountEmail: order.email,
+                type: "customer payment",
+                paymentMethod: "cash on delivery",
+                totalAmount: amount,
+                status: "paid",
+                paidAt: getPHTime(),
+                refNo: order.refNo
+            });
+        }
+    }
 
 
     await AdminPaymentTransaction.create({
@@ -111,9 +135,12 @@ const createOrUpdatePayout = async(items, orderId) => {
     const SELLER_TAX_RATE = parseFloat(process.env.SELLER_TAX_RATE) || 0.05; // 5% tax default
     
     
-
     for (const item of items) {
         const sellerId = item.seller.id;
+        
+        // Check if this seller is an OfflineFarmer - if so, skip it
+        const isOfflineFarmer = await OfflineFarmer.findById(sellerId);
+        if (isOfflineFarmer) continue;
         
         // ✅ UPDATED: Calculate GROSS, TAX, and NET amounts
         const grossAmount = item.prodPrice * item.quantity;
@@ -226,6 +253,51 @@ const createOrUpdateRiderPayout = async(riderId, orderId) => {
 }
 
 
+// NEW: Offline Farmer Payout Function (for COD orders)
+const createOrUpdateOfflineFarmerPayout = async(items, orderId) => {
+    const SELLER_TAX_RATE = parseFloat(process.env.SELLER_TAX_RATE) || 0.05;
+
+    for (const item of items) {
+        const farmerId = item.seller.id;
+        
+        // Check if this seller ID is actually an OfflineFarmer
+        const farmer = await OfflineFarmer.findById(farmerId);
+        if (!farmer) continue; // Skip if not an offline farmer
+
+        const grossAmount = item.prodPrice * item.quantity;
+        const taxAmount = grossAmount * SELLER_TAX_RATE;
+        const netAmount = grossAmount - taxAmount;
+        const today = new Date().toISOString().split("T")[0];
+
+        const payout = await OfflineFarmerPayout.findOne({ 
+            farmerId, 
+            date: today, 
+            status: "pending" 
+        });
+
+        if (payout) {
+            payout.orders.push({ orderId: orderId, amount: grossAmount });
+            payout.totalAmount += grossAmount;
+            payout.taxAmount += taxAmount;
+            payout.netAmount += netAmount;
+            payout.totalOrders = payout.orders.length;
+            await payout.save();
+        } else {
+            await OfflineFarmerPayout.create({
+                farmerId,
+                farmerName: `${farmer.firstname} ${farmer.lastname}`,
+                farmerContact: farmer.contact || "",
+                date: today,
+                orders: [{ orderId: orderId, amount: grossAmount }],
+                totalAmount: grossAmount,
+                taxAmount: taxAmount,
+                netAmount: netAmount,
+                totalOrders: 1
+            });
+        }
+    }
+}
+
 
 const storage = multer.memoryStorage();
 export const imageProof = multer({ storage: storage });
@@ -307,6 +379,7 @@ const updateStatusDelivery = async (req, res) => {
             if (!isReplacementDelivery && order.paymentStatus === "pending") {
                 order.paymentStatus = "paid";
                 await createOrUpdatePayout(order.orderItems, order._id);
+                await createOrUpdateOfflineFarmerPayout(order.orderItems, order._id);
                 await createTransaction(order, paymentReceiptFileUrl); // ✅ Pass Cloudinary URL
 
                 
