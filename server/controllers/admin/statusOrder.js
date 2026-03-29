@@ -309,11 +309,12 @@ const sendSMS = async (contact, orderId, firstname, productList, totalAmount) =>
 
 
 
-const sendOfflineFarmerSMS = async (contact, firstname, orderId, productList, totalAmount) => {
+const sendOfflineFarmerSMS = async (contact, firstname, orderId, productList, totalAmount, refNo) => {
     const name = firstname.charAt(0).toUpperCase() + firstname.slice(1).toLowerCase();
     const amount = totalAmount.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    const message = `E-FARMERS HUB: Hi ${name}! Order #${orderId} - ${productList}. Total: Php${amount}.`;
+    const message = `E-FARMERS HUB: Hi ${name}! Order #${orderId} - ${productList}. Total: Php${amount}. Here's your order reference number #${refNo}. Thank you!`;
 
+    
     const submitData = {
         "api_token": process.env.SMS_TOKEN,
         "phone_number": contact,
@@ -716,7 +717,7 @@ export const statusOrder = async(req, res) => {
                         `${item.prodName} (${item.quantity} bundle${item.quantity > 1 ? 's' : ''})`
                     ).join(', ');
 
-                    await sendOfflineFarmerSMS(farmer.contact, farmer.firstname, order.orderId, productList, totalAmount);
+                    await sendOfflineFarmerSMS(farmer.contact, farmer.firstname, order.orderId, productList, totalAmount, order.refNo);
                 }
 
 

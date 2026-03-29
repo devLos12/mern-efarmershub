@@ -9,7 +9,7 @@ const SellerPaymentTransactions = () => {
     const location = useLocation();
     const navigate = useNavigate();
 
-    const { payoutId, payoutDate } = location?.state || {};
+    const { payoutId, payoutDate, totalAmount: payoutGross, taxAmount: payoutTax, netAmount: payoutNet } = location?.state || {};
 
     const [transactions, setTransactions] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -51,6 +51,10 @@ const SellerPaymentTransactions = () => {
     const formattedDate = payoutDate
         ? new Date(payoutDate).toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" })
         : "";
+
+    const formatCurrency = (value) => {
+        return (value || 0).toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    };
 
     const filteredTransactions = transactions.filter((t) => {
         const q = search.trim().toLowerCase();
@@ -97,7 +101,11 @@ const SellerPaymentTransactions = () => {
                         <p>Payout Date: ${formattedDate}</p>
                         <p>Generated: ${new Date().toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" })}</p>
                         <p>Total Records: ${filteredTransactions.length}</p>
-                        <p>Total Amount: ₱${totalAmount.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                        <p style="margin-top: 10px; border-top: 1px solid #ddd; padding-top: 10px;">
+                            <strong>Gross Total: ₱${formatCurrency(payoutGross)}</strong><br/>
+                            Tax (5%): ₱${formatCurrency(payoutTax)}<br/>
+                            <span style="color: #198754; font-weight: bold;">Net Total (Payout): ₱${formatCurrency(payoutNet)}</span>
+                        </p>
                     </div>
                     ${printContent.innerHTML}
                     <script>
@@ -118,7 +126,11 @@ const SellerPaymentTransactions = () => {
                 <p style="margin: 5px 0; color: #666;">Payout Date: ${formattedDate}</p>
                 <p style="margin: 5px 0; color: #666;">Generated: ${new Date().toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" })}</p>
                 <p style="margin: 5px 0; color: #666;">Total Records: ${filteredTransactions.length}</p>
-                <p style="margin: 5px 0; color: #666;">Total Amount: ₱${totalAmount.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                <p style="margin: 10px 0; padding: 10px 0; border-top: 1px solid #ddd; color: #666;">
+                    <strong>Gross Total: ₱${formatCurrency(payoutGross)}</strong><br/>
+                    Tax (5%): ₱${formatCurrency(payoutTax)}<br/>
+                    <span style="color: #198754; font-weight: bold;">Net Total (Payout): ₱${formatCurrency(payoutNet)}</span>
+                </p>
             </div>
         `;
         wrapper.appendChild(printContent);

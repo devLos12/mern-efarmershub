@@ -1172,7 +1172,13 @@ const Transactions = () => {
                                                                                 <button
                                                                                     className="btn btn-sm btn-outline-success d-flex align-items-center justify-content-center"
                                                                                     onClick={() => navigate("/admin/with-device-transactions", {
-                                                                                        state: { payoutId: info.data.transaction._id, payoutDate: info.data.transaction.date }
+                                                                                        state: { 
+                                                                                            payoutId: info.data.transaction._id, 
+                                                                                            payoutDate: info.data.transaction.date,
+                                                                                            totalAmount: info.data.transaction.totalAmount,
+                                                                                            taxAmount: info.data.transaction.taxAmount,
+                                                                                            netAmount: info.data.transaction.netAmount
+                                                                                        }
                                                                                     })}
                                                                                     style={{ width: "120px" }}
                                                                                 >
@@ -1264,7 +1270,13 @@ const Transactions = () => {
                                                                             <button
                                                                                 className="btn btn-sm btn-outline-success d-flex align-items-center justify-content-center"
                                                                                 onClick={() => navigate("/admin/transactions", {
-                                                                                    state: { payoutId: info.data.transaction._id, payoutDate: info.data.transaction.date   }
+                                                                                    state: { 
+                                                                                        payoutId: info.data.transaction._id, 
+                                                                                        payoutDate: info.data.transaction.date,
+                                                                                        totalAmount: info.data.transaction.totalAmount,
+                                                                                        taxAmount: info.data.transaction.taxAmount,
+                                                                                        netAmount: info.data.transaction.netAmount
+                                                                                    }
                                                                                 })}
                                                                                 style={{ width: "120px" }}
                                                                             >
