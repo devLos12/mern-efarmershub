@@ -151,6 +151,8 @@ adminRouter.get('/offline-farmer/payment-transactions', authMiddleware, getOffli
 adminRouter.get('/seller/payment-transactions', authMiddleware, getSellerPaymentTransactions);
 
 
+
+
 adminRouter.get("/logoutAdmin", authMiddleware, Logout);
 
 

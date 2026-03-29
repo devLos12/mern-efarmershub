@@ -1,6 +1,8 @@
 import mongoose from "mongoose";
 
 const offlineFarmerPaymentTransactionSchema = new mongoose.Schema({
+    
+    payoutId: { type: mongoose.Schema.Types.ObjectId, default: null },
 
     farmerId: {
         type: mongoose.Schema.Types.ObjectId,

@@ -8,7 +8,8 @@ import html2pdf from "html2pdf.js";
 const SellerPaymentTransactions = () => {
     const location = useLocation();
     const navigate = useNavigate();
-    const { sellerId, payoutDate } = location?.state || {};
+
+    const { payoutId, payoutDate } = location?.state || {};
 
     const [transactions, setTransactions] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -19,13 +20,13 @@ const SellerPaymentTransactions = () => {
     const printRef = useRef();
 
     useEffect(() => {
-        if (!sellerId || !payoutDate) return;
+        if (!payoutId) return;
         handleLoading();
-    }, [sellerId, payoutDate]);
+    }, [payoutId]);
 
     const fetchTransactions = async () => {
         const res = await fetch(
-            `${import.meta.env.VITE_API_URL}/api/seller/payment-transactions?sellerId=${sellerId}&payoutDate=${payoutDate}`,
+            `${import.meta.env.VITE_API_URL}/api/seller/payment-transactions?payoutId=${payoutId}`,
             { credentials: "include" }
         );
         const data = await res.json();
@@ -163,7 +164,6 @@ const SellerPaymentTransactions = () => {
                         </p>
                         <p className="m-0 text-muted">Payout Date: <strong>{formattedDate}</strong></p>
                     </div>
-                
                 </div>
 
 

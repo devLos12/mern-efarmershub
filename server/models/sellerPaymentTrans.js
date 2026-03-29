@@ -4,6 +4,8 @@ import mongoose from "mongoose";
 
 const sellerPaymentTransactionSchema = new mongoose.Schema({
 
+    payoutId: { type: mongoose.Schema.Types.ObjectId, default: null },
+    
     sellerId: {
         type: mongoose.Schema.Types.ObjectId,
         required: true,

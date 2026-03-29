@@ -55,7 +55,6 @@ const sendSMS = async (firstname, contact, totalAmount, riderName, riderContact)
 }
 
 
-
 const getPHTime = () => {
     const now = new Date();
     const phTime = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Manila" }));
@@ -71,17 +70,30 @@ const getPHTime = () => {
 };
 
 
-const createTransaction = async(order, receiptFIle) => {
+const createTransaction = async(order, receiptFile) => {
+    const paidTime = getPHTime();
 
-    for (const item of order.orderItems){
+    // GROUP items by seller
+    const sellerGroups = {};
+    for (const item of order.orderItems) {
         const sellerId = item.seller.id;
-        const amount = item.prodPrice * item.quantity;
+        if (!sellerGroups[sellerId]) {
+            sellerGroups[sellerId] = { totalAmount: 0 };
+        }
+        sellerGroups[sellerId].totalAmount += item.prodPrice * item.quantity;
+    }
 
-        // Check if this seller is an OfflineFarmer
+    // CREATE transaction per seller (not per item)
+    for (const sellerId in sellerGroups) {
+        const { totalAmount } = sellerGroups[sellerId];
         const isOfflineFarmer = await OfflineFarmer.findById(sellerId);
         
         if (isOfflineFarmer) {
-            // Create OfflineFarmerPaymentTransaction for offline farmers
+            const farmerPayout = await OfflineFarmerPayout.findOne({
+                farmerId: sellerId,
+                "orders.orderId": order._id,
+            });
+
             await OfflineFarmerPaymentTransaction.create({
                 farmerId: sellerId,
                 farmerName: `${isOfflineFarmer.firstname} ${isOfflineFarmer.lastname}`,
@@ -91,29 +103,35 @@ const createTransaction = async(order, receiptFIle) => {
                 accountEmail: order.email,
                 type: "customer payment",
                 paymentMethod: "cash on delivery",
-                totalAmount: amount,
+                totalAmount: totalAmount,
                 status: "paid",
-                paidAt: getPHTime(),
-                refNo: order.refNo
+                paidAt: paidTime,
+                refNo: order.refNo,
+                payoutId: farmerPayout?._id ?? null
             });
         } else {
-            // Create SellerPaymentTransaction for regular sellers
+            const sellerPayout = await PayoutTransaction.findOne({
+                sellerId,
+                "orders.orderId": order._id,
+            });
+
             await SellerPaymentTransaction.create({
-                sellerId: sellerId,
+                sellerId,
                 accountId: order.userId,
                 accountName: `${order.firstname} ${order.lastname}`,
                 accountEmail: order.email,
                 type: "customer payment",
                 paymentMethod: "cash on delivery",
-                totalAmount: amount,
+                totalAmount: totalAmount,
                 status: "paid",
-                paidAt: getPHTime(),
-                refNo: order.refNo
+                paidAt: paidTime,
+                refNo: order.refNo,
+                payoutId: sellerPayout?._id ?? null
             });
         }
     }
 
-
+    // CREATE single admin transaction with total
     await AdminPaymentTransaction.create({
         accountId: order.userId,
         accountName: `${order.firstname} ${order.lastname}`,
@@ -122,12 +140,13 @@ const createTransaction = async(order, receiptFIle) => {
         paymentMethod: "cash on delivery",
         totalAmount: order.totalPrice,
         status: "paid",
-        paidAt: getPHTime(),
+        paidAt: paidTime,
         refNo: order.refNo,
-        imageFile: receiptFIle
-    })
+        imageFile: receiptFile
+    });
+};
 
-}
+
 
 
 const createOrUpdatePayout = async(items, orderId) => {

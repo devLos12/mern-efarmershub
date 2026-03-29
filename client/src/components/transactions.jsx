@@ -489,18 +489,30 @@ const Transactions = () => {
         setSelectedTransaction(null);
     };
 
+
+
+
+    // ✅ Fix
     const handlePayout = async (id) => {
-        if (!imageFile[id]?.preview) {
+        const isOfflineFarmer = selectedTransaction?.farmerName;
+
+        // ✅ Skip image check para sa offline farmer
+        if (!isOfflineFarmer && !imageFile[id]?.preview) {
             showNotification("Receipt file is required", "error");
             return;
         }
+
         if (isProcessingPayout) return;
         setIsProcessingPayout(true);
         setTransactions((items) => items.map((item) => item._id === id ? ({ ...item, status: "paid" }) : item));
 
         const formData = new FormData();
         formData.append("id", id);
-        formData.append("image", imageFile[id]?.image);
+
+        // ✅ I-append lang yung image kung may image (regular seller/rider)
+        if (imageFile[id]?.image) {
+            formData.append("image", imageFile[id]?.image);
+        }
 
         try {
             const res = await fetch(`${import.meta.env.VITE_API_URL}/api/updatePayout`, {
@@ -514,7 +526,7 @@ const Transactions = () => {
             setImageFile(prev => { const n = { ...prev }; delete n[id]; return n; });
             if (fileUploadRef.current[id]) fileUploadRef.current[id].value = null;
             closePayoutModal();
-            setRefresh(prev => !prev);
+            setRefresh(prev => !prev); // ✅ mag-ti-trigger na ng refetch
             showNotification(data.message || "Payout completed successfully!", "success");
         } catch (error) {
             showNotification(error.message || "Failed to process payout", "error");
@@ -522,6 +534,9 @@ const Transactions = () => {
             setIsProcessingPayout(false);
         }
     };
+
+
+
 
 
 
@@ -559,6 +574,7 @@ const Transactions = () => {
 
 
     // ── Fetch Transactions (with period + custom date query params) ──────────────
+  
     useEffect(() => {
         if (isInitialLoad) {
             handleLoading();
@@ -566,8 +582,7 @@ const Transactions = () => {
         } else {
             handleTabChange();
         }
-    }, [location?.state?.source, period, customStartDate, customEndDate, location?.state?.farmerTab, location?.state?.riderTab]);
-
+    }, [location?.state?.source, period, customStartDate, customEndDate, location?.state?.farmerTab, location?.state?.riderTab, refresh]); // ✅
 
 
     const handleRefresh = async () => {
@@ -695,150 +710,212 @@ const Transactions = () => {
     return (
         <>
             {/* Payout Modal */}
-            {showPayoutModal && selectedTransaction && (
-                <div
-                    className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
-                    style={{ backgroundColor: "rgba(0,0,0,0.5)", zIndex: 10001 }}
-                    onClick={closePayoutModal}
-                >
-                    <div
-                        className="bg-white rounded shadow-lg"
-                        style={{ maxWidth: "600px", width: "90%", maxHeight: "90vh", overflow: "auto" }}
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        <div className="border-bottom p-3 d-flex justify-content-between align-items-center sticky-top bg-white">
-                            <h5 className="m-0 fw-bold text-success">
-                                {role === "admin"
-                                    ? (selectedTransaction.status === 'paid' ? 'Payout Details' : 'Process Payout')
-                                    : 'Payout Details'
+           {/* Payout Modal */}
+{showPayoutModal && selectedTransaction && (
+    <div
+        className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
+        style={{ backgroundColor: "rgba(0,0,0,0.5)", zIndex: 10001 }}
+        onClick={closePayoutModal}
+    >
+        <div
+            className="bg-white rounded shadow-lg"
+            style={{ maxWidth: "600px", width: "90%", maxHeight: "90vh", overflow: "auto" }}
+            onClick={(e) => e.stopPropagation()}
+        >
+            <div className="border-bottom p-3 d-flex justify-content-between align-items-center sticky-top bg-white">
+                <h5 className="m-0 fw-bold text-success">
+                    {role === "admin"
+                        ? (selectedTransaction.status === 'paid' ? 'Payout Details' : 'Process Payout')
+                        : 'Payout Details'
+                    }
+                </h5>
+                <button className="btn-close" onClick={closePayoutModal}></button>
+            </div>
+
+            <div className="p-4">
+                <div className="mb-4">
+                    <h6 className="fw-bold text-muted mb-3">Transaction Information</h6>
+                    <div className="row g-2">
+                        {/* Total Orders / Delivery */}
+                        <div className="col-6">
+                            <p className="m-0 small text-muted">
+                                {selectedTransaction?.totalDelivery !== undefined ? 'Total Delivery' : 'Total Orders'}
+                            </p>
+                            <p className="m-0 fw-bold small">
+                                {selectedTransaction?.totalDelivery !== undefined
+                                    ? (selectedTransaction.totalDelivery === 1 ? `${selectedTransaction.totalDelivery} Delivery` : `${selectedTransaction.totalDelivery} Deliveries`)
+                                    : (() => {
+                                        const count = selectedTransaction?.orders?.length ?? selectedTransaction?.totalOrders ?? 0;
+                                        return count === 1 ? `${count} Order` : `${count} Orders`;
+                                    })()
                                 }
-                            </h5>
-                            <button className="btn-close" onClick={closePayoutModal}></button>
+                            </p>
                         </div>
 
-                        <div className="p-4">
-                            <div className="mb-4">
-                                <h6 className="fw-bold text-muted mb-3">Transaction Information</h6>
-                                <div className="row g-2">
-                                    <div className="col-6">
-                                        <p className="m-0 small text-muted">{selectedTransaction?.orders ? 'Total Orders' : 'Total Delivery'}</p>
-                                        <p className="m-0 fw-bold small">
-                                            {selectedTransaction?.orders
-                                                ? (selectedTransaction.orders.length === 1 ? `${selectedTransaction.orders.length} Order` : `${selectedTransaction.orders.length} Orders`)
-                                                : (selectedTransaction?.totalDelivery === 1 ? `${selectedTransaction.totalDelivery} Delivery` : `${selectedTransaction.totalDelivery} Deliveries`)}
-                                        </p>
-                                    </div>
-                                    <div className="col-6">
-                                        <p className="m-0 small text-muted">Date Payout</p>
-                                        <p className="m-0">{new Date(selectedTransaction.date).toLocaleDateString('en-PH', { year: 'numeric', month: 'short', day: 'numeric' })}</p>
-                                    </div>
-                                    <div className="col-6 mt-3">
-                                        <p className="m-0 small text-muted">Name</p>
-                                        <p className="m-0 fw-bold text-capitalize">{selectedTransaction.sellerName || selectedTransaction.riderName}</p>
-                                    </div>
-                                    <div className="col-6 mt-3">
-                                        <p className="m-0 small text-muted">Email</p>
-                                        <p className="m-0 small">{selectedTransaction.sellerEmail || selectedTransaction.riderEmail}</p>
-                                    </div>
-                                    <div className="col-6 mt-3">
-                                        <p className="m-0 small text-muted">E-Wallet</p>
-                                        <p className="m-0 fw-bold">{selectedTransaction.e_WalletAcc?.number}</p>
-                                        <p className="m-0 small text-capitalize text-muted">{selectedTransaction.e_WalletAcc?.type}</p>
-                                    </div>
-                                    <div className="col-6 mt-3">
-                                        <p className="m-0 small text-muted">Status</p>
-                                        <span className={`badge text-capitalize ${selectedTransaction.status === 'paid' ? 'bg-success' : 'bg-warning'}`}>
-                                            {selectedTransaction.status}
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
+                        {/* Date */}
+                        <div className="col-6">
+                            <p className="m-0 small text-muted">Date Payout</p>
+                            <p className="m-0">{new Date(selectedTransaction.date).toLocaleDateString('en-PH', { year: 'numeric', month: 'short', day: 'numeric' })}</p>
+                        </div>
 
-                            <div className="mb-4 bg-light rounded p-3">
-                                <div className="d-flex justify-content-between mb-2">
-                                    <span className="text-muted">Total Amount:</span>
-                                    <span className="fw-bold">₱{selectedTransaction.totalAmount.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                                </div>
-                                <div className="d-flex justify-content-between mb-2">
-                                    <span className="text-muted">Tax Amount:</span>
-                                    <div className="text-end">
-                                        <span className="text-danger d-block">- ₱{(selectedTransaction?.taxAmount ?? 0).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                                        <span className="small text-muted">({taxPercentage}%)</span>
-                                    </div>
-                                </div>
-                                <hr className="my-2" />
-                                <div className="d-flex justify-content-between">
-                                    <span className="fw-bold">Net Amount:</span>
-                                    <span className="fw-bold text-success fs-5">₱{selectedTransaction.netAmount.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                                </div>
-                            </div>
-                            <hr />
+                        {/* Name */}
+                        <div className="col-6 mt-3">
+                            <p className="m-0 small text-muted">Name</p>
+                            <p className="m-0 fw-bold text-capitalize">
+                                {selectedTransaction.sellerName || selectedTransaction.riderName || selectedTransaction.farmerName}
+                            </p>
+                        </div>
 
-                            <div className="mb-4">
-                                <h6 className="fw-bold text-muted mb-3">Payment Receipt</h6>
-                                {selectedTransaction.imageFile ? (
-                                    <div className="border rounded p-3 d-flex align-items-center gap-3" style={{ cursor: "pointer" }} onClick={() => openImageModal(selectedTransaction.imageFile, selectedTransaction.imageFile)}>
-                                        <div className="border rounded bg-light d-flex align-items-center justify-content-center" style={{ width: "50px", height: "50px", minWidth: "50px", overflow: "hidden" }}>
-                                            <img src={selectedTransaction.imageFile} alt="Receipt" className="img-fluid" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                                        </div>
-                                        <div className="flex-grow-1">
-                                            <p className="m-0 fw-bold small">{selectedTransaction.imageFile}</p>
-                                            <p className="m-0 small text-muted"><i className="fa fa-search-plus me-1"></i>Click to view full size</p>
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <>
-                                        {role === "admin" ? (
-                                            <div>
-                                                {imageFile[selectedTransaction._id]?.preview ? (
-                                                    <div className="border rounded p-3 d-flex align-items-center gap-3">
-                                                        <div className="border rounded bg-light d-flex align-items-center justify-content-center" style={{ width: "50px", height: "50px", minWidth: "50px", overflow: "hidden", cursor: "pointer" }} onClick={() => openImageModal(imagePrev[selectedTransaction._id], imageFile[selectedTransaction._id]?.preview)}>
-                                                            <img src={imagePrev[selectedTransaction._id]} alt="Preview" className="img-fluid" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                                                        </div>
-                                                        <div className="flex-grow-1">
-                                                            <p className="m-0 fw-bold small"><i className="fa fa-file-image me-2 text-success"></i>{imageFile[selectedTransaction._id]?.preview}</p>
-                                                            <p className="m-0 small text-muted">Ready to upload</p>
-                                                        </div>
-                                                        <button className="btn btn-sm btn-outline-danger" onClick={() => handleRemoveFile(selectedTransaction._id)}><i className="fa fa-trash"></i></button>
-                                                    </div>
-                                                ) : (
-                                                    <div className="border border-dashed rounded p-4 text-center">
-                                                        <i className="fa fa-cloud-upload-alt fs-1 text-muted mb-3"></i>
-                                                        <p className="m-0 mb-3 text-muted text-capitalize small">Upload payment receipt</p>
-                                                        <label htmlFor={`modalInputFile-${selectedTransaction._id}`} className="btn btn-outline-success btn-sm" style={{ cursor: "pointer" }}>
-                                                            <i className="fa fa-paperclip me-2"></i>Choose File
-                                                        </label>
-                                                        <input id={`modalInputFile-${selectedTransaction._id}`} name="image" type="file" accept="image/*" hidden onChange={(e) => handleFile(e, selectedTransaction._id)} ref={(el) => (fileUploadRef.current[selectedTransaction._id] = el)} />
-                                                    </div>
-                                                )}
-                                            </div>
-                                        ) : (
-                                            <div className="text-center p-4 bg-light rounded">
-                                                <i className="fa fa-receipt fs-1 text-muted mb-3"></i>
-                                                <p className="m-0 text-muted fw-bold">No payment receipt yet</p>
-                                                <p className="m-0 small text-muted mt-2">Receipt will be uploaded once admin processes the payout</p>
-                                            </div>
-                                        )}
-                                    </>
-                                )}
-                            </div>
+                        {/* Email / Contact */}
+                        <div className="col-6 mt-3">
+                            <p className="m-0 small text-muted">
+                                {selectedTransaction.farmerName ? 'Contact' : 'Email'}
+                            </p>
+                            <p className="m-0 small">
+                                {selectedTransaction.sellerEmail || selectedTransaction.riderEmail || selectedTransaction.farmerContact || "N/A"}
+                            </p>
+                        </div>
 
-                            {role === "admin" && selectedTransaction.status === 'pending' ? (
-                                <div className="d-flex gap-2 justify-content-end">
-                                    <button className="btn btn-secondary btn-sm" onClick={closePayoutModal} disabled={isProcessingPayout}>Cancel</button>
-                                    <button className="btn btn-success btn-sm d-flex align-items-center gap-2" onClick={() => handlePayout(selectedTransaction._id)} disabled={!imageFile[selectedTransaction._id]?.preview || isProcessingPayout}>
-                                        {isProcessingPayout ? (<><span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span><span>Processing...</span></>) : (<><i className="fa fa-check"></i><span>Process Payout</span></>)}
-                                    </button>
-                                </div>
-                            ) : (
-                                <div className="d-flex justify-content-end">
-                                    <button className="btn btn-secondary btn-sm" onClick={closePayoutModal} disabled={isProcessingPayout}>Close</button>
-                                </div>
-                            )}
+                        {/* E-Wallet — hide para sa offline farmer */}
+                        {!selectedTransaction.farmerName && (
+                            <div className="col-6 mt-3">
+                                <p className="m-0 small text-muted">E-Wallet</p>
+                                <p className="m-0 fw-bold">{selectedTransaction.e_WalletAcc?.number}</p>
+                                <p className="m-0 small text-capitalize text-muted">{selectedTransaction.e_WalletAcc?.type}</p>
+                            </div>
+                        )}
+
+                        {/* Status */}
+                        <div className={`${!selectedTransaction.farmerName ? 'col-6' : 'col-12'} mt-3`}>
+                            <p className="m-0 small text-muted">Status</p>
+                            <span className={`badge text-capitalize ${selectedTransaction.status === 'paid' ? 'bg-success' : 'bg-warning'}`}>
+                                {selectedTransaction.status}
+                            </span>
                         </div>
                     </div>
                 </div>
-            )}
+
+                {/* Amounts */}
+                <div className="mb-4 bg-light rounded p-3">
+                    <div className="d-flex justify-content-between mb-2">
+                        <span className="text-muted">Total Amount:</span>
+                        <span className="fw-bold">₱{selectedTransaction.totalAmount.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                    </div>
+                    <div className="d-flex justify-content-between mb-2">
+                        <span className="text-muted">Tax Amount:</span>
+                        <div className="text-end">
+                            <span className="text-danger d-block">- ₱{(selectedTransaction?.taxAmount ?? 0).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                            <span className="small text-muted">({taxPercentage}%)</span>
+                        </div>
+                    </div>
+                    <hr className="my-2" />
+                    <div className="d-flex justify-content-between">
+                        <span className="fw-bold">Net Amount:</span>
+                        <span className="fw-bold text-success fs-5">₱{selectedTransaction.netAmount.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                    </div>
+                </div>
+                <hr />
+
+                {/* ── Receipt section — skip para sa offline farmer ── */}
+                {!selectedTransaction.farmerName && (
+                    <div className="mb-4">
+                        <h6 className="fw-bold text-muted mb-3">Payment Receipt</h6>
+                        {selectedTransaction.imageFile ? (
+                            <div className="border rounded p-3 d-flex align-items-center gap-3" style={{ cursor: "pointer" }} onClick={() => openImageModal(selectedTransaction.imageFile, selectedTransaction.imageFile)}>
+                                <div className="border rounded bg-light d-flex align-items-center justify-content-center" style={{ width: "50px", height: "50px", minWidth: "50px", overflow: "hidden" }}>
+                                    <img src={selectedTransaction.imageFile} alt="Receipt" className="img-fluid" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                                </div>
+                                <div className="flex-grow-1">
+                                    <p className="m-0 fw-bold small">{selectedTransaction.imageFile}</p>
+                                    <p className="m-0 small text-muted"><i className="fa fa-search-plus me-1"></i>Click to view full size</p>
+                                </div>
+                            </div>
+                        ) : (
+                            <>
+                                {role === "admin" ? (
+                                    <div>
+                                        {imageFile[selectedTransaction._id]?.preview ? (
+                                            <div className="border rounded p-3 d-flex align-items-center gap-3">
+                                                <div className="border rounded bg-light d-flex align-items-center justify-content-center" style={{ width: "50px", height: "50px", minWidth: "50px", overflow: "hidden", cursor: "pointer" }} onClick={() => openImageModal(imagePrev[selectedTransaction._id], imageFile[selectedTransaction._id]?.preview)}>
+                                                    <img src={imagePrev[selectedTransaction._id]} alt="Preview" className="img-fluid" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                                                </div>
+                                                <div className="flex-grow-1">
+                                                    <p className="m-0 fw-bold small"><i className="fa fa-file-image me-2 text-success"></i>{imageFile[selectedTransaction._id]?.preview}</p>
+                                                    <p className="m-0 small text-muted">Ready to upload</p>
+                                                </div>
+                                                <button className="btn btn-sm btn-outline-danger" onClick={() => handleRemoveFile(selectedTransaction._id)}><i className="fa fa-trash"></i></button>
+                                            </div>
+                                        ) : (
+                                            <div className="border border-dashed rounded p-4 text-center">
+                                                <i className="fa fa-cloud-upload-alt fs-1 text-muted mb-3"></i>
+                                                <p className="m-0 mb-3 text-muted text-capitalize small">Upload payment receipt</p>
+                                                <label htmlFor={`modalInputFile-${selectedTransaction._id}`} className="btn btn-outline-success btn-sm" style={{ cursor: "pointer" }}>
+                                                    <i className="fa fa-paperclip me-2"></i>Choose File
+                                                </label>
+                                                <input id={`modalInputFile-${selectedTransaction._id}`} name="image" type="file" accept="image/*" hidden onChange={(e) => handleFile(e, selectedTransaction._id)} ref={(el) => (fileUploadRef.current[selectedTransaction._id] = el)} />
+                                            </div>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <div className="text-center p-4 bg-light rounded">
+                                        <i className="fa fa-receipt fs-1 text-muted mb-3"></i>
+                                        <p className="m-0 text-muted fw-bold">No payment receipt yet</p>
+                                        <p className="m-0 small text-muted mt-2">Receipt will be uploaded once admin processes the payout</p>
+                                    </div>
+                                )}
+                            </>
+                        )}
+                    </div>
+                )}
+
+                {/* ── Offline farmer — simple note kung paid na ── */}
+                {selectedTransaction.farmerName && selectedTransaction.status === 'paid' && (
+                    <div className="alert alert-success py-2 px-3 mb-4">
+                        <i className="fa fa-check-circle me-2"></i>
+                        <small>Payout has been confirmed and marked as received.</small>
+                    </div>
+                )}
+
+                {/* ── Footer buttons ── */}
+                {role === "admin" && selectedTransaction.status === 'pending' ? (
+                    <div className="d-flex gap-2 justify-content-end">
+                        <button className="btn btn-secondary btn-sm" onClick={closePayoutModal} disabled={isProcessingPayout}>
+                            Cancel
+                        </button>
+                        {/* Offline farmer — no receipt needed, confirm lang */}
+                        {selectedTransaction.farmerName ? (
+                            <button
+                                className="btn btn-success btn-sm d-flex align-items-center gap-2"
+                                onClick={() => handlePayout(selectedTransaction._id)}
+                                disabled={isProcessingPayout}
+                            >
+                                {isProcessingPayout
+                                    ? (<><span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span><span>Processing...</span></>)
+                                    : (<><i className="fa fa-check"></i><span>Confirm Received</span></>)
+                                }
+                            </button>
+                        ) : (
+                            <button
+                                className="btn btn-success btn-sm d-flex align-items-center gap-2"
+                                onClick={() => handlePayout(selectedTransaction._id)}
+                                disabled={!imageFile[selectedTransaction._id]?.preview || isProcessingPayout}
+                            >
+                                {isProcessingPayout
+                                    ? (<><span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span><span>Processing...</span></>)
+                                    : (<><i className="fa fa-check"></i><span>Process Payout</span></>)
+                                }
+                            </button>
+                        )}
+                    </div>
+                ) : (
+                    <div className="d-flex justify-content-end">
+                        <button className="btn btn-secondary btn-sm" onClick={closePayoutModal} disabled={isProcessingPayout}>Close</button>
+                    </div>
+                )}
+            </div>
+        </div>
+    </div>
+)}
 
             {/* Image Modal */}
             {showModal && (
@@ -1080,7 +1157,7 @@ const Transactions = () => {
                                                                 {i === 1 ? (<>{info.data.name}<p className="m-0 text-lowercase opacity-75 small">{info.data.email}</p></>)
                                                                     : i === 5 ? (<>{info.data.number}<p className="m-0 text-capitalize opacity-75 small">{info.data.type}</p></>)
                                                                         : i === 8 ? (
-                                                                            <div className="d-flex align-items-center justify-content-center gap-1 flex-wrap">
+                                                                            <div className="d-flex align-items-center justify-content-center gap-1 flex-column">
                                                                                 {/* Process / View Details */}
                                                                                 <button
                                                                                     className={`btn btn-sm d-flex align-items-center justify-content-center ${info.data.transaction.status === 'paid' ? 'btn-outline-success' : 'btn-success'}`}
@@ -1095,7 +1172,7 @@ const Transactions = () => {
                                                                                 <button
                                                                                     className="btn btn-sm btn-outline-success d-flex align-items-center justify-content-center"
                                                                                     onClick={() => navigate("/admin/with-device-transactions", {
-                                                                                        state: { sellerId: info.data.transaction.sellerId, payoutDate: info.data.transaction.date }
+                                                                                        state: { payoutId: info.data.transaction._id, payoutDate: info.data.transaction.date }
                                                                                     })}
                                                                                     style={{ width: "120px" }}
                                                                                 >
@@ -1172,14 +1249,27 @@ const Transactions = () => {
                                                             <td key={i} className={`text-capitalize p-3 small ${i === 0 && "text-center"}`}>
                                                                 {i === 1 ? (<>{info.data.name}<p className="m-0 text-uppercase opacity-75 small" style={{fontSize: "10px"}}>{info.data.contact || "N/A"}</p></>)
                                                                     : i === 7 ? (
-                                                                        <div className="d-flex align-items-center justify-content-center">
-                                                                            <button className="btn btn-sm btn-outline-success"
-                                                                            onClick={() => {
-                                                                                navigate("/admin/transactions", { 
-                                                                                    state: { farmerId: data.farmerId, payoutDate: data.date }});
-                                                                                }}>
-                                                                                    <i className="fa fa-list me-1"></i>
-                                                                                    View Trans.
+                                                                       <div className="d-flex align-items-center justify-content-center gap-1 flex-column">
+                                                                            {/* Process / View Details */}
+                                                                            <button
+                                                                                className={`btn btn-sm d-flex align-items-center justify-content-center ${info.data.transaction.status === 'paid' ? 'btn-outline-success' : 'btn-success'}`}
+                                                                                onClick={() => openPayoutModal(info.data.transaction)}
+                                                                                style={{ width: "120px" }}
+                                                                            >
+                                                                                <i className={`fa ${info.data.transaction.status === 'paid' ? 'fa-eye' : 'fa-edit'} me-1`}></i>
+                                                                                {info.data.transaction.status === 'paid' ? 'View Details' : 'Process'}
+                                                                            </button>
+
+                                                                            {/* View Trans */}
+                                                                            <button
+                                                                                className="btn btn-sm btn-outline-success d-flex align-items-center justify-content-center"
+                                                                                onClick={() => navigate("/admin/transactions", {
+                                                                                    state: { payoutId: info.data.transaction._id, payoutDate: info.data.transaction.date   }
+                                                                                })}
+                                                                                style={{ width: "120px" }}
+                                                                            >
+                                                                                <i className="fa fa-list me-1"></i>
+                                                                                View Trans.
                                                                             </button>
                                                                         </div>
                                                                     ) : info.data}
@@ -1202,7 +1292,8 @@ const Transactions = () => {
                                                                 {i === 1 ? (<>{info.data.name}<p className="m-0 text-lowercase opacity-75 small">{info.data.email}</p></>)
                                                                     : i === 5 ? (<><p className="m-0 small">{new Date(info.data.date).toLocaleDateString('en-PH', { year: 'numeric', month: 'short', day: 'numeric' })}</p><p className="m-0 small">{info.data.time}</p></>)
                                                                         : i === 6 ? (
-                                                                            !info?.data ? <p className="m-0 text-muted small">no image</p> : (
+                                                                            !info?.data ? <p className="m-0 text-muted text-center "
+                                                                            >_</p> : (
                                                                                 <div className="w-100 border rounded shadow-sm p-2 position-relative" style={{ maxWidth: "120px", cursor: "pointer" }} onClick={() => openImageModal(info.data)}>
                                                                                     <div className="d-flex align-items-center gap-2">
                                                                                         <div className="border shadow-sm rounded" style={{ width: "40px", height: "40px", overflow: "hidden", flexShrink: 0 }}>

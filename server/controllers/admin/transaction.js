@@ -178,6 +178,7 @@ export const updatePayout = async (req, res) => {
         const { id } = req.body;
         let imageFile = null;
 
+        // ✅ Upload image kung may file (optional — offline farmer walang image)
         if (req.file) {
             const base64 = req.file.buffer.toString('base64');
             const dataURI = `data:${req.file.mimetype};base64,${base64}`;
@@ -185,24 +186,35 @@ export const updatePayout = async (req, res) => {
             imageFile = result.secure_url;
         }
 
-        await PayoutTransaction.findByIdAndUpdate(id, { $set: { status: "paid", imageFile } });
-        await RiderPayout.findByIdAndUpdate(id, { $set: { status: "paid", imageFile } });
-        await OfflineFarmerPayout.findByIdAndUpdate(id, { $set: { status: "paid", imageFile } });
+        // ✅ Identify muna kung sino — sequential, not all at once
+        const seller = await PayoutTransaction.findById(id);
+        const rider = !seller ? await RiderPayout.findById(id) : null;
+        const offlineFarmer = !seller && !rider ? await OfflineFarmerPayout.findById(id) : null;
 
-        const seller = await PayoutTransaction.findOne({ _id: id });
-        const rider = await RiderPayout.findOne({ _id: id });
-        const offlineFarmer = await OfflineFarmerPayout.findOne({ _id: id });
+        if (!seller && !rider && !offlineFarmer) {
+            return res.status(404).json({ message: "Payout record not found" });
+        }
+
+        // ✅ I-update lang yung tamang model
+        if (seller) {
+            await PayoutTransaction.findByIdAndUpdate(id, { $set: { status: "paid", imageFile } });
+        } else if (rider) {
+            await RiderPayout.findByIdAndUpdate(id, { $set: { status: "paid", imageFile } });
+        } else if (offlineFarmer) {
+            await OfflineFarmerPayout.findByIdAndUpdate(id, { $set: { status: "paid" } }); // ✅ walang imageFile para sa offline farmer
+        }
 
         const date = new Date().toISOString().split("T")[0].replace(/-/g, "");
         const random = Math.floor(10000 + Math.random() * 90000);
         const refNo = `REF${date}-${random}`;
 
+        // ✅ AdminPaymentTransaction — tama na ang fields
         await AdminPaymentTransaction.create({
             accountId: seller?.sellerId ?? rider?.riderId ?? offlineFarmer?.farmerId,
             accountName: seller?.sellerName ?? rider?.riderName ?? offlineFarmer?.farmerName,
-            accountEmail: seller?.sellerEmail ?? rider?.riderEmail ?? offlineFarmer?.farmerEmail,
+            accountEmail: seller?.sellerEmail ?? rider?.riderEmail ?? offlineFarmer?.farmerContact ?? "N/A", // ✅ farmerContact fallback, walang email ang offline farmer
             type: seller ? "seller payout" : rider ? "rider payout" : "offline farmer payout",
-            paymentMethod: "gcash",
+            paymentMethod: offlineFarmer ? " cash payout" : seller?.e_WalletAcc?.type, // ✅ offline farmer = cash, seller/rider = gcash
             totalAmount: seller?.totalAmount ?? rider?.totalAmount ?? offlineFarmer?.totalAmount,
             status: "paid",
             paidAt: {
@@ -210,9 +222,10 @@ export const updatePayout = async (req, res) => {
                 time: new Date().toLocaleTimeString("en-PH", { hour: "2-digit", minute: "2-digit", hour12: true })
             },
             refNo,
-            imageFile: imageFile
+            imageFile: imageFile ?? null
         });
 
+        // ✅ SellerPaymentTransaction — seller payout lang, hindi para sa offline farmer
         if (seller) {
             await SellerPaymentTransaction.create({
                 sellerId: seller.sellerId,
@@ -220,7 +233,7 @@ export const updatePayout = async (req, res) => {
                 accountName: seller.sellerName,
                 accountEmail: seller.sellerEmail,
                 type: "seller payout",
-                paymentMethod: "gcash",
+                paymentMethod: seller?.e_WalletAcc?.type ?? "gcash",
                 totalAmount: seller.totalAmount,
                 status: "paid",
                 paidAt: {
@@ -238,26 +251,20 @@ export const updatePayout = async (req, res) => {
 };
 
 
-
-
 export const getOfflineFarmerPaymentTransactions = async (req, res) => {
     try {
-        const { farmerId, payoutDate } = req.query;
+        const { payoutId } = req.query;
 
-        if (!farmerId || !payoutDate) {
-            return res.status(400).json({ message: "farmerId and payoutDate are required" });
+        if (!payoutId) {
+            return res.status(400).json({ message: "payoutId is required" });
         }
-        
-        // Query payment transactions by farmerId and payment date
-        // payoutDate format: YYYY-MM-DD
-        const transactions = await OfflineFarmerPaymentTransaction.find({
-            farmerId: farmerId,
-            'paidAt.date': payoutDate
+
+        const transactions = await OfflineFarmerPaymentTransaction.find({ 
+            payoutId 
         }).sort({ createdAt: -1 });
 
-
         res.status(200).json({
-            transactions: transactions,
+            transactions,
             total: transactions.length,
             totalAmount: transactions.reduce((sum, t) => sum + t.totalAmount, 0)
         });
@@ -269,15 +276,14 @@ export const getOfflineFarmerPaymentTransactions = async (req, res) => {
 
 export const getSellerPaymentTransactions = async (req, res) => {
     try {
-        const { sellerId, payoutDate } = req.query;
+        const { payoutId } = req.query;
 
-        if (!sellerId || !payoutDate) {
-            return res.status(400).json({ message: "sellerId and payoutDate are required" });
+        if (!payoutId) {
+            return res.status(400).json({ message: "payoutId is required" });
         }
 
-        const transactions = await SellerPaymentTransaction.find({
-            sellerId: sellerId,
-            'paidAt.date': payoutDate
+        const transactions = await SellerPaymentTransaction.find({ 
+            payoutId 
         }).sort({ createdAt: -1 });
 
         res.status(200).json({

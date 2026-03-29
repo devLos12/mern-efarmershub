@@ -7,7 +7,9 @@ const OfflineFarmerPaymentTransactions = () => {
     const navigate = useNavigate();
 
     const location = useLocation();
-    const { farmerId, payoutDate } = location?.state || {};
+    
+    
+    const { payoutId, payoutDate } = location?.state || {};
 
     const [transactions, setTransactions] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -18,13 +20,14 @@ const OfflineFarmerPaymentTransactions = () => {
     const printRef = useRef();
 
     useEffect(() => {
-        if (!farmerId || !payoutDate) return;
+        if (!payoutId) return;
         handleLoading();
-    }, [farmerId, payoutDate]);
+    }, [payoutId])
+
 
     const fetchTransactions = async () => {
         const res = await fetch(
-            `${import.meta.env.VITE_API_URL}/api/offline-farmer/payment-transactions?farmerId=${farmerId}&payoutDate=${payoutDate}`,
+            `${import.meta.env.VITE_API_URL}/api/offline-farmer/payment-transactions?payoutId=${payoutId}`,
             { credentials: "include" }
         );
         const data = await res.json();
@@ -49,6 +52,11 @@ const OfflineFarmerPaymentTransactions = () => {
     const formattedDate = payoutDate
         ? new Date(payoutDate).toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" })
         : "";
+
+    
+
+
+
 
     // ── Search filter ──────────────────────────────────────────────────────────
     const filteredTransactions = transactions.filter((t) => {

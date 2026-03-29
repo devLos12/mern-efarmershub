@@ -305,6 +305,42 @@ const sendSMS = async (contact, orderId, firstname, productList, totalAmount) =>
 }
 
 
+
+
+
+
+const sendOfflineFarmerSMS = async (contact, firstname, orderId, productList, totalAmount) => {
+    const name = firstname.charAt(0).toUpperCase() + firstname.slice(1).toLowerCase();
+    const amount = totalAmount.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const message = `E-FARMERS HUB: Hi ${name}! Order #${orderId} - ${productList}. Total: Php${amount}.`;
+
+    const submitData = {
+        "api_token": process.env.SMS_TOKEN,
+        "phone_number": contact,
+        "message": message
+    };
+
+    try {
+        const res = await fetch(process.env.IPROG_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(submitData)
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message);
+        console.log(`Offline farmer SMS sent →`, contact);
+    } catch (error) {
+        console.log("Offline farmer SMS error:", error.message);
+    }
+};
+
+
+
+
+
+
+
+
 const formatTime = () =>
     new Date().toLocaleTimeString("en-PH", {
       timeZone: "Asia/Manila",
@@ -340,17 +376,31 @@ const createActivityLog = async (adminId, action, description, req) => {
     }
 };
 
+const createTransaction = async(orderId, items, payment, userId, firstname, lastname, email, totalPrice, refNo, proofOfPayment) => {
+    const today = new Date().toISOString().split("T")[0];
+    const paidTime = new Date().toLocaleTimeString("en-PH", { hour: "2-digit", minute: "2-digit", hour12: true });
 
-const createTransaction = async(items, payment, userId, firstname, lastname, email, totalPrice, refNo, proofOfPayment) => {
-    for (const item of items){
+    // GROUP items by seller
+    const sellerGroups = {};
+    for (const item of items) {
         const sellerId = item.seller.id;
-        const amount = item.prodPrice * item.quantity;
-        
-        // Check if this seller is an OfflineFarmer
+        if (!sellerGroups[sellerId]) {
+            sellerGroups[sellerId] = { seller: item.seller, totalAmount: 0 };
+        }
+        sellerGroups[sellerId].totalAmount += item.prodPrice * item.quantity;
+    }
+
+    // CREATE transaction per seller (not per item)
+    for (const sellerId in sellerGroups) {
+        const { seller, totalAmount } = sellerGroups[sellerId];
         const isOfflineFarmer = await OfflineFarmer.findById(sellerId);
         
         if (isOfflineFarmer) {
-            // Create OfflineFarmerPaymentTransaction for offline farmers
+            const farmerPayout = await OfflineFarmerPayout.findOne({
+                farmerId: sellerId,
+                "orders.orderId": orderId,
+            });
+            
             await OfflineFarmerPaymentTransaction.create({
                 farmerId: sellerId,
                 farmerName: `${isOfflineFarmer.firstname} ${isOfflineFarmer.lastname}`,
@@ -360,16 +410,18 @@ const createTransaction = async(items, payment, userId, firstname, lastname, ema
                 accountEmail: email,
                 type: "customer payment",
                 paymentMethod: payment,
-                totalAmount: amount,
+                totalAmount: totalAmount,
                 status: "paid",
-                paidAt: { 
-                    date: new Date().toISOString().split("T")[0],
-                    time: new Date().toLocaleTimeString("en-PH", { hour: "2-digit", minute: "2-digit", hour12: true })
-                },
+                paidAt: { date: today, time: paidTime },
                 refNo: refNo,
+                payoutId: farmerPayout?._id ?? null
             });
         } else {
-            // Create SellerPaymentTransaction for regular sellers
+            const sellerPayout = await PayoutTransaction.findOne({
+                sellerId: sellerId,
+                "orders.orderId": orderId,
+            });
+
             await SellerPaymentTransaction.create({
                 sellerId: sellerId,
                 accountId: userId,
@@ -377,17 +429,16 @@ const createTransaction = async(items, payment, userId, firstname, lastname, ema
                 accountEmail: email,
                 type: "customer payment",
                 paymentMethod: payment,
-                totalAmount: amount,
+                totalAmount: totalAmount,
                 status: "paid",
-                paidAt: { 
-                    date: new Date().toISOString().split("T")[0],
-                    time: new Date().toLocaleTimeString("en-PH", { hour: "2-digit", minute: "2-digit", hour12: true })
-                },
+                paidAt: { date: today, time: paidTime },
                 refNo: refNo,
+                payoutId: sellerPayout?._id ?? null
             });
         }
     }
 
+    // CREATE single admin transaction with total
     await AdminPaymentTransaction.create({
         accountId: userId,
         accountName: `${firstname} ${lastname}`,
@@ -396,14 +447,11 @@ const createTransaction = async(items, payment, userId, firstname, lastname, ema
         paymentMethod: payment,
         totalAmount: totalPrice,
         status: "paid",
-        paidAt: { 
-            date: new Date().toISOString().split("T")[0],
-            time: new Date().toLocaleTimeString("en-PH", { hour: "2-digit", minute: "2-digit", hour12: true })
-        },
+        paidAt: { date: today, time: paidTime },
         refNo: refNo,
         imageFile: proofOfPayment,
-    }) 
-}
+    });
+};
 
 
 
@@ -539,6 +587,7 @@ export const statusOrder = async(req, res) => {
                     await createOrUpdateOfflineFarmerPayout(order.orderItems, order);
                     
                     await createTransaction(
+                        order._id,
                         order.orderItems, 
                         order.paymentType, 
                         order.userId, 
@@ -625,6 +674,38 @@ export const statusOrder = async(req, res) => {
                     
                     await sendSMS(sellerContact, order.orderId, seller.firstname, productList, totalAmount);
                 }
+
+
+
+                const farmerGroups = {};
+
+                for (const item of order.orderItems) {
+                    const sellerId = item.seller.id;
+                    const farmer = await OfflineFarmer.findById(sellerId);
+                    if (!farmer) continue;
+
+                    if (!farmerGroups[sellerId]) {
+                        farmerGroups[sellerId] = { farmer, items: [], totalAmount: 0 };
+                    }
+                    farmerGroups[sellerId].items.push({ prodName: item.prodName, quantity: item.quantity });
+                    farmerGroups[sellerId].totalAmount += item.prodPrice * item.quantity;
+                }
+
+                for (const farmerId in farmerGroups) {
+                    const { farmer, items, totalAmount } = farmerGroups[farmerId];
+                    if (!farmer.contact) continue;
+
+                    const productList = items.map(item =>
+                        `${item.prodName} (${item.quantity} bundle${item.quantity > 1 ? 's' : ''})`
+                    ).join(', ');
+
+                    await sendOfflineFarmerSMS(farmer.contact, farmer.firstname, order.orderId, productList, totalAmount);
+                }
+
+
+
+
+
 
                 // 📧 EMAIL - confirm (with items + total)
                 await sendOrderStatusEmail(
