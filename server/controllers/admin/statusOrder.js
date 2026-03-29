@@ -376,9 +376,26 @@ const createActivityLog = async (adminId, action, description, req) => {
     }
 };
 
+
+
+
+const getPHTime = () => {
+    const now = new Date();
+    const phTime = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Manila" }));
+    
+    return {
+        date: phTime.toISOString().split("T")[0], // YYYY-MM-DD
+        time: phTime.toLocaleTimeString("en-PH", { 
+            hour: "2-digit", 
+            minute: "2-digit", 
+            hour12: true 
+        })
+    };
+};
+
+
 const createTransaction = async(orderId, items, payment, userId, firstname, lastname, email, totalPrice, refNo, proofOfPayment) => {
-    const today = new Date().toISOString().split("T")[0];
-    const paidTime = new Date().toLocaleTimeString("en-PH", { hour: "2-digit", minute: "2-digit", hour12: true });
+    const paidTime = getPHTime();
 
     // GROUP items by seller
     const sellerGroups = {};
@@ -412,7 +429,7 @@ const createTransaction = async(orderId, items, payment, userId, firstname, last
                 paymentMethod: payment,
                 totalAmount: totalAmount,
                 status: "paid",
-                paidAt: { date: today, time: paidTime },
+                paidAt: paidTime,
                 refNo: refNo,
                 payoutId: farmerPayout?._id ?? null
             });
@@ -431,7 +448,7 @@ const createTransaction = async(orderId, items, payment, userId, firstname, last
                 paymentMethod: payment,
                 totalAmount: totalAmount,
                 status: "paid",
-                paidAt: { date: today, time: paidTime },
+                paidAt: paidTime,
                 refNo: refNo,
                 payoutId: sellerPayout?._id ?? null
             });
@@ -447,7 +464,7 @@ const createTransaction = async(orderId, items, payment, userId, firstname, last
         paymentMethod: payment,
         totalAmount: totalPrice,
         status: "paid",
-        paidAt: { date: today, time: paidTime },
+        paidAt: paidTime,
         refNo: refNo,
         imageFile: proofOfPayment,
     });
