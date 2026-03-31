@@ -596,6 +596,7 @@ const ViewProfile = () => {
                     <div className="col-md-6"><EditableField label="First Name"  name="firstname"  value={profile.firstname}  capitalize {...editableProps} /></div>
                     <div className="col-md-6"><EditableField label="Last Name"   name="lastname"   value={profile.lastname}   capitalize {...editableProps} /></div>
                     <div className="col-md-6"><EditableField label="Middle Name" name="middlename" value={profile.middlename} capitalize {...editableProps} /></div>
+                    <div className="col-md-6"><EditableField label="Suffix" name="suffix" value={profile.suffix} capitalize {...editableProps} /></div>  {/* ✅ */}
                     <div className="col-md-6"><EditableField label="Email"       name="email"      value={profile.email}      type="email" lowercase {...editableProps} /></div>
                 </div>
             </div>
@@ -632,6 +633,7 @@ const ViewProfile = () => {
                     <div className="col-md-6"><EditableField label="First Name"  name="firstname"  value={profile.firstname}  capitalize {...editableProps} /></div>
                     <div className="col-md-6"><EditableField label="Last Name"   name="lastname"   value={profile.lastname}   capitalize {...editableProps} /></div>
                     <div className="col-md-6"><EditableField label="Middle Name" name="middlename" value={profile.middlename} capitalize {...editableProps} /></div>
+                    <div className="col-md-6"><EditableField label="Suffix"      name="suffix" value={profile.suffix} capitalize {...editableProps} /></div>  {/* ✅ */}
                     <div className="col-md-6"><EditableField label="Email"       name="email"      value={profile.email}      type="email" lowercase {...editableProps} /></div>
                     <div className="col-md-6"><EditableField label="Contact"     name="contact"    value={profile.contact}    {...editableProps} /></div>
                     <div className="col-md-6"><ReadOnlyField label="Created At"  value={formatDate(profile.createdAt)} /></div>
@@ -695,6 +697,7 @@ const ViewProfile = () => {
                     <div className="col-md-6"><EditableField label="First Name"  name="firstname"  value={profile.firstname}  capitalize {...editableProps} /></div>
                     <div className="col-md-6"><EditableField label="Last Name"   name="lastname"   value={profile.lastname}   capitalize {...editableProps} /></div>
                     <div className="col-md-6"><EditableField label="Middle Name" name="middlename" value={profile.middlename} capitalize {...editableProps} /></div>
+                    <div className="col-md-6"><EditableField label="Suffix"      name="suffix" value={profile.suffix} capitalize {...editableProps} /></div>  {/* ✅ */}
                     <div className="col-md-6"><EditableField label="Email"       name="email"      value={profile.email}      type="email" lowercase {...editableProps} /></div>
                     <div className="col-md-6"><EditableField label="Contact"     name="contact"    value={profile.contact}    {...editableProps} /></div>
                     <div className="col-md-6">

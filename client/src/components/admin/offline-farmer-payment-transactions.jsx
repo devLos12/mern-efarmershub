@@ -23,7 +23,7 @@ const OfflineFarmerPaymentTransactions = () => {
         if (!payoutId) return;
         handleLoading();
     }, [payoutId])
-
+    
 
     const fetchTransactions = async () => {
         const res = await fetch(

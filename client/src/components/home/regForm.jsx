@@ -96,6 +96,13 @@ const Register = () => {
         }
     };
 
+    const handleSuffixChange = (e) => {
+        const value = e.target.value;
+        // Allow typing pero i-sanitize: letters, dots, spaces lang
+        const cleaned = value.replace(/[^a-zA-Z.\s]/g, '');
+        setFormData({ ...formData, suffix: cleaned });
+    };
+
     const handlePlateImageChange = (e) => {
         const file = e.target.files[0];
         if (file) {
@@ -337,7 +344,6 @@ const Register = () => {
         if (formData.password !== confirmPassword) {
             setPasswordError("Passwords do not match");
             setSubmitting(false);
-
             return;
         }
 
@@ -640,25 +646,23 @@ const Register = () => {
                                     </div>
 
                                     <form onSubmit={handleForm}>
+
                                         <div className="row mt-3">
                                             {[
                                                 { label: 'First name', name: 'firstname', type: 'text', holder: 'Enter first name', optional: false },
-                                                { label: "Middle name", name: "middlename", type: "text", holder: "Enter middle", optional: true},
-                                                { label: 'Last name', name: 'lastname', type: 'text',  holder: 'Enter last name', optional: false },
-
+                                                { label: "Middle name", name: "middlename", type: "text", holder: "Enter middle name", optional: true },
+                                                { label: 'Last name', name: 'lastname', type: 'text', holder: 'Enter last name', optional: false },
                                             ].map((data, i) => (
-                                                <div key={i} className="col-12 col-md-4 mt-2 mt-md-0">
-                                                    <label className="text-capitalize small mt-2  fw-bold"
-                                                        htmlFor={data.name}>
+                                                <div key={i} className="col-12 col-md-6 mt-2 mt-md-0">
+                                                    <label className="text-capitalize small mt-2 fw-bold" htmlFor={data.name}>
                                                         {data.label}:
                                                         {data.optional && (
                                                             <span className="text-normal text-muted small ms-1">{'(optional)'}</span>
                                                         )}
                                                     </label>
-                                                    
                                                     <input
                                                         className="mt-2 form-control small"
-                                                        style={{fontSize: "14px"}}
+                                                        style={{ fontSize: "14px" }}
                                                         type={data.type}
                                                         name={data.name}
                                                         id={data.name}
@@ -669,8 +673,38 @@ const Register = () => {
                                                     />
                                                 </div>
                                             ))}
+                                            
+                                            
+
+                                            {/* Suffix Field */}
+                                            <div className="col-12 col-md-6 mt-2 mt-md-0">
+                                                <label className="text-capitalize small mt-2 fw-bold" htmlFor="suffix">
+                                                    Suffix: <span className="text-muted small ms-1">(optional)</span>
+                                                </label>
+                                                <input
+                                                    className="mt-2 form-control small"
+                                                    style={{ fontSize: "14px" }}
+                                                    type="text"
+                                                    name="suffix"
+                                                    id="suffix"
+                                                    placeholder="e.g. Jr., Sr., MD..."
+                                                    value={formData.suffix || ''}
+                                                    onChange={handleSuffixChange}
+                                                    maxLength={10}
+                                                    list="suffix-options"
+                                                />
+                                                <datalist id="suffix-options">
+                                                    {['Jr.', 'Sr.', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X',
+                                                    'MD', 'DDS', 'DMD', 'RN', 'PhD', 'EdD', 'JD', 'Esq.', 'CPA', 'Ret.'
+                                                    ].map((s, i) => (
+                                                        <option key={i} value={s} />
+                                                    ))}
+                                                </datalist>
+                                                <small className="text-muted d-block mt-1" style={{ fontSize: "12px" }}>
+                                                    Type or select from suggestions
+                                                </small>
+                                            </div>
                                         </div>
-                                        
                                         
                                         {needsEWallet && (
                                             <>
@@ -938,7 +972,7 @@ const Register = () => {
                                                 </div>
                                             </>
                                         )}
-                                        
+
                                         {needsEWallet && (
                                             <div className="d-flex align-items-center gap-2 opacity-75 mt-4">
                                                 <i className="fa fa-info-circle small"></i>

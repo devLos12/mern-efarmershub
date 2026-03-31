@@ -514,19 +514,25 @@ const OfflineFarmerUpload = ({ onClose }) => {
                                                     <label className="form-label small fw-semibold text-success text-capitalize">
                                                         suffix <span className="text-muted fw-normal">(optional)</span>
                                                     </label>
-                                                    <select
-                                                        className="form-select border-success border-opacity-25"
+                                                    <input
+                                                        type="text"
+                                                        className="form-control border-success border-opacity-25"
                                                         name="suffix"
                                                         value={farmerData.suffix}
-                                                        onChange={handleFarmerChange}
-                                                    >
-                                                        <option value="">none</option>
-                                                        <option value="Jr.">Jr.</option>
-                                                        <option value="Sr.">Sr.</option>
-                                                        <option value="II">II</option>
-                                                        <option value="III">III</option>
-                                                        <option value="IV">IV</option>
-                                                    </select>
+                                                        onChange={(e) => {
+                                                            const cleaned = e.target.value.replace(/[^a-zA-Z.\s]/g, '');
+                                                            setFarmerData((prev) => ({ ...prev, suffix: cleaned }));
+                                                        }}
+                                                        placeholder="e.g. Jr., Sr., MD..."
+                                                        maxLength={10}
+                                                        list="suffix-options"
+                                                    />
+                                                    <datalist id="suffix-options">
+                                                        {['Jr.', 'Sr.', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X',
+                                                        'MD', 'DDS', 'DMD', 'RN', 'PhD', 'EdD', 'JD', 'Esq.', 'CPA', 'Ret.'
+                                                        ].map((s, i) => <option key={i} value={s} />)}
+                                                    </datalist>
+                                                    <small className="text-muted" style={{ fontSize: 11 }}>Type or select</small>
                                                 </div>
                                             </div>
 

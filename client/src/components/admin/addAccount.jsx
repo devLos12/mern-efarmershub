@@ -337,7 +337,7 @@ const AddAccount = ({ isOpen, onClose, onSuccess }) => {
                                             { label: 'Middle name', name: 'middlename', holder: 'Enter middle name', optional: true },
                                             { label: 'Last name', name: 'lastname', holder: 'Enter last name' }
                                         ].map((field, i) => (
-                                            <div key={i} className="col">
+                                            <div key={i} className="col-12 col-md-6 mt-2 mt-md-2">
                                                 <label className="text-capitalize small fw-bold" htmlFor={field.name}>
                                                     {field.label}:
                                                     {field.optional && (
@@ -358,7 +358,42 @@ const AddAccount = ({ isOpen, onClose, onSuccess }) => {
                                                 />
                                             </div>
                                         ))}
+
+                                        
+
+                                        {/* Suffix Field */}
+                                        <div className="col-12 col-md-6 mt-2 mt-md-2">
+                                            <label className="text-capitalize small fw-bold" htmlFor="suffix">
+                                                Suffix: <span className="text-muted small ms-1">(optional)</span>
+                                            </label>
+                                            <input
+                                                className="mt-2 form-control small"
+                                                style={{ fontSize: "14px" }}
+                                                type="text"
+                                                name="suffix"
+                                                id="suffix"
+                                                placeholder="e.g. Jr., Sr., MD..."
+                                                value={formData.suffix || ''}
+                                                onChange={(e) => {
+                                                    const cleaned = e.target.value.replace(/[^a-zA-Z.\s]/g, '');
+                                                    setFormData({ ...formData, suffix: cleaned });
+                                                }}
+                                                maxLength={10}
+                                                list="suffix-options"
+                                            />
+                                            <datalist id="suffix-options">
+                                                {['Jr.', 'Sr.', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X',
+                                                'MD', 'DDS', 'DMD', 'RN', 'PhD', 'EdD', 'JD', 'Esq.', 'CPA', 'Ret.'
+                                                ].map((s, i) => <option key={i} value={s} />)}
+                                            </datalist>
+                                            <small className="text-muted d-block mt-1" style={{ fontSize: "12px" }}>
+                                                Type or select from suggestions
+                                            </small>
+                                        </div>
+
                                     </div>
+
+                                 
 
                                     {/* ✅ Address — dropdown version matching Register.jsx */}
                                     {needsEWallet && (

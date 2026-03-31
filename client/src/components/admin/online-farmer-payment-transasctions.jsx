@@ -4,7 +4,6 @@ import html2pdf from "html2pdf.js";
 
 
 
-
 const SellerPaymentTransactions = () => {
     const location = useLocation();
     const navigate = useNavigate();

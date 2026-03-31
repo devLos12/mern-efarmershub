@@ -235,12 +235,18 @@ const Accounts = () => {
                 const lastname = (account.lastname || "").toLowerCase();
                 const email = (account.email || "").toLowerCase();
                 const accountId = (account.accountId || "").toLowerCase();
+                const fullname = [account.firstname, account.middlename, account.lastname, account.suffix]
+                    .filter(Boolean).join(' ').toLowerCase();
+
                 return firstname.includes(debouncedSearch) ||
                     lastname.includes(debouncedSearch) ||
+                    fullname.includes(debouncedSearch) ||
                     email.includes(debouncedSearch) ||
                     accountId.includes(debouncedSearch);
             });
         }
+
+        
 
         // ✅ Farmer type filter — With Device / No Device
         if (location.state?.source === "seller" && farmerTypeFilter !== 'all') {
@@ -772,8 +778,14 @@ const Accounts = () => {
 
                                                             {/* Farmer name — no badge here */}
                                                             <td className="align-middle small text-capitalize">
-                                                                {`${data.lastname}, ${data.firstname} ${data.middlename === undefined ? '' : `${data.middlename}.`}`}
+                                                                {[
+                                                                    data.firstname,
+                                                                    data.middlename || '',
+                                                                    data.lastname,
+                                                                    data.suffix || ''
+                                                                ].filter(Boolean).join(' ')}
                                                             </td>
+
 
                                                             {/* ✅ Email — no text-lowercase para hindi ma-lowercase ang N/A */}
                                                             <td className="align-middle small">{data.email || "N/A"}</td>
