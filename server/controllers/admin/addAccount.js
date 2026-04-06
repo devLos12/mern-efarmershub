@@ -127,6 +127,7 @@ const addAccount = async (req, res) => {
             firstname,
             middlename, 
             lastname,
+            suffix,
             contact, 
             email, 
             password, 
@@ -141,7 +142,20 @@ const addAccount = async (req, res) => {
             zipCode
         } = req.body;
 
-                
+
+        const validSuffixes = [
+            'Jr.', 'Sr.',
+            'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X',
+            'MD', 'DDS', 'DMD', 'RN',
+            'PhD', 'EdD', 'JD',
+            'Esq.', 'CPA', 'Ret.'
+        ];
+
+        if (suffix !== undefined && suffix.trim() !== "" && !validSuffixes.includes(suffix.trim())) {
+            return res.status(400).json({ message: "Invalid suffix!" });
+        }
+
+
         // Validate role
         const validRoles = ['admin', 'seller', 'rider'];
         if (!role || !validRoles.includes(role.toLowerCase())) {
@@ -211,6 +225,7 @@ const addAccount = async (req, res) => {
             }
         }
 
+        
         // Check if email already exists in any collection
         const existingAdmin = await Admin.findOne({ email });
         const existingSeller = await Seller.findOne({ email });
@@ -270,6 +285,7 @@ const addAccount = async (req, res) => {
                 firstname,
                 middlename,
                 lastname,
+                suffix,
                 contact: wallet_number,
                 email,
                 password: hashpass,
@@ -329,6 +345,7 @@ const addAccount = async (req, res) => {
                 firstname,
                 middlename,
                 lastname,
+                suffix,
                 contact: wallet_number,
                 email,
                 password: hashpass,
@@ -349,7 +366,7 @@ const addAccount = async (req, res) => {
                 verification: "verified"
             });
 
-            // await newRider.save();
+            await newRider.save();
 
 
             // ✅ NEW: Send rider app download link email (non-blocking)

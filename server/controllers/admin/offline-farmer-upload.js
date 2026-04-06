@@ -49,7 +49,19 @@ export const adminUploadOfflineFarmerProduct = async (req, res) => {
 
         if (isNewFarmer === "true") {
 
+            const validSuffixes = [
+                'Jr.', 'Sr.',
+                'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X',
+                'MD', 'DDS', 'DMD', 'RN',
+                'PhD', 'EdD', 'JD',
+                'Esq.', 'CPA', 'Ret.'
+            ];
 
+            if (suffix && suffix.trim() !== "" && suffix !== "N/A" && !validSuffixes.includes(suffix.trim())) {
+                return res.status(400).json({ message: "Invalid suffix!" });
+            }
+
+            
             // ✅ DITO ILAGAY — bago ang create
             const existingFarmer = await OfflineFarmer.findOne({
                 firstname: { $regex: `^${firstname.trim()}$`, $options: "i" },

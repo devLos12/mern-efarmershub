@@ -7,7 +7,6 @@ const trackReplacementProduct = async (req, res) => {
         const role = req.account.role;
 
 
-
         const order = await Order.findById(orderId);
         
         if (!order) {

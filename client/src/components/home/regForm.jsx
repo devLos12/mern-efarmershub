@@ -972,7 +972,8 @@ const Register = () => {
                                                 </div>
                                             </>
                                         )}
-
+                                        
+                                        
                                         {needsEWallet && (
                                             <div className="d-flex align-items-center gap-2 opacity-75 mt-4">
                                                 <i className="fa fa-info-circle small"></i>

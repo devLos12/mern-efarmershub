@@ -22,6 +22,10 @@ const riderSchema = new mongoose.Schema({
         type: String, 
         required: true 
     },
+    suffix: { 
+        type: String, 
+        required: false 
+    },
     contact: {
         type: String, 
         required: true 

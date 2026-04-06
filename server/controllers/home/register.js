@@ -19,6 +19,7 @@ const register = async (req, res) => {
             firstname, 
             middlename,
             lastname, 
+            suffix,
             contact, 
             email, 
             password, 
@@ -33,6 +34,18 @@ const register = async (req, res) => {
             zipCode
         } = req.body;
         
+
+        const validSuffixes = [
+            'Jr.', 'Sr.',
+            'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X',
+            'MD', 'DDS', 'DMD', 'RN',
+            'PhD', 'EdD', 'JD',
+            'Esq.', 'CPA', 'Ret.'
+        ];
+
+        if (suffix && suffix.trim() && !validSuffixes.includes(suffix.trim())) {
+            return res.status(400).json({ message: "Invalid suffix!" });
+        }
 
 
         if(contact && !/^\d{11}$/.test(contact)) {
@@ -100,6 +113,7 @@ const register = async (req, res) => {
                 firstname,
                 middlename, 
                 lastname, 
+                suffix,
                 contact: wallet_number, 
                 email, 
                 password: hashpass, 
@@ -143,14 +157,15 @@ const register = async (req, res) => {
             const day = String(now.getDate()).padStart(2, '0');
             const count = await User.countDocuments();
             const accountId = `${year}${month}${day}${String(count + 1).padStart(4, '0')}`;
-
-
+            
             
             const newUser = new User({
                 accountId,
                 firstname,
                 middlename, 
                 lastname, 
+                suffix,
+
                 contact, 
                 email, 
                 password: hashpass, 
@@ -163,7 +178,6 @@ const register = async (req, res) => {
             });
             
             await newUser.save();
-
 
             return res.status(201).json({ message: "Successfully Registered!" });
         }
@@ -233,12 +247,14 @@ const register = async (req, res) => {
             } catch (uploadError) {
                 return res.status(400).json({ message: "Failed to upload images to Cloudinary!" });
             }
-                        
+            
+
             const newRider = new Rider({
                 accountId,
                 firstname, 
                 middlename,  // Optional field
                 lastname, 
+                suffix,        // New field
                 contact: wallet_number, 
                 email, 
                 password: hashpass,
