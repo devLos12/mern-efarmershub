@@ -951,7 +951,10 @@ const ViewProfile = () => {
 
                     <div className="d-flex align-items-center gap-2 flex-wrap">
                         {/* ✅ Approve/Reject — seller only (not offlineFarmer) */}
-                        {!isEditMode && source === "seller" && resolvedType !== "offlineFarmer" && profile.verification === "pending" && (
+                        {!isEditMode && 
+                        (source === "seller" || source === "rider") && 
+                        resolvedType !== "offlineFarmer" && 
+                        profile.verification === "pending" && (
                             <div className="d-flex gap-2">
                                 <button className="btn btn-success btn-sm" onClick={() => openActionModal("approve")}>
                                     <i className="fa fa-check me-2"></i>Approve
