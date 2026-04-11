@@ -714,20 +714,53 @@ export default Messages;
 const ImageViewerModal = ({ image, images, currentIndex, onClose, onNext, onPrev, onSelect }) => {
     if (!image) return null;
 
+    const handleDownload = async (imageUrl, index) => {
+    try {
+        const response = await fetch(imageUrl);
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `image_${index + 1}.jpg`;
+        a.click();
+        window.URL.revokeObjectURL(url);
+    } catch (err) {
+        console.error("Download failed:", err);
+    }
+};
+
     return (
         <div 
             className="position-fixed top-0 start-0 w-100 h-100 d-flex flex-column align-items-center justify-content-center"
             style={{ backgroundColor: 'rgba(0, 0, 0, 0.95)', zIndex: 9999 }}
             onClick={onClose}
         >
-            {/* Close Button */}
-            <button 
-                className="btn btn-light position-absolute top-0 end-0 m-3 rounded-circle d-flex align-items-center justify-content-center"
-                style={{ width: "40px", height: "40px", zIndex: 10000 }}
-                onClick={onClose}
+                {/* Top-right button group */}
+            <div 
+                className="position-absolute top-0 end-0 m-3 d-flex gap-2"
+                style={{ zIndex: 10000 }}
+                onClick={(e) => e.stopPropagation()}
             >
-                <i className="bx bx-x fs-2"></i>
-            </button>
+                <button 
+                    className="btn btn-light rounded-circle d-flex align-items-center justify-content-center"
+                    style={{ width: "40px", height: "40px" }}
+                    onClick={(e) => { e.stopPropagation(); handleDownload(image, currentIndex); }}
+                    title="Download image"
+                >
+                    <i className="bx bx-download fs-5"></i>
+                </button>
+
+                <button 
+                    className="btn btn-light rounded-circle d-flex align-items-center justify-content-center"
+                    style={{ width: "40px", height: "40px" }}
+                    onClick={onClose}
+                    title="Close"
+                >
+                    <i className="bx bx-x fs-2"></i>
+                </button>
+            </div>
+
+
 
             {/* Image Counter */}
             {images.length > 1 && (
@@ -748,7 +781,7 @@ const ImageViewerModal = ({ image, images, currentIndex, onClose, onNext, onPrev
                 {/* Previous Button */}
                 {images.length > 1 && currentIndex > 0 && (
                     <button 
-                        className="btn btn-light rounded-circle position-absolute start-0 ms-3"
+                        className="btn btn-light rounded-circle position-absolute start-0 ms-3 d-flex align-items-center"
                         style={{ width: "50px", height: "50px", zIndex: 10000 }}
                         onClick={(e) => { e.stopPropagation(); onPrev(); }}
                     >
@@ -771,7 +804,7 @@ const ImageViewerModal = ({ image, images, currentIndex, onClose, onNext, onPrev
                 {/* Next Button */}
                 {images.length > 1 && currentIndex < images.length - 1 && (
                     <button 
-                        className="btn btn-light rounded-circle position-absolute end-0 me-3"
+                        className="btn btn-light rounded-circle position-absolute end-0 me-3 d-flex align-items-center"
                         style={{ width: "50px", height: "50px", zIndex: 10000 }}
                         onClick={(e) => { e.stopPropagation(); onNext(); }}
                     >

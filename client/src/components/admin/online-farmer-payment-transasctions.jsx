@@ -8,7 +8,7 @@ const SellerPaymentTransactions = () => {
     const location = useLocation();
     const navigate = useNavigate();
 
-    const { payoutId, payoutDate, totalAmount: payoutGross, taxAmount: payoutTax, netAmount: payoutNet } = location?.state || {};
+    const { payoutNumber, payoutId, payoutDate, totalAmount: payoutGross, taxAmount: payoutTax, netAmount: payoutNet } = location?.state || {};
 
     const [transactions, setTransactions] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -97,6 +97,7 @@ const SellerPaymentTransactions = () => {
                 <body>
                     <div class="header">
                         <h2>Payment Transactions Report</h2>
+                        <p style="font-size: 16px; color: #444; font-weight: bold;">Payout No: ${payoutNumber}</p> 
                         <p>Payout Date: ${formattedDate}</p>
                         <p>Generated: ${new Date().toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" })}</p>
                         <p>Total Records: ${filteredTransactions.length}</p>
@@ -122,6 +123,7 @@ const SellerPaymentTransactions = () => {
         wrapper.innerHTML = `
             <div style="text-align: center; margin-bottom: 20px;">
                 <h2 style="margin: 0; color: #198754;">Payment Transactions Report</h2>
+                <p style="margin: 5px 0; font-size: 16px; color: #444; font-weight: bold;">Payout No: ${payoutNumber}</p>
                 <p style="margin: 5px 0; color: #666;">Payout Date: ${formattedDate}</p>
                 <p style="margin: 5px 0; color: #666;">Generated: ${new Date().toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" })}</p>
                 <p style="margin: 5px 0; color: #666;">Total Records: ${filteredTransactions.length}</p>
@@ -159,22 +161,28 @@ const SellerPaymentTransactions = () => {
             {/* ── Top Controls ── */}
             <div className="row g-0 bg-white border rounded p-2 px-2 px-lg-4 mt-1 gap-2">
 
-
-                <div className="d-flex gap-3 align-items-center">
-                    
-                    <button
-                        className="btn  btn-outline-success"
-                        onClick={() => navigate(-1)}
-                    >
-                        <i className="fa fa-arrow-left small"></i>
-                    </button>
-                    
-                    <div>
-                        <p className="m-0 fw-semibold text-success">
-                            <i className="fa fa-receipt me-1"></i> Payment Transactions
-                        </p>
-                        <p className="m-0 text-muted">Payout Date: <strong>{formattedDate}</strong></p>
+                <div className="row g-0 gap-3 align-items-center mt-2">
+                    <div className="col-auto">
+                        <button
+                            className="btn  btn-outline-success"
+                            onClick={() => navigate(-1)}
+                        >
+                            <i className="fa fa-arrow-left small"></i>
+                        </button>
                     </div>
+                    <div className="col-auto col-md-5">
+                        <div>
+                            <p className="m-0 fw-semibold text-success">
+                                <i className="fa fa-receipt me-1"></i> Payment Transactions
+                            </p>
+                            <p className="m-0 text-muted">Payout Date: <strong>{formattedDate}</strong></p>
+                        </div>
+                    </div>
+
+                    <div className="col-12 col-md-6 text-start text-lg-start text-xl-end ">
+                        <p className="fw-bold fs-5 text-muted">{payoutNumber}</p>
+                    </div>
+
                 </div>
 
 

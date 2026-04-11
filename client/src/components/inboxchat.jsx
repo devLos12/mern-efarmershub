@@ -83,7 +83,8 @@ const InboxChat = () =>{
 
 
     return (
-        <div className={"mx-2 d-flex vh-100"} style={{ height : role ==="user" ? height : height-68}}>
+        <div className={"mx-2 "} style={{ height: role === "user" ? height - 90 : height - 60, overflowY: "auto" }}>
+
             <div className={role === "user" ? "container-fluid bg-light p-2" : "container-fluid bg-light p-2 p-md-4"}>
 
                 <div className="row ">

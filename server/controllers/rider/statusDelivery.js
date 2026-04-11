@@ -256,24 +256,6 @@ const createOrUpdatePayout = async(items, orderId) => {
 
 
 
-const generateRiderPayoutNumber = async (date) => {
-    const prefix = `RIDERPAY${date.replace(/-/g, "")}`;
-
-    const lastPayout = await RiderPayout.findOne(
-        { payoutNumber: { $regex: `^${prefix}` } },
-        { payoutNumber: 1 },
-        { sort: { payoutNumber: -1 } }
-    );
-
-    let sequence = 1;
-    if (lastPayout) {
-        const lastSequence = parseInt(lastPayout.payoutNumber.split("-").pop());
-        sequence = lastSequence + 1;
-    }
-
-    return `${prefix}-${String(sequence).padStart(4, "0")}`;
-};
-
 
 
 // NEW: Offline Farmer Payout Function (for COD orders)
@@ -308,7 +290,11 @@ const createOrUpdateOfflineFarmerPayout = async(items, orderId) => {
         } else {
 
 
+            const payoutNumber = await generatePayoutNumber(today, "offlineFarmer");
+
+
             await OfflineFarmerPayout.create({
+                payoutNumber,
                 farmerId,
                 farmerName: `${farmer.firstname} ${farmer.lastname}`,
                 farmerContact: farmer.contact || "",
@@ -328,6 +314,23 @@ const createOrUpdateOfflineFarmerPayout = async(items, orderId) => {
 
 
 
+const generateRiderPayoutNumber = async (date) => {
+    const prefix = `PAY${date.replace(/-/g, "")}`;
+
+    const lastPayout = await RiderPayout.findOne(
+        { payoutNumber: { $regex: `^${prefix}` } },
+        { payoutNumber: 1 },
+        { sort: { payoutNumber: -1 } }
+    );
+
+    let sequence = 1;
+    if (lastPayout) {
+        const lastSequence = parseInt(lastPayout.payoutNumber.split("-").pop());
+        sequence = lastSequence + 1;
+    }
+
+    return `${prefix}-${String(sequence).padStart(4, "0")}`;
+};
 
 
 
@@ -373,7 +376,7 @@ const createOrUpdateRiderPayout = async(riderId, orderId) => {
 
         const payoutNumber = await generateRiderPayoutNumber(today);
 
-        
+
         await RiderPayout.create({
             payoutNumber,
             riderId,

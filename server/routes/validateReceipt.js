@@ -17,6 +17,7 @@ router.post("/validate-receipt", upload.single("image"), async (req, res) => {
     // ── Kunin ang payment method na pinili ng user ───────────────
     const paymentMethod = req.body.paymentMethod?.toLowerCase(); // "gcash" or "maya"
 
+    
     // ── STEP 1: QR CODE DETECTION ────────────────────────────────
     const { data: pixels, info } = await sharp(file.buffer)
       .resize(500)

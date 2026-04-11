@@ -247,7 +247,7 @@ const Transactions = () => {
     const [selectedTransaction, setSelectedTransaction] = useState(null);
 
     // ── Date Filter States ──────────────────────────────────────────────────────
-    const [period, setPeriod] = useState('thisweek');
+    const [period, setPeriod] = useState('today');
     const [customStartDate, setCustomStartDate] = useState('');
     const [customEndDate, setCustomEndDate] = useState('');
     const [isCustomRange, setIsCustomRange] = useState(false);
@@ -265,6 +265,7 @@ const Transactions = () => {
     // ── Period Label ────────────────────────────────────────────────────────────
     const getPeriodLabel = () => {
         switch (period) {
+            case "today": return "Today";
             case "thisweek": return "This Week";
             case "thismonth": return "This Month";
             case "thisyear": return "This Year";
@@ -281,6 +282,9 @@ const Transactions = () => {
             default: return "";
         }
     };
+
+
+
 
     // ── Custom Range Handlers ───────────────────────────────────────────────────
     const handleCustomRangeApply = (startDate, endDate) => {
@@ -415,10 +419,11 @@ const Transactions = () => {
         return transactions.filter((t) => {
             const name = (t.sellerName || t.riderName || t.farmerName || "").toLowerCase();
             const email = (t.sellerEmail || t.riderEmail || t.farmerContact || "").toLowerCase();
-            return name.includes(debouncedSearch) || email.includes(debouncedSearch);
+            const payoutNo = (t.payoutNumber || "").toLowerCase();
+            const farmerId = (t.farmerId?.accountId || t.sellerId?.accountId || t.riderId?.accountId || t.accountId || "").toLowerCase();
+            return name.includes(debouncedSearch) || email.includes(debouncedSearch) || payoutNo.includes(debouncedSearch) || farmerId.includes(debouncedSearch);
         });
     }, [transactions, debouncedSearch]);
-
 
 
 
@@ -443,29 +448,99 @@ const Transactions = () => {
         setCurrentPage(1);
     }, [search, source, period]);
 
+
+
+
+
     const handleRemoveFile = (id) => {
         setImageFile(prev => { const n = { ...prev }; delete n[id]; return n; });
+        setImagePrev(prev => { const n = { ...prev }; delete n[id]; return n; });
         if (fileUploadRef.current[id]) fileUploadRef.current[id].value = null;
     };
+
+
 
     const handleFile = async (e, id) => {
         const { name } = e.target;
         const file = e.target.files[0];
         if (!file) return;
+
+        const allowedTypes = ['image/png', 'image/jpg', 'image/jpeg'];
+        if (!allowedTypes.includes(file.type)) {
+            showNotification('Invalid file type! PNG or JPG only.', 'error');
+            if (fileUploadRef.current[id]) fileUploadRef.current[id].value = null;
+            return;
+        }
+
         try {
             const options = { maxSizeMB: 0.5, maxWidthOrHeight: 1920, useWebWorker: true };
             const compressedFile = await imageCompression(file, options);
-            setImageFile((prev) => ({ ...prev, [id]: { [name]: compressedFile, preview: compressedFile?.name } }));
-            if (compressedFile) {
-                const reader = new FileReader();
-                reader.onload = (e) => setImagePrev((prev) => ({ ...prev, [id]: e.target.result }));
-                reader.readAsDataURL(compressedFile);
+
+            // Preview agad
+            const reader = new FileReader();
+            reader.onload = (e) => setImagePrev((prev) => ({ ...prev, [id]: e.target.result }));
+            reader.readAsDataURL(compressedFile);
+
+            // Set validating state
+            setImageFile((prev) => ({ ...prev, [id]: { validating: true } }));
+
+            // E-wallet type ng selected transaction
+
+            const eWalletType = selectedTransaction?.e_WalletAcc?.type
+            ?.toLowerCase()
+            .replace("g-cash", "gcash")  // ← normalize
+            .replace("pay maya", "maya");
+
+
+            const formData = new FormData();
+            formData.append("image", compressedFile);
+            formData.append("paymentMethod", eWalletType || "");
+
+            const res = await fetch(`${import.meta.env.VITE_API_URL}/api/validate-receipt`, {
+                method: "POST",
+                credentials: "include",
+                body: formData
+            });
+            const result = await res.json();
+
+            if (!result.isValid) {
+                // Invalid — clear preview, store reason para sa badge
+                setImagePrev((prev) => { const n = { ...prev }; delete n[id]; return n; });
+                setImageFile((prev) => ({
+                    ...prev,
+                    [id]: {
+                        validationResult: { isValid: false, reason: result.reason }
+                    }
+                }));
+                if (fileUploadRef.current[id]) fileUploadRef.current[id].value = null;
+                return;
             }
+
+            // Valid — store file + result
+            setImageFile((prev) => ({
+                ...prev,
+                [id]: {
+                    [name]: compressedFile,
+                    preview: compressedFile?.name,
+                    validationResult: { isValid: true, reason: result.reason }
+                }
+            }));
+
         } catch (error) {
-            console.error("Error compressing image:", error);
-            alert('Failed to compress image');
+            console.error("Validation error:", error);
+            // Fallback — i-allow na lang kung may network issue
+            const compressedFile = await imageCompression(file, { maxSizeMB: 0.5, maxWidthOrHeight: 1920, useWebWorker: true });
+            setImageFile((prev) => ({
+                ...prev,
+                [id]: { [name]: compressedFile, preview: compressedFile?.name }
+            }));
         }
     };
+
+
+
+
+
 
     const openImageModal = (imageSrc, title) => {
         setModalImage(imageSrc);
@@ -659,6 +734,9 @@ const Transactions = () => {
             if (location?.state?.source === `payout/rider`) {
                 transactions = data.riderPayout?.reverse() || [];
                 setSource(`payout${role === "admin" ? "/rider" : ""}`);
+
+                console.log(transactions);
+
             }
             if (location?.state?.source === "payment") {
                 transactions = data.payment?.reverse() || [];
@@ -710,212 +788,265 @@ const Transactions = () => {
     return (
         <>
             {/* Payout Modal */}
-           {/* Payout Modal */}
-{showPayoutModal && selectedTransaction && (
-    <div
-        className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
-        style={{ backgroundColor: "rgba(0,0,0,0.5)", zIndex: 10001 }}
-        onClick={closePayoutModal}
-    >
-        <div
-            className="bg-white rounded shadow-lg"
-            style={{ maxWidth: "600px", width: "90%", maxHeight: "90vh", overflow: "auto" }}
-            onClick={(e) => e.stopPropagation()}
-        >
-            <div className="border-bottom p-3 d-flex justify-content-between align-items-center sticky-top bg-white">
-                <h5 className="m-0 fw-bold text-success">
-                    {role === "admin"
-                        ? (selectedTransaction.status === 'paid' ? 'Payout Details' : 'Process Payout')
-                        : 'Payout Details'
-                    }
-                </h5>
-                <button className="btn-close" onClick={closePayoutModal}></button>
-            </div>
-
-            <div className="p-4">
-                <div className="mb-4">
-                    <h6 className="fw-bold text-muted mb-3">Transaction Information</h6>
-                    <div className="row g-2">
-                        {/* Total Orders / Delivery */}
-                        <div className="col-6">
-                            <p className="m-0 small text-muted">
-                                {selectedTransaction?.totalDelivery !== undefined ? 'Total Delivery' : 'Total Orders'}
-                            </p>
-                            <p className="m-0 fw-bold small">
-                                {selectedTransaction?.totalDelivery !== undefined
-                                    ? (selectedTransaction.totalDelivery === 1 ? `${selectedTransaction.totalDelivery} Delivery` : `${selectedTransaction.totalDelivery} Deliveries`)
-                                    : (() => {
-                                        const count = selectedTransaction?.orders?.length ?? selectedTransaction?.totalOrders ?? 0;
-                                        return count === 1 ? `${count} Order` : `${count} Orders`;
-                                    })()
+            {showPayoutModal && selectedTransaction && (
+                <div
+                    className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
+                    style={{ backgroundColor: "rgba(0,0,0,0.5)", zIndex: 10001 }}
+                    onClick={closePayoutModal}
+                >
+                    <div
+                        className="bg-white rounded shadow-lg"
+                        style={{ maxWidth: "600px", width: "90%", maxHeight: "90vh", overflow: "auto" }}
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="border-bottom p-3 d-flex justify-content-between align-items-center sticky-top bg-white">
+                            <h5 className="m-0 fw-bold text-success">
+                                {role === "admin"
+                                    ? (selectedTransaction.status === 'paid' ? 'Payout Details' : 'Process Payout')
+                                    : 'Payout Details'
                                 }
-                            </p>
+                            </h5>
+                            <button className="btn-close" onClick={closePayoutModal}></button>
                         </div>
 
-                        {/* Date */}
-                        <div className="col-6">
-                            <p className="m-0 small text-muted">Date Payout</p>
-                            <p className="m-0">{new Date(selectedTransaction.date).toLocaleDateString('en-PH', { year: 'numeric', month: 'short', day: 'numeric' })}</p>
-                        </div>
+                        <div className="p-4">
+                            <div className="mb-4">
+                                <h6 className="fw-bold text-muted mb-3">Transaction Information</h6>
+                                <div className="row g-2">
+                                    {/* Total Orders / Delivery */}
+                                    <div className="col-6">
+                                        <p className="m-0 small text-muted">
+                                            {selectedTransaction?.totalDelivery !== undefined ? 'Total Delivery' : 'Total Orders'}
+                                        </p>
+                                        <p className="m-0 fw-bold small">
+                                            {selectedTransaction?.totalDelivery !== undefined
+                                                ? (selectedTransaction.totalDelivery === 1 ? `${selectedTransaction.totalDelivery} Delivery` : `${selectedTransaction.totalDelivery} Deliveries`)
+                                                : (() => {
+                                                    const count = selectedTransaction?.orders?.length ?? selectedTransaction?.totalOrders ?? 0;
+                                                    return count === 1 ? `${count} Order` : `${count} Orders`;
+                                                })()
+                                            }
+                                        </p>
+                                    </div>
 
-                        {/* Name */}
-                        <div className="col-6 mt-3">
-                            <p className="m-0 small text-muted">Name</p>
-                            <p className="m-0 fw-bold text-capitalize">
-                                {selectedTransaction.sellerName || selectedTransaction.riderName || selectedTransaction.farmerName}
-                            </p>
-                        </div>
+                                    {/* Date */}
+                                    <div className="col-6">
+                                        <p className="m-0 small text-muted">Date Payout</p>
+                                        <p className="m-0">{new Date(selectedTransaction.date).toLocaleDateString('en-PH', { year: 'numeric', month: 'short', day: 'numeric' })}</p>
+                                    </div>
 
-                        {/* Email / Contact */}
-                        <div className="col-6 mt-3">
-                            <p className="m-0 small text-muted">
-                                {selectedTransaction.farmerName ? 'Contact' : 'Email'}
-                            </p>
-                            <p className="m-0 small">
-                                {selectedTransaction.sellerEmail || selectedTransaction.riderEmail || selectedTransaction.farmerContact || "N/A"}
-                            </p>
-                        </div>
+                                    {/* Name */}
+                                    <div className="col-6 mt-3">
+                                        <p className="m-0 small text-muted">Name</p>
+                                        <p className="m-0 fw-bold text-capitalize">
+                                            {selectedTransaction.sellerName || selectedTransaction.riderName || selectedTransaction.farmerName}
+                                        </p>
+                                    </div>
 
-                        {/* E-Wallet — hide para sa offline farmer */}
-                        {!selectedTransaction.farmerName && (
-                            <div className="col-6 mt-3">
-                                <p className="m-0 small text-muted">E-Wallet</p>
-                                <p className="m-0 fw-bold">{selectedTransaction.e_WalletAcc?.number}</p>
-                                <p className="m-0 small text-capitalize text-muted">{selectedTransaction.e_WalletAcc?.type}</p>
+                                    {/* Email / Contact */}
+                                    <div className="col-6 mt-3">
+                                        <p className="m-0 small text-muted">
+                                            {selectedTransaction.farmerName ? 'Contact' : 'Email'}
+                                        </p>
+                                        <p className="m-0 small">
+                                            {selectedTransaction.sellerEmail || selectedTransaction.riderEmail || selectedTransaction.farmerContact || "N/A"}
+                                        </p>
+                                    </div>
+
+                                    {/* E-Wallet — hide para sa offline farmer */}
+                                    {!selectedTransaction.farmerName && (
+                                        <div className="col-6 mt-3">
+                                            <p className="m-0 small text-muted">E-Wallet</p>
+                                            <p className="m-0 fw-bold">{selectedTransaction.e_WalletAcc?.number}</p>
+                                            <p className="m-0 small text-capitalize text-muted">{selectedTransaction.e_WalletAcc?.type}</p>
+                                        </div>
+                                    )}
+
+                                    {/* Status */}
+                                    <div className={`${!selectedTransaction.farmerName ? 'col-6' : 'col-12'} mt-3`}>
+                                        <p className="m-0 small text-muted">Status</p>
+                                        <span className={`badge text-capitalize ${selectedTransaction.status === 'paid' ? 'bg-success' : 'bg-warning'}`}>
+                                            {selectedTransaction.status}
+                                        </span>
+                                    </div>
+                                </div>
                             </div>
-                        )}
 
-                        {/* Status */}
-                        <div className={`${!selectedTransaction.farmerName ? 'col-6' : 'col-12'} mt-3`}>
-                            <p className="m-0 small text-muted">Status</p>
-                            <span className={`badge text-capitalize ${selectedTransaction.status === 'paid' ? 'bg-success' : 'bg-warning'}`}>
-                                {selectedTransaction.status}
-                            </span>
+                            {/* Amounts */}
+                            <div className="mb-4 bg-light rounded p-3">
+                                <div className="d-flex justify-content-between mb-2">
+                                    <span className="text-muted">Total Amount:</span>
+                                    <span className="fw-bold">₱{selectedTransaction.totalAmount.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                </div>
+                                <div className="d-flex justify-content-between mb-2">
+                                    <span className="text-muted">Tax Amount:</span>
+                                    <div className="text-end">
+                                        <span className="text-danger d-block">- ₱{(selectedTransaction?.taxAmount ?? 0).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                        <span className="small text-muted">({taxPercentage}%)</span>
+                                    </div>
+                                </div>
+                                <hr className="my-2" />
+                                <div className="d-flex justify-content-between">
+                                    <span className="fw-bold">Net Amount:</span>
+                                    <span className="fw-bold text-success fs-5">₱{selectedTransaction.netAmount.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                </div>
+                            </div>
+                            <hr />
+
+                            {/* ── Receipt section — skip para sa offline farmer ── */}
+                            {!selectedTransaction.farmerName && (
+                                <div className="mb-4">
+                                    <h6 className="fw-bold text-muted mb-3">Payment Receipt</h6>
+                                    {selectedTransaction.imageFile ? (
+                                        <div className="border rounded p-3 d-flex align-items-center gap-3" style={{ cursor: "pointer" }} onClick={() => openImageModal(selectedTransaction.imageFile, selectedTransaction.imageFile)}>
+                                            <div className="border rounded bg-light d-flex align-items-center justify-content-center" style={{ width: "50px", height: "50px", minWidth: "50px", overflow: "hidden" }}>
+                                                <img src={selectedTransaction.imageFile} alt="Receipt" className="img-fluid" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                                            </div>
+                                            <div className="flex-grow-1">
+                                                <p className="m-0 fw-bold small">{selectedTransaction.imageFile}</p>
+                                                <p className="m-0 small text-muted"><i className="fa fa-search-plus me-1"></i>Click to view full size</p>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <>
+                                            {role === "admin" ? (
+                                                <div>
+                                                    {imageFile[selectedTransaction._id]?.preview ? (
+                                                        <div className="border rounded p-3 d-flex align-items-center gap-3">
+                                                            <div className="border rounded bg-light d-flex align-items-center justify-content-center" style={{ width: "50px", height: "50px", minWidth: "50px", overflow: "hidden", cursor: "pointer" }} onClick={() => openImageModal(imagePrev[selectedTransaction._id], imageFile[selectedTransaction._id]?.preview)}>
+                                                                <img src={imagePrev[selectedTransaction._id]} alt="Preview" className="img-fluid" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                                                            </div>
+                                                            <div className="flex-grow-1">
+                                                                <p className="m-0 fw-bold small"><i className="fa fa-file-image me-2 text-success"></i>{imageFile[selectedTransaction._id]?.preview}</p>
+                                                                <p className="m-0 small text-muted">Ready to upload</p>
+                                                            </div>
+                                                            <button className="btn btn-sm btn-outline-danger" onClick={() => handleRemoveFile(selectedTransaction._id)}><i className="fa fa-trash"></i></button>
+                                                        </div>
+                                                    ) : (
+
+                                                        <>
+                                                        {/* ← DAGDAG DITO — validating indicator */}
+                                                        {imageFile[selectedTransaction._id]?.validating && (
+                                                            <div className="alert alert-info py-2 px-3 d-flex align-items-center gap-2 mb-3" style={{ fontSize: "12px" }}>
+                                                                <div className="spinner-border spinner-border-sm text-info" role="status"></div>
+                                                                <span>Validating receipt...</span>
+                                                            </div>
+                                                        )}
+
+                                                        {/* Validation result badge */}
+                                                        {!imageFile[selectedTransaction._id]?.validating && imageFile[selectedTransaction._id]?.validationResult && (
+                                                            <div
+                                                                className={`alert py-2 px-3 mb-2 d-flex align-items-center gap-2 ${
+                                                                    imageFile[selectedTransaction._id]?.validationResult?.isValid 
+                                                                        ? "alert-success" 
+                                                                        : "alert-danger"
+                                                                }`}
+                                                                style={{ fontSize: "12px" }}
+                                                            >
+                                                                <i className={`fa-solid ${
+                                                                    imageFile[selectedTransaction._id]?.validationResult?.isValid 
+                                                                        ? "fa-circle-check" 
+                                                                        : "fa-circle-xmark"
+                                                                }`}></i>
+                                                                <span>
+                                                                    <strong>
+                                                                        {imageFile[selectedTransaction._id]?.validationResult?.isValid 
+                                                                            ? "Valid receipt!" 
+                                                                            : "Invalid image!"}
+                                                                    </strong>
+                                                                    {" "}{imageFile[selectedTransaction._id]?.validationResult?.reason}
+                                                                </span>
+                                                            </div>
+                                                        )}
+
+
+                                                        <div className="border border-dashed rounded p-4 text-center">
+                                                          
+                                                            <i className="fa fa-cloud-upload-alt fs-1 text-muted mb-3"></i>
+                                                            <p className="m-0 mb-3 text-muted text-capitalize small">Upload payment receipt</p>
+                                                            <label 
+                                                                htmlFor={`modalInputFile-${selectedTransaction._id}`} 
+                                                                className={`btn btn-outline-success btn-sm ${imageFile[selectedTransaction._id]?.validating ? "disabled" : ""}`}
+                                                                style={{ cursor: imageFile[selectedTransaction._id]?.validating ? "not-allowed" : "pointer" }}
+                                                            >
+                                                                <i className="fa fa-paperclip me-2"></i>
+                                                                {imageFile[selectedTransaction._id]?.validating ? "Validating..." : "Choose File"}
+                                                            </label>
+                                                            <input 
+                                                                id={`modalInputFile-${selectedTransaction._id}`} 
+                                                                name="image" 
+                                                                type="file" 
+                                                                accept="image/*" 
+                                                                hidden 
+                                                                disabled={imageFile[selectedTransaction._id]?.validating}
+                                                                onChange={(e) => handleFile(e, selectedTransaction._id)} 
+                                                                ref={(el) => (fileUploadRef.current[selectedTransaction._id] = el)} 
+                                                            />
+                                                        </div>
+                                                        </>
+
+                                                    )}
+                                                </div>
+                                            ) : (
+                                                <div className="text-center p-4 bg-light rounded">
+                                                    <i className="fa fa-receipt fs-1 text-muted mb-3"></i>
+                                                    <p className="m-0 text-muted fw-bold">No payment receipt yet</p>
+                                                    <p className="m-0 small text-muted mt-2">Receipt will be uploaded once admin processes the payout</p>
+                                                </div>
+                                            )}
+                                        </>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* ── Offline farmer — simple note kung paid na ── */}
+                            {selectedTransaction.farmerName && selectedTransaction.status === 'paid' && (
+                                <div className="alert alert-success py-2 px-3 mb-4">
+                                    <i className="fa fa-check-circle me-2"></i>
+                                    <small>Payout has been confirmed and marked as received.</small>
+                                </div>
+                            )}
+
+                            {/* ── Footer buttons ── */}
+                            {role === "admin" && selectedTransaction.status === 'pending' ? (
+                                <div className="d-flex gap-2 justify-content-end">
+                                    <button className="btn btn-secondary btn-sm" onClick={closePayoutModal} disabled={isProcessingPayout}>
+                                        Cancel
+                                    </button>
+                                    {/* Offline farmer — no receipt needed, confirm lang */}
+                                    {selectedTransaction.farmerName ? (
+                                        <button
+                                            className="btn btn-success btn-sm d-flex align-items-center gap-2"
+                                            onClick={() => handlePayout(selectedTransaction._id)}
+                                            disabled={isProcessingPayout}
+                                        >
+                                            {isProcessingPayout
+                                                ? (<><span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span><span>Processing...</span></>)
+                                                : (<><i className="fa fa-check"></i><span>Confirm Received</span></>)
+                                            }
+                                        </button>
+                                    ) : (
+                                        <button
+                                            className="btn btn-success btn-sm d-flex align-items-center gap-2"
+                                            onClick={() => handlePayout(selectedTransaction._id)}
+                                            disabled={!imageFile[selectedTransaction._id]?.preview || isProcessingPayout || imageFile[selectedTransaction._id]?.validating}
+                                        >
+                                            {isProcessingPayout
+                                                ? (<><span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span><span>Processing...</span></>)
+                                                : (<><i className="fa fa-check"></i><span>Process Payout</span></>)
+                                            }
+                                        </button>
+                                    )}
+                                </div>
+                            ) : (
+                                <div className="d-flex justify-content-end">
+                                    <button className="btn btn-secondary btn-sm" onClick={closePayoutModal} disabled={isProcessingPayout}>Close</button>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
-
-                {/* Amounts */}
-                <div className="mb-4 bg-light rounded p-3">
-                    <div className="d-flex justify-content-between mb-2">
-                        <span className="text-muted">Total Amount:</span>
-                        <span className="fw-bold">₱{selectedTransaction.totalAmount.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                    </div>
-                    <div className="d-flex justify-content-between mb-2">
-                        <span className="text-muted">Tax Amount:</span>
-                        <div className="text-end">
-                            <span className="text-danger d-block">- ₱{(selectedTransaction?.taxAmount ?? 0).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                            <span className="small text-muted">({taxPercentage}%)</span>
-                        </div>
-                    </div>
-                    <hr className="my-2" />
-                    <div className="d-flex justify-content-between">
-                        <span className="fw-bold">Net Amount:</span>
-                        <span className="fw-bold text-success fs-5">₱{selectedTransaction.netAmount.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                    </div>
-                </div>
-                <hr />
-
-                {/* ── Receipt section — skip para sa offline farmer ── */}
-                {!selectedTransaction.farmerName && (
-                    <div className="mb-4">
-                        <h6 className="fw-bold text-muted mb-3">Payment Receipt</h6>
-                        {selectedTransaction.imageFile ? (
-                            <div className="border rounded p-3 d-flex align-items-center gap-3" style={{ cursor: "pointer" }} onClick={() => openImageModal(selectedTransaction.imageFile, selectedTransaction.imageFile)}>
-                                <div className="border rounded bg-light d-flex align-items-center justify-content-center" style={{ width: "50px", height: "50px", minWidth: "50px", overflow: "hidden" }}>
-                                    <img src={selectedTransaction.imageFile} alt="Receipt" className="img-fluid" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                                </div>
-                                <div className="flex-grow-1">
-                                    <p className="m-0 fw-bold small">{selectedTransaction.imageFile}</p>
-                                    <p className="m-0 small text-muted"><i className="fa fa-search-plus me-1"></i>Click to view full size</p>
-                                </div>
-                            </div>
-                        ) : (
-                            <>
-                                {role === "admin" ? (
-                                    <div>
-                                        {imageFile[selectedTransaction._id]?.preview ? (
-                                            <div className="border rounded p-3 d-flex align-items-center gap-3">
-                                                <div className="border rounded bg-light d-flex align-items-center justify-content-center" style={{ width: "50px", height: "50px", minWidth: "50px", overflow: "hidden", cursor: "pointer" }} onClick={() => openImageModal(imagePrev[selectedTransaction._id], imageFile[selectedTransaction._id]?.preview)}>
-                                                    <img src={imagePrev[selectedTransaction._id]} alt="Preview" className="img-fluid" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                                                </div>
-                                                <div className="flex-grow-1">
-                                                    <p className="m-0 fw-bold small"><i className="fa fa-file-image me-2 text-success"></i>{imageFile[selectedTransaction._id]?.preview}</p>
-                                                    <p className="m-0 small text-muted">Ready to upload</p>
-                                                </div>
-                                                <button className="btn btn-sm btn-outline-danger" onClick={() => handleRemoveFile(selectedTransaction._id)}><i className="fa fa-trash"></i></button>
-                                            </div>
-                                        ) : (
-                                            <div className="border border-dashed rounded p-4 text-center">
-                                                <i className="fa fa-cloud-upload-alt fs-1 text-muted mb-3"></i>
-                                                <p className="m-0 mb-3 text-muted text-capitalize small">Upload payment receipt</p>
-                                                <label htmlFor={`modalInputFile-${selectedTransaction._id}`} className="btn btn-outline-success btn-sm" style={{ cursor: "pointer" }}>
-                                                    <i className="fa fa-paperclip me-2"></i>Choose File
-                                                </label>
-                                                <input id={`modalInputFile-${selectedTransaction._id}`} name="image" type="file" accept="image/*" hidden onChange={(e) => handleFile(e, selectedTransaction._id)} ref={(el) => (fileUploadRef.current[selectedTransaction._id] = el)} />
-                                            </div>
-                                        )}
-                                    </div>
-                                ) : (
-                                    <div className="text-center p-4 bg-light rounded">
-                                        <i className="fa fa-receipt fs-1 text-muted mb-3"></i>
-                                        <p className="m-0 text-muted fw-bold">No payment receipt yet</p>
-                                        <p className="m-0 small text-muted mt-2">Receipt will be uploaded once admin processes the payout</p>
-                                    </div>
-                                )}
-                            </>
-                        )}
-                    </div>
-                )}
-
-                {/* ── Offline farmer — simple note kung paid na ── */}
-                {selectedTransaction.farmerName && selectedTransaction.status === 'paid' && (
-                    <div className="alert alert-success py-2 px-3 mb-4">
-                        <i className="fa fa-check-circle me-2"></i>
-                        <small>Payout has been confirmed and marked as received.</small>
-                    </div>
-                )}
-
-                {/* ── Footer buttons ── */}
-                {role === "admin" && selectedTransaction.status === 'pending' ? (
-                    <div className="d-flex gap-2 justify-content-end">
-                        <button className="btn btn-secondary btn-sm" onClick={closePayoutModal} disabled={isProcessingPayout}>
-                            Cancel
-                        </button>
-                        {/* Offline farmer — no receipt needed, confirm lang */}
-                        {selectedTransaction.farmerName ? (
-                            <button
-                                className="btn btn-success btn-sm d-flex align-items-center gap-2"
-                                onClick={() => handlePayout(selectedTransaction._id)}
-                                disabled={isProcessingPayout}
-                            >
-                                {isProcessingPayout
-                                    ? (<><span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span><span>Processing...</span></>)
-                                    : (<><i className="fa fa-check"></i><span>Confirm Received</span></>)
-                                }
-                            </button>
-                        ) : (
-                            <button
-                                className="btn btn-success btn-sm d-flex align-items-center gap-2"
-                                onClick={() => handlePayout(selectedTransaction._id)}
-                                disabled={!imageFile[selectedTransaction._id]?.preview || isProcessingPayout}
-                            >
-                                {isProcessingPayout
-                                    ? (<><span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span><span>Processing...</span></>)
-                                    : (<><i className="fa fa-check"></i><span>Process Payout</span></>)
-                                }
-                            </button>
-                        )}
-                    </div>
-                ) : (
-                    <div className="d-flex justify-content-end">
-                        <button className="btn btn-secondary btn-sm" onClick={closePayoutModal} disabled={isProcessingPayout}>Close</button>
-                    </div>
-                )}
-            </div>
-        </div>
-    </div>
-)}
+            )}
 
             {/* Image Modal */}
             {showModal && (
@@ -999,6 +1130,7 @@ const Transactions = () => {
                                             }
                                         }}
                                     >
+                                        <option value="today">Today</option> 
                                         <option value="thisweek">This Week</option>
                                         <option value="thismonth">This Month</option>
                                         <option value="thisyear">This Year</option>
@@ -1022,11 +1154,10 @@ const Transactions = () => {
                             </div>
 
                             {/* ────────────────────────────────────────────────────────────────── */}
-
-                            <div className="col-12 col-md-4 d-flex flex-column justify-content-center">
+                            <div className="col-12 col-md-6 d-flex flex-column justify-content-center">
                                 <input
                                     type="search"
-                                    placeholder="Search Name..."
+                                    placeholder="Search farmer ID, Name or Payout No...."
                                     value={search}
                                     onChange={(e) => setSearch(e.target.value)}
                                     className="form-control border-2"
@@ -1082,36 +1213,48 @@ const Transactions = () => {
                                         <thead className="position-sticky top-0 z-1">
                                             <tr className="bg-white">
                                                 {role === "admin" && source === "payout/seller"
-                                                    && ["#", "sellers name", "total orders", "gross amount", "tax amount", "e-wallet", "status", "date payout", "actions"]
+                                                    && ["#", "payout no.", "Farmer name", "total orders", "gross amount", "tax amount", "e-wallet", "status", "date payout", "actions"]
+
                                                         .map((data, i) => (
-                                                            <th key={i} className={`text-capitalize p-3 text-success ${i === 8 && "text-center"} ${i === 7 && "text-center"} ${i === 0 && "text-center"} small`}>
+                                                            <th key={i} className={`text-capitalize p-3 text-success ${i === 9 && "text-center"} ${i === 9 && "text-center"} ${i === 0 && "text-center"} small`}>
                                                                 {data}
-                                                                {i === 4 && <span className="small ms-2">(5%)</span>}
+                                                                {i === 5 && <span 
+                                                                title="tax for system maintenance"
+                                                                className="small ms-2">(5%)</span>}
                                                             </th>
                                                         ))}
 
                                                 {role === "admin" && source === "payout/rider"
-                                                    && ["#", "rider name", "total delivery", "gross amount", "tax amount", "e-wallet", "status", "date payout", "actions"]
+                                                    && ["#", "payout no.", "rider name", "total delivery", "gross amount", "tax amount", "e-wallet", "status", "date payout", "actions"]
                                                         .map((data, i) => (
-                                                            <th key={i} className={`text-capitalize p-3 text-success ${i === 8 && "text-center"} ${i === 7 && "text-center"} ${i === 0 && "text-center"} small`}>
+                                                            <th key={i} className={`text-capitalize p-3 text-success ${i === 9 && "text-center"} ${i === 9 && "text-center"} ${i === 0 && "text-center"} small`}>
                                                                 {data}
-                                                                {i === 4 && <span className="small ms-2">(5%)</span>}
+                                                                {i === 5 && <span 
+                                                                title="Tax for system maintenance"
+                                                                className="small ms-2">(5%)</span>}
                                                             </th>
                                                         ))}
 
                                                 {role === "admin" && source === "payout/offlineFarmer"
-                                                    && ["#", "farmer name", "total orders", "gross amount", "tax amount", "status", "date payout", "actions"]
+                                                    && ["#", "payout no.", "farmer name", "total orders", "gross amount", "tax amount", "status", "date payout", "actions"]
                                                         .map((data, i) => (
-                                                            <th key={i} className={`text-capitalize p-3 text-success ${i === 7 && "text-center"} ${i === 6 && "text-center"} ${i === 0 && "text-center"} small`}>
+                                                            <th key={i} className={`text-capitalize p-3 text-success ${i === 8 && "text-center"} ${i === 8 && "text-center"} ${i === 0 && "text-center"} small`}>
                                                                 {data}
-                                                                {i === 4 && <span className="small ms-2">(5%)</span>}
+                                                                {i === 5 && <span
+                                                                title="Tax for system maintenance"
+                                                                className="small ms-2">(5%)</span>}
                                                             </th>
                                                         ))}
 
                                                 {role === "seller" && source === "payout"
-                                                    && ["#", "sellers name", "total orders", "gross amount", "tax amount", "e-wallet", "status", "date payout", "actions"]
+                                                    && ["#", "payout no.", "Farmer name", "total orders", "gross amount", "tax amount", "e-wallet", "status", "date payout", "actions"]
                                                         .map((data, i) => (
-                                                            <th key={i} className={`text-capitalize p-3 text-success ${i === 8 && "text-center"} ${i === 0 && "text-center"} small`}>{data}</th>
+                                                            <th key={i} className={`text-capitalize p-3 text-success ${i === 9 && "text-center"} ${i === 0 && "text-center"} small`}>
+                                                                {data}
+                                                                {i === 5 && <span
+                                                                title="Tax for system maintenance"
+                                                                className="small ms-2">(5%)</span>}
+                                                            </th>
                                                         ))}
 
                                                 {source === "payment" && role === "admin"
@@ -1144,6 +1287,7 @@ const Transactions = () => {
                                                     {role === "admin" && source === "payout/seller" &&
                                                         [
                                                             { data: indexOfFirstItem + i + 1 },
+                                                            { data: data.payoutNumber || "—" },
                                                             { data: { name: data.sellerName, email: data.sellerEmail } },
                                                             { data: data.orders.length },
                                                             { data: `₱${data.totalAmount.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` },
@@ -1154,45 +1298,42 @@ const Transactions = () => {
                                                             { data: { transaction: data } }
                                                         ].map((info, i) => (
                                                             <td key={i} className={`text-capitalize p-3 small ${i === 0 && "text-center"}`}>
-                                                                {i === 1 ? (<>{info.data.name}<p className="m-0 text-lowercase opacity-75 small">{info.data.email}</p></>)
-                                                                    : i === 5 ? (<>{info.data.number}<p className="m-0 text-capitalize opacity-75 small">{info.data.type}</p></>)
-                                                                        : i === 8 ? (
-                                                                            <div className="d-flex align-items-center justify-content-center gap-1 flex-column">
-                                                                                {/* Process / View Details */}
-                                                                                <button
-                                                                                    className={`btn btn-sm d-flex align-items-center justify-content-center ${info.data.transaction.status === 'paid' ? 'btn-outline-success' : 'btn-success'}`}
-                                                                                    onClick={() => openPayoutModal(info.data.transaction)}
-                                                                                    style={{ width: "120px" }}
-                                                                                >
-                                                                                    <i className={`fa ${info.data.transaction.status === 'paid' ? 'fa-eye' : 'fa-edit'} me-1`}></i>
-                                                                                    {info.data.transaction.status === 'paid' ? 'View Details' : 'Process'}
-                                                                                </button>
-
-                                                                                {/* View Transactions */}
-                                                                                <button
-                                                                                    className="btn btn-sm btn-outline-success d-flex align-items-center justify-content-center"
-                                                                                    onClick={() => navigate("/admin/with-device-transactions", {
-                                                                                        state: { 
-                                                                                            payoutId: info.data.transaction._id, 
-                                                                                            payoutDate: info.data.transaction.date,
-                                                                                            totalAmount: info.data.transaction.totalAmount,
-                                                                                            taxAmount: info.data.transaction.taxAmount,
-                                                                                            netAmount: info.data.transaction.netAmount
-                                                                                        }
-                                                                                    })}
-                                                                                    style={{ width: "120px" }}
-                                                                                >
-                                                                                    <i className="fa fa-list me-1"></i>
-                                                                                    View Trans.
-                                                                                </button>
-                                                                            </div>
-                                                                        ) : info.data}
+                                                                {i === 2 ? (<>{info.data.name}<p className="m-0 text-lowercase opacity-75 small">{info.data.email}</p></>)
+                                                                    : i === 6 ? (<>{info.data.number}<p className="m-0 text-capitalize opacity-75 small">{info.data.type}</p></>)
+                                                                        : i === 9 ? (
+                                                                                <div className="d-flex align-items-center justify-content-center gap-2">
+                                                                                    <button
+                                                                                        className={`btn btn-sm ${info.data.transaction.status === 'paid' ? 'btn-outline-success' : 'btn-success'}`}
+                                                                                        onClick={() => openPayoutModal(info.data.transaction)}
+                                                                                        title={info.data.transaction.status === 'paid' ? 'View Details' : 'Process'}
+                                                                                    >
+                                                                                        <i className={`fa ${info.data.transaction.status === 'paid' ? 'fa-eye' : 'fa-edit'}`}></i>
+                                                                                    </button>
+                                                                                    <button
+                                                                                        className="btn btn-sm btn-outline-success"
+                                                                                        onClick={() => navigate("/admin/with-device-transactions", {
+                                                                                            state: { 
+                                                                                                payoutNumber: info.data.transaction.payoutNumber,
+                                                                                                payoutId: info.data.transaction._id, 
+                                                                                                payoutDate: info.data.transaction.date,
+                                                                                                totalAmount: info.data.transaction.totalAmount,
+                                                                                                taxAmount: info.data.transaction.taxAmount,
+                                                                                                netAmount: info.data.transaction.netAmount
+                                                                                            }
+                                                                                        })}
+                                                                                        title="View Transactions"
+                                                                                    >
+                                                                                        <i className="fa fa-list"></i>
+                                                                                    </button>
+                                                                                </div>
+                                                                ) : info.data}
                                                             </td>
                                                         ))}
 
                                                     {role === "admin" && source === "payout/rider" &&
                                                         [
                                                             { data: indexOfFirstItem + i + 1 },
+                                                            { data: data.payoutNumber || "—" },
                                                             { data: { name: data.riderName, email: data.riderEmail } },
                                                             { data: data.totalDelivery },
                                                             { data: `₱${data.totalAmount.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` },
@@ -1203,13 +1344,14 @@ const Transactions = () => {
                                                             { data: { transaction: data } }
                                                         ].map((info, i) => (
                                                             <td key={i} className={`text-capitalize p-3 small ${i === 0 && "text-center"}`}>
-                                                                {i === 1 ? (<>{info.data.name}<p className="m-0 text-lowercase opacity-75 small">{info.data.email}</p></>)
-                                                                    : i === 5 ? (<>{info.data.number}<p className="m-0 text-capitalize opacity-75 small">{info.data.type}</p></>)
-                                                                        : i === 8 ? (
+                                                                {i === 2 ? (<>{info.data.name}<p className="m-0 text-lowercase opacity-75 small">{info.data.email}</p></>)
+                                                                    : i === 6 ? (<>{info.data.number}<p className="m-0 text-capitalize opacity-75 small">{info.data.type}</p></>)
+                                                                        : i === 9 ? (
                                                                             <div className="d-flex align-items-center justify-content-center">
-                                                                                <button className={`btn btn-sm ${info.data.transaction.status === 'paid' ? 'btn-outline-success' : 'btn-success'}`} onClick={() => openPayoutModal(info.data.transaction)}>
-                                                                                    <i className={`fa ${info.data.transaction.status === 'paid' ? 'fa-eye' : 'fa-edit'} me-1`}></i>
-                                                                                    {info.data.transaction.status === 'paid' ? 'View Details' : 'Process'}
+                                                                                <button 
+                                                                                title={info.data.transaction.status === 'paid' ? 'View Details' : 'Process'}
+                                                                                className={`btn btn-sm ${info.data.transaction.status === 'paid' ? 'btn-outline-success' : 'btn-success'}`} onClick={() => openPayoutModal(info.data.transaction)}>
+                                                                                    <i className={`fa ${info.data.transaction.status === 'paid' ? 'fa-eye' : 'fa-edit'} `}></i>
                                                                                 </button>
                                                                             </div>
                                                                         ) : info.data}
@@ -1219,6 +1361,7 @@ const Transactions = () => {
                                                     {role === "seller" && source === "payout" &&
                                                         [
                                                             { data: indexOfFirstItem + i + 1 },
+                                                            { data: data.payoutNumber},
                                                             { data: { name: data.sellerName, email: data.sellerEmail } },
                                                             { data: data.orders.length },
                                                             { data: `₱${data.totalAmount.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` },
@@ -1229,12 +1372,15 @@ const Transactions = () => {
                                                             { data: { transaction: data } }
                                                         ].map((info, i) => (
                                                             <td key={i} className={`text-capitalize p-3 small ${i === 0 && "text-center"}`}>
-                                                                {i === 1 ? (<>{info.data.name}<p className="m-0 text-lowercase opacity-75 small">{info.data.email}</p></>)
-                                                                    : i === 5 ? (<>{info.data.number}<p className="m-0 text-capitalize opacity-75 small">{info.data.type}</p></>)
-                                                                        : i === 8 ? (
+                                                                {i === 2 ? (<>{info.data.name}<p className="m-0 text-lowercase opacity-75 small">{info.data.email}</p></>)
+                                                                    : i === 6 ? (<>{info.data.number}<p className="m-0 text-capitalize opacity-75 small">{info.data.type}</p></>)
+                                                                        : i === 9 ? (
                                                                             <div className="d-flex align-items-center justify-content-center">
-                                                                                <button className="btn btn-sm btn-outline-success" onClick={() => openPayoutModal(info.data.transaction)}>
-                                                                                    <i className="fa fa-eye me-1"></i> View Details
+                                                                                <button 
+                                                                                title="view details"
+                                                                                className="btn btn-sm btn-outline-success" 
+                                                                                onClick={() => openPayoutModal(info.data.transaction)}>
+                                                                                    <i className="fa fa-eye "></i> 
                                                                                 </button>
                                                                             </div>
                                                                         ) : info.data}
@@ -1244,6 +1390,7 @@ const Transactions = () => {
                                                     {role === "admin" && source === "payout/offlineFarmer" &&
                                                         [
                                                             { data: indexOfFirstItem + i + 1 },
+                                                            { data: data.payoutNumber || "—" },
                                                             { data: { name: data.farmerName, contact: data.farmerContact } },
                                                             { data: data.totalOrders || data.orders?.length || 0 },
                                                             { data: `₱${data.totalAmount.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` },
@@ -1253,22 +1400,18 @@ const Transactions = () => {
                                                             { data: { transaction: data } }
                                                         ].map((info, i) => (
                                                             <td key={i} className={`text-capitalize p-3 small ${i === 0 && "text-center"}`}>
-                                                                {i === 1 ? (<>{info.data.name}<p className="m-0 text-uppercase opacity-75 small" style={{fontSize: "10px"}}>{info.data.contact || "N/A"}</p></>)
-                                                                    : i === 7 ? (
-                                                                       <div className="d-flex align-items-center justify-content-center gap-1 flex-column">
-                                                                            {/* Process / View Details */}
+                                                                {i === 2 ? (<>{info.data.name}<p className="m-0 text-uppercase opacity-75 small" style={{fontSize: "10px"}}>{info.data.contact || "N/A"}</p></>)
+                                                                    : i === 8 ? (
+                                                                        <div className="d-flex align-items-center  gap-2">
                                                                             <button
-                                                                                className={`btn btn-sm d-flex align-items-center justify-content-center ${info.data.transaction.status === 'paid' ? 'btn-outline-success' : 'btn-success'}`}
+                                                                                className={`btn btn-sm ${info.data.transaction.status === 'paid' ? 'btn-outline-success' : 'btn-success'}`}
                                                                                 onClick={() => openPayoutModal(info.data.transaction)}
-                                                                                style={{ width: "120px" }}
+                                                                                title={info.data.transaction.status === 'paid' ? 'View Details' : 'Process'}
                                                                             >
-                                                                                <i className={`fa ${info.data.transaction.status === 'paid' ? 'fa-eye' : 'fa-edit'} me-1`}></i>
-                                                                                {info.data.transaction.status === 'paid' ? 'View Details' : 'Process'}
+                                                                                <i className={`fa ${info.data.transaction.status === 'paid' ? 'fa-eye' : 'fa-edit'}`}></i>
                                                                             </button>
-
-                                                                            {/* View Trans */}
                                                                             <button
-                                                                                className="btn btn-sm btn-outline-success d-flex align-items-center justify-content-center"
+                                                                                className="btn btn-sm btn-outline-success"
                                                                                 onClick={() => navigate("/admin/transactions", {
                                                                                     state: { 
                                                                                         payoutId: info.data.transaction._id, 
@@ -1278,10 +1421,9 @@ const Transactions = () => {
                                                                                         netAmount: info.data.transaction.netAmount
                                                                                     }
                                                                                 })}
-                                                                                style={{ width: "120px" }}
+                                                                                title="View Transactions"
                                                                             >
-                                                                                <i className="fa fa-list me-1"></i>
-                                                                                View Trans.
+                                                                                <i className="fa fa-list"></i>
                                                                             </button>
                                                                         </div>
                                                                     ) : info.data}

@@ -11,7 +11,6 @@ import OfflineFarmerPaymentTransaction from "../../models/offlineFarmerPaymentTr
 
 
 
-
 // ─── Helper: Build date range filter ─────────────────────────────────────────
 // NOTE: `date` field in PayoutTransaction & RiderPayout is stored as String ("YYYY-MM-DD")
 // ISO date string comparison is lexicographic = chronological, so $gte/$lte works correctly
@@ -21,6 +20,14 @@ const getDateStringRange = (period, startDate, endDate) => {
     const todayStr = toDateStr(now);
 
     switch (period) {
+
+
+        case "today": {                              // ← DAGDAG LANG ITO
+            return { start: todayStr, end: todayStr };
+        }
+
+
+
         case "thisweek": {
             const dayOfWeek = now.getDay();
             const daysFromMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Monday-based
@@ -64,25 +71,65 @@ export const transaction = async (req, res) => {
         const paymentQuery  = dateRange ? { 'paidAt.date': { $gte: dateRange.start, $lte: dateRange.end } } : {};
 
         // ── Payout (Seller) ───────────────────────────────────────────────────
-        const payout = await PayoutTransaction.find(payoutQuery);
-        const filteredPayouts = payout.filter((payout) => {
-            const deleted = payout.deletedBy.find(
-                (e) => e.id.toString() === id.toString() && e.role === role
-            );
-            return !deleted;
-        });
+        
+        const payout = await PayoutTransaction.find(payoutQuery)
+        .populate('sellerId', 'accountId e_WalletAcc');
+
+        const filteredPayouts = payout
+            .filter((payout) => {
+                const deleted = payout.deletedBy.find(
+                    (e) => e.id.toString() === id.toString() && e.role === role
+                );
+                return !deleted;
+            })
+            .map((payout) => {
+                const obj = payout.toObject();
+                return {
+                    ...obj,
+                    e_WalletAcc: payout.sellerId?.e_WalletAcc ?? obj.e_WalletAcc,
+                    accountId: payout.sellerId?.accountId
+                };
+             });
+
+        
 
         // ── Rider Payout ──────────────────────────────────────────────────────
-        const riderPayout = await RiderPayout.find(riderQuery);
-        const filteredRiderPayouts = riderPayout.filter((payout) => {
-            const deleted = payout.deletedBy.find(
-                (e) => e.id.toString() === id.toString() && e.role === role
-            );
-            return !deleted;
-        });
+        const riderPayout = await RiderPayout.find(riderQuery)
+            .populate('riderId', 'accountId e_WalletAcc'); // 👈
+
+        const filteredRiderPayouts = riderPayout
+            .filter((payout) => {
+                const deleted = payout.deletedBy.find(
+                    (e) => e.id.toString() === id.toString() && e.role === role
+                );
+                return !deleted;
+            })
+            .map((payout) => {
+                const obj = payout.toObject();
+                return {
+                    ...obj,
+                    e_WalletAcc: payout.riderId?.e_WalletAcc ?? obj.e_WalletAcc,
+                    accountId: payout.riderId?.accountId
+                };
+            });
+
+
+
 
         // ── Offline Farmer Payout (No Device) ─────────────────────────────────
-        const offlineFarmerPayout = await OfflineFarmerPayout.find(offlineFarmerQuery);
+
+        const offlineFarmerPayout = await OfflineFarmerPayout.find(offlineFarmerQuery)
+            .populate('farmerId', 'accountId'); // 👈
+
+        const mappedOfflineFarmerPayout = offlineFarmerPayout.map((payout) => {
+            const obj = payout.toObject();
+            return {
+                ...obj,
+                accountId: payout.farmerId?.accountId
+            };
+        })
+
+
 
         // ── Payment ───────────────────────────────────────────────────────────
         const payment = await AdminPaymentTransaction.find(paymentQuery);
@@ -91,7 +138,7 @@ export const transaction = async (req, res) => {
             payout: filteredPayouts,
             payment,
             riderPayout: filteredRiderPayouts,
-            offlineFarmerPayout: offlineFarmerPayout
+            offlineFarmerPayout: mappedOfflineFarmerPayout
         };
 
         res.status(200).json(resData);
@@ -251,6 +298,11 @@ export const updatePayout = async (req, res) => {
 };
 
 
+
+
+
+
+
 export const getOfflineFarmerPaymentTransactions = async (req, res) => {
     try {
         const { payoutId } = req.query;
@@ -272,6 +324,10 @@ export const getOfflineFarmerPaymentTransactions = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
+
+
+
+
 
 
 export const getSellerPaymentTransactions = async (req, res) => {

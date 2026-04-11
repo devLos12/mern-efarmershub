@@ -11,6 +11,12 @@ const getDateStringRange = (period, startDate, endDate) => {
     const todayStr = toDateStr(now);
 
     switch (period) {
+
+        
+        case "today": {
+            return { start: todayStr, end: todayStr };
+        }
+
         case "thisweek": {
             const dayOfWeek = now.getDay();
             const daysFromMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Monday-based
@@ -37,6 +43,8 @@ const getDateStringRange = (period, startDate, endDate) => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 
+
+
 export const getSellerTransaction = async (req, res) => {
     try {
         const { id, role } = req.account;
@@ -56,14 +64,25 @@ export const getSellerTransaction = async (req, res) => {
             ...(dateRange && { 'paidAt.date': { $gte: dateRange.start, $lte: dateRange.end } })
         };
 
-        const payout = await PayoutTransaction.find(payoutQuery);
-        const filteredPayouts = payout.filter((payout) => {
-            const deleted = payout.deletedBy.find(
-                (e) => e.id.toString() === id.toString() && e.role === role
-            );
-            return !deleted;
-        });
+        const payout = await PayoutTransaction.find(payoutQuery)
+            .populate('sellerId', 'accountId e_WalletAcc'); // 👈
 
+        const filteredPayouts = payout
+            .filter((payout) => {
+                const deleted = payout.deletedBy.find(
+                    (e) => e.id.toString() === id.toString() && e.role === role
+                );
+                return !deleted;
+            })
+            .map((payout) => {
+                const obj = payout.toObject();
+                return {
+                    ...obj,
+                    e_WalletAcc: payout.sellerId?.e_WalletAcc ?? obj.e_WalletAcc,
+                    accountId: payout.sellerId?.accountId
+                };
+            });
+        
         const payment = await SellerPaymentTransaction.find(paymentQuery);
 
         const resData = { payout: filteredPayouts, payment };
@@ -73,6 +92,11 @@ export const getSellerTransaction = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
+
+
+
+
+
 
 
 export const sellerDeletePayment = async (req, res) => {
