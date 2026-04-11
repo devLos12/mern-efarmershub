@@ -1,6 +1,8 @@
 import mongoose from "mongoose";
 
 const offlineFarmerPayoutSchema = new mongoose.Schema({
+
+    payoutNumber: { type: String, unique: true, sparse: true },
     
     farmerId: { 
         type: mongoose.Schema.Types.ObjectId,

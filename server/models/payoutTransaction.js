@@ -2,6 +2,9 @@ import mongoose from "mongoose";
 
 
 const payoutTransactionSchema = new mongoose.Schema({
+    payoutNumber: { type: String, unique: true, sparse: true },
+    
+    
     sellerId: { 
         type: mongoose.Schema.Types.ObjectId,
         ref: "Seller",

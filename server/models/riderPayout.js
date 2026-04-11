@@ -2,6 +2,8 @@ import mongoose from "mongoose";
 
 
 const riderPayout = new mongoose.Schema({
+    payoutNumber: { type: String, unique: true, sparse: true },    
+    
     riderId: { 
         type: mongoose.Schema.Types.ObjectId,
         ref: "Rider",

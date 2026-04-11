@@ -70,6 +70,7 @@ const getPHTime = () => {
 };
 
 
+
 const createTransaction = async(order, receiptFile) => {
     const paidTime = getPHTime();
 
@@ -149,6 +150,37 @@ const createTransaction = async(order, receiptFile) => {
 
 
 
+
+
+const generatePayoutNumber = async (date, type) => {
+    const prefix =  type === "offlineFarmer" 
+    ? `OFFPAY${date.replace(/-/g, "")}` 
+    : `PAY${date.replace(/-/g, "")}`;
+    
+
+    const model = type === "offlineFarmer" ? OfflineFarmerPayout : PayoutTransaction;
+
+    const lastPayout = await model.findOne(
+        { payoutNumber: { $regex: `^${prefix}` } },
+        { payoutNumber: 1 },
+        { sort: { payoutNumber: -1 } }
+    );
+
+    let sequence = 1;
+    if (lastPayout) {
+        const lastSequence = parseInt(lastPayout.payoutNumber.split("-").pop());
+        sequence = lastSequence + 1;
+    }
+
+    return `${prefix}-${String(sequence).padStart(4, "0")}`;
+};
+
+
+
+
+
+
+
 const createOrUpdatePayout = async(items, orderId) => {
     // ✅ ADD: Get seller tax rate from environment
     const SELLER_TAX_RATE = parseFloat(process.env.SELLER_TAX_RATE) || 0.05; // 5% tax default
@@ -187,13 +219,18 @@ const createOrUpdatePayout = async(items, orderId) => {
             await payout.save();
             
         } else {
+
             // ✅ UPDATED: Create new payout with tax calculation
             const seller = await Seller.findOne({_id: sellerId});
             if(!seller){
                 throw new Error("seller not found. product must have an active seller.")
             }
             
+            const payoutNumber = await generatePayoutNumber(today, "onlineFarmer");
+
+
             await PayoutTransaction.create({
+                payoutNumber,
                 sellerId,
                 sellerName: `${seller.firstname} ${seller.lastname}`,
                 sellerEmail: seller.email,
@@ -210,9 +247,88 @@ const createOrUpdatePayout = async(items, orderId) => {
                 taxAmount: taxAmount,       // TAX total
                 netAmount: netAmount        // NET total (actual payout to seller)
             });
+                
+        
         }
     }
 }
+
+
+
+
+const generateRiderPayoutNumber = async (date) => {
+    const prefix = `RIDERPAY${date.replace(/-/g, "")}`;
+
+    const lastPayout = await RiderPayout.findOne(
+        { payoutNumber: { $regex: `^${prefix}` } },
+        { payoutNumber: 1 },
+        { sort: { payoutNumber: -1 } }
+    );
+
+    let sequence = 1;
+    if (lastPayout) {
+        const lastSequence = parseInt(lastPayout.payoutNumber.split("-").pop());
+        sequence = lastSequence + 1;
+    }
+
+    return `${prefix}-${String(sequence).padStart(4, "0")}`;
+};
+
+
+
+// NEW: Offline Farmer Payout Function (for COD orders)
+const createOrUpdateOfflineFarmerPayout = async(items, orderId) => {
+    const SELLER_TAX_RATE = parseFloat(process.env.SELLER_TAX_RATE) || 0.05;
+
+    for (const item of items) {
+        const farmerId = item.seller.id;
+        
+        // Check if this seller ID is actually an OfflineFarmer
+        const farmer = await OfflineFarmer.findById(farmerId);
+        if (!farmer) continue; // Skip if not an offline farmer
+
+        const grossAmount = item.prodPrice * item.quantity;
+        const taxAmount = grossAmount * SELLER_TAX_RATE;
+        const netAmount = grossAmount - taxAmount;
+        const today = new Date().toISOString().split("T")[0];
+
+        const payout = await OfflineFarmerPayout.findOne({ 
+            farmerId, 
+            date: today, 
+            status: "pending" 
+        });
+
+        if (payout) {
+            payout.orders.push({ orderId: orderId, amount: grossAmount });
+            payout.totalAmount += grossAmount;
+            payout.taxAmount += taxAmount;
+            payout.netAmount += netAmount;
+            payout.totalOrders = payout.orders.length;
+            await payout.save();
+        } else {
+
+
+            await OfflineFarmerPayout.create({
+                farmerId,
+                farmerName: `${farmer.firstname} ${farmer.lastname}`,
+                farmerContact: farmer.contact || "",
+                date: today,
+                orders: [{ orderId: orderId, amount: grossAmount }],
+                totalAmount: grossAmount,
+                taxAmount: taxAmount,
+                netAmount: netAmount,
+                totalOrders: 1
+            });
+        }
+    }
+}
+
+
+
+
+
+
+
 
 
 
@@ -254,7 +370,12 @@ const createOrUpdateRiderPayout = async(riderId, orderId) => {
         const taxAmount = grossAmount * RIDER_TAX_RATE;
         const netAmount = grossAmount - taxAmount;
 
+
+        const payoutNumber = await generateRiderPayoutNumber(today);
+
+        
         await RiderPayout.create({
+            payoutNumber,
             riderId,
             riderName: `${rider.firstname} ${rider.lastname}`,
             riderEmail: rider.email,
@@ -272,50 +393,12 @@ const createOrUpdateRiderPayout = async(riderId, orderId) => {
 }
 
 
-// NEW: Offline Farmer Payout Function (for COD orders)
-const createOrUpdateOfflineFarmerPayout = async(items, orderId) => {
-    const SELLER_TAX_RATE = parseFloat(process.env.SELLER_TAX_RATE) || 0.05;
 
-    for (const item of items) {
-        const farmerId = item.seller.id;
-        
-        // Check if this seller ID is actually an OfflineFarmer
-        const farmer = await OfflineFarmer.findById(farmerId);
-        if (!farmer) continue; // Skip if not an offline farmer
 
-        const grossAmount = item.prodPrice * item.quantity;
-        const taxAmount = grossAmount * SELLER_TAX_RATE;
-        const netAmount = grossAmount - taxAmount;
-        const today = new Date().toISOString().split("T")[0];
 
-        const payout = await OfflineFarmerPayout.findOne({ 
-            farmerId, 
-            date: today, 
-            status: "pending" 
-        });
 
-        if (payout) {
-            payout.orders.push({ orderId: orderId, amount: grossAmount });
-            payout.totalAmount += grossAmount;
-            payout.taxAmount += taxAmount;
-            payout.netAmount += netAmount;
-            payout.totalOrders = payout.orders.length;
-            await payout.save();
-        } else {
-            await OfflineFarmerPayout.create({
-                farmerId,
-                farmerName: `${farmer.firstname} ${farmer.lastname}`,
-                farmerContact: farmer.contact || "",
-                date: today,
-                orders: [{ orderId: orderId, amount: grossAmount }],
-                totalAmount: grossAmount,
-                taxAmount: taxAmount,
-                netAmount: netAmount,
-                totalOrders: 1
-            });
-        }
-    }
-}
+
+
 
 
 const storage = multer.memoryStorage();

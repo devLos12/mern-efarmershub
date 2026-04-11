@@ -473,6 +473,37 @@ const createTransaction = async(orderId, items, payment, userId, firstname, last
 
 
 
+
+
+
+const generatePayoutNumber = async (date, type) => {
+    const prefix =  type === "offlineFarmer" 
+    ? `OFFPAY${date.replace(/-/g, "")}` 
+    : `PAY${date.replace(/-/g, "")}`;
+    
+
+    const model = type === "offlineFarmer" ? OfflineFarmerPayout : PayoutTransaction;
+
+    const lastPayout = await model.findOne(
+        { payoutNumber: { $regex: `^${prefix}` } },
+        { payoutNumber: 1 },
+        { sort: { payoutNumber: -1 } }
+    );
+
+    let sequence = 1;
+    if (lastPayout) {
+        const lastSequence = parseInt(lastPayout.payoutNumber.split("-").pop());
+        sequence = lastSequence + 1;
+    }
+
+    return `${prefix}-${String(sequence).padStart(4, "0")}`;
+};
+
+
+
+
+
+
 const createOrUpdatePayout = async(items, order)=>{
     const SELLER_TAX_RATE = process.env.SELLER_TAX_RATE;
 
@@ -490,6 +521,9 @@ const createOrUpdatePayout = async(items, order)=>{
         const today = new Date().toISOString().split("T")[0];
         const payout = await PayoutTransaction.findOne({ sellerId, date: today, status: "pending"})
 
+
+        
+
         if (payout){
             payout.orders.push({ orderId: order._id, amount: grossAmount })
             payout.totalAmount += grossAmount;
@@ -497,10 +531,14 @@ const createOrUpdatePayout = async(items, order)=>{
             payout.netAmount += netAmount;
             await payout.save();
         } else {
+
             const seller = await Seller.findOne({_id: sellerId});
-            if(!seller) throw new Error("Seller not found. Product must have an active seller.");
+            if(!seller) throw new Error("Seller not found.");
+
+            const payoutNumber = await generatePayoutNumber(today, 'onlineFarmer');
 
             await PayoutTransaction.create({
+                payoutNumber,
                 sellerId,
                 sellerName: `${seller.firstname} ${seller.lastname}`,
                 sellerEmail: seller.email,
@@ -514,6 +552,8 @@ const createOrUpdatePayout = async(items, order)=>{
                 taxAmount: taxAmount,
                 netAmount: netAmount
             });
+
+
         }
     }
 }
@@ -549,7 +589,11 @@ const createOrUpdateOfflineFarmerPayout = async(items, order) => {
             payout.totalOrders = payout.orders.length;
             await payout.save();
         } else {
+
+            const payoutNumber = await generatePayoutNumber(today, 'offlineFarmer');
+
             await OfflineFarmerPayout.create({
+                payoutNumber,
                 farmerId,
                 farmerName: `${farmer.firstname} ${farmer.lastname}`,
                 farmerContact: farmer.contact || "",
@@ -560,6 +604,7 @@ const createOrUpdateOfflineFarmerPayout = async(items, order) => {
                 netAmount: netAmount,
                 totalOrders: 1
             });
+
         }
     }
 };
@@ -616,7 +661,7 @@ export const statusOrder = async(req, res) => {
                         order.refNo,
                         order.proofOfPayment.image,
                     );
-
+                    
                     try {
                         for (const item of order.orderItems) {
                             const product = await Product.findById(item.prodId);
@@ -794,8 +839,6 @@ export const statusOrder = async(req, res) => {
         // ============================
         if(order.orderMethod === "delivery" && newStatus === "ready to deliver") {
 
-
-
             order.statusDelivery = newStatus;
             order.statusHistory.push({
                 status: newStatus,
@@ -864,11 +907,6 @@ export const statusOrder = async(req, res) => {
         res.status(500).json({ message: error.message});
     }
 }
-
-
-
-
-
 
 
 
