@@ -8,10 +8,6 @@ import { appContext } from "../../context/appContext.jsx";
 import Toast from "../toastNotif.jsx";
 import html2pdf from 'html2pdf.js';
 
-
-
-
-// ── CUSTOM DATE RANGE MODAL ────────────────────────────────────────────────────
 const CustomRangeModal = ({ 
     show, 
     onClose, 
@@ -191,9 +187,8 @@ const Accounts = () => {
     const [showAddModal, setShowAddModal] = useState(false);
     const [verificationFilter, setVerificationFilter] = useState('all');
     const [isRefreshing, setIsRefreshing] = useState(false);
-    const [farmerTypeFilter, setFarmerTypeFilter] = useState('all'); // ✅ With Device / No Device filter
+    const [farmerTypeFilter, setFarmerTypeFilter] = useState('all');
 
-    // Date filter states
     const [datePeriod, setDatePeriod] = useState('all');
     const [customStartDate, setCustomStartDate] = useState('');
     const [customEndDate, setCustomEndDate] = useState('');
@@ -204,18 +199,12 @@ const Accounts = () => {
     const [itemsPerPage] = useState(10);
     const printRef = useRef();
 
+    // ── DATE ONLY — no time ───────────────────────────────────────────────────
     const formatDate = (dateString) => {
         const date = new Date(dateString);
-        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-        const month = months[date.getMonth()];
-        const day = date.getDate();
-        const year = date.getFullYear();
-        let hours = date.getHours();
-        const minutes = date.getMinutes().toString().padStart(2, '0');
-        const ampm = hours >= 12 ? 'PM' : 'AM';
-        hours = hours % 12;
-        hours = hours ? hours : 12;
-        return `${month} ${day}, ${year} ${hours}:${minutes} ${ampm}`;
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        return `${months[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
     };
 
     useEffect(() => {
@@ -225,30 +214,28 @@ const Accounts = () => {
         return () => clearTimeout(result);
     }, [search]);
 
-    // ✅ filteredAccounts — farmerTypeFilter included in deps
     const filteredAccounts = useMemo(() => {
         let filtered = accountsData;
 
         if (debouncedSearch) {
             filtered = filtered.filter((account) => {
-                const firstname = (account.firstname || "").toLowerCase();
-                const lastname = (account.lastname || "").toLowerCase();
-                const email = (account.email || "").toLowerCase();
-                const accountId = (account.accountId || "").toLowerCase();
-                const fullname = [account.firstname, account.middlename, account.lastname, account.suffix]
+                const firstname  = (account.firstname  || "").toLowerCase();
+                const middlename = (account.middlename || "").toLowerCase();
+                const lastname   = (account.lastname   || "").toLowerCase();
+                const email      = (account.email      || "").toLowerCase();
+                const accountId  = (account.accountId  || "").toLowerCase();
+                const fullname   = [account.firstname, account.middlename, account.lastname, account.suffix]
                     .filter(Boolean).join(' ').toLowerCase();
 
-                return firstname.includes(debouncedSearch) ||
-                    lastname.includes(debouncedSearch) ||
-                    fullname.includes(debouncedSearch) ||
-                    email.includes(debouncedSearch) ||
+                return firstname.includes(debouncedSearch)  ||
+                    middlename.includes(debouncedSearch)     ||
+                    lastname.includes(debouncedSearch)       ||
+                    fullname.includes(debouncedSearch)       ||
+                    email.includes(debouncedSearch)          ||
                     accountId.includes(debouncedSearch);
             });
         }
 
-        
-
-        // ✅ Farmer type filter — With Device / No Device
         if (location.state?.source === "seller" && farmerTypeFilter !== 'all') {
             filtered = filtered.filter((account) => account._farmerType === farmerTypeFilter);
         }
@@ -258,12 +245,12 @@ const Accounts = () => {
         }
 
         return filtered;
-    }, [accountsData, debouncedSearch, verificationFilter, farmerTypeFilter, location.state?.source]); // ✅ farmerTypeFilter sa deps
+    }, [accountsData, debouncedSearch, verificationFilter, farmerTypeFilter, location.state?.source]);
 
-    const indexOfLastItem = currentPage * itemsPerPage;
+    const indexOfLastItem  = currentPage * itemsPerPage;
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-    const currentItems = filteredAccounts.slice(indexOfFirstItem, indexOfLastItem);
-    const totalPages = Math.ceil(filteredAccounts.length / itemsPerPage);
+    const currentItems     = filteredAccounts.slice(indexOfFirstItem, indexOfLastItem);
+    const totalPages       = Math.ceil(filteredAccounts.length / itemsPerPage);
 
     const getVerificationBadge = (status) => {
         const badges = {
@@ -285,7 +272,7 @@ const Accounts = () => {
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (!openMenuId) return;
-            const menuEl = menuRefs.current[openMenuId];
+            const menuEl   = menuRefs.current[openMenuId];
             const buttonEl = buttonRefs.current[openMenuId];
             if (menuEl && buttonEl && !menuEl.contains(event.target) && !buttonEl.contains(event.target)) {
                 setOpenMenuId(null);
@@ -319,8 +306,8 @@ const Accounts = () => {
 
     const handleViewProfile = (id) => {
         const account = accountsData.find(a => a._id === id);
-        const resolvedSource = account?._farmerType === "offlineFarmer" 
-            ? "offlineFarmer" 
+        const resolvedSource = account?._farmerType === "offlineFarmer"
+            ? "offlineFarmer"
             : location.state?.source;
         navigate(`/admin/profile`, { state: { accountId: id, source: resolvedSource } });
     };
@@ -331,23 +318,19 @@ const Accounts = () => {
             if (datePeriod === 'custom' && customStartDate && customEndDate) {
                 url += `&startDate=${customStartDate}&endDate=${customEndDate}`;
             }
-
-            const res = await fetch(url, { method: "GET", credentials: "include" });
+            const res  = await fetch(url, { method: "GET", credentials: "include" });
             const data = await res.json();
             if (!res.ok) throw new Error(data.message);
             setError(null);
 
-            if (location.state?.source === "user")  setAccountsData([...(data.user ?? [])].reverse());
-
+            if (location.state?.source === "user")   setAccountsData([...(data.user ?? [])].reverse());
             if (location.state?.source === "seller") {
-                // ✅ Merge seller + offlineFarmer, sorted by createdAt descending
                 const merged = [
-                    ...(data.seller ?? []).map(s => ({ ...s, _farmerType: "seller" })),
+                    ...(data.seller       ?? []).map(s => ({ ...s, _farmerType: "seller" })),
                     ...(data.offlineFarmer ?? []).map(f => ({ ...f, _farmerType: "offlineFarmer" })),
                 ].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
                 setAccountsData(merged);
             }
-
             if (location.state?.source === "rider") setAccountsData([...(data.rider ?? [])].reverse());
             if (location.state?.source === "admin") setAccountsData([...(data.admin ?? [])].reverse());
 
@@ -363,7 +346,6 @@ const Accounts = () => {
         finally { setIsRefreshing(false); }
     };
 
-    // ── PRINT ──────────────────────────────────────────────────────────────────
     const handlePrint = () => {
         const printContent = printRef.current.cloneNode(true);
         printContent.querySelectorAll('tr').forEach(row => {
@@ -419,7 +401,6 @@ const Accounts = () => {
         windowPrint.document.close();
     };
 
-    // ── DOWNLOAD PDF ───────────────────────────────────────────────────────────
     const handleDownloadPDF = () => {
         const printContent = printRef.current.cloneNode(true);
         printContent.querySelectorAll('tr').forEach(row => {
@@ -472,7 +453,6 @@ const Accounts = () => {
 
     const Height = () => { return height < 574 ? height : height - 152; };
 
-    // ✅ Reset page + farmerTypeFilter on tab/search/filter change
     useEffect(() => {
         setCurrentPage(1);
         setFarmerTypeFilter('all');
@@ -497,7 +477,6 @@ const Accounts = () => {
         </div>
     );
 
-    // ── REUSABLE ACTION MENU ───────────────────────────────────────────────────
     const ActionMenu = ({ data, popUp }) => {
         const isMenuOpen = openMenuId === data._id;
         return (
@@ -527,10 +506,7 @@ const Accounts = () => {
                             style={{ cursor: "pointer" }}
                             onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f3f4f6'}
                             onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                            onClick={() => {
-                                handleViewProfile(data._id); 
-                                setOpenMenuId(null); 
-                                }}>
+                            onClick={() => { handleViewProfile(data._id); setOpenMenuId(null); }}>
                             <i className="fa fa-user text-primary"></i>
                             <p className="m-0 small text-primary">view profile</p>
                         </div>
@@ -581,6 +557,16 @@ const Accounts = () => {
         if (!isCustomRange) setDatePeriod('all');
     };
 
+    // ── SHARED NAME CELLS (firstname | middlename | lastname | ext.) ──────────
+    const NameCells = ({ data }) => (
+        <>
+            <td className="align-middle small text-capitalize">{data.firstname  || "N/A"}</td>
+            <td className="align-middle small text-capitalize">{data.middlename || "N/A"}</td>
+            <td className="align-middle small text-capitalize">{data.lastname   || "N/A"}</td>
+            <td className="align-middle small text-capitalize">{data.suffix     || "N/A"}</td>
+        </>
+    );
+
     return (
         <>
             <div className="p-2">
@@ -626,8 +612,6 @@ const Accounts = () => {
                                 className="form-control border-success border-opacity-25 ps-5 small"
                                 style={{ outline: "none" }} />
                         </div>
-
-                        {/* Date Period Filter */}
                         <div className="d-flex align-items-center gap-2">
                             <div className="d-flex align-items-center gap-2">
                                 <i className="fa-solid fa-calendar small text-success"></i>
@@ -651,16 +635,12 @@ const Accounts = () => {
                                 <option value="thisyear">This Year</option>
                                 <option value="custom">Custom</option>
                             </select>
-                            <span className="text-muted small text-nowrap">
-                                {getPeriodLabel()}
-                            </span>
+                            <span className="text-muted small text-nowrap">{getPeriodLabel()}</span>
                         </div>
                     </div>
 
                     <div className="col">
                         <div className="mt-3 mt-md-0 text-end d-flex justify-content-end gap-2 flex-wrap">
-
-                            {/* ✅ Farmer Type Filter — seller tab only */}
                             {location.state?.source === "seller" && (
                                 <select
                                     className="form-select form-select-sm border-success border-opacity-25 small"
@@ -672,8 +652,6 @@ const Accounts = () => {
                                     <option value="offlineFarmer">No Device</option>
                                 </select>
                             )}
-
-                            {/* Verification Status Filter */}
                             {showVerificationFilter && (
                                 <select
                                     className="form-select form-select-sm border-success border-opacity-25 small"
@@ -686,7 +664,6 @@ const Accounts = () => {
                                     <option value="rejected">Rejected</option>
                                 </select>
                             )}
-
                             <button
                                 className="d-flex align-items-center px-3 py-1 shadow-sm border gap-2 rounded"
                                 onClick={handleRefresh}
@@ -718,44 +695,53 @@ const Accounts = () => {
 
                             <div ref={printRef} className="table-responsive"
                                 style={{ height: filteredAccounts.length <= 9 ? "320px" : "" }}>
-                                <table className="table table-hover" style={{ minWidth: "800px" }}>
+                                <table className="table table-hover" style={{ minWidth: "1000px" }}>
                                     <thead className="bg-light">
                                         <tr>
+                                            {/* ── ADMIN ── */}
                                             {location.state?.source === "admin" &&
-                                                ["Account ID", "Email", "Contact Number", "Admin Type", "Created At", "Action"].map((col, i) => (
-                                                    <th key={i} className={`text-uppercase small text-success ${i === 5 ? "text-center" : ""}`}>{col}</th>
+                                                ["Account ID", "Firstname", "Middlename", "Lastname", "Ext.", "Email", "Contact Number", "Admin Type", "Created At", "Action"]
+                                                .map((col, i) => (
+                                                    <th key={i} className={`text-uppercase small text-success ${i === 9 ? "text-center" : ""}`}>{col}</th>
                                                 ))
                                             }
+                                            {/* ── BUYER ── */}
                                             {location.state?.source === "user" &&
-                                                ["Account ID", "Buyer Name", "Email", "Created At", "Message", "Action"].map((col, i) => (
-                                                    <th key={i} className={`text-uppercase small text-success ${i >= 4 ? "text-center" : ""}`}>{col}</th>
+                                                ["Account ID", "Firstname", "Middlename", "Lastname", "Ext.", "Email", "Created At", "Message", "Action"]
+                                                .map((col, i) => (
+                                                    <th key={i} className={`text-uppercase small text-success ${i >= 7 ? "text-center" : ""}`}>{col}</th>
                                                 ))
                                             }
+                                            {/* ── FARMER ── */}
                                             {location.state?.source === "seller" &&
-                                                ["Verification Status", "Account ID", "Farmer Name", "Email", "Created At", "Message", "Action"].map((col, i) => (
-                                                    <th key={i} className={`text-uppercase small text-success ${i >= 5 ? "text-center" : ""}`}>{col}</th>
+                                                ["Verification", "Account ID", "Firstname", "Middlename", "Lastname", "Ext.", "Email", "Created At", "Message", "Action"]
+                                                .map((col, i) => (
+                                                    <th key={i} className={`text-uppercase small text-success ${i >= 8 ? "text-center" : ""}`}>{col}</th>
                                                 ))
                                             }
+                                            {/* ── RIDER ── */}
                                             {location.state?.source === "rider" &&
-                                                ["Verification Status", "Account ID", "Rider Name", "Email", "Created At", "Message", "Action"].map((col, i) => (
-                                                    <th key={i} className={`text-uppercase small text-success ${i >= 5 ? "text-center" : ""}`}>{col}</th>
+                                                ["Verification", "Account ID", "Firstname", "Middlename", "Lastname", "Ext.", "Email", "Created At", "Message", "Action"]
+                                                .map((col, i) => (
+                                                    <th key={i} className={`text-uppercase small text-success ${i >= 8 ? "text-center" : ""}`}>{col}</th>
                                                 ))
                                             }
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {currentItems.map((data, i) => {
-                                            const isAdmin = location.state?.source === "admin";
+                                            const isAdmin        = location.state?.source === "admin";
                                             const needsVerification = location.state?.source === "seller" || location.state?.source === "rider";
-                                            const isOfflineFarmer = data._farmerType === "offlineFarmer";
-                                            const popUp = i === 0 ? 0 : i >= currentItems.length - 2;
+                                            const isOfflineFarmer   = data._farmerType === "offlineFarmer";
+                                            const popUp          = i === 0 ? 0 : i >= currentItems.length - 2;
 
                                             return (
                                                 <tr key={i}>
                                                     {isAdmin ? (
                                                         <>
                                                             <td className="align-middle small fw-bold">{data.accountId || "N/A"}</td>
-                                                            <td className="align-middle small text-lowercase">{data.email}</td>
+                                                            <NameCells data={data} />
+                                                            <td className="align-middle small">{data.email || "N/A"}</td>
                                                             <td className="align-middle small">{data.contact || "N/A"}</td>
                                                             <td className="align-middle small">
                                                                 <span className={`badge ${data.adminType === 'main' ? 'bg-success' : 'bg-secondary'}`}>
@@ -775,23 +761,9 @@ const Accounts = () => {
                                                                 </td>
                                                             )}
                                                             <td className="align-middle small fw-bold">{data.accountId || "N/A"}</td>
-
-                                                            {/* Farmer name — no badge here */}
-                                                            <td className="align-middle small text-capitalize">
-                                                                {[
-                                                                    data.firstname,
-                                                                    data.middlename || '',
-                                                                    data.lastname,
-                                                                    data.suffix || ''
-                                                                ].filter(Boolean).join(' ')}
-                                                            </td>
-
-
-                                                            {/* ✅ Email — no text-lowercase para hindi ma-lowercase ang N/A */}
+                                                            <NameCells data={data} />
                                                             <td className="align-middle small">{data.email || "N/A"}</td>
                                                             <td className="align-middle small">{data.createdAt ? formatDate(data.createdAt) : "N/A"}</td>
-
-                                                            {/* ✅ No Device badge sa Message column */}
                                                             <td className="align-middle text-center">
                                                                 {isOfflineFarmer ? (
                                                                     <span className="badge bg-secondary" style={{ fontSize: "10px" }}>No Device</span>
@@ -805,7 +777,6 @@ const Accounts = () => {
                                                                     </button>
                                                                 )}
                                                             </td>
-
                                                             <td className="align-middle text-center">
                                                                 <ActionMenu data={data} popUp={popUp} />
                                                             </td>
@@ -889,7 +860,6 @@ const Accounts = () => {
 
             <AddAccount isOpen={showAddModal} onClose={() => setShowAddModal(false)} onSuccess={() => handleRefresh()} />
             <Toast show={showToast} message={toastMessage} type={toastType} onClose={() => setShowToast(false)} />
-
             <CustomRangeModal
                 show={showCustomRangeModal}
                 onClose={handleCustomRangeClose}
@@ -902,4 +872,4 @@ const Accounts = () => {
     );
 };
 
-export default Accounts;3
+export default Accounts;
