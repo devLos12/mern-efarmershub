@@ -562,6 +562,9 @@ const buildUpdateFields = (source, profileData) => {
 
 export const upload  = multer({ storage: multer.memoryStorage() });
 
+
+
+
 // ── Controller ────────────────────────────────────────────────────────────────
 export const adminUpdateProfile = async (req, res) => {
     try {
@@ -572,8 +575,7 @@ export const adminUpdateProfile = async (req, res) => {
         const profileData = typeof req.body.profileData === "string"
             ? JSON.parse(req.body.profileData)
             : req.body.profileData;
-
-
+        
 
 
         if (!source || !profileData) {

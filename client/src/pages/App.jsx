@@ -71,6 +71,7 @@ const  App = ()=> {
     })
     .then(res => res.json())
     .then(data => {
+      setId(data.id);
       setRole(data.role);
       setSellerAuth(data.role === "seller");
       setAdminAuth(data.role === "admin");

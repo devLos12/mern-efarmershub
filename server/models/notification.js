@@ -5,7 +5,7 @@ const notificationSchema = new mongoose.Schema({
     sender : {
         id : {
             type : mongoose.Schema.Types.ObjectId,
-            required : false
+            required : false,
         },
         role : {
             type : String,

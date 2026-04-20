@@ -9,7 +9,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 
 
 const Notification = () => {
-    const { role } = useContext(appContext);
+    const { role, id } = useContext(appContext);
     const admin = useContext(adminContext);
     const seller = useContext(sellerContext);
     const user = useContext(userContext);
@@ -30,7 +30,8 @@ const Notification = () => {
     const height = useBreakpointHeight();
     const navigate = useNavigate();
     
-    const recipientId = role === "seller" ? sellerInfo?._id : userData?._id;
+    const recipientId = id; 
+
     const [filter, setFilter] = useState("all"); // "all" or "unread"
 
     // Sort and filter notifications
@@ -45,6 +46,8 @@ const Notification = () => {
 
     const unreadCount = notifList.filter(notif => !notif.readBy.includes(recipientId)).length;
 
+
+
     const handleReadUpdate = async(id) =>{
         setNotifList((prev) => 
             prev.map((notif) => notif._id === id
@@ -57,9 +60,17 @@ const Notification = () => {
             )
         )
 
-        const endPoint = role === "seller"
-        ? "sellerReadNotif"
-        : "userReadNotif"
+
+        let endPoint = null;
+
+        if(role === "seller") {
+            endPoint = 'sellerReadNotif';
+        } else if (role === "user" ){
+            endPoint = 'userReadNotif';
+        } else if (role === 'admin'){
+            endPoint = 'adminReadNotif';
+        }
+        
 
         try{
             const res = await fetch(`${import.meta.env.VITE_API_URL}/api/${endPoint}/${id}`, 
@@ -140,8 +151,8 @@ const Notification = () => {
                             
                             onClick={()=>{
 
-                                if(role === "user"){
 
+                                if(role === "user"){
                                     if((data.type === "checkout" || data.type === "replacement approved" || data.type === "replacement rejected")){
                                         navigate(`/user/${data.link}`, {state : { orderId : data.meta.orderId }})
                                     } else if (data.type === "system notice"){
@@ -149,16 +160,26 @@ const Notification = () => {
                                         navigate(`/user/${data.link}`, {state: { productId: data.meta.prodId}})
                                     } 
                                 }
+                                         
 
                                 if(role === "seller"){
+
                                     if(data.type === "statusApprove"){
                                         setOpenNotif(false);
                                         navigate(`/seller/${data.link}`, { state: { productId: data.meta.prodId } }); 
                                     }else {
                                         setOpenNotif(false);
-                                        navigate(`/seller/${data.link}`, {state: { productId: data.meta.prodId}})
+                                        navigate(`/seller/${data.link}`, {state: { productId: data.meta.prodId}});
                                     }
                                 }
+
+
+                                if(role === 'admin'){
+
+                                    setOpenNotif(false);
+                                    navigate(`/admin/${data.link}`, { state: { productId: data.meta.prodId }});
+                                }
+
 
                                 if (isUnread) {
                                     handleReadUpdate(data._id, recipientId);

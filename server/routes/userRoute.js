@@ -23,7 +23,7 @@ import { inboxChats, markAsRead, deleteChat} from "../controllers/chats.js";
 import { getMessages, sendMessage, sendImage, getChatId} from "../controllers/messages.js";
 import { UpdateProfile, updateProfile } from "../controllers/user/updateProfile.js";
 import { displayAnnouncement } from "../controllers/user/annoucement.js";
-import { getNotification, readNotification } from "../controllers/notification.js";
+import { getNotification, readNotification, userGetNotification } from "../controllers/notification.js";
 import changePassword from "../controllers/user/changepassword.js";
 import { cancelOrder, replacementImagesUpload, requestReplacement, uploadRefundFile } from '../controllers/user/cancelOrder.js';
 import trackReplacementProduct from "../controllers/trackReplacement.js";
@@ -31,8 +31,6 @@ import trackReplacementProduct from "../controllers/trackReplacement.js";
 
 
 // Add this route
-
-
 
 
 const userRouter = express.Router();
@@ -54,7 +52,7 @@ userRouter.get('/getUserOrderDetails/:id', getOrderDetails);
 userRouter.get('/trackorder/:id', authMiddleware, trackOrder);
 userRouter.post('/webhook', handlePaymongoWebhook);
 userRouter.get('/getCookieId', getCookieIdBillingAddress);
-userRouter.get('/getUserNotification', authMiddleware, getNotification);
+userRouter.get('/getUserNotification', authMiddleware, userGetNotification);
 userRouter.patch('/userReadNotif/:id', authMiddleware, readNotification);
 userRouter.post('/checkout',upload.single("image"), authMiddleware, checkOut);
 userRouter.delete('/placeOrderclearCart', authMiddleware, placeOrderclearCart);

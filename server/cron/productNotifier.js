@@ -4,9 +4,11 @@ import Notification from "../models/notification.js";
 
 
 
+
+
 const startSchedule = () => {
 
-    cron.schedule("0 0 * * *", async () => {
+    cron.schedule("0 0 * * * *", async () => {
 
         const now = new Date();
 
@@ -24,7 +26,10 @@ const startSchedule = () => {
                 (product.lifeSpan / 2) * 24 * 60 * 60 * 1000
             );
 
-            if (now >= halfLifeDate) {
+            if (
+                // now >= halfLifeDate 
+                false
+            ) {
                 await Notification.create({
                     sender: { role: "system" },
                     recipient: { role: "all" },
@@ -33,7 +38,8 @@ const startSchedule = () => {
                     link: "productDetails",
                     meta: { 
                         prodId: product._id,
-                        imageFile: product.imageFile  
+                        imageFile: product.imageFile,
+                        sellerId: product.seller?.id  
                     }
                 });
 

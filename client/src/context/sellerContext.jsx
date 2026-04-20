@@ -78,7 +78,7 @@ export const MySellerContext = ({children}) => {
     const [hasIcon, setHasIcon] = useState(false);
     const [source, setSource] = useState('');  
     
-
+        
 
     return (
         <sellerContext.Provider 

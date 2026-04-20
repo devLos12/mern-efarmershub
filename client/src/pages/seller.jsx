@@ -73,7 +73,6 @@ const Seller = ({setSellerAuth}) => {
                 show: unreadChatsCount > 0
             });
 
-            console.log(data);
 
         }catch(err){
             setInboxLoading(false);
@@ -132,7 +131,6 @@ const Seller = ({setSellerAuth}) => {
             const fetchUrl = `${import.meta.env.VITE_API_URL}/api/getSellerNotification`;
             const res = await fetch(fetchUrl, { method : "GET", credentials : "include"});
             const data = await res.json();
-            console.log("Response from notification: ", res.status);
             if(!res.ok) throw new Error(data.message);
 
             setError((prev) => ({...prev, notification : null}));

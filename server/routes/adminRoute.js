@@ -9,7 +9,7 @@ import TotalOrders from "../controllers/admin/totalorders.js";
 import Logout from "../controllers/admin/logout.js";
 import statusApprove from "../controllers/admin/statusApprove.js";
 import authMiddleware from "../middlewares/authmiddlewares.js";
-import { getNotification } from "../controllers/notification.js";
+import { adminGetNotification, getNotification, readNotification } from "../controllers/notification.js";
 import getOrderDetails from "../controllers/admin/orderDetails.js";
 import getProductsDetails from "../controllers/admin/productDetails.js";
 import { getChatId, getMessages, sendImage, sendMessage } from "../controllers/messages.js";
@@ -36,6 +36,8 @@ import { deleteSales, getSalesData, getSalesGraphData } from "../controllers/adm
 import { getShippingFee, updateShippingFee } from "../controllers/admin/shippingFee.js";
 import { deleteRemittances, getRemittances, updateRemittanceStatus, uploadRemit } from "../controllers/admin/remittance.js";
 import { adminUploadOfflineFarmerProduct, uploadOfflineFarmer, searchOfflineFarmers } from "../controllers/admin/offline-farmer-upload.js";
+import { UpdateAdminProfile, updateAdminProfile } from "../controllers/admin/updateProfile.js";
+import changePassword from "../controllers/admin/changepassword.js";
 
 
 
@@ -151,6 +153,12 @@ adminRouter.get('/offline-farmer/payment-transactions', authMiddleware, getOffli
 adminRouter.get('/seller/payment-transactions', authMiddleware, getSellerPaymentTransactions);
 
 
+
+adminRouter.patch('/adminUpdateProfile', authMiddleware, updateAdminProfile.single('image'), UpdateAdminProfile);
+adminRouter.patch('/adminChangePassword', authMiddleware, changePassword);
+
+adminRouter.get('/adminGetNotification', authMiddleware, adminGetNotification);
+adminRouter.patch('/adminReadNotif/:id', authMiddleware, readNotification);
 
 
 adminRouter.get("/logoutAdmin", authMiddleware, Logout);

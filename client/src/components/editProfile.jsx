@@ -49,7 +49,7 @@ const EditProfile = () => {
         context = user;
     }
 
-    const { sellerInfo, userData, setTrigger } = context;
+    const { sellerInfo, userData, setTrigger, adminInfo, setRefetchAdminInfo } = context;
 
     let dataProfile = {
         firstname: "",
@@ -74,8 +74,25 @@ const EditProfile = () => {
         return cleaned;
     };
 
+
+
+
+
     if(role === "admin"){
+        dataProfile = {
+            image: adminInfo?.imageFile,
+            firstname: adminInfo?.firstname ?? fallBack,
+            lastname: adminInfo?.lastname ?? fallBack,
+            email: adminInfo?.email ?? fallBack,
+            contact: normalizePhoneNumber(adminInfo?.contact) ?? fallBack,
+            province: adminInfo?.adminAddress?.province ?? fallBack,
+            city: adminInfo?.adminAddress?.city ?? fallBack,
+            barangay: adminInfo?.adminAddress?.barangay ?? fallBack,
+            zipcode: adminInfo?.adminAddress?.zipCode ?? fallBack,
+            detailAddress: adminInfo?.adminAddress?.detailAddress ?? fallBack
+        }
         
+
     } else if(role === "seller"){
         dataProfile = {
             image: sellerInfo?.imageFile,
@@ -94,7 +111,7 @@ const EditProfile = () => {
             detailAddress: sellerInfo?.sellerAddress?.detailAddress ?? fallBack
         }
 
-    } else {
+    } else if (role === 'user'){
 
         dataProfile = {
             image: userData?.imageFile,
@@ -110,7 +127,14 @@ const EditProfile = () => {
         }
     }
 
+
+
+
+
+
     useEffect(()=>{
+
+
         setFormData(dataProfile);
         setOriginalData(dataProfile);
         setImagePrev(dataProfile?.image);
@@ -286,10 +310,17 @@ const EditProfile = () => {
         sendData.append('zipCode', formData.zipcode);
         sendData.append('detailAddress', formData.detailAddress);
 
-        const endPoint = role === "user" 
-        ? "userUpdateProfile" 
-        : "sellerUpdateProfile"
-        
+
+        let endPoint = '';
+
+        if(role === 'user'){
+            endPoint = 'userUpdateProfile';
+        } else if (role === 'seller'){
+            endPoint = 'sellerUpdateProfile';
+        } else if (role === 'admin'){
+            endPoint = 'adminUpdateProfile';
+        }
+
         try {
             const res = await fetch(`${import.meta.env.VITE_API_URL}/api/${endPoint}`, {
                 method: "PATCH",
@@ -303,6 +334,8 @@ const EditProfile = () => {
             
             // // Success - trigger refresh and navigate back
             setTrigger((prev) => !prev);
+            setRefetchAdminInfo((prev) => !prev);
+            
 
                   // Navigate after short delay
             setTimeout(() => {
@@ -316,6 +349,9 @@ const EditProfile = () => {
             setIsSubmitting(false);
         }
     }
+
+
+
 
     const handleFile = (e) =>{
         const {name} = e.target;
@@ -400,7 +436,7 @@ const EditProfile = () => {
                                     ):(
                                         <>
                                             <div style={{position: "relative"}}>
-                                                {formData?.image ? (
+                                                { formData?.image  ? (
                                                     <div className="border border-white rounded-circle shadow" 
                                                         style={{ width: "100px", height: "100px", overflow: "hidden" }}>
                                                         <img src={formData?.image}

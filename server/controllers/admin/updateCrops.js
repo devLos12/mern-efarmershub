@@ -13,7 +13,7 @@ export const update = multer({ storage: storage });
 
 export const updateCrops = async (req, res) => {
     try {
-        const { id, name, category, disc, image, kg, lifeSpan } = req.body;
+        const { id, name, category, disc, image, kg, lifeSpan, productType } = req.body;
         
         // Convert to numbers para mag-match yung comparison
         const price = Number(req.body.price);
@@ -60,20 +60,19 @@ export const updateCrops = async (req, res) => {
             lifeSpan, 
             category, 
             disc, 
-            imageFile 
+            imageFile,
+            productType 
         };
 
-
-         if (lifeSpan) {
+        if (Number(lifeSpan) !== oldProduct.lifeSpan) {
             updateData.expiryDate = new Date(
                 Date.now() + Number(lifeSpan) * 24 * 60 * 60 * 1000
             );
-            updateData.notified = false; // reset notification
-            updateData.status = "active"; // reset status kung expired na dati
+            updateData.notified = false;
+            updateData.status = "active";
         }
 
         
-
         if (newCloudinaryId) {
             updateData.cloudinaryId = newCloudinaryId;
         }

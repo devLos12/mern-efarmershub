@@ -77,6 +77,7 @@ const Sidebar = () => {
             { label: 'Payout',          link: '/seller/payout',             icon: "fa-solid fa-money-bill-transfer",    source: "payout" },
         ]
     }
+    
 
 
     const navLinks = data[role] || [];
@@ -95,7 +96,7 @@ const Sidebar = () => {
                 style={{
                     overflowY: 'auto',
                     overflowX: 'hidden',
-                    maxHeight: height - 120,
+                    maxHeight: height - 78,
                 }}>
                 {
                     navLinks.map((data, i) => {
@@ -222,7 +223,7 @@ const Sidebar = () => {
                 }
             </nav>
             
-            {role === "admin" && (
+            {/* {role === "admin" && (
                 <div className="p-2">
                     <button className={`w-100 mt-4 border-0 p-1 d-flex align-items-center justify-content-center rounded-3
                     shadow-lg ${role === "seller" ? "bg-dark text-white" : "bg-white text-dark"}`}
@@ -232,7 +233,7 @@ const Sidebar = () => {
                         <p className="m-0 ms-2 small">Log out</p>
                     </button>
                 </div>
-            )}
+            )} */}
 
         </>
     );

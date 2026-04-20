@@ -16,20 +16,31 @@ const IconCard = () => {
     const seller = useContext(sellerContext);
     const context = role === "admin" ? admin : seller;
     const { openNotif, openProfile, openViewProfile, openSettings, setHasIcon } = context;
-    const height = useBreakpointHeight();
+
     
+    const height = useBreakpointHeight();
+
+
     
     return (
-        <div className="container-fluid bg-darken " 
+        <div className="container-fluid bg-darken" 
         >
             <div className="row">
                 <div className="col g-0 d-flex justify-content-end">
                     <div className="bg-light mt-1 rounded shadow"
                     style={{width : "430px", height: height-60}}>
-                        { openNotif && <Notification/>}
-                        { openProfile && <Profile/>}
-                        { openViewProfile && <ViewProfile/>}
-                        { openSettings && <Settings/>}
+                        { role === "seller" &&  openNotif && <Notification/>}
+                        { role === "seller" &&  openProfile && <Profile/>}
+                        { role === "seller" &&  openViewProfile && <ViewProfile/>}
+                        { role === "seller" &&  openSettings && <Settings/>}
+
+                        
+                        { role === 'admin' && openNotif && <Notification/>}
+                        { role === "admin" && openProfile && <Profile/>}
+                        { role === "admin" && openViewProfile && <ViewProfile/>}
+                        { role === "admin" && openSettings && <Settings/>}
+
+        
                     </div>
                 </div>
             </div>

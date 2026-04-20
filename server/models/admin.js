@@ -6,27 +6,45 @@ const adminSchema = new mongoose.Schema({
         required: true,
         unique: true
     },
-    contact: {
+    firstname: {
         type: String,
-        required: true
+        default: null
+    },
+    lastname: {
+        type: String,
+        default: null
     },
     email: {
         type: String,
         required: true,
         unique: true
     },
+    contact: {
+        type: String,
+        required: true
+    },
     password: {
         type: String,
         required: true
+    },
+    imageFile: {
+        type: String,
+        default: null
     },
     adminType: {
         type: String,
         enum: ['main', 'sub'],
         default: 'sub'
+    },
+    adminAddress: {
+        province: { type: String, default: null },
+        city: { type: String, default: null },
+        barangay: { type: String, default: null },
+        zipCode: { type: String, default: null },
+        detailAddress: { type: String, default: null }
     }
 }, { 
-    timestamps: true,
-    strict: false 
+    timestamps: true 
 });
 
 const Admin = mongoose.model('Admin', adminSchema, 'admins');

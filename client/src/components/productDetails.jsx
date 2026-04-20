@@ -216,11 +216,6 @@ const ProductDetails = () =>{
 
 
 
-    useEffect(() => {
-        console.log(productDetails);
-    },[productDetails]);
-
-
 
 
    if(loading) return (
@@ -330,7 +325,7 @@ const ProductDetails = () =>{
                                                 style={{fontSize: "12px"}}
                                             >
                                                 <p className="m-0  text-success small fw-bold text-capitalize">expires in:</p>
-                                                <p className="m-0 small fw-bold text-muted">
+                                                <div className="m-0 small fw-bold text-muted">
                                                     {
                                                         (() => {
                                                             const days = getRemainingDays(productDetails.expiryDate);
@@ -339,7 +334,7 @@ const ProductDetails = () =>{
                                                             return <p className="m-0 fw-bold text-muted">{`${days} ${days === 1 ? 'day' : 'days'}`}</p>;
                                                         })()
                                                     }
-                                                </p>
+                                                </div>
                                             </div>
                                         </div>
                                         
@@ -624,7 +619,6 @@ const ProductDetails = () =>{
                                         })
                                         .then((res) => res.json())
                                         .then((data) => {
-                                            console.log(data);
                                             navigate(`/${role}/messages`, { state : {
                                                 source : "seller",
                                                 chatId : data.chatId,

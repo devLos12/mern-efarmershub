@@ -12,7 +12,7 @@ export const getProducts = async(req, res) =>{
         const id = req.params.id;
 
         const products = await Product.find({"seller.id" : id });
-        
+
         if(!products || products.length === 0){ 
             return res.status(404).json({message : "No crops display"});
         }

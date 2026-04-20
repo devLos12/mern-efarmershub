@@ -29,10 +29,8 @@ import SalesReport from "../components/admin/salesReport.jsx";
 import ShippingFee from "../components/admin/shippingFee.jsx";
 import OfflineFarmerPaymentTransactions from "../components/admin/offline-farmer-payment-transactions.jsx";
 import SellerPaymentTransactions from "../components/admin/online-farmer-payment-transasctions.jsx";
-
-
-
-
+import EditProfile from "../components/editProfile.jsx";
+import ChangePassword from "../components/changePassword.jsx";
 
 
 
@@ -40,6 +38,8 @@ import SellerPaymentTransactions from "../components/admin/online-farmer-payment
 
 //admin file
 const Admin = ({setAdminAuth})=>{
+
+    const { id } = useContext(appContext);
 
     const { setLoadingStateButton, showNotification, setOrderBadge, setProdBadge } = useContext(appContext);
 
@@ -49,9 +49,12 @@ const Admin = ({setAdminAuth})=>{
         accountsModal, setAccountsModal, deleteOrderModal, setDeleteOrderModal,
         setAccountsData,  editProduct,
         addAnnouncement, setAddAnnouncement, announcementModal, setAnnouncementModal,
-        hasIcon, 
+        hasIcon, refetchAdminInfo, 
+        setNotifList, setNotifBadge
     } = useContext(adminContext);
     
+    
+
         
     const width = useBreakpoint();
     const height = useBreakpointHeight();
@@ -245,27 +248,39 @@ const Admin = ({setAdminAuth})=>{
             setLoading(false);
             console.log("Error: ", err.message);
         })
-    },[]);
+    },[refetchAdminInfo]);
+
 
 
     //api call for orders;
-  
-    // api call for notification
     const getNotification = async() =>{
 
         try{
-            const fetchUrl = `${import.meta.env.VITE_API_URL}/api/getNotification`;
+            const fetchUrl = `${import.meta.env.VITE_API_URL}/api/adminGetNotification`;
             const res = await fetch(fetchUrl, { method : "GET", credentials : "include"});
             
             const data = await res.json();
             if(!res.ok) throw new Error(data.message);
 
-            setError((prev) => ({...prev,  notification: null}));
+            setError((prev) => ({...prev, notification : null}));
+            setNotifList(data.reverse());
+
+            const unreadCount = data.filter(
+                notif => !notif.readBy.includes(id)  // kung hindi kasama ang id sa readBy = unread
+            ).length;
+
+            setNotifBadge({
+                number: unreadCount,
+                show: unreadCount > 0
+            });
+            
+
             
         }catch(err){
             setError((prev) => ({...prev,  notification: err.message}));
         }
     }
+    
     useEffect(()=>{
         getNotification();
     },[]);
@@ -308,7 +323,8 @@ const Admin = ({setAdminAuth})=>{
 
         {path: 'transactions',      element: <OfflineFarmerPaymentTransactions/>},
         {path: 'with-device-transactions', element: <SellerPaymentTransactions/>},
-
+        {path: 'edit-profile',      element: <EditProfile/> },
+        {path: 'change-password',   element: <ChangePassword/>},
         {path: '*',                 element: <Navigate to="/admin"/>},
     ]
 
@@ -320,7 +336,6 @@ const Admin = ({setAdminAuth})=>{
             <div className="row ">
                 <div className="p-0 bg-dark d-none d-md-flex border-end  justify-content-between flex-column " 
                 style={{width: "220px"}}>
-                        
                     <Sidebar />
                 </div>
                 <div className={`col p-0 bg-warning bg-opacity-10`} 

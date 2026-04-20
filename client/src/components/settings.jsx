@@ -3,13 +3,25 @@ import { useNavigate } from "react-router-dom";
 import { appContext } from "../context/appContext";
 import { sellerContext } from "../context/sellerContext";
 import { userContext } from "../context/userContext";
+import { adminContext } from "../context/adminContext";
 
 
 const Settings = () => {
     const { role } = useContext(appContext);
     const seller = useContext(sellerContext);
     const user = useContext(userContext);
-    const context = role === "seller" ? seller : user;
+    const admin = useContext(adminContext);
+
+    let context = null;
+
+    if(role === "admin"){
+        context = admin;
+    } else if (role === "seller"){
+        context = seller;
+    } else {
+        context = user;
+    }
+
     const { setOpenProfile, setOpenSettings } = context;
     const navigate = useNavigate();
 
@@ -41,7 +53,7 @@ const Settings = () => {
                             </div>
                         </div>
                     </div>
-
+                    
                     <div className="px-2">
                         <div className="row bg-hover g-0 rounded-3 shadow-sm border p-3 mt-2"
                         style={{cursor: "pointer"}}

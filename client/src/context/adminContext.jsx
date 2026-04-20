@@ -1,5 +1,5 @@
 import { useState, createContext, useEffect } from "react";
-import { useLocation } from "react-router-dom";
+import { useAsyncError, useLocation } from "react-router-dom";
 
 
 export const adminContext = createContext();
@@ -53,7 +53,6 @@ export const MyAdminContext = ({children}) => {
         account : "",
     }))
 
-    const [openNotif, setOpenNotif] = useState(false);
     const [exitModal, setExitModal] = useState(false);
 
     const [notifBadge, setNotifBadge] = useState({
@@ -95,6 +94,15 @@ export const MyAdminContext = ({children}) => {
     const [source, setSource] = useState('');  
 
 
+
+    const [openProfile, setOpenProfile] = useState(false);
+    const [openViewProfile, setOpenViewProfile] = useState(false);
+    const [openSettings, setOpenSettings] = useState(false);
+    const [refetchAdminInfo, setRefetchAdminInfo] = useState(false);
+    const [openNotif, setOpenNotif] = useState(false);
+
+
+
         
     return (
         <adminContext.Provider 
@@ -122,7 +130,12 @@ export const MyAdminContext = ({children}) => {
             addAnnouncement, setAddAnnouncement,
             announcementModal, setAnnouncementModal,
             hasIcon, setHasIcon,
-            source, setSource
+            source, setSource,
+            openProfile, setOpenProfile,
+            openViewProfile, setOpenViewProfile,
+            openSettings, setOpenSettings,
+            refetchAdminInfo, setRefetchAdminInfo,
+            openNotif, setOpenNotif
 
         }}>{children}
         </adminContext.Provider>

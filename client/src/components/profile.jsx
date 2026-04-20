@@ -28,9 +28,11 @@ const Profile = ()=>{
         context = user;
     }
 
+    
+
     const {userData, openOrder, setOpenOrder, openProfile, setOpenProfile, setOpenExit ,
          setOpenMessages, setText, sellerInfo, setExitModal, setOpenViewProfile,
-         setOpenUpdateProfile, setOpenSettings
+         setOpenUpdateProfile, setOpenSettings, adminInfo
     } = context;
     
 
@@ -87,7 +89,7 @@ const Profile = ()=>{
         setOpenOrder(true);
     }
 
-    
+
     const messages = () => {
         setOpenProfile(false);
         setOpenOrder(false);
@@ -96,6 +98,7 @@ const Profile = ()=>{
     
 
     const settings = () =>{ 
+
         setOpenProfile(false);
         setOpenSettings(true);
     }
@@ -108,9 +111,9 @@ const Profile = ()=>{
             setOpenExit(true);
         } else {
             setExitModal(true);
-            
         }
     }
+
 
 
     let dataProfile = {
@@ -132,10 +135,24 @@ const Profile = ()=>{
             name: `${sellerInfo?.firstname} ${sellerInfo?.lastname}`,
             email: sellerInfo?.email    
         }
+    } else if (role === "admin") {
+        dataProfile = {
+            profile: adminInfo?.imageFile,
+            name: `${adminInfo?.firstname} ${adminInfo?.lastname}`,
+            email: adminInfo?.email
+        }
     }
 
 
+
     const ProfileLinks = {
+
+        admin: [
+            {value : "settings",          icon : "fa-solid fa-gear",              action : settings},
+            {value : "Log-out",           icon : "fa-solid fa-right-from-bracket", 
+            action : logOut},
+        ],
+
         user : [
             {value : "My Orders",         icon : "fa-solid fa-shopping-bag",       action : order},
             {value : "settings",          icon : "fa-solid fa-gear",               action : settings},
@@ -172,8 +189,11 @@ const Profile = ()=>{
                                     />
                                 </div>
                             ):(
-                                <div  style={{width:"50px", height:"50px"}} className=" rounded-circle bg-danger d-flex justify-content-center align-items-center fs-2 text-white text-uppercase">{
-                                    role === "user" ? userData?.firstname?.charAt(0) : sellerInfo?.firstname.charAt(0)    
+                                <div  style={{width:"50px", height:"50px"}} 
+                                className=" rounded-circle bg-danger d-flex justify-content-center align-items-center fs-2 text-white text-uppercase">{
+                                    role === "user"  ? userData?.firstname?.charAt(0) 
+                                    : role === "seller" ? sellerInfo?.firstname.charAt(0) 
+                                    : "a"
                                 }</div>
                             )}
 
@@ -199,7 +219,7 @@ const Profile = ()=>{
                 </div>
 
                 <div className="col  rounded mt-3">
-                    {dataLinks.map((data, i) => (
+                    {dataLinks?.map((data, i) => (
                         <div key={i} className="row mt-1 shadow-sm border py-3 rounded bg-hover"
                         onClick={data.action} 
                         style={{ cursor:"pointer"}}>

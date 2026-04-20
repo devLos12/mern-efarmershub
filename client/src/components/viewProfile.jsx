@@ -35,6 +35,11 @@ const ViewProfile = () => {
     };
     
 
+    useEffect(() => {
+        console.log(userData);
+    },[userData]);
+
+
     if(role === "seller"){
         dataProfile = {
             profile: sellerInfo?.imageFile ?? "",
@@ -75,9 +80,26 @@ const ViewProfile = () => {
                 icon:"fa fa-location-dot"}
             ]
         }
-    }
-
-
+    } else if(role === 'admin'){
+        dataProfile = {
+            profile: adminInfo?.imageFile,
+                name: adminInfo?.firstname + " " + adminInfo?.lastname,
+                id: adminInfo?._id,
+                dataInfo: [
+                    {value: adminInfo?.contact ?? "N/A", icon: "fa fa-phone"},
+                    {value: adminInfo?.email ?? "N/A",                   icon: "fa fa-envelope"},
+                    {value: [
+                        adminInfo?.adminAddress?.detailAddress, 
+                        adminInfo?.adminAddress?.barangay, 
+                        adminInfo?.adminAddress?.city, 
+                        adminInfo?.adminAddress?.province,
+                        admin?.adminAddress?.zipCode
+                    ].filter(Boolean)
+                    .join(', ') ||  "No address available",
+                    icon:"fa fa-location-dot"}
+                ]
+            }
+        }
     return (
         <div className="container">
             <div className="row  p-2">

@@ -208,7 +208,7 @@ const User = ({setUserAuth}) => {
 
         
         const unreadCount = data.filter(notif => !notif.readBy.includes(userData?._id)).length;
-
+                
         setNotifBadge({
             number: unreadCount,
             show: unreadCount > 0

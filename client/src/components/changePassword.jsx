@@ -106,10 +106,20 @@ const ChangePassword = () => {
             return;
         }
 
-        const endPoint = role === "seller" 
-            ? "sellerChangePassword" 
-            : "userChangePassword";
+
+        // ✅ TAMA - idagdag lang ang admin
+        let endPoint = '';
+
+        if (role === "seller") {
+            endPoint = "sellerChangePassword";
+        } else if (role === "admin") {
+            endPoint = "adminChangePassword";
+        } else {
+            endPoint = "userChangePassword";
+        }
+
         
+
         setLoading(true);
                 
         try {

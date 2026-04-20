@@ -49,9 +49,7 @@ const Inventory = () => {
     const uniqueCategories = ["all", "grains", "root crops", "fruits", "fruit vegetables", "leafy vegetables", "legumes"];;
 
 
-
-
-
+    
     
     useEffect(() => {
         if (role === "admin" && !location?.state?.source && !location?.state?.view) {
@@ -153,6 +151,7 @@ const Inventory = () => {
         
         // Filter by approval status
         if (approvalStatus === "expired") {
+
             filteredProducts = products.filter((p) => p.status === "expired");
         } else if (approvalStatus === "pending") {
             filteredProducts = products.filter((p) => p.statusApprove === "pending" && p.status !== "expired");
@@ -193,8 +192,11 @@ const Inventory = () => {
 
         // Filter by approval status
         if (approvalStatus === "expired") {
+
+
             // ✅ dagdag na ang expired case para sa seller
             filteredProducts = products.filter((p) => p.status === "expired");
+
         } else if (approvalStatus === "pending") {
             filteredProducts = products.filter((p) => p.statusApprove === "pending" && p.status !== "expired");
         } else if (approvalStatus === "approved") {
@@ -301,7 +303,7 @@ const Inventory = () => {
                                             { label: "expired", icon: "fa-solid fa-triangle-exclamation", 
                                                 color: "text-secondary bg-secondary border-secondary", source: "expired" },
                                         ]
-                                        
+
                                         .map((data, i) => (
                                             <div
                                                 key={i}

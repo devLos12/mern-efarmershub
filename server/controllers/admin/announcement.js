@@ -2,6 +2,9 @@ import SeasonalAnnouncement from "../../models/seasonal.js";
 import multer from "multer";
 import cloudinary from "../../config/cloudinary.js";
 
+
+
+
 // Changed to memory storage
 const storage = multer.memoryStorage();
 

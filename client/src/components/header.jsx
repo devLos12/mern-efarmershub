@@ -68,8 +68,12 @@ const Header = () => {
     const { setText, textHeader, setExitModal, openNotif, setOpenNotif,
         openProfile, setOpenProfile, notifBadge, setNotifBadge, sellerInfo,
         adminInfo, openViewProfile, setOpenViewProfile, openSettings, setOpenSettings,
-        hasIcon, setHasIcon,
+        hasIcon, setHasIcon, 
     } = context;
+
+
+        
+
 
     const [isMenu, setMenu] = useState(false);
     const width = useBreakpoint();
@@ -88,7 +92,7 @@ const Header = () => {
     useEffect(() => {
         const handleClickOutside = (event) => {
             const isAnyModalOpen = role === "admin"
-                ? openProfile || openViewProfile || openSettings
+                ? openNotif || openProfile || openViewProfile || openSettings
                 : openNotif || openProfile || openViewProfile || openSettings;
 
             if (!isAnyModalOpen) return;
@@ -105,9 +109,10 @@ const Header = () => {
         return () => document.removeEventListener('click', handleClickOutside);
     }, [openNotif, openProfile, openViewProfile, openSettings, role]);
 
+
     useLayoutEffect(() => {
         const overlayActive = role === "admin"
-            ? isMenu || openProfile || openViewProfile || openSettings
+            ? isMenu || openNotif || openProfile || openViewProfile || openSettings
             : isMenu || openNotif || openProfile || openViewProfile || openSettings;
         setHasIcon(overlayActive);
     }, [isMenu, openNotif, openProfile, openViewProfile, openSettings, role, setHasIcon]);
@@ -120,22 +125,33 @@ const Header = () => {
         setMenu(false);
         setOpenNotif((prev) => !prev);
     }
+    
 
     const handleMenu = () => {
-        if (role === "seller") {
-            setOpenViewProfile(false);
-            setOpenProfile(false);
-        }
+        setOpenSettings(false);
+        setOpenViewProfile(false);
+        setOpenProfile(false);
         setOpenNotif(false);
         setMenu((prev) => !prev);
     }
 
     const handleProfile = () => {
-        setOpenSettings(false);
-        setOpenViewProfile(false);
-        setMenu(false);
-        setOpenNotif(false);
-        setOpenProfile((prev) => !prev);
+
+        if(role === "admin"){
+            setOpenSettings(false);
+            setOpenViewProfile(false);
+            setMenu(false);
+            setOpenProfile((prev) => !prev);
+        }
+
+
+        if(role === "seller"){
+            setOpenSettings(false);
+            setOpenViewProfile(false);
+            setMenu(false);
+            setOpenNotif(false);
+            setOpenProfile((prev) => !prev);
+        } 
     }
 
 
@@ -201,7 +217,7 @@ const Header = () => {
             }
         } else if (role === "admin") {
             return {
-                profile: null,
+                profile: adminInfo?.imageFile,
                 name: role,
                 sub: adminInfo?.adminType
             }
@@ -211,10 +227,13 @@ const Header = () => {
 
     const dataProfile = getProfileData();
 
+    
+        
+
     return (
         <>
             <div>
-                <div className={hasIcon ? "position-fixed top-0 end-0 start-0" : ""}
+                <div className={hasIcon ? "position-fixed top-0 end-0 start-0 " : ""}
                     style={{
                         zIndex: 99,
                         backgroundColor: "rgba(0, 0, 0, 0.204)",
@@ -237,47 +256,67 @@ const Header = () => {
 
                         <div className="d-flex align-items-center gap-3">
                             {/* Notification Bell - ONLY for Seller */}
-                            {role === "seller" && (
-                                <div
-                                    className="fa fa-bell fs-5 text-dark position-relative"
-                                    style={{ cursor: "pointer", transition: 'all 0.2s ease' }}
-                                    onClick={handleNotification}
-                                    onMouseEnter={(e) => e.target.style.color = '#ffc107'}
-                                    onMouseLeave={(e) => e.target.style.color = '#212529'}
-                                    role="button"
-                                    aria-label="Notifications"
-                                >
-                                    {notifBadge.show && (
-                                        <span className="position-absolute top-0 end-0 d-flex justify-content-center align-items-center fw-normal text-white m-2"
-                                            style={{
-                                                fontSize: "9px",
-                                                width: "17px",
-                                                height: "17px",
-                                                borderRadius: "50%",
-                                                background: "#dc3545",
-                                            }}
-                                        >
-                                            {notifBadge.number}
-                                        </span>
-                                    )}
-                                </div>
-                            )}
+                            <div
+                                className="fa fa-bell fs-5 position-relative"
+                                style={{ cursor: "pointer", transition: 'all 0.2s ease' }}
+                                onClick={handleNotification}
+                                role="button"
+                                aria-label="Notifications"
+                            >
+                                {notifBadge.show && (
+                                    <span className="position-absolute top-0 end-0 d-flex justify-content-center align-items-center fw-normal text-white m-2"
+                                        style={{
+                                            fontSize: "9px",
+                                            width: "17px",
+                                            height: "17px",
+                                            borderRadius: "50%",
+                                            background: "#dc3545",
+                                        }}
+                                    >
+                                        {notifBadge.number}
+                                    </span>
+                                )}
+                            </div>
 
                             {/* Profile Section */}
                             <div className="d-flex align-items-center gap-2">
                                 {role === "admin" && (
-                                    <div className="d-flex align-items-center gap-1">
-                                        <div
-                                            className="rounded-circle bg-primary d-flex justify-content-center text-white align-items-center border border-white"
-                                            style={{
-                                                height: "30px",
-                                                width: "30px",
-                                                boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                                                fontWeight: '600'
-                                            }}
-                                        >
-                                            <span className="text-uppercase small">{dataProfile?.name?.charAt(0)}</span>
-                                        </div>
+                                    <div className="d-flex align-items-center gap-1"
+                                    onClick={handleProfile}
+                                    style={{ cursor: 'pointer' }}>
+                                        {dataProfile?.profile ? (
+                                            <div
+                                                className="border border-2 rounded-circle"
+                                                style={{
+                                                    width: "30px",
+                                                    height: "30px",
+                                                    overflow: "hidden",
+                                                    boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
+                                                    borderColor: '#dee2e6',
+                                                    transition: 'all 0.2s ease'
+                                                }}
+                                            >
+                                                <img
+                                                    src={dataProfile?.profile}
+                                                    alt="Profile"
+                                                    className="h-100 w-100"
+                                                    style={{ objectFit: "cover" }}
+                                                />
+                                            </div>
+                                        ) : (
+                                            <div
+                                                className="rounded-circle bg-primary d-flex justify-content-center text-white align-items-center"
+                                                style={{
+                                                    height: "30px",
+                                                    width: "30px",
+                                                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                                                    fontWeight: '600'
+                                                }}
+                                            >
+                                                <span className="text-uppercase small">{dataProfile?.name?.charAt(0)}</span>
+                                            </div>
+                                        )}
+                                   
                                         <div className="d-none d-sm-flex align-items-center gap-1">
                                             <p className="m-0 fw-semibold text-capitalize small">{dataProfile?.name}</p>
                                             <p className="m-0 text-capitalize" style={{ fontSize: '0.75rem' }}>{`(${dataProfile?.sub})`}</p>
@@ -286,7 +325,9 @@ const Header = () => {
                                 )}
 
                                 {role === "seller" && (
-                                    <div className="d-flex align-items-center gap-2" onClick={handleProfile} style={{ cursor: 'pointer' }}>
+                                    <div className="d-flex align-items-center gap-2" 
+                                    onClick={handleProfile} 
+                                    style={{ cursor: 'pointer' }}>
                                         {dataProfile?.profile ? (
                                             <div
                                                 className="border border-2 rounded-circle"
@@ -322,10 +363,14 @@ const Header = () => {
                                         <p className="m-0 text-capitalize fw-semibold small d-none d-sm-block">Farmer</p>
                                     </div>
                                 )}
+
+
+
+
                             </div>
                         </div>
                     </header>
-
+                                
                     {/* Mobile Menu */}
                     {isMenu && (
                         <nav className="w-100 d-md-none" style={{ maxHeight: 'calc(100vh - 70px)', overflowY: 'auto' }}>
@@ -402,9 +447,14 @@ const Header = () => {
                     )}
 
                     {role === "seller" && openNotif && <IconCard />}
-                    {openProfile && <IconCard />}
-                    {openViewProfile && <IconCard />}
-                    {openSettings && <IconCard />}
+                    {role === "seller" && openProfile && <IconCard />}
+                    {role === "seller" && openViewProfile && <IconCard />}
+                    {role === "seller" && openSettings && <IconCard />}
+
+                    {role === 'admin' && openNotif && <IconCard/>}
+                    {role === "admin" && openProfile && <IconCard/>}
+                    {role === "admin" && openViewProfile && <IconCard/>}
+                    {role === "admin" && openSettings && <IconCard/>}
                 </div>
             </div>
         </>
