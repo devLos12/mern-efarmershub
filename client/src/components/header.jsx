@@ -102,6 +102,7 @@ const Header = () => {
         setMenu((prev) => !prev);
     }
 
+    
     const handleProfile = () => {
 
         if(role === "admin"){

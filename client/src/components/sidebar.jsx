@@ -89,7 +89,7 @@ const Sidebar = () => {
         }
         return location.pathname.startsWith(link);
     };
-
+    
     return (
         <>
             <nav className="nav custom-scrollbar px-3"

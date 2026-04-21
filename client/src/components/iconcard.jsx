@@ -46,6 +46,7 @@ const IconCard = () => {
             <div className="row">
                 <div className="col g-0 d-flex justify-content-end">
                     <div className="bg-light mt-1 rounded shadow"
+                    onClick={(e)=> e.stopPropagation()}
                     style={{width : "430px", height: height-60}}>
                         { role === "seller" &&  openNotif && <Notification/>}
                         { role === "seller" &&  openProfile && <Profile/>}
