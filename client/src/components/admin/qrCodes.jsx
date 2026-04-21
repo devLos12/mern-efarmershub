@@ -1,8 +1,12 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect, useContext, useLayoutEffect } from "react";
 import Modal from "../modal";
 import imageCompression from 'browser-image-compression';
 import { appContext } from "../../context/appContext";
 import Toast from "../toastNotif.jsx";
+import { adminContext } from "../../context/adminContext.jsx";
+import { useLocation } from "react-router-dom";
+
+
 
 
 
@@ -27,8 +31,15 @@ const QrCodes = () => {
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [deleteType, setDeleteType] = useState(null); // 'gcash' or 'maya'
 
+    const { setTextHeader } = useContext(adminContext);
+    const location = useLocation();
 
 
+    useLayoutEffect(() => {
+        setTextHeader(location?.state?.title);
+    },[location?.state?.title]);
+
+        
     // Function para mag-open ng delete confirmation
     const confirmDelete = (type) => {
         setDeleteType(type);

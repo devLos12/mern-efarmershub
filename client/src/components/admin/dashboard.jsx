@@ -1,5 +1,5 @@
 
-import React, { useContext} from "react";
+import React, { useContext, useLayoutEffect} from "react";
 // import Orders from "./order.jsx";
 import Orders from "../orders.jsx";
 import TotalUser from "./totaluser.jsx";
@@ -8,6 +8,7 @@ import TotalOrder from "./totalorder.jsx";
 import { useBreakpoint } from "../../components/breakpoint.jsx";
 import { useNavigate, useLocation } from "react-router-dom";
 import RiderRemittances from "./remittance.jsx";
+import { adminContext } from "../../context/adminContext.jsx";
 
 
 
@@ -18,6 +19,7 @@ import RiderRemittances from "./remittance.jsx";
 const Dashboard =()=>{
     const width = useBreakpoint();
     const navigate = useNavigate();
+    const { setTextHeader, textHeader } = useContext(adminContext);
     const location = useLocation();
     
     const widgetsStats = [
@@ -27,6 +29,12 @@ const Dashboard =()=>{
     ]  
 
 
+    useLayoutEffect(() => {
+        setTextHeader(location?.state?.title || textHeader)
+    },[location?.state?.title, textHeader]);
+    
+    
+    
     return(
         <>
         <div className="p-2 mb-5">
@@ -52,7 +60,7 @@ const Dashboard =()=>{
                             location?.state?.navigateTo === "track-remit" ? "outline-success": "success"
                         } btn-sm text-capitalize`}
                         onClick={ 
-                            () => navigate("/admin", { state: { navigateTo: "order-list" }})  
+                            () => navigate("/admin", { state: { navigateTo: "order-list", title: location?.state?.title }})  
                         }
                         >order list</button>
 
@@ -61,7 +69,7 @@ const Dashboard =()=>{
                             location?.state?.navigateTo === "track-remit" ? "success": "outline-success"
                         } btn-sm text-capitalize`}
                         onClick={ 
-                            () => navigate("/admin", { state: { navigateTo: "track-remit" }})  
+                            () => navigate("/admin", { state: { navigateTo: "track-remit", title: location?.state?.title }})  
                         }
                         >track remit</button>
                     </div>

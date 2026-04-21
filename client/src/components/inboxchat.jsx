@@ -1,8 +1,12 @@
-import { useContext, useEffect, useState , useMemo, useRef} from "react";
+import { useContext, useEffect, useState , useMemo, useRef, useLayoutEffect} from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { appContext } from "../context/appContext";
 import { useBreakpointHeight } from "../components/breakpoint.jsx";
 import { io } from "socket.io-client";
+import { adminContext} from "../context/adminContext.jsx";
+import { sellerContext} from "../context/sellerContext.jsx";
+
+
 
 
 const InboxChat = () =>{
@@ -20,6 +24,23 @@ const InboxChat = () =>{
             inboxLoading, setInboxLoading 
     } = useContext(appContext);
 
+
+    const admin = useContext(adminContext)
+    const seller = useContext(sellerContext)
+
+
+    const context = role === "admin" ? admin : role === "seller" ? seller : null;
+    const setTextHeader = context?.setTextHeader ?? (() => {});
+    const location = useLocation();
+
+
+    useLayoutEffect(() => {
+        if(role === 'user') return;
+        setTextHeader(location?.state?.title);
+    },[location?.state?.title]);
+
+
+    
 
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -153,6 +174,7 @@ const InboxChat = () =>{
                                     .catch((err) => console.log("Error:", err.message));
 
                                     navigate(`/${role}/messages`, { state :  { 
+                                        title: 'messages',
                                         source : receiver.role,
                                         chatId : data._id,
                                         senderId : sender.accountId._id,

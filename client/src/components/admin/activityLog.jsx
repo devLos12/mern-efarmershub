@@ -1,8 +1,10 @@
-import React, { useEffect, useState, useRef, useContext } from "react";
+import React, { useEffect, useState, useRef, useContext, useLayoutEffect } from "react";
 import io from "socket.io-client";
 import Toast from "../toastNotif.jsx";
 import { appContext } from "../../context/appContext.jsx";
 import html2pdf from 'html2pdf.js';
+import { useLocation } from "react-router-dom";
+import { adminContext } from "../../context/adminContext.jsx";
 
 
 // ─── Custom Range Modal ────────────────────────────────────────────────────────
@@ -154,6 +156,16 @@ const ActivityLog = () => {
     const [isCustomRange, setIsCustomRange] = useState(false);
     const [showCustomRangeModal, setShowCustomRangeModal] = useState(false);
     // ───────────────────────────────────────────────────────────────────────────
+
+    const location = useLocation();
+    const { setTextHeader } = useContext(adminContext);
+
+    
+    useLayoutEffect(() => {
+        setTextHeader(location?.state?.title);
+    },[location?.state?.title]);
+
+
 
     // ── Period label ────────────────────────────────────────────────────────────
     const getPeriodLabel = () => {

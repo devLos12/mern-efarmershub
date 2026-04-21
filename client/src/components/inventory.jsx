@@ -1,4 +1,4 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useLayoutEffect, useState } from "react";
 import { useEffect } from "react";
 import { adminContext } from "../context/adminContext";
 import { sellerContext } from "../context/sellerContext";
@@ -20,7 +20,9 @@ const Inventory = () => {
     const admin = useContext(adminContext);
     const seller = useContext(sellerContext);
     const context = role === "admin" ? admin : seller;
-    const { trigger, sellerInfo, setSellerUpload } = context;
+    const { trigger, sellerInfo, setSellerUpload, setTextHeader, textHeader } = context;
+
+
 
     const [products, setProducts] = useState([]);
     const [error, setError] = useState(null);
@@ -36,29 +38,20 @@ const Inventory = () => {
 
     const [showOfflineUpload, setShowOfflineUpload] = useState(false);
 
-
     // Get current view from location state (products or list-report)
     const currentView = location.state?.view || "products";
     const currentApproved = location.state?.source === "approved";
-    
-
+    const approvalStatus = location.state?.source || (role === "admin" ? "pending" : undefined);
 
 
     // Get unique categories from products
     // const uniqueCategories = [...new Set(products.map(p => p.category?.toLowerCase()).filter(Boolean))];
     const uniqueCategories = ["all", "grains", "root crops", "fruits", "fruit vegetables", "leafy vegetables", "legumes"];;
 
+    useLayoutEffect(() => {
+        setTextHeader(location?.state?.title || textHeader)
+    },[location?.state?.title, textHeader]);
 
-    
-    
-    useEffect(() => {
-        if (role === "admin" && !location?.state?.source && !location?.state?.view) {
-            navigate(location.pathname, {
-                replace: true,
-                state: { source: "pending", view: "products" }
-            });
-        }
-    }, [location.state, location.pathname, navigate, role]);
 
 
     // Fetch products function
@@ -143,20 +136,15 @@ const Inventory = () => {
     };
 
 
-    let approvalStatus = null;
     let filteredProducts = [];
 
     if (role === "admin") {
-        approvalStatus = location?.state?.source;
-        
-        // Filter by approval status
+        // approvalStatus na galing sa derived const sa taas, hindi na kailangan i-assign ulit
         if (approvalStatus === "expired") {
-
             filteredProducts = products.filter((p) => p.status === "expired");
         } else if (approvalStatus === "pending") {
             filteredProducts = products.filter((p) => p.statusApprove === "pending" && p.status !== "expired");
         } else if (approvalStatus === "approved") {
-            // ✅ i-exclude ang expired kahit statusApprove === "approved"
             filteredProducts = products.filter((p) => p.statusApprove === "approved" && p.status !== "expired");
         } else if (approvalStatus === "rejected") {
             filteredProducts = products.filter((p) => p.statusApprove === "rejected" && p.status !== "expired");
@@ -164,39 +152,21 @@ const Inventory = () => {
             filteredProducts = products;
         }
 
-
-        // Filter by category - dynamic matching
         if (categoryFilter !== "all") {
-            filteredProducts = filteredProducts.filter((p) => 
-                p.category?.toLowerCase() === categoryFilter.toLowerCase()
-            );
+            filteredProducts = filteredProducts.filter((p) => p.category?.toLowerCase() === categoryFilter.toLowerCase());
         }
-
-        // Filter by stock status
         if (stockStatus === "available") {
             filteredProducts = filteredProducts.filter((p) => p.stocks > 0);
         } else if (stockStatus === "outofstock") {
             filteredProducts = filteredProducts.filter((p) => p.stocks === 0);
         }
-
-        // Filter by search term
         if (searchTerm.trim()) {
-            filteredProducts = filteredProducts.filter((p) =>
-                p.name?.toLowerCase().includes(searchTerm.toLowerCase())
-            );
+            filteredProducts = filteredProducts.filter((p) => p.name?.toLowerCase().includes(searchTerm.toLowerCase()));
         }
 
     } else {
-        // SELLER FILTERING LOGIC
-        approvalStatus = location?.state?.source;
-
-        // Filter by approval status
         if (approvalStatus === "expired") {
-
-
-            // ✅ dagdag na ang expired case para sa seller
             filteredProducts = products.filter((p) => p.status === "expired");
-
         } else if (approvalStatus === "pending") {
             filteredProducts = products.filter((p) => p.statusApprove === "pending" && p.status !== "expired");
         } else if (approvalStatus === "approved") {
@@ -207,25 +177,16 @@ const Inventory = () => {
             filteredProducts = products;
         }
 
-        // Filter by category - dynamic matching
         if (categoryFilter !== "all") {
-            filteredProducts = filteredProducts.filter((p) => 
-                p.category?.toLowerCase() === categoryFilter.toLowerCase()
-            );
+            filteredProducts = filteredProducts.filter((p) => p.category?.toLowerCase() === categoryFilter.toLowerCase());
         }
-        
-        // Filter by stock status
         if (stockStatus === "available") {
             filteredProducts = filteredProducts.filter((p) => p.stocks > 0);
         } else if (stockStatus === "outofstock") {
             filteredProducts = filteredProducts.filter((p) => p.stocks === 0);
         }
-
-        // Filter by search term
         if (searchTerm.trim()) {
-            filteredProducts = filteredProducts.filter((p) =>
-                p.name?.toLowerCase().includes(searchTerm.toLowerCase())
-            );
+            filteredProducts = filteredProducts.filter((p) => p.name?.toLowerCase().includes(searchTerm.toLowerCase()));
         }
     }
 
@@ -259,7 +220,11 @@ const Inventory = () => {
                                         : "btn-outline-secondary"
                                 }`}
                                 onClick={() => navigate("/admin/inventory", { 
-                                    state: { view: "products", source: location.state?.source || "pending" } 
+                                    state: { 
+                                        view: "products", 
+                                        source: location.state?.source || "pending",
+                                        title: location.state?.title  
+                                    } 
                                 })}
                             >
                                 <i className="fa-solid fa-box me-2"></i>
@@ -272,7 +237,7 @@ const Inventory = () => {
                                         : "btn-outline-secondary"
                                 }`}
                                 onClick={() => navigate("/admin/inventory", { 
-                                    state: { view: "list-report" } 
+                                    state: { view: "list-report", title: location?.state?.title } 
                                 })}
                             >
                                 <i className="fa-solid fa-file-lines me-2"></i>
@@ -313,7 +278,11 @@ const Inventory = () => {
                                                 style={{ cursor: "pointer", userSelect: "none" }}
                                                 onClick={() => {
                                                     navigate("/admin/inventory", { 
-                                                        state: { source: data.source, view: "products" } 
+                                                        state: { 
+                                                            source: data.source, 
+                                                            view: "products", 
+                                                            title: location?.state?.title
+                                                        } 
                                                     });
                                                 }}
                                             >
@@ -343,7 +312,10 @@ const Inventory = () => {
                                             `}
                                                 style={{ cursor: "pointer", userSelect: "none" }}
                                                 onClick={() => {
-                                                    navigate("/seller", { state: { source: data.source } });
+                                                    navigate("/seller", { state: { 
+                                                        source: data.source,
+                                                        title: location?.state?.title 
+                                                    }});
                                                 }}
                                             >
                                                 <div className={`${data.icon} small`}></div>

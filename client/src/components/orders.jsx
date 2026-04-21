@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState, useRef, useMemo } from "react";
+import React, { useContext, useEffect, useState, useRef, useMemo, useLayoutEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import img from "../assets/images/nodata.png";
 import { useBreakpointHeight } from "./breakpoint";
@@ -138,7 +138,7 @@ const Orders = () => {
     const admin = useContext(adminContext);
     const seller = useContext(sellerContext);
     const context = role === "admin" ? admin : seller;
-    const { orders, loading, error, setError, setDeleteOrderModal, setText, setOrders, setLoading } = context;
+    const { orders, loading, error, setError, setDeleteOrderModal, setText, setOrders, setLoading, setTextHeader } = context;
     const height = useBreakpointHeight();
     const [openMenuId, setOpenMenuId] = useState(null);
     const menuRefs = useRef({});
@@ -166,6 +166,12 @@ const Orders = () => {
     const location = useLocation();
 
     const [isLoading, setIsLoading] = useState(true);
+
+
+    useLayoutEffect(() => {
+        if(role === "admin") return;
+        setTextHeader(location?.state?.title)
+    },[location?.state?.title]);
 
 
 

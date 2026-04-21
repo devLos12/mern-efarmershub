@@ -1,6 +1,8 @@
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useLayoutEffect, useState } from "react";
 import { appContext } from "../../context/appContext.jsx";
 import Toast from "../toastNotif.jsx";
+import { useLocation } from "react-router-dom";
+import { adminContext} from "../../context/adminContext.jsx";
 
 
 
@@ -25,9 +27,16 @@ const ShippingFee = () => {
         isLoading: false
     });
 
+    const location = useLocation();
+    const { setTextHeader } = useContext(adminContext);
 
 
 
+    useLayoutEffect(() => {
+        setTextHeader(location?.state?.title);
+    },[location?.state?.title]);
+
+    
     useEffect(() => {
         getShippingFee();
     },[]);

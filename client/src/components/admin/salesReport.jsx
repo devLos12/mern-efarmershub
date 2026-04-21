@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useMemo, useContext } from "react";
+import { useEffect, useState, useRef, useMemo, useContext, useLayoutEffect } from "react";
 import html2pdf from 'html2pdf.js';
 import { appContext } from "../../context/appContext";
 import Toast from "../toastNotif.jsx";
@@ -11,8 +11,8 @@ import {
     Tooltip, 
     ResponsiveContainer 
 } from 'recharts';
-
-
+import { adminContext } from "../../context/adminContext.jsx";
+import { useLocation } from "react-router-dom";
 
 
 
@@ -410,6 +410,16 @@ const SalesReport = () => {
     const [isCustomRange, setIsCustomRange] = useState(false);
     
     const printRef = useRef();
+
+    const { setTextHeader } = useContext(adminContext);
+    const location = useLocation();
+
+    useLayoutEffect(() => {
+        setTextHeader(location?.state?.title);
+    },[location?.state?.title]);
+    
+    
+
 
     // ✅ Fetch data when period or refresh changes
     useEffect(() => {

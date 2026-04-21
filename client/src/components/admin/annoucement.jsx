@@ -1,8 +1,9 @@
-import React, { useContext, useEffect, useState, useRef } from "react";
+import React, { useContext, useEffect, useState, useRef, useLayoutEffect } from "react";
 import { adminContext } from "../../context/adminContext";
 import { useBreakpointHeight } from "../breakpoint";
 import Toast from "../toastNotif";
 import { appContext } from "../../context/appContext";
+import { useLocation } from "react-router-dom";
 
 
 
@@ -18,6 +19,7 @@ const Announcement = () => {
 
     const { 
         addAnnouncement, setAddAnnouncement, setText,setAnnouncementModal,
+        setTextHeader
     } = useContext(adminContext);
     const [announcement, setAnnouncement] = useState([]);
     const height = useBreakpointHeight();
@@ -30,6 +32,17 @@ const Announcement = () => {
 
     const menuRefs = useRef({});
     const buttonRefs = useRef({});
+
+    const location = useLocation();
+
+
+    useLayoutEffect(() => {
+        setTextHeader(location?.state?.title);
+    },[location?.state?.title]);
+
+    
+
+
 
     useEffect(() => {
         const handleClickOutside = (event) => {

@@ -1,4 +1,4 @@
-import React, { useContext } from "react";
+import React, { useContext, useLayoutEffect } from "react";
 import { useState, useEffect, useRef, useMemo } from "react";
 import { adminContext } from "../../context/adminContext.jsx";
 import { useBreakpointHeight } from "../../components/breakpoint.jsx";
@@ -173,7 +173,7 @@ const Accounts = () => {
         showNotification
     } = useContext(appContext);
 
-    const { setText, setId, setAccountsModal, accountsData, setAccountsData, error, setError } = useContext(adminContext);
+    const { setText, setId, setAccountsModal, accountsData, setAccountsData, error, setError, setTextHeader } = useContext(adminContext);
     const { trigger } = useContext(adminContext);
     const height = useBreakpointHeight();
     const [loading, setLoading] = useState(true);
@@ -206,6 +206,15 @@ const Accounts = () => {
                         'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
         return `${months[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
     };
+
+
+
+    useLayoutEffect(() => {
+        setTextHeader(location?.state?.title);
+    },[location?.state?.title, location?.state?.source]);
+
+
+    
 
     useEffect(() => {
         const result = setTimeout(() => {
@@ -295,6 +304,7 @@ const Accounts = () => {
             if (!data.chatId || !data.senderId) return;
             navigate("/admin/messages", {
                 state: {
+                    title: "messages",
                     source: location.state?.source,
                     chatId: data.chatId,
                     senderId: data.senderId,
@@ -583,7 +593,7 @@ const Accounts = () => {
                                     <div key={source}
                                         className={`text-capitalize rounded p-2 px-3 d-flex align-items-center ${location.state?.source === source ? "bg-success text-white shadow-sm" : "bg-white text-success border border-success border-opacity-25"}`}
                                         style={{ cursor: "pointer", transition: "all 0.2s ease" }}
-                                        onClick={() => navigate("/admin/accounts", { state: { source } })}>
+                                        onClick={() => navigate("/admin/accounts", { state: { source, title: location?.state?.title } })}>
                                         <i className={`fa ${icon} me-2 small`}></i>
                                         <p className="m-0 small fw-bold d-none d-md-flex">{label}</p>
                                     </div>

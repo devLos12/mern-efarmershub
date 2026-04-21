@@ -357,7 +357,8 @@ const DamageLog = () => {
                         <p className=' small text-muted'>Loading damage log...</p>
                     </div>
                 ) : filteredDamageLogs.length === 0 ? (
-                    <div className="mt-5">
+                    <div className="p-5">
+                        <i className='fa fa-logs'></i>
                         <p className="m-0 text-capitalize text-center small opacity-75">no damage logs found</p>
                     </div>
                 ) : (

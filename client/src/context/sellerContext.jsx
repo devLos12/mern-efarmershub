@@ -9,37 +9,8 @@ export const MySellerContext = ({children}) => {
     const [sellerInfo, setSellerInfo] = useState({});
     const [text, setText] = useState(null);
     const [textHeader, setTextHeader] = useState("my crops");
-    const { pathname } = useLocation(); 
 
-    useEffect(() => {
-        const parts = pathname.toLowerCase().split("/").filter(Boolean);
-        const pathFiltered = parts.length >= 2 ? parts[1]  : parts[parts.length - 1];
-
-
-        let pathFilteredHeader = "";
-
-        if(pathFiltered === "seller"){
-            pathFilteredHeader = "my crop";
-        } else if (pathFiltered === "orderdetails"){ 
-            pathFilteredHeader = "order details";
-
-        } else if (pathFiltered === "trackorder"){
-            pathFilteredHeader = "TracK Order";
-        } else if (pathFiltered === "productdetails") {
-            pathFilteredHeader = "product details";
-        } else if (pathFiltered === "edit-profile"){
-            pathFilteredHeader = "edit profile";
-        } else if (pathFiltered === "change-password") {
-            pathFilteredHeader = "change password";
-
-        }else {
-            pathFilteredHeader = pathFiltered;
-        }
-
-
-        setTextHeader(pathFilteredHeader);
-    },[pathname]);
-
+    
     const [sellerData, setSellerData] = useState({ deleteProduct : { id : ""}});
     const [sellerUpload, setSellerUpload] = useState({
         isShow: false,

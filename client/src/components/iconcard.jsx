@@ -30,7 +30,7 @@ const IconCard = () => {
         setOpenSettings(false);
     };
 
-
+    
     
     return (
         <div className="position-absolute vh-100 bg-darken"

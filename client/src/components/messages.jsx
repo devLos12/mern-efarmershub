@@ -5,9 +5,12 @@ import { useBreakpoint, useBreakpointHeight } from "./breakpoint";
 import { io } from "socket.io-client";
 import img from "../assets/images/about.png";
 import imageCompression from 'browser-image-compression';
+import { sellerContext } from "../context/sellerContext";
+import { adminContext } from "../context/adminContext";
 
 const Messages = () => {
     const { role} = useContext(appContext);
+
 
     const [message, setMessage] = useState({});
     const [chat, setChat] = useState([]);
@@ -31,11 +34,27 @@ const Messages = () => {
     // Step 1: Add loading state
     const [isSending, setIsSending] = useState(false);
 
+    const seller = useContext(sellerContext);
+    const admin = useContext(adminContext);
+    
+
+    // Guard lahat before destructuring
+    const context = role === 'admin' ? admin : role === 'seller' ? seller : null;
+    const setTextHeader = context?.setTextHeader ?? (() => {}); // fallback to no-op function
+
+
     useEffect(() => {
         if (!location.state) {
             navigate(`/${role}/inbox`);
         }
     }, [location.state]);
+
+
+    useLayoutEffect(() => {
+        if(role === 'user') return;
+        setTextHeader(location?.state?.title);
+    },[location?.state?.title]);
+
 
 
     const autoResize = ()=>{

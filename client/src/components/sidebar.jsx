@@ -113,7 +113,13 @@ const Sidebar = () => {
                                 style={{ cursor: "pointer" }}
                                 onClick={() => {
                                     if (role === "admin") {
-                                        navigate(data.link, { state: { source: data?.source } })
+
+                                        navigate(data.link, { 
+                                            state: { 
+                                                source: data?.source,
+                                                title: data?.label 
+                                            } 
+                                        })
 
                                         if (data.label === 'dashboard') {
                                             setOrderBadge((prev) => ({ ...prev, show: false }))
@@ -148,6 +154,7 @@ const Sidebar = () => {
                                                 .then((e) => {
                                                     navigate(data.link, {
                                                         state: {
+                                                            title: "messages",
                                                             source: "admin",
                                                             chatId: e.chatId,
                                                             senderId: e.senderId,
@@ -166,7 +173,14 @@ const Sidebar = () => {
                                             if (data.label === "inbox") {
                                                 setInboxBadge((prev) => ({ ...prev, show: false }))
                                             }
-                                            navigate(data.link, { state: { source: data.source } });
+
+
+                                            navigate(data.link, { state: 
+                                                { 
+                                                    source: data.source,
+                                                    title: data.label
+                                                } 
+                                            });
                                         }
                                     }
                                 }}>

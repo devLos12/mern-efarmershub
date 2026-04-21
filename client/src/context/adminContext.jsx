@@ -11,27 +11,7 @@ export const MyAdminContext = ({children}) => {
     const [textHeader, setTextHeader] = useState("Dashboard");
     const { pathname } = useLocation(); 
 
-
-    useEffect(() => {
-        const parts = pathname.toLowerCase().split("/").filter(Boolean);
-        const pathFiltered = parts.length >= 2 ? parts[1]  : parts[parts.length - 1];
-
-        setTextHeader(
-            pathFiltered === "admin" 
-            ? "Dashboard" 
-            : pathFiltered === "orderdetails"  
-            ? "order details" 
-            : pathFiltered === "trackorder" 
-            ? "Track Order" 
-            : pathFiltered === "track-replacement" 
-            ? "Track Replacement" 
-            : pathFiltered === "activity-logs"
-            ? "Activity Logs"
-            : pathFiltered
-        );
-    },[pathname]);
-
-
+        
     const [accountsModal, setAccountsModal] = useState({
         isShow: false,
         id: ""
@@ -93,8 +73,7 @@ export const MyAdminContext = ({children}) => {
     const [hasIcon, setHasIcon] = useState(false);
     const [source, setSource] = useState('');  
 
-
-
+    
     const [openProfile, setOpenProfile] = useState(false);
     const [openViewProfile, setOpenViewProfile] = useState(false);
     const [openSettings, setOpenSettings] = useState(false);

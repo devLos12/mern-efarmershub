@@ -1,4 +1,4 @@
-import React, { useContext, useRef, useState } from "react";
+import React, { useContext, useLayoutEffect, useRef, useState } from "react";
 import { useEffect, useMemo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useBreakpointHeight } from "./breakpoint";
@@ -217,6 +217,11 @@ const Transactions = () => {
     const admin = useContext(adminContext);
     const seller = useContext(sellerContext);
 
+    const context = role === 'admin' ? admin : seller;
+    const { setTextHeader } = context;
+
+
+
     const location = useLocation();
     const navigate = useNavigate();
     const [transactions, setTransactions] = useState([]);
@@ -258,6 +263,11 @@ const Transactions = () => {
     const printRef = useRef();
     const [isProcessingPayout, setIsProcessingPayout] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+
+
+    useLayoutEffect(() => {
+        setTextHeader(location?.state?.title);
+    },[location?.state?.title]);
 
 
 
@@ -1074,12 +1084,24 @@ const Transactions = () => {
                             <div className="col-12">
                                 <div className="d-flex align-items-center gap-2">
                                     <div className={`text-capitalize rounded p-2 px-3 d-flex align-items-center transition-all ${location.state?.source === "payout/seller" || location.state?.source === "payout/offlineFarmer" ? "bg-success text-white shadow-sm" : "bg-white text-success border border-success border-opacity-25"}`} style={{ cursor: "pointer", transition: "all 0.2s ease" }} 
-                                    onClick={() => navigate('/admin/payout/seller', { state: { source: 'payout/seller', farmerTab: 'with-device' } })}>
+                                    onClick={() => navigate('/admin/payout/seller', { state: 
+                                        { 
+                                            source: 'payout/seller', 
+                                            farmerTab: 'with-device',
+                                            title: location?.state?.title
+                                        } 
+                                    })}>
                                         <i className="fa fa-store me-2 small"></i>
                                         <p className="m-0 small fw-bold">Farmer</p>
                                     </div>
                                     <div className={`text-capitalize rounded p-2 px-3 d-flex align-items-center transition-all ${location.state?.source === "payout/rider" ? "bg-success text-white shadow-sm" : "bg-white text-success border border-success border-opacity-25"}`} style={{ cursor: "pointer", transition: "all 0.2s ease" }} 
-                                    onClick={() => navigate('/admin/payout/rider', { state: { source: 'payout/rider' } })}>
+                                    onClick={() => navigate('/admin/payout/rider', { state: 
+                                        { 
+                                            source: 'payout/rider',
+                                            title: location?.state?.title 
+                                        } 
+                                    })}
+                                    >
                                         <i className="fa fa-bicycle me-2 small"></i>
                                         <p className="m-0 small fw-bold">rider</p>
                                     </div>
@@ -1088,10 +1110,22 @@ const Transactions = () => {
 
                             {(source === "payout/seller" || source === "payout/offlineFarmer") && (
                                 <div className="d-flex align-items-center gap-4 mt-3 border-bottom">
-                                    <div className={`pb-2 ${farmerTab === "with-device" ? "border-bottom border-success border-3 text-success" : "text-muted"}`} style={{ cursor: "pointer", transition: "all 0.2s ease" }} onClick={() => navigate('/admin/payout/seller', { state: { source: 'payout/seller', farmerTab: 'with-device' } })}>
+                                    <div className={`pb-2 ${farmerTab === "with-device" ? "border-bottom border-success border-3 text-success" : "text-muted"}`} style={{ cursor: "pointer", transition: "all 0.2s ease" }} 
+                                    onClick={() => navigate('/admin/payout/seller', { state: { 
+                                            source: 'payout/seller', 
+                                            farmerTab: 'with-device',
+                                            title: location?.state?.title 
+                                        } 
+                                    })}>
                                         <p className="m-0 small">With Device</p>
                                     </div>
-                                    <div className={`pb-2 ${farmerTab === "no-device" ? "border-bottom border-success border-3 text-success" : "text-muted"}`} style={{ cursor: "pointer", transition: "all 0.2s ease" }} onClick={() => navigate('/admin/payout/seller', { state: { source: 'payout/seller', farmerTab: 'no-device' } })}>
+                                    <div className={`pb-2 ${farmerTab === "no-device" ? "border-bottom border-success border-3 text-success" : "text-muted"}`} style={{ cursor: "pointer", transition: "all 0.2s ease" }} 
+                                    onClick={() => navigate('/admin/payout/seller', { state: { 
+                                            source: 'payout/seller', 
+                                            farmerTab: 'no-device',
+                                            title: location?.state?.title 
+                                        } 
+                                    })}>
                                         <p className="m-0 small">No Device</p>
                                     </div>
                                 </div>
@@ -1099,10 +1133,23 @@ const Transactions = () => {
 
                             {source === "payout/rider" && (
                                 <div className="d-flex align-items-center gap-4 mt-3 border-bottom">
-                                    <div className={`pb-2 ${riderTab === "delivered" ? "border-bottom border-success border-3 text-success" : "text-muted"}`} style={{ cursor: "pointer", transition: "all 0.2s ease" }} onClick={() => navigate('/admin/payout/rider', { state: { source: 'payout/rider', riderTab: 'delivered' } })}>
+                                    <div className={`pb-2 ${riderTab === "delivered" ? "border-bottom border-success border-3 text-success" : "text-muted"}`} style={{ cursor: "pointer", transition: "all 0.2s ease" }} 
+                                    onClick={() => navigate('/admin/payout/rider', { state: { 
+                                            source: 'payout/rider', 
+                                            riderTab: 'delivered',
+                                            title: location?.state?.title 
+                                        } 
+                                    })}>
                                         <p className="m-0 small">Delivered</p>
                                     </div>
-                                    <div className={`pb-2 ${riderTab === "damage-log" ? "border-bottom border-success border-3 text-success" : "text-muted"}`} style={{ cursor: "pointer", transition: "all 0.2s ease" }} onClick={() => navigate('/admin/payout/rider', { state: { source: 'payout/rider', riderTab: 'damage-log' } })}>
+                                    <div className={`pb-2 ${riderTab === "damage-log" ? "border-bottom border-success border-3 text-success" : "text-muted"}`} style={{ cursor: "pointer", transition: "all 0.2s ease" }} 
+                                    onClick={() => navigate('/admin/payout/rider', { state: { 
+                                            source: 'payout/rider', 
+                                            riderTab: 'damage-log',
+                                            title: location?.state?.title 
+
+                                        } 
+                                    })}>
                                         <p className="m-0 small">Damage Log</p>
                                     </div>
                                 </div>
