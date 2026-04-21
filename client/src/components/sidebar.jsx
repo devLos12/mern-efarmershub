@@ -96,7 +96,7 @@ const Sidebar = () => {
                 style={{
                     overflowY: 'auto',
                     overflowX: 'hidden',
-                    maxHeight: height - 78,
+                    maxHeight: height - 30,
                 }}>
                 {
                     navLinks.map((data, i) => {

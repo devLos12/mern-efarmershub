@@ -212,16 +212,16 @@ const Seller = ({setSellerAuth}) => {
 
     return (
         <>
-        <Header/>
-        <div className={`container-fluid ${ hasIcon ? "mt-5": "mt-0"}`}>
+        <div className={`container-fluid`}>
             <div className="row">
                 <div className="p-0 d-none d-md-flex border-end bg-white flex-column justify-content-between" 
                 style={{width : "210px"}}>
                     <Sidebar />
                 </div>
                 <div className="col p-0 bg-warning bg-opacity-10" 
-                style={{ height : height -50, overflowY : "auto"}}
+                style={{ height : height -7, overflowY : "auto"}}
                 >
+                    <Header/>
                     <Routes>
                         {routes.map((data, i) => (
                             <Route key={i} path={data.path} element={data.element}/>

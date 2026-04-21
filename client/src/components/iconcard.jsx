@@ -15,15 +15,33 @@ const IconCard = () => {
     const admin = useContext(adminContext);
     const seller = useContext(sellerContext);
     const context = role === "admin" ? admin : seller;
-    const { openNotif, openProfile, openViewProfile, openSettings, setHasIcon } = context;
+
+    const { openNotif, openProfile, openViewProfile, openSettings,
+            setOpenNotif, setOpenProfile, setOpenViewProfile, setOpenSettings } = context;
 
     
     const height = useBreakpointHeight();
 
+        
+    const closeAll = () => {
+        setOpenNotif(false);
+        setOpenProfile(false);
+        setOpenViewProfile(false);
+        setOpenSettings(false);
+    };
+
 
     
     return (
-        <div className="container-fluid bg-darken" 
+        <div className="position-absolute vh-100 bg-darken"
+         onClick={closeAll}
+          style={{
+            position: 'absolute',
+            top: '100%',       // kaagad sa baba ng header
+            right: 0,
+            left: 0,
+            zIndex: 999,
+        }}
         >
             <div className="row">
                 <div className="col g-0 d-flex justify-content-end">

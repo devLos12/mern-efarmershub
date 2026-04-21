@@ -26,13 +26,26 @@ const Notification = () => {
     }
 
 
-    const { notifList, setNotifList, loading, error, setOpenNotif, sellerInfo, userData }  = context;
+    const { notifList, setNotifList, loading, error, setOpenNotif, sellerInfo, userData, adminInfo }  = context;
     const height = useBreakpointHeight();
     const navigate = useNavigate();
     
-    const recipientId = id; 
+
+
+    let recipientId = null;
+
+    if(role === 'admin'){
+        recipientId = adminInfo?._id
+    } else if (role === 'seller'){
+        recipientId = sellerInfo?._id
+    } else if (role === 'user'){
+        recipientId === userData?._id
+    }
+
 
     const [filter, setFilter] = useState("all"); // "all" or "unread"
+
+
 
     // Sort and filter notifications
     const sortedAndFilteredNotifs = notifList
@@ -45,6 +58,11 @@ const Notification = () => {
         .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
     const unreadCount = notifList.filter(notif => !notif.readBy.includes(recipientId)).length;
+    
+    
+
+
+
 
 
 
@@ -107,7 +125,7 @@ const Notification = () => {
 
     return (
         <div className="container-fluid " 
-        style={{height : height-89, overflowY : "auto"}} >
+        style={{height : height-69, overflowY : "auto"}} >
         {notifList.length > 0 ? (
             <>
             <div className="row g-0">
@@ -187,9 +205,9 @@ const Notification = () => {
 
                             }}>
                                 
-                                <div className="col-3 col-md-2">
+                                <div className="col-2 col-md-2">
                                     {(data.type === "statusApprove") && (
-                                        <div className="rounded border shadow-sm" 
+                                        <div className="rounded border shadow-sm " 
                                         style={{width: "55px", height: "55px" , overflow: "hidden"}}
                                         >
                                             <img src={data.meta.imageFile} 
@@ -223,7 +241,7 @@ const Notification = () => {
                                     )}
                                 </div>
 
-                                <div className="col">
+                                <div className="col ms-1 ms-md-0">
                                     <div className="d-flex justify-content-between align-items-start">
                                         <p className="m-0 text-capitalize fw-bold small">{data.sender.role === "system" 
                                         ? "System Notice"
