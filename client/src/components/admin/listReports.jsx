@@ -959,7 +959,7 @@ const ListReports = () => {
                             value={farmerTypeFilter}
                             onChange={(e) => setFarmerTypeFilter(e.target.value)}
                         >
-                            <option value="all">All Farmer Types</option>
+                            <option value="all">All Farmer Types</option>   
                             {uniqueFarmerTypes.map((type, i) => (
                                 <option key={i} value={type}>
                                     {type === 'with-device' ? 'With Device' : 'No Device'}
@@ -1171,8 +1171,7 @@ const ListReports = () => {
                                             </td>
 
                                             <td className="align-middle small text-capitalize">
-                                                <span className="badge" style={{
-                                                    backgroundColor: product.farmerType === 'with-device' ? '#10b981' : '#f59e0b',
+                                                <span className={`badge ${product.farmerType === 'with-device' ? 'bg-success' : 'bg-secondary'}`} style={{
                                                     color: '#fff'
                                                 }}>
                                                     {product.farmerType === 'with-device' ? 'With Device' : 'No Device'}
