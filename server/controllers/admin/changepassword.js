@@ -1,6 +1,6 @@
 import Admin from "../../models/admin.js";
 import bcrypt from "bcrypt";
-
+import { createActivityLog } from "./activity-log.js";
 
 
 const changePassword = async (req, res) => {
@@ -25,6 +25,15 @@ const changePassword = async (req, res) => {
 
         admin.password = hashedPassword;
         await admin.save();            
+
+        
+
+        await createActivityLog(
+            req.account.id,
+            'CHANGE PASSWORD',
+            `Changed own password: ${admin.firstname} ${admin.lastname} (${admin.accountId})`,
+            req
+        );
 
         res.status(200).json({ message: "Password changed successfully." });
     } catch (error) {

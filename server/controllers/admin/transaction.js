@@ -6,7 +6,7 @@ import RiderPayout from "../../models/riderPayout.js";
 import OfflineFarmerPayout from "../../models/offlineFarmerPayout.js";
 import { v2 as cloudinary } from "cloudinary";
 import OfflineFarmerPaymentTransaction from "../../models/offlineFarmerPaymentTrans.js";
-
+import { createActivityLog } from "./activity-log.js";
 
 
 
@@ -193,6 +193,13 @@ export const deletePayout = async (req, res) => {
             await RiderPayout.deleteMany({ _id: { $in: ids } });
         }
 
+        await createActivityLog(
+            req.account.id,
+            'DELETE PAYOUT',
+            `Deleted ${items.length} payout record(s)`,
+            req
+        );
+
         res.status(200).json({
             message: "Successfully deleted",
             hardDeletedPayout: doubleDeletedPayout.map(item => item._id),
@@ -209,6 +216,14 @@ export const deletePayment = async (req, res) => {
     try {
         const { items } = req.body;
         await AdminPaymentTransaction.deleteMany({ _id: { $in: items } });
+
+        await createActivityLog(
+            req.account.id,
+            'DELETE PAYMENT',
+            `Deleted ${items.length} payment record(s)`,
+            req
+        );
+
         res.status(200).json({ message: "successfully deleted" });
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -290,6 +305,21 @@ export const updatePayout = async (req, res) => {
                 refNo
             });
         }
+
+
+
+
+        const payoutType = seller ? 'seller' : rider ? 'rider' : 'offline farmer';
+        const payoutName = seller?.sellerName ?? rider?.riderName ?? offlineFarmer?.farmerName;
+        const payoutNumber = seller?.payoutNumber ?? rider?.payoutNumber ?? offlineFarmer?.payoutNumber;
+
+        await createActivityLog(
+            req.account.id,
+            'UPDATE PAYOUT',
+            `Marked ${payoutType} payout as paid: ${payoutName} (${payoutNumber})`,
+            req
+        );
+        
 
         res.status(200).json({ message: `Payout receipt successfully sent.` });
     } catch (error) {

@@ -137,6 +137,7 @@ const UpdateStatusModal = ({ show, remittance, onClose, onConfirm, isProcessing 
     const [showFullView, setShowFullView] = useState(false);
 
 
+
     useEffect(() => {
         if (!show) {
             setImageFile(null);
@@ -344,6 +345,7 @@ const RiderRemittances = () => {
     const [imagePrev, setImagePrev] = useState('');
 
 
+    const [isDeleting, setIsDeleting] = useState(false);
 
     
     const handleRemitProof = (imageFile) => {
@@ -473,8 +475,10 @@ const RiderRemittances = () => {
 
 
     // ── Batch delete ─────────────────────────────────────────────────────────────
+    // i-update yung handleBatchDelete
     const handleBatchDelete = async () => {
         if (selectedIds.size === 0) { showNotification("No records selected.", "error"); return; }
+        setIsDeleting(true);  // ← dagdag
         try {
             const res = await fetch(`${import.meta.env.VITE_API_URL}/api/deleteRemittances`, {
                 method: "DELETE",
@@ -492,6 +496,8 @@ const RiderRemittances = () => {
             await fetchRemittances();
         } catch (err) {
             showNotification(err.message, "error");
+        } finally {
+            setIsDeleting(false);  // ← dagdag
         }
     };
     // ───────────────────────────────────────────────────────────────────────────
@@ -980,9 +986,20 @@ const RiderRemittances = () => {
                         Are you sure you want to delete <strong>{selectedIds.size}</strong> record{selectedIds.size > 1 ? "s" : ""}? This action cannot be undone.
                     </p>
                     <div className="d-flex gap-2 justify-content-end mt-3">
-                        <button className="btn btn-sm btn-secondary" onClick={() => setShowDeleteModal(false)}>Cancel</button>
-                        <button className="btn btn-sm btn-danger" onClick={handleBatchDelete}>
-                            <i className="fa fa-trash me-1"></i>Delete
+                        <button 
+                            className="btn btn-sm btn-secondary" 
+                            onClick={() => setShowDeleteModal(false)}
+                            disabled={isDeleting}>  {/* ← dagdag */}
+                            Cancel
+                        </button>
+                        <button 
+                            className="btn btn-sm btn-danger d-flex align-items-center gap-2" 
+                            onClick={handleBatchDelete}
+                            disabled={isDeleting}>  {/* ← dagdag */}
+                            {isDeleting 
+                                ? <><span className="spinner-border spinner-border-sm" role="status"></span><span>Deleting...</span></>
+                                : <><i className="fa fa-trash me-1"></i>Delete</>
+                            }
                         </button>
                     </div>
                 </div>

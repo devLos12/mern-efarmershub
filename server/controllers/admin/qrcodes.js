@@ -2,7 +2,7 @@ import QrCode from "../../models/qrCodes.js";
 import multer from "multer";
 import cloudinary from "../../config/cloudinary.js";
 import { isObjectIdOrHexString } from "mongoose";
-
+import { createActivityLog } from "./activity-log.js";
 
 
 
@@ -99,6 +99,21 @@ export const updateQr = async (req, res) => {
 
         io.emit('qrcode:update', { message: "new qr update"});
 
+
+
+        const updatedTypes = [];
+        if (gcash) updatedTypes.push('GCash');
+        if (maya) updatedTypes.push('Maya');
+
+        await createActivityLog(
+            req.account.id,
+            'UPDATE QR CODE',
+            `Updated QR code: ${updatedTypes.join(', ')}`,
+            req
+        );
+
+
+
         return res.status(200).json({ 
             message: "QR code updated successfully", 
             success: true 
@@ -162,6 +177,17 @@ export const deleteQrCode = async (req, res) => {
         }
 
         io.emit('qrcode:delete', { message: `${type} qr code has been deleted`});
+
+
+
+
+        await createActivityLog(
+            req.account.id,
+            'DELETE QR CODE',
+            `Deleted ${type} QR code`,
+            req
+        );
+
 
         return res.status(200).json({ 
             success: true,

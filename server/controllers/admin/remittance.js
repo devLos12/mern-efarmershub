@@ -1,5 +1,9 @@
 import Remit from "../../models/remittance.js";
 import cloudinary from "../../config/cloudinary.js";
+import { createActivityLog } from "./activity-log.js";
+
+
+
 
 
 import multer from "multer";
@@ -163,11 +167,23 @@ export const updateRemittanceStatus = async (req, res) => {
             id,
             { $set: updatePayload },
             { new: true }
-        );
+        ).populate('orderId', "orderId");
+
+
 
         if (!updated) {
             return res.status(404).json({ success: false, message: "Remittance record not found." });
         }
+
+        
+        await createActivityLog(
+            req.account.id,
+            'UPDATE REMITTANCE STATUS',
+            `Updated remittance status to '${status}' for order #${updated.orderId?.orderId}`,
+            req
+        );
+
+
 
         return res.status(200).json({
             success: true,
@@ -200,6 +216,15 @@ export const deleteRemittances = async (req, res) => {
         // ─────────────────────────────────────────────────────────────────────
 
         const result = await Remit.deleteMany({ _id: { $in: ids } });
+
+
+        await createActivityLog(
+            req.account.id,
+            'DELETE REMITTANCE',
+            `Deleted ${result.deletedCount} remittance record(s)`,
+            req
+        );
+
 
         return res.status(200).json({
             success: true,

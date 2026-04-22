@@ -7,10 +7,7 @@ import { Resend } from 'resend';
 import cloudinary from "../../config/cloudinary.js";
 import multer from "multer";
 import OfflineFarmer from "../../models/offline-farmer.js";
-
-
-
-
+import { createActivityLog} from "./activity-log.js";
 
 
 
@@ -417,27 +414,43 @@ export const getAccounts = async (req, res) => {
 
 
 
-export const removeAccount = async (req, res)=>{
-    try{
-        const id  = req.params.id;
+export const removeAccount = async (req, res) => {
+    try {
+        const id = req.params.id;
 
+        // Find which model this account belongs to
+        const user = await User.findById(id).select('accountId firstname lastname');
+        const seller = await Seller.findById(id).select('accountId firstname lastname');
+        const rider = await Rider.findById(id).select('accountId firstname lastname');
+        const admin = await Admin.findById(id).select('accountId firstname lastname');
 
-        
+        const account = user || seller || rider || admin;
+        const accountType = user ? 'User' : seller ? 'Seller' : rider ? 'Rider' : 'Admin';
 
-        await User.deleteOne({_id : id});
-        const seller = await Seller.deleteOne({_id : id});
-        await Rider.deleteOne({_id: id});
-        await Admin.deleteOne({_id: id});
+        // Delete logic
+        await User.deleteOne({ _id: id });
+        const sellerDelete = await Seller.deleteOne({ _id: id });
+        await Rider.deleteOne({ _id: id });
+        await Admin.deleteOne({ _id: id });
 
-        if(seller.deletedCount > 0){
+        if (sellerDelete.deletedCount > 0) {
             await Product.deleteMany({ "seller.id": id });
         }
 
-        res.status(201).json({ message : "Account Deleted Successfully"});
-    }catch(error){
-        res.status(500).json({ message : error.message});
+        await createActivityLog(
+            req.account.id,
+            'DELETE ACCOUNT',
+            `Deleted ${accountType} account: ${account?.firstname} ${account?.lastname} (${account?.accountId})`,
+            req
+        );
+
+        res.status(201).json({ message: "Account Deleted Successfully" });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
     }
 }
+
+
 
 
 
@@ -564,7 +577,6 @@ export const upload  = multer({ storage: multer.memoryStorage() });
 
 
 
-
 // ── Controller ────────────────────────────────────────────────────────────────
 export const adminUpdateProfile = async (req, res) => {
     try {
@@ -665,6 +677,15 @@ export const adminUpdateProfile = async (req, res) => {
             return res.status(404).json({ message: "Account not found." });
         }
 
+
+        await createActivityLog(
+            req.account.id,
+            'UPDATE ACCOUNT PROFILE',
+            `Updated ${source} profile: ${updated.firstname} ${updated.lastname} (${updated.accountId})`,
+            req
+        );
+
+
         return res.status(200).json({ message: "Profile updated successfully." });
 
     } catch (err) {
@@ -672,10 +693,6 @@ export const adminUpdateProfile = async (req, res) => {
         return res.status(500).json({ message: err.message || "Server error." });
     }
 };
-
-
-
-
 
 
 
@@ -717,6 +734,14 @@ export const updateVerification = async(req, res) => {
                 }
             }
             
+            await createActivityLog(
+                req.account.id,
+                'UPDATE VERIFICATION',
+                `Set seller verification to '${verification}': ${sellerUpdate.firstname} ${sellerUpdate.lastname} (${sellerUpdate.accountId})`,
+                req
+            );
+
+
             return res.status(200).json({ 
                 success: true,
                 message: "Seller verification updated successfully",
@@ -724,6 +749,8 @@ export const updateVerification = async(req, res) => {
                 emailSent: verification === 'verified' ? true : undefined
             });
         }
+
+
 
         // If not found in Seller, try Rider collection
         const riderUpdate = await Rider.findByIdAndUpdate(
@@ -743,6 +770,13 @@ export const updateVerification = async(req, res) => {
                     console.warn('Approval succeeded but email notification failed:', emailResult.error);
                 }
             }
+            
+            await createActivityLog(
+                req.account.id,
+                'UPDATE VERIFICATION',
+                `Set rider verification to '${verification}': ${riderUpdate.firstname} ${riderUpdate.lastname} (${riderUpdate.accountId})`,
+                req
+            );
 
             return res.status(200).json({ 
                 success: true,

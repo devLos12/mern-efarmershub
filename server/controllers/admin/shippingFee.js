@@ -1,5 +1,5 @@
 import ShippingFee from "../../models/shippingFee.js";
-
+import { createActivityLog } from "./activity-log.js";
 
 
 
@@ -35,6 +35,13 @@ export const updateShippingFee = async(req, res) => {
             { upsert: true, new: true }  // ← upsert = create if not exists, new = ibalik yung updated
         );
 
+        await createActivityLog(
+            req.account.id,
+            'UPDATE SHIPPING FEE',
+            `Updated shipping fee to ₱${amount}`,
+            req
+        );
+        
         return res.status(200).json(fee);
     } catch (error) {
         return res.status(500).json({ message: error.message });

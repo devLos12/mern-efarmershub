@@ -340,8 +340,6 @@ const sendOfflineFarmerSMS = async (contact, firstname, orderId, productList, to
 
 
 
-
-
 const formatTime = () =>
     new Date().toLocaleTimeString("en-PH", {
       timeZone: "Asia/Manila",
@@ -473,15 +471,12 @@ const createTransaction = async(orderId, items, payment, userId, firstname, last
 
 
 
-
-
-
 const generatePayoutNumber = async (date, type) => {
     const prefix =  type === "offlineFarmer" 
     ? `OFFPAY${date.replace(/-/g, "")}` 
     : `PAY${date.replace(/-/g, "")}`;
     
-
+    
     const model = type === "offlineFarmer" ? OfflineFarmerPayout : PayoutTransaction;
 
     const lastPayout = await model.findOne(

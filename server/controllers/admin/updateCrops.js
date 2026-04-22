@@ -174,7 +174,7 @@ export const updateCrops = async (req, res) => {
             cloudinary.uploader.destroy(oldCloudinaryId).catch(err => 
                 console.error('Failed to delete old Cloudinary image:', err)
             );
-        }
+        } 
 
         io.emit('product:updated');
         res.status(200).json({ message: `Product successfully updated.` });

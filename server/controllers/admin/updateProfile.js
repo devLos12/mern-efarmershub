@@ -1,6 +1,10 @@
 import Admin from "../../models/admin.js";
 import multer from "multer";
 import { v2 as cloudinary } from "cloudinary";
+import { createActivityLog } from "./activity-log.js";
+
+
+
 
 const storage = multer.memoryStorage();
 export const updateAdminProfile = multer({ storage: storage });
@@ -57,6 +61,13 @@ export const UpdateAdminProfile = async (req, res) => {
                 }
             },
             { new: true }
+        );
+
+        await createActivityLog(
+            req.account.id,
+            'UPDATE OWN PROFILE',
+            `Updated own admin profile: ${admin.firstname} ${admin.lastname} (${admin.accountId})`,
+            req
         );
 
         res.status(200).json({ message: "Profile updated successfully." });

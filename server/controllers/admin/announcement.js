@@ -1,6 +1,8 @@
 import SeasonalAnnouncement from "../../models/seasonal.js";
 import multer from "multer";
 import cloudinary from "../../config/cloudinary.js";
+import { createActivityLog } from "./activity-log.js";
+
 
 
 
@@ -84,11 +86,20 @@ export const addAnnouncement = async (req, res) => {
             cloudinaryId
         });
 
+        await createActivityLog(
+            req.account.id,
+            'ADD ANNOUNCEMENT',
+            `Added announcement: "${title}" for crop "${name}"`,
+            req
+        );
+
         res.status(200).json({ message: "Announcement added successfully." });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 }
+
+
 
 
 
@@ -155,6 +166,15 @@ export const editAnnouncement = async (req, res) => {
             );
         }
 
+        await createActivityLog(
+            req.account.id,
+            'EDIT ANNOUNCEMENT',
+            `Updated announcement: "${title}" for crop "${name}"`,
+            req
+        );
+
+
+
         res.status(200).json({ message: "Successfully updated." });
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -167,8 +187,15 @@ export const deleteAnnouncement = async (req, res) => {
 
 
         // Get cloudinary ID before deleting
-        const announcement = await SeasonalAnnouncement.findById(id).select('cloudinaryId');
+        const announcement = await SeasonalAnnouncement.findById(id);
         
+        await createActivityLog(    
+            req.account.id,
+            'DELETE ANNOUNCEMENT',
+            `Deleted announcement: "${announcement?.title}" for crop "${announcement?.cropName}"`,
+            req
+        );
+
         // Delete from database
         await SeasonalAnnouncement.findByIdAndDelete(id);
 
@@ -179,6 +206,7 @@ export const deleteAnnouncement = async (req, res) => {
             );
         }
 
+        
         res.status(200).json({ message: "Announcement Deleted Successfully." });
     } catch (error) {
         res.status(500).json({ message: error.message });

@@ -2,6 +2,11 @@ import multer from "multer";
 import Product from "../../models/products.js";
 import cloudinary from "../../config/cloudinary.js";
 import OfflineFarmer from "../../models/offline-farmer.js";
+import { createActivityLog } from "./activity-log.js";
+
+
+
+
 
 
 // Same memory storage as original uploadProducts
@@ -157,9 +162,25 @@ export const adminUploadOfflineFarmerProduct = async (req, res) => {
 
         await newProduct.save();
 
+
+
+
         io.emit("product:uploaded", {
             message: `New product "${name}" uploaded by admin for ${farmer.firstname} ${farmer.lastname}`,
         });
+
+
+
+        const farmerLabel = isNewFarmer === "true"
+            ? `new farmer ${farmer.firstname} ${farmer.lastname} (${farmer.accountId})`
+            : `existing farmer ${farmer.firstname} ${farmer.lastname} (${farmer.accountId})`;
+
+        await createActivityLog(
+            req.account.id,
+            'UPLOAD OFFLINE FARMER PRODUCT',
+            `Uploaded product "${name}" (${newProdId}) for ${farmerLabel}`,
+            req
+        );
 
         res.status(201).json({ message: "Product uploaded successfully!" });
 
@@ -168,6 +189,12 @@ export const adminUploadOfflineFarmerProduct = async (req, res) => {
         res.status(500).json({ message: "Server error occurred." });
     }
 };
+
+
+
+
+
+
 
 
 
