@@ -25,6 +25,7 @@ export const UpdateAdminProfile = async (req, res) => {
             return res.status(404).json({ message: "Admin not found." });
         }
 
+        
         // Handle image upload
         let imageFileUrl = image;
 
@@ -44,7 +45,8 @@ export const UpdateAdminProfile = async (req, res) => {
             imageFileUrl = null;
         }
 
-        await Admin.findByIdAndUpdate(
+
+        const updatedAdmin = await Admin.findByIdAndUpdate(
             id,
             {
                 imageFile: imageFileUrl,
@@ -60,15 +62,16 @@ export const UpdateAdminProfile = async (req, res) => {
                     detailAddress
                 }
             },
-            { new: true }
+            { new: true }  // ← ibinabalik na yung updated data
         );
 
         await createActivityLog(
             req.account.id,
             'UPDATE OWN PROFILE',
-            `Updated own admin profile: ${admin.firstname} ${admin.lastname} (${admin.accountId})`,
+            `Updated own admin profile: ${updatedAdmin.firstname} ${updatedAdmin.lastname} (${updatedAdmin.accountId})`,
             req
         );
+
 
         res.status(200).json({ message: "Profile updated successfully." });
     } catch (error) {
