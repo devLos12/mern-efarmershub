@@ -50,27 +50,26 @@ export const updateCrops = async (req, res) => {
             }
         }
 
-        // Prepare update data
+        const shouldReset = lifeSpan === "reset";
+        const effectiveLifeSpan = shouldReset ? oldProduct.lifeSpan : Number(lifeSpan);
+
+
         const updateData = { 
             name, 
             price, 
             stocks,
             totalStocks: stocks, 
             kg, 
-            lifeSpan, 
+            lifeSpan: effectiveLifeSpan, // ✅ hindi na "reset" string ang mase-save
             category, 
             disc, 
             imageFile,
-            productType 
+            productType,
+            expiryDate: new Date(Date.now() + effectiveLifeSpan * 24 * 60 * 60 * 1000), // ✅ always reset
+            notified: false,
+            status: "active"
         };
-
-        if (Number(lifeSpan) !== oldProduct.lifeSpan) {
-            updateData.expiryDate = new Date(
-                Date.now() + Number(lifeSpan) * 24 * 60 * 60 * 1000
-            );
-            updateData.notified = false;
-            updateData.status = "active";
-        }
+        
 
         
         if (newCloudinaryId) {
@@ -153,6 +152,22 @@ export const updateCrops = async (req, res) => {
                     status: 'success'
                 });
             }
+
+
+            if (oldProduct.lifeSpan !== effectiveLifeSpan || shouldReset) {
+                await ActivityLog.create({
+                    performedBy: admin._id,
+                    adminType: admin.adminType,
+                    action: 'UPDATE PRODUCT',
+                    description: shouldReset 
+                        ? `Reset expiry date of "${name}" using existing lifeSpan (${effectiveLifeSpan} days)`
+                        : `Updated product lifeSpan from ${oldProduct.lifeSpan} to ${effectiveLifeSpan} days`,
+                    ipAddress,
+                    userAgent,
+                    status: 'success'
+                });
+            }
+
 
             // If walang changes at all
             if (oldProduct.name === name && oldProduct.price === price && 

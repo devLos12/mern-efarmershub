@@ -40,20 +40,21 @@ export const updateCrops = async(req, res) => {
             newCloudinaryId = result.public_id;
         }
 
+
+        const shouldReset = lifeSpan === "reset";
+        const effectiveLifeSpan = shouldReset ? oldProduct.lifeSpan : Number(lifeSpan);
+
         const updateData = { 
-            name, price, stocks, kg, lifeSpan, 
-            category, productType, disc, imageFile
+            name, price, stocks, kg, category, productType, disc, imageFile,
+            lifeSpan: effectiveLifeSpan, // ✅ gamitin yung effective, hindi yung raw "reset" string
+            expiryDate: new Date(Date.now() + effectiveLifeSpan * 24 * 60 * 60 * 1000), // ✅ always reset
+            notified: false,
+            status: "active"
         };
 
-        // Fix — mag-update lang ng expiry kung talagang nagbago ang lifeSpan
-        if (Number(lifeSpan) !== oldProduct.lifeSpan) {
-            updateData.expiryDate = new Date(
-                Date.now() + Number(lifeSpan) * 24 * 60 * 60 * 1000
-            );
-            updateData.notified = false;
-            updateData.status = "active";
-        }
+        
 
+        
         // Update totalStocks kung mas mataas ang bagong stocks
         if (Number(stocks) > oldProduct.totalStocks) {
             updateData.totalStocks = Number(stocks);

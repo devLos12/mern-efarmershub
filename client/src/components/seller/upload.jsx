@@ -489,6 +489,11 @@ const Upload = () => {
                                         disabled={isUploading}
                                     >
                                         <option value="" hidden>select life span</option>
+
+                                        {isUpdate && (
+                                            <option value="reset">Reset</option>
+                                        )}
+
                                         {Array.from({ length: 14 }, (_, i) => (
                                             <option key={i} value={i + 1}>{i + 1} days</option>
                                         ))}

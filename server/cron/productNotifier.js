@@ -26,10 +26,7 @@ const startSchedule = () => {
                 (product.lifeSpan / 2) * 24 * 60 * 60 * 1000
             );
 
-            if (
-                // now >= halfLifeDate 
-                false
-            ) {
+            if ( now >= halfLifeDate ) {
                 await Notification.create({
                     sender: { role: "system" },
                     recipient: { role: "all" },
