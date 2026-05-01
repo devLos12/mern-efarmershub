@@ -55,9 +55,7 @@ export const riderPayout = async (req, res) => {
 
         // Fetch all payouts for this rider, sorted by date (newest first)
         const payouts = await RiderPayout.find({ riderId: id })
-            .sort({ createdAt: -1 })
-            .lean();
-
+        
         if (!payouts || payouts.length === 0) {
             return res.status(200).json([]);
         }

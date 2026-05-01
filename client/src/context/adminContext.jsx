@@ -96,7 +96,6 @@ export const MyAdminContext = ({children}) => {
             deleteProductModal, setDeleteProductModal,
             trigger, setTrigger,
             inventoryData, setInventoryData,
-            openNotif, setOpenNotif,
             exitModal, setExitModal,
             notifBadge, setNotifBadge,
             notifList, setNotifList,

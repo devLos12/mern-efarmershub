@@ -69,7 +69,7 @@ export const updateCrops = async (req, res) => {
             notified: false,
             status: "active"
         };
-        
+
 
         
         if (newCloudinaryId) {
