@@ -67,9 +67,9 @@ const EditableField = ({
         );
     }
 
-    const isEmail    = type === "email" || name === "email";
-    const isName     = name === "firstname" || name === "lastname" || name === "middlename";
-    const isContact  = name === "contact" || name === "number";
+    const isEmail   = type === "email" || name === "email";
+    const isName    = name === "firstname" || name === "lastname" || name === "middlename";
+    const isContact = name === "contact" || name === "number";
     const currentVal = parentKey ? (editForm[parentKey]?.[name] ?? "") : (editForm[name] ?? "");
 
     const handleNameChange = (e) => {
@@ -130,7 +130,7 @@ const ViewProfile = () => {
     const source    = location?.state?.source;
 
     const [profile, setProfile]                   = useState(null);
-    const [accountType, setAccountType]           = useState(null); // ✅ track actual accountType from API
+    const [accountType, setAccountType]           = useState(null);
     const [loading, setLoading]                   = useState(true);
     const [error, setError]                       = useState(null);
     const [showImageModal, setShowImageModal]     = useState(false);
@@ -164,7 +164,7 @@ const ViewProfile = () => {
             const data = await res.json();
             if (!res.ok) throw new Error(data.message);
             setProfile(data.profile);
-            setAccountType(data.accountType); // ✅ store accountType from API
+            setAccountType(data.accountType);
             setError(null);
         } catch (err) {
             setError(err.message);
@@ -203,14 +203,14 @@ const ViewProfile = () => {
         if (source === "user")   return "billingAddress";
         if (source === "seller") return "sellerAddress";
         if (source === "rider")  return "riderAddress";
-        return null; // ✅ offlineFarmer — walang address
+        if (source === "admin")  return "adminAddress";  // ✅ ADDED
+        return null;
     };
 
     const handleEnableEdit = () => {
         setEditForm({ ...profile });
         const addrKey = getAddressKey();
 
-        // ✅ Skip address setup kung walang address (offlineFarmer)
         if (addrKey) {
             const addrData = profile[addrKey] ?? {};
             const provData = philippinesAddress[addrData.province];
@@ -561,7 +561,7 @@ const ViewProfile = () => {
             </div>
         </div>
     ) : null;
-    
+
     const LicenseModal = () => showLicenseModal ? (
         <div className="modal fade show d-block" tabIndex="-1"
             style={{ backgroundColor: "rgba(0,0,0,0.8)" }}
@@ -596,7 +596,7 @@ const ViewProfile = () => {
                     <div className="col-md-6"><EditableField label="First Name"  name="firstname"  value={profile.firstname}  capitalize {...editableProps} /></div>
                     <div className="col-md-6"><EditableField label="Last Name"   name="lastname"   value={profile.lastname}   capitalize {...editableProps} /></div>
                     <div className="col-md-6"><EditableField label="Middle Name" name="middlename" value={profile.middlename} capitalize {...editableProps} /></div>
-                    <div className="col-md-6"><EditableField label="Suffix" name="suffix" value={profile.suffix} capitalize {...editableProps} /></div>  {/* ✅ */}
+                    <div className="col-md-6"><EditableField label="Suffix"      name="suffix"     value={profile.suffix}     capitalize {...editableProps} /></div>
                     <div className="col-md-6"><EditableField label="Email"       name="email"      value={profile.email}      type="email" lowercase {...editableProps} /></div>
                 </div>
             </div>
@@ -633,7 +633,7 @@ const ViewProfile = () => {
                     <div className="col-md-6"><EditableField label="First Name"  name="firstname"  value={profile.firstname}  capitalize {...editableProps} /></div>
                     <div className="col-md-6"><EditableField label="Last Name"   name="lastname"   value={profile.lastname}   capitalize {...editableProps} /></div>
                     <div className="col-md-6"><EditableField label="Middle Name" name="middlename" value={profile.middlename} capitalize {...editableProps} /></div>
-                    <div className="col-md-6"><EditableField label="Suffix"      name="suffix" value={profile.suffix} capitalize {...editableProps} /></div>  {/* ✅ */}
+                    <div className="col-md-6"><EditableField label="Suffix"      name="suffix"     value={profile.suffix}     capitalize {...editableProps} /></div>
                     <div className="col-md-6"><EditableField label="Email"       name="email"      value={profile.email}      type="email" lowercase {...editableProps} /></div>
                     <div className="col-md-6"><EditableField label="Contact"     name="contact"    value={profile.contact}    {...editableProps} /></div>
                     <div className="col-md-6"><ReadOnlyField label="Created At"  value={formatDate(profile.createdAt)} /></div>
@@ -697,7 +697,7 @@ const ViewProfile = () => {
                     <div className="col-md-6"><EditableField label="First Name"  name="firstname"  value={profile.firstname}  capitalize {...editableProps} /></div>
                     <div className="col-md-6"><EditableField label="Last Name"   name="lastname"   value={profile.lastname}   capitalize {...editableProps} /></div>
                     <div className="col-md-6"><EditableField label="Middle Name" name="middlename" value={profile.middlename} capitalize {...editableProps} /></div>
-                    <div className="col-md-6"><EditableField label="Suffix"      name="suffix" value={profile.suffix} capitalize {...editableProps} /></div>  {/* ✅ */}
+                    <div className="col-md-6"><EditableField label="Suffix"      name="suffix"     value={profile.suffix}     capitalize {...editableProps} /></div>
                     <div className="col-md-6"><EditableField label="Email"       name="email"      value={profile.email}      type="email" lowercase {...editableProps} /></div>
                     <div className="col-md-6"><EditableField label="Contact"     name="contact"    value={profile.contact}    {...editableProps} /></div>
                     <div className="col-md-6">
@@ -842,22 +842,38 @@ const ViewProfile = () => {
 
     // ─── Admin ────────────────────────────────────────────────────────
     const renderAdminProfile = () => (
-        <div className="bg-white rounded shadow-sm border p-4 mb-3">
-            <SectionTitle icon="fa fa-user-shield" title="Admin Information" />
-            <div className="row g-3">
-                <div className="col-md-6"><ReadOnlyField label="Account ID" value={profile.accountId} /></div>
-                <div className="col-md-6">
-                    <ReadOnlyField label="Admin Type">
-                        <span className={`badge ${profile.adminType === "main" ? "bg-success" : "bg-secondary"}`}>
-                            {(profile.adminType ?? "sub").toUpperCase()}
-                        </span>
-                    </ReadOnlyField>
+        <>
+            <div className="bg-white rounded shadow-sm border p-4 mb-3">
+                <SectionTitle icon="fa fa-user-shield" title="Admin Information" />
+                <div className="row g-3">
+                    <div className="col-md-6"><ReadOnlyField label="Account ID" value={profile.accountId} /></div>
+                    <div className="col-md-6">
+                        <ReadOnlyField label="Admin Type">
+                            <span className={`badge ${profile.adminType === "main" ? "bg-success" : "bg-secondary"}`}>
+                                {(profile.adminType ?? "sub").toUpperCase()}
+                            </span>
+                        </ReadOnlyField>
+                    </div>
+                    <div className="col-md-6"><EditableField label="First Name"  name="firstname"  value={profile.firstname}  capitalize {...editableProps} /></div>
+                    <div className="col-md-6"><EditableField label="Last Name"   name="lastname"   value={profile.lastname}   capitalize {...editableProps} /></div>
+                    <div className="col-md-6"><EditableField label="Middle Name" name="middlename" value={profile.middlename} capitalize {...editableProps} /></div>
+                    <div className="col-md-6"><EditableField label="Suffix"      name="suffix"     value={profile.suffix}     capitalize {...editableProps} /></div>
+                    <div className="col-md-6"><EditableField label="Email"       name="email"      value={profile.email}      type="email" lowercase {...editableProps} /></div>
+                    <div className="col-md-6"><EditableField label="Contact"     name="contact"    value={profile.contact}    {...editableProps} /></div>
+                    <div className="col-md-6"><ReadOnlyField label="Created At"  value={formatDate(profile.createdAt)} /></div>
                 </div>
-                <div className="col-md-6"><EditableField label="Email"   name="email"   value={profile.email}   type="email" lowercase {...editableProps} /></div>
-                <div className="col-md-6"><EditableField label="Contact" name="contact" value={profile.contact} {...editableProps} /></div>
-                <div className="col-md-6"><ReadOnlyField label="Created At" value={formatDate(profile.createdAt)} /></div>
             </div>
-        </div>
+
+            {/* ✅ Admin Address Section */}
+            {profile.adminAddress && Object.values(profile.adminAddress).some(Boolean) && (
+                <div className="bg-white rounded shadow-sm border p-4 mb-3">
+                    <SectionTitle icon="fa fa-map-marker-alt" title="Address Information" />
+                    <div className="row g-3">
+                        {renderAddressFields("adminAddress")}
+                    </div>
+                </div>
+            )}
+        </>
     );
 
     // ─── Offline Farmer ───────────────────────────────────────────────
@@ -898,10 +914,8 @@ const ViewProfile = () => {
         </div>
     );
 
-    // ✅ Use accountType from API, fallback to source
     const resolvedType = accountType || source;
 
-    // ✅ Profile title label
     const profileLabel = {
         user:          "Buyer",
         seller:        "Farmer",
@@ -910,7 +924,6 @@ const ViewProfile = () => {
         offlineFarmer: "Offline Farmer",
     }[resolvedType] || "Profile";
 
-    // ✅ Hide edit button for offlineFarmer (read-only profile) or show with limited fields
     const canEdit = true;
 
     return (
@@ -934,7 +947,7 @@ const ViewProfile = () => {
                             <div className="bg-success rounded-circle border border-white d-flex align-items-center justify-content-center text-uppercase text-white fs-2"
                                 style={{ width: "60px", height: "60px" }}
                             >
-                                {profile.firstname?.charAt(0)}
+                                {profile.firstname?.charAt(0) || profile.email?.charAt(0)}
                             </div>
                         )}
 
@@ -950,10 +963,9 @@ const ViewProfile = () => {
                     </div>
 
                     <div className="d-flex align-items-center gap-2 flex-wrap">
-                        {/* ✅ Approve/Reject — seller only (not offlineFarmer) */}
-                        {!isEditMode && 
-                        (source === "seller" || source === "rider") && 
-                        resolvedType !== "offlineFarmer" && 
+                        {!isEditMode &&
+                        (source === "seller" || source === "rider") &&
+                        resolvedType !== "offlineFarmer" &&
                         profile.verification === "pending" && (
                             <div className="d-flex gap-2">
                                 <button className="btn btn-success btn-sm" onClick={() => openActionModal("approve")}>
@@ -965,7 +977,6 @@ const ViewProfile = () => {
                             </div>
                         )}
 
-                        {/* ✅ Edit button — hidden for offlineFarmer */}
                         {canEdit && (
                             !isEditMode ? (
                                 <button className="btn btn-dark btn-sm" onClick={handleEnableEdit}>
@@ -986,7 +997,6 @@ const ViewProfile = () => {
                 </div>
             </div>
 
-            {/* ✅ Render correct profile based on resolvedType */}
             {resolvedType === "user"          && renderUserProfile()}
             {resolvedType === "seller"        && renderSellerProfile()}
             {resolvedType === "rider"         && renderRiderProfile()}
@@ -1005,7 +1015,7 @@ const ViewProfile = () => {
                 handleClickNo={() => setShowActionModal(false)}
             />
         )}
-        
+
         {showSaveModal && (
             <Modal
                 textModal="Are you sure you want to save these changes?"

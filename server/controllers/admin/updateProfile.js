@@ -10,7 +10,6 @@ const storage = multer.memoryStorage();
 export const updateAdminProfile = multer({ storage: storage });
 
 
-
 export const UpdateAdminProfile = async (req, res) => {
     try {
         const { id } = req.account;

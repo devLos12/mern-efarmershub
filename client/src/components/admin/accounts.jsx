@@ -333,6 +333,7 @@ const Accounts = () => {
             if (!res.ok) throw new Error(data.message);
             setError(null);
 
+
             if (location.state?.source === "user")   setAccountsData([...(data.user ?? [])].reverse());
             if (location.state?.source === "seller") {
                 const merged = [
@@ -589,6 +590,7 @@ const Accounts = () => {
                                     { source: "user",   icon: "fa-user",    label: "buyer" },
                                     { source: "seller", icon: "fa-store",   label: "farmer" },
                                     { source: "rider",  icon: "fa-bicycle", label: "rider" },
+                                    // { source: "admin",  icon: "fa-user-shield", label: "admin" },
                                 ].map(({ source, icon, label }) => (
                                     <div key={source}
                                         className={`text-capitalize rounded p-2 px-3 d-flex align-items-center ${location.state?.source === source ? "bg-success text-white shadow-sm" : "bg-white text-success border border-success border-opacity-25"}`}

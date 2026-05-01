@@ -6,6 +6,10 @@ const adminSchema = new mongoose.Schema({
         required: true,
         unique: true
     },
+    middlename: { 
+        type: String, 
+        required: false 
+    },
     firstname: {
         type: String,
         default: null
@@ -14,6 +18,7 @@ const adminSchema = new mongoose.Schema({
         type: String,
         default: null
     },
+    suffix: { type: String, required: false },
     email: {
         type: String,
         required: true,

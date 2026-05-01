@@ -144,6 +144,7 @@ const Sidebar = () => {
                                                 receiverId: "unknown",
                                                 receiverRole: "admin"
                                             }
+                                            
                                             fetch(`${import.meta.env.VITE_API_URL}/api/getSellerChatId`, {
                                                 method: "POST",
                                                 headers: { "Content-Type": "application/json" },

@@ -133,7 +133,6 @@ const addAccount = async (req, res) => {
             password, 
             wallet_number, 
             wallet_type, 
-            adminType, 
             plateNumber,
             province,
             city,
@@ -180,9 +179,6 @@ const addAccount = async (req, res) => {
         if (role.toLowerCase() === "admin") {
             if (!contact || !contact.trim()) {
                 return res.status(400).json({ message: "Contact number is required!" });
-            }
-            if (adminType && !['super', 'sub'].includes(adminType.toLowerCase())) {
-                return res.status(400).json({ message: "Admin type must be 'super' or 'sub'!" });
             }
         }
 
@@ -260,21 +256,36 @@ const addAccount = async (req, res) => {
             return `${datePrefix}${String(counter).padStart(4, '0')}`;
         };
         
+
         // Add Admin Account
         if (role.toLowerCase() === "admin") {
             const accountId = await generateUniqueAccountId(Admin);
 
+            
             const newAdmin = new Admin({
                 accountId,
+                firstname:  firstname  || null,
+                middlename: middlename || null,
+                lastname:   lastname   || null,
+                suffix:     suffix || null,
                 contact,
                 email,
-                password: hashpass,
-                adminType: adminType || 'sub'
+                password:   hashpass,
+                adminType:  'sub',          // ← hardcoded, always sub
+                adminAddress: {
+                    province:      province      || null,
+                    city:          city          || null,
+                    barangay:      barangay      || null,
+                    detailAddress: detailAddress || null,
+                    zipCode:       zipCode       || null,
+                }
             });
 
             await newAdmin.save();
             return res.status(201).json({ message: "Admin account created successfully!" });
         }
+        
+        
 
         // Add Seller Account (Farmer)
         if (role.toLowerCase() === "seller") {

@@ -745,8 +745,6 @@ const Transactions = () => {
                 transactions = data.riderPayout?.reverse() || [];
                 setSource(`payout${role === "admin" ? "/rider" : ""}`);
 
-                console.log(transactions);
-
             }
             if (location?.state?.source === "payment") {
                 transactions = data.payment?.reverse() || [];
@@ -758,7 +756,6 @@ const Transactions = () => {
             console.log("Error:", err.message);
         } 
     };
-
 
 
 

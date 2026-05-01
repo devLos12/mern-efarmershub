@@ -564,8 +564,17 @@ const buildUpdateFields = (source, profileData) => {
 
     if (source === "admin") {
         return {
-            email:   profileData.email,
-            contact: profileData.contact,
+            firstname:                       profileData.firstname,
+            lastname:                        profileData.lastname,
+            middlename:                      profileData.middlename,
+            suffix:                          profileData.suffix,
+            email:                           profileData.email,
+            contact:                         profileData.contact,
+            "adminAddress.province":         profileData.adminAddress?.province,
+            "adminAddress.city":             profileData.adminAddress?.city,
+            "adminAddress.barangay":         profileData.adminAddress?.barangay,
+            "adminAddress.detailAddress":    profileData.adminAddress?.detailAddress,
+            "adminAddress.zipCode":          profileData.adminAddress?.zipCode,
         };
     }
 
@@ -574,7 +583,6 @@ const buildUpdateFields = (source, profileData) => {
 
 
 export const upload  = multer({ storage: multer.memoryStorage() });
-
 
 
 // ── Controller ────────────────────────────────────────────────────────────────
@@ -615,8 +623,6 @@ export const adminUpdateProfile = async (req, res) => {
         // ── Build explicit $set fields based on source ────────────────
         const updateFields = buildUpdateFields(source, profileData);
         
-
-
 
 
 
