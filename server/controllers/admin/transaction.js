@@ -231,14 +231,27 @@ export const deletePayment = async (req, res) => {
 };
 
 
+
+
+
+
+
+
+
+
+
 const storage = multer.memoryStorage();
 export const payout = multer({ storage: storage });
+
+
 
 
 export const updatePayout = async (req, res) => {
     try {
         const { id } = req.body;
         let imageFile = null;
+
+
 
         // ✅ Upload image kung may file (optional — offline farmer walang image)
         if (req.file) {
@@ -247,6 +260,7 @@ export const updatePayout = async (req, res) => {
             const result = await cloudinary.uploader.upload(dataURI, { folder: "payout-receipts" });
             imageFile = result.secure_url;
         }
+
 
         // ✅ Identify muna kung sino — sequential, not all at once
         const seller = await PayoutTransaction.findById(id);
@@ -257,6 +271,7 @@ export const updatePayout = async (req, res) => {
             return res.status(404).json({ message: "Payout record not found" });
         }
 
+                
         // ✅ I-update lang yung tamang model
         if (seller) {
             await PayoutTransaction.findByIdAndUpdate(id, { $set: { status: "paid", imageFile } });
@@ -276,7 +291,7 @@ export const updatePayout = async (req, res) => {
             accountName: seller?.sellerName ?? rider?.riderName ?? offlineFarmer?.farmerName,
             accountEmail: seller?.sellerEmail ?? rider?.riderEmail ?? offlineFarmer?.farmerContact ?? "N/A", // ✅ farmerContact fallback, walang email ang offline farmer
             type: seller ? "seller payout" : rider ? "rider payout" : "offline farmer payout",
-            paymentMethod: offlineFarmer ? " cash payout" : seller?.e_WalletAcc?.type, // ✅ offline farmer = cash, seller/rider = gcash
+            paymentMethod: offlineFarmer ? " cash payout" : seller?.e_WalletAcc?.type ?? rider?.e_WalletAcc?.type, // ✅ offline farmer = cash, seller/rider = gcash
             totalAmount: seller?.totalAmount ?? rider?.totalAmount ?? offlineFarmer?.totalAmount,
             status: "paid",
             paidAt: {
