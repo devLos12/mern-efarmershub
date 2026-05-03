@@ -332,10 +332,14 @@ const EditProfile = () => {
 
             showNotification(data.message, 'success');
             
-            // // Success - trigger refresh and navigate back
-            role === "user" || role === 'seller' && setTrigger((prev) => !prev);
-            role === "admin" && setRefetchAdminInfo((prev) => !prev);
+
             
+            // // Success - trigger refresh and navigate back
+            if(role === "user" || role === 'seller') {
+                setTrigger((prev) => !prev);
+            } else {
+                setRefetchAdminInfo((prev) => !prev);
+            }
 
                   // Navigate after short delay
             setTimeout(() => {
