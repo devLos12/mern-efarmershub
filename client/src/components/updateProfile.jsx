@@ -41,7 +41,7 @@ const UpadateProfile = () => {
     }
 
     const { openUpdateProfile, setOpenUpdateProfile, sellerInfo, userData, setTrigger } = context;
-
+    
     let dataProfile = {
         firstname: "",
         lastname: ""

@@ -59,7 +59,7 @@ export const UpdateProfile = async(req, res) => {
                     zipCode,
                     detailAddress
                 },
-                e_WalletAcc: {
+                e_WalletAcc: {  
                     number: wallet_number,
                     type: wallet_type
                 }
