@@ -3,6 +3,8 @@ import mongoose from "mongoose";
 
 
 
+
+
 export const adminGetNotification = async (req, res) => {
     try {
         const id = req.account.id;
@@ -20,7 +22,7 @@ export const adminGetNotification = async (req, res) => {
         if (!notif || notif.length === 0) {
             return res.status(404).json({ message: "empty notification" });
         }
-
+        
         const result = notif.map(n => ({
             ...n.toObject(),
             isRead: n.readBy.includes(id)
@@ -31,6 +33,8 @@ export const adminGetNotification = async (req, res) => {
         res.status(500).json({ message: err.message });
     }
 }
+
+
 
 
 
@@ -62,14 +66,21 @@ export const userGetNotification = async (req, res) => {
 }
 
 
+
+
 export const sellerGetNotification = async (req, res) => {
     try {
         const id = req.account.id;
 
         const notif = await Notification.find({
             $or: [
-                { "recipient.id": new mongoose.Types.ObjectId(id) },
-                { "recipient.role": "seller" },
+                { 
+                    "recipient.id": new mongoose.Types.ObjectId(id) 
+                },
+                { 
+                    "recipient.id": new mongoose.Types.ObjectId(id), //
+                    "recipient.role": "seller" 
+                },
                 { 
                     "recipient.role": "all",
                     "meta.sellerId": new mongoose.Types.ObjectId(id) // sariling system notice lang
@@ -95,7 +106,6 @@ export const sellerGetNotification = async (req, res) => {
         res.status(500).json({ message: err.message });
     }
 }
-
 
 
 

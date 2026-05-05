@@ -6,12 +6,11 @@ const Footer = () => {
     
 
     const contactLinks = [
-        { icon: "fa-solid fa-location-dot",  label: "Lupang Ramos Brgy. Lankaan II, Dasmarinas Cavite." },
-        { icon: "fa-brands fa-facebook",     label: "https://www.facebook.com/KasamaLR" },
-        { icon: "fa-solid fa-envelope",      label: "lupangramoskasama@gmail.com" },
-        { icon: "fa-solid fa-phone",         label: "+63 991 137 5276" },
+        { icon: "fa-solid fa-location-dot", label: "Lupang Ramos Brgy. Lankaan I, Dasmarinas Cavite.", type: "text" },
+        { icon: "fa-brands fa-facebook",    label: "https://www.facebook.com/KasamaLR", type: "link" },
+        { icon: "fa-solid fa-envelope",     label: "lupangramoskasama@gmail.com", type: "email" },
+        { icon: "fa-solid fa-phone",        label: "+63 991 137 5276", type: "text" },
     ]
-
 
     const links = [
         {id: 'about',        label: 'About Us'},
@@ -87,8 +86,18 @@ const Footer = () => {
                         </h6>
                         {contactLinks.map((link, i) => (
                             <div key={i} className="d-flex align-items-center gap-3 mb-2">
-                                <i className={`${link.icon} text-white `}></i>
-                                <p className="m-0 text-white">{link.label}</p>
+                                <i className={`${link.icon} text-white`}></i>
+                                {link.type === "link" ? (
+                                    <a href={link.label} target="_blank" className="text-decoration-none text-white">
+                                        {link.label}
+                                    </a>
+                                ) : link.type === "email" ? (
+                                    <a href={`mailto:${link.label}`} className="text-decoration-none text-white">
+                                        {link.label}
+                                    </a>
+                                ) : (
+                                    <p className="m-0 text-white">{link.label}</p>
+                                )}
                             </div>
                         ))}
                     </div>

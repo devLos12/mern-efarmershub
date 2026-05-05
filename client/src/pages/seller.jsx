@@ -151,21 +151,24 @@ const Seller = ({setSellerAuth}) => {
     }
 
 
+
     useEffect(() => {
         const socket = io(`${import.meta.env.VITE_API_URL}`);
         getNotification();
 
         socket.on("to seller", (e)=> {
             console.log(e.message);
-
             getNotification();
-        })
+        });
+
         return ()=>{
             socket.off("Notification Added");
         }
 
     },[]);
 
+
+    
 
     //api call for sellerinfo
     useEffect(() => {

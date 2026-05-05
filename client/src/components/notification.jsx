@@ -59,13 +59,7 @@ const Notification = () => {
 
     const unreadCount = notifList.filter(notif => !notif.readBy.includes(recipientId)).length;
     
-    
-
-
-
-
-
-
+        
     const handleReadUpdate = async(id) =>{
         setNotifList((prev) => 
             prev.map((notif) => notif._id === id
@@ -106,6 +100,7 @@ const Notification = () => {
         }
     }
 
+
     const timeAgo = (date) => {
         if (!date) return "just now";
         const past = new Date(date);
@@ -121,7 +116,12 @@ const Notification = () => {
         return `${Math.floor(diff / 86400)}d ago`;
     };
 
+
+
     if(loading) return <p></p>
+
+
+    
 
     return (
         <div className="container-fluid " 
@@ -178,33 +178,32 @@ const Notification = () => {
                                         navigate(`/user/${data.link}`, {state: { productId: data.meta.prodId}})
                                     } 
                                 }
-                                         
+                
 
                                 if(role === "seller"){
 
                                     if(data.type === "statusApprove"){
                                         setOpenNotif(false);
-                                        navigate(`/seller/${data.link}`, { state: { productId: data.meta.prodId } }); 
+                                        navigate(`/seller/${data.link}`, {state: { productId: data.meta.prodId }}); 
                                     }else {
                                         setOpenNotif(false);
-                                        navigate(`/seller/${data.link}`, {state: { productId: data.meta.prodId}});
+                                        navigate(`/seller/${data.link}`, {state : { orderId : data.meta.orderId }})
                                     }
                                 }
 
-
                                 if(role === 'admin'){
-
                                     setOpenNotif(false);
                                     navigate(`/admin/${data.link}`, { state: { productId: data.meta.prodId }});
                                 }
 
-
+                                                                 
                                 if (isUnread) {
                                     handleReadUpdate(data._id, recipientId);
                                 }
 
                             }}>
                                 
+
                                 <div className="col-2 col-md-2">
                                     {(data.type === "statusApprove") && (
                                         <div className="rounded border shadow-sm " 
@@ -220,7 +219,7 @@ const Notification = () => {
 
 
                                     {(data.type === "system notice") && (
-                                        <div className="rounded border shadow-sm" 
+                                        <div className="rounded border shadow-sm " 
                                         style={{width: "55px", height: "55px" , overflow: "hidden"}}
                                         >
                                             <img src={data.meta.imageFile} 
@@ -231,7 +230,7 @@ const Notification = () => {
                                         </div>
                                     )}
 
-                                    {(data.type === "checkout" || data.type === "replacement approved" || data.type === "replacement rejected") &&(
+                                    {(data.type === "checkout" || data.type === "replacement approved" || data.type === "replacement rejected" || data.type === 'new order') &&(
                                         <div className="bg-success bg-opacity-10 border border-success border-opacity-25
                                         d-flex align-items-center justify-content-center rounded"
                                         style={{width: "55px", height: "55px"}}

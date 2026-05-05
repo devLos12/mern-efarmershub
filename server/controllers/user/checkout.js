@@ -31,6 +31,9 @@ const createNotification = async(id, role, orderId) => {
 
 
 
+
+
+
 const createTransaction = async(items, payment, userId, firstname, lastname, email, totalPrice, refNo) => {
     for (const item of items){
         const sellerId = item.seller.id;
@@ -191,6 +194,7 @@ export const checkOut = async(req, res) => {
             );
         }
 
+
         
         if(orderMethod === "delivery" && payment === "cash on delivery" ){
 
@@ -214,14 +218,34 @@ export const checkOut = async(req, res) => {
                     cloudinaryId: null
                 },
                 refNo: refNo
-            })
+            });
 
+
+
+            const sellerIds = [...new Set(items.map(item => item.seller.id))];
+
+            for (const sellerId of sellerIds) {
+                await Notification.create({
+                    sender: { id: userId, role: "user" },
+                    recipient: { id: sellerId, role: "seller" },
+                    message: `You have a new order!`,
+                    link: "orderdetails",
+                    type: "new order",
+                    meta: {
+                        orderId: newOrder._id,
+                        orderIdShort: newOrderId
+                    }
+                });
+            }
+
+            
             await newOrder.save();
             await createNotification(userId, "user", newOrder._id);
             io.emit("user notif", { message: "new notif"});
+            io.emit('to seller', { message: "new order notification" });
             io.emit('new order');
-                
             
+
             return res.status(200).json({ message: "placed order succesfully!"});
         }
 
@@ -248,11 +272,30 @@ export const checkOut = async(req, res) => {
                 refNo: refNo
             })
 
+            
+            const sellerIds = [...new Set(items.map(item => item.seller.id))];
+
+            for (const sellerId of sellerIds) {
+                await Notification.create({
+                    sender: { id: userId, role: "user" },
+                    recipient: { id: sellerId, role: "seller" },
+                    message: `You have a new order!`,
+                    link: "orderdetails",
+                    type: "new order",
+                    meta: {
+                        orderId: newOrder._id,
+                        orderIdShort: newOrderId
+                    }
+                });
+            }
+
             await newOrder.save();
             await createNotification(userId, "user", newOrder._id);
             io.emit("user notif", { message: "new notif"});
+            io.emit('to seller', { message: "new order notification" });
             io.emit('new order');
-        
+
+            
         }
 
         return res.status(200).json({ message: "placed order succesfully!"});
