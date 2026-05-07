@@ -250,8 +250,7 @@ const Admin = ({setAdminAuth})=>{
         })
     },[refetchAdminInfo]);
 
-
-
+    
     //api call for orders;
     const getNotification = async() =>{
 
@@ -282,7 +281,18 @@ const Admin = ({setAdminAuth})=>{
     }
     
     useEffect(()=>{
+        const socket = io(`${import.meta.env.VITE_API_URL}`);
         getNotification();
+
+        socket.on("admin:notifier", (e) => {
+            console.log(e.message);
+            getNotification();
+        });
+
+        return () => {
+            socket.off("admin:notifier");
+        };
+
     },[]);
 
 

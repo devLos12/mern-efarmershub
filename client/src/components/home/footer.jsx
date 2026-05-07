@@ -5,6 +5,7 @@ const Footer = () => {
     const navigate = useNavigate();
     
 
+    
     const contactLinks = [
         { icon: "fa-solid fa-location-dot", label: "Lupang Ramos Brgy. Lankaan I, Dasmarinas Cavite.", type: "text" },
         { icon: "fa-brands fa-facebook",    label: "https://www.facebook.com/KasamaLR", type: "link" },

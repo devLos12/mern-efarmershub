@@ -58,7 +58,7 @@ const ItemCards = ({ products }) => {
             ? {...product, stocks : product.stocks - 1}
             : product 
         ))
-
+        
         
         setPendingCartItems((prev) => [
             ...prev, 

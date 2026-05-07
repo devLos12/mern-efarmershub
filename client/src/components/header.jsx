@@ -72,9 +72,6 @@ const Header = () => {
     } = context;
 
 
-        
-
-
     const [isMenu, setMenu] = useState(false);
     const width = useBreakpoint();
     const navigate = useNavigate();
@@ -82,9 +79,7 @@ const Header = () => {
     const { inboxBadge, setInboxBadge } = useContext(appContext);
     const headerRef = useRef(null);
 
-
-
-
+    
     const handleNotification = () => {
         setOpenViewProfile(false);
         setNotifBadge((prev) => ({ ...prev, show: false }));

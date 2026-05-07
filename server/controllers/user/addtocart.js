@@ -11,7 +11,8 @@ const addItemsToCart = async(req, res) => {
         if (!items || items.length === 0) {
             return res.status(400).json({ message: "No items provided" });
         }
-
+        
+        
         for(let i = 0; i < items.length; i++) {
             const item = items[i];
             

@@ -9,7 +9,7 @@ import TotalOrders from "../controllers/admin/totalorders.js";
 import Logout from "../controllers/admin/logout.js";
 import statusApprove from "../controllers/admin/statusApprove.js";
 import authMiddleware from "../middlewares/authmiddlewares.js";
-import { adminGetNotification, getNotification, readNotification } from "../controllers/notification.js";
+import { adminGetNotification, getNotification, readNotification, deleteNotification } from "../controllers/notification.js";
 import getOrderDetails from "../controllers/admin/orderDetails.js";
 import getProductsDetails from "../controllers/admin/productDetails.js";
 import { getChatId, getMessages, sendImage, sendMessage } from "../controllers/messages.js";
@@ -159,6 +159,7 @@ adminRouter.patch('/adminChangePassword', authMiddleware, changePassword);
 
 adminRouter.get('/adminGetNotification', authMiddleware, adminGetNotification);
 adminRouter.patch('/adminReadNotif/:id', authMiddleware, readNotification);
+adminRouter.patch('/adminDeleteNotif/:id', authMiddleware, deleteNotification);
 
 
 adminRouter.get("/logoutAdmin", authMiddleware, Logout);

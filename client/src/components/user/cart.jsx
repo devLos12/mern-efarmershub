@@ -16,16 +16,15 @@ const Cart = () => {
     const { loading, error } = useContext(userContext);
     const navigate = useNavigate();
     const height = useBreakpointHeight();
-    const [pendingData, setPendingData] = useState([]);
     const { bestSellers, setBestSellers } = useContext(appContext);
+    const [isProcessing, setIsProcessing] = useState(false);
+    const [loadingId, setLoadingId] = useState(null);
+
+
     
-
-
-
     const totalPrice = useMemo(()=>{
         return cart.reduce((sum, data) => sum + data.prodPrice * data.quantity, 0);
     },[cart]);
-
 
 
     const removeItem = async(prodId)=>{
@@ -71,101 +70,93 @@ const Cart = () => {
 
 
 
-
     const handleQuantity = async(operator, prodId) =>{
         
-        if (operator === "+") {
+        // ✅ Prevent multiple clicks while processing
+        if (isProcessing) return;
 
-            setCartBadge((prev) => ({
-                ...prev, 
-                number : prev.number + 1,
-                show : true,
-            }))
+        try {
 
-            setCart((prev) =>
-                prev.map((item) =>
-                    item.prodId === prodId  ? { ...item, quantity: item.quantity + 1 } : item
+            setIsProcessing(true);
+            setLoadingId(`${prodId}-${operator}`); // ✅ i-track kung sino at anong operator
+
+
+            const res = await fetch(`${import.meta.env.VITE_API_URL}/api/reqQuantity`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json', 
+                },
+                body: JSON.stringify({ pendingData : [{ operator, prodId }] }),
+                credentials: 'include'  
+            });
+
+            const data = await res.json();
+            if(!res.ok) throw new Error(data.message);
+
+
+            // ✅ Update UI after successful API call
+            if (operator === "+") {
+
+                setCartBadge((prev) => ({
+                    ...prev, 
+                    number : prev.number + 1,
+                    show : true,
+                }))
+
+                setCart((prev) =>
+                    prev.map((item) =>
+                        item.prodId === prodId  ? { ...item, quantity: item.quantity + 1 } : item
+                    )
+                );
+
+                setBestSellers((prev) => 
+                    prev.map((item) => 
+                        item._id === prodId ? { ...item, stocks : item.stocks - 1} : item
+                    )
                 )
-            );
 
-            setBestSellers((prev) => 
-                prev.map((item) => 
-                    item._id === prodId ? { ...item, stocks : item.stocks - 1} : item
+                setProducts((prev) => 
+                    prev.map((item) => 
+                        item._id === prodId ? { ...item, stocks : item.stocks - 1} : item
+                    )
                 )
-            )
+                  
+            }else{
 
+                setCartBadge((prev) => ({
+                    ...prev, 
+                    number : prev.number - 1,
+                    show : true,
+                }))
 
-            setProducts((prev) => 
-                prev.map((item) => 
-                    item._id === prodId ? { ...item, stocks : item.stocks - 1} : item
+                setCart((prev) =>
+                    prev.map((item) =>
+                    item.prodId === prodId ? { ...item, quantity: item.quantity - 1 } : item
+                    )
+                );
+
+                setBestSellers((prev) => 
+                    prev.map((item) => 
+                        item._id === prodId ? { ...item, stocks : item.stocks + 1} : item
+                    )
                 )
-            )
-              
-        }else{
-
-            setCartBadge((prev) => ({
-                ...prev, 
-                number : prev.number - 1,
-                show : true,
-            }))
-
-
-            setCart((prev) =>
-                prev.map((item) =>
-                item.prodId === prodId ? { ...item, quantity: item.quantity - 1 } : item
-                )
-            );
-
-            setBestSellers((prev) => 
-                prev.map((item) => 
-                    item._id === prodId ? { ...item, stocks : item.stocks + 1} : item
-                )
-            )
-            
-            setProducts((prev) => 
-                prev.map((item) => 
-                    item._id === prodId ? { ...item, stocks : item.stocks + 1} : item
-                )
-            )
-        }
-
-        setPendingData((prev) => [
-            ...prev,
-            {operator, prodId}
-        ])
-    }
-
-    //debouce quantity request data
-    useEffect(()=> {
-        if(pendingData.length === 0) return 
-
-        const timeout = setTimeout(async() => {
-
-            try{
-                const res = await fetch(`${import.meta.env.VITE_API_URL}/api/reqQuantity`, {
-                    method : "POST",
-                    headers :{
-                        "Content-Type" : "application/json"
-                    },
-                    body : JSON.stringify({ pendingData }),
-                    credentials : "include"
-                });
-                const data = await res.json();
-                if(!res.ok) throw new Error(data.message);                
                 
-                setPendingData([]);
-                console.log("Response: ",data.message);
-
-            }catch(error){
-                console.log("Error: ", error.message);
+                setProducts((prev) => 
+                    prev.map((item) => 
+                        item._id === prodId ? { ...item, stocks : item.stocks + 1} : item
+                    )
+                )
             }
 
-        }, 500);
+            console.log("Response: ", data.message);
 
-        return () => clearTimeout(timeout);
-
-    },[pendingData, cart])
-
+        } catch (error) {
+            console.log("Error: ", error.message);
+        } finally {
+            setIsProcessing(false);
+            setLoadingId(null);
+        }
+    }
 
     if(loading) return <p></p>
 
@@ -211,16 +202,36 @@ const Cart = () => {
 
                                             <div className="d-flex align-items-center justify-content-between w-50 ">
                                                 <button className={`border-0 bg-dark text-light 
-                                                ${productItem?.stocks === 0 || !productItem ? "opacity-75" : ""}`} style={{width : "35px", height:"35px", borderRadius: "50%"}} onClick={()=>handleQuantity("+", data.prodId)}
-                                                disabled={productItem?.stocks === 0 || !productItem} 
-                                                >+</button>
+                                                ${productItem?.stocks === 0 || !productItem || isProcessing ? "opacity-75" : ""}`} 
+                                                style={{width : "35px", height:"35px", borderRadius: "50%"}} 
+                                                onClick={()=>handleQuantity("+", data.prodId)}
+                                                disabled={productItem?.stocks === 0 || !productItem || isProcessing} 
+                                                >
+
+
+                                                    {loadingId === `${data.prodId}-+` ? (
+                                                        <div className="spinner-border spinner-border-sm text-white opacity-75" role="status">
+                                                            <span className="visually-hidden">Loading...</span>
+                                                        </div>
+                                                    ) : "+"}
+
+                                                </button>
                                                 
                                                 <p className="m-0  p-2 text-center">{data.quantity}</p>
                                                 
-                                                <button className={`border-0 bg-dark text-light ${data.quantity === 1 || !productItem ? "opacity-75" : ""}`}
-                                                style={{width : "35px", height:"35px", borderRadius: "50%"}} onClick={()=>handleQuantity("-", data.prodId)}
-                                                disabled={data.quantity === 1 || !productItem}
-                                                >-</button>
+                                                <button className={`border-0 bg-dark text-light ${data.quantity === 1 || !productItem || isProcessing ? "opacity-75" : ""}`}
+                                                style={{width : "35px", height:"35px", borderRadius: "50%"}} 
+                                                onClick={()=>handleQuantity("-", data.prodId)}
+                                                disabled={data.quantity === 1 || !productItem || isProcessing}
+                                                >
+
+                                                    {loadingId === `${data.prodId}--` ? (
+                                                        <div className="spinner-border spinner-border-sm text-white opacity-75" role="status">
+                                                            <span className="visually-hidden">Loading...</span>
+                                                        </div>
+                                                    ) : "-"}
+
+                                                </button>
                                             </div>
                                         </div>
                                     </div>

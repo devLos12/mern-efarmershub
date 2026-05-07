@@ -51,11 +51,12 @@ const AllProductCards = () => {
 
         setPendingCartItems((prev) => [
             ...prev, 
-            {prodId, prodName, prodDisc, prodPrice, imageFile, seller}
+            {pid, prodId, prodName, prodDisc, prodPrice, imageFile, seller}
         ]);
 
         setOpenCart(true);
     };
+
 
     // Debounce cart data to backend
     useEffect(() => {
@@ -82,6 +83,8 @@ const AllProductCards = () => {
 
         return () => clearTimeout(timeout);
     }, [pendingCartItems]);
+
+
 
     // Fixed categories list
     const categories = ["all", "grains", "root crops", "fruits", "fruit vegetables", "leafy vegetables", "legumes"];

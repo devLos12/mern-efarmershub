@@ -221,6 +221,8 @@ const User = ({setUserAuth}) => {
     }
   }
 
+
+
   useEffect(()=> {
     const socket = io(`${import.meta.env.VITE_API_URL}`);
     getNotification();
@@ -228,10 +230,20 @@ const User = ({setUserAuth}) => {
     socket.on("user notif", (e)=> {
         getNotification();
     })
+
+    socket.on('user:notifier', (e) => {
+        console.log(e.message);
+        getNotification();
+    })
+
+    
     return ()=>{
         socket.off("user notif");
+        socket.off("user:notifier");
     }
   },[userData?._id]);
+
+
     
   //api call for userInfo
   useEffect(() => {

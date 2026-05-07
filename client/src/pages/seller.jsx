@@ -161,8 +161,16 @@ const Seller = ({setSellerAuth}) => {
             getNotification();
         });
 
+        socket.on("seller:notifier", (e) => {
+            console.log(e.message);
+            getNotification();
+        })
+
         return ()=>{
             socket.off("Notification Added");
+            socket.off("to seller");
+            socket.off("seller:notifier");
+            
         }
 
     },[]);

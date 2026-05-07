@@ -113,7 +113,6 @@ const BestSellerProducts = ({signIn}) => {
     };
 
 
-
     // Handle buy now
     const handleBuyNow = (data) => {
         if(role !== "user") {
@@ -189,6 +188,8 @@ const BestSellerProducts = ({signIn}) => {
             </div>
         );
     }
+    
+    
 
     return (
         <div className="container g-0">

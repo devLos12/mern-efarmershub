@@ -12,7 +12,7 @@ import { inboxChats, markAsRead, deleteChat } from "../controllers/chats.js";
 import { updateCrops, update } from "../controllers/seller/updateCrops.js";
 import { UpdateProfile, updateProfile } from "../controllers/seller/updateProfile.js";
 import { getSellerTransaction, sellerDeletePayment, sellerDeletePayout } from "../controllers/seller/transaction.js";
-import { getNotification, readNotification, sellerGetNotification } from "../controllers/notification.js";
+import { getNotification, readNotification, sellerGetNotification, deleteNotification } from "../controllers/notification.js";
 import trackOrder from "../controllers/trackorder.js";
 import changePassword from "../controllers/seller/changepassword.js";
 
@@ -41,6 +41,7 @@ sellerRouter.get("/getSellerOrderDetails/:id", authMiddleware, getOrderDetails);
 sellerRouter.get("/trackSellerOrder/:id", authMiddleware, trackOrder);
 sellerRouter.get("/getSellerNotification", authMiddleware, sellerGetNotification);
 sellerRouter.patch("/sellerReadNotif/:id", authMiddleware, readNotification);
+sellerRouter.patch("/sellerDeleteNotif/:id", authMiddleware, deleteNotification);
 sellerRouter.post("/sellerSendMessage", sendImage.array("images"), authMiddleware, sendMessage);
 sellerRouter.get("/getSellerMessages/:id", authMiddleware, getMessages);
 sellerRouter.get("/getSellerInboxChat", authMiddleware, inboxChats);
