@@ -16,7 +16,6 @@ export const getListProducts = async (req, res) => {
             .sort({ createdAt: -1 })
             .lean();
         
-        
 
         // Calculate date range based on period (in UTC)
         const now = new Date();

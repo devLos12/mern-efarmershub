@@ -72,6 +72,7 @@ const login = async (req, res) => {
             role = "seller";
         }
         
+                
         if (!account) {
             if(role === "admin"){
                 await ActivityLog.create({

@@ -404,27 +404,46 @@ const ListReports = () => {
         
         return matchesSearch && matchesProductType && matchesCategory && matchesFarmerType;
 
-    }).sort((a, b) => {
-        if (sortOrder === 'asc') {
-            return (b.soldToday || 0) - (a.soldToday || 0);
-        } else if (sortOrder === 'desc') {
-            return (a.soldToday || 0) - (b.soldToday || 0);
+    })
+    .sort((a, b) => {
+        if (sortOrder) {
+            const aVal = a.soldToday || 0;
+            const bVal = b.soldToday || 0;
+            if (aVal !== bVal) {
+                // ↑ (asc) = show HIGHEST first
+                return sortOrder === 'asc' 
+                    ? bVal - aVal  // ← Reverse (high to low)
+                    : aVal - bVal;  // ↓ (desc) = show lowest first
+            }
         }
         
-        if (priceSortOrder === 'asc') {
-            return (b.price || 0) - (a.price || 0);
-        } else if (priceSortOrder === 'desc') {
-            return (a.price || 0) - (b.price || 0);
+        if (priceSortOrder) {
+            const aVal = a.price || 0;
+            const bVal = b.price || 0;
+            if (aVal !== bVal) {
+                return priceSortOrder === 'asc'
+                    ? bVal - aVal  // ↑ = highest price first
+                    : aVal - bVal;  // ↓ = lowest price first
+            }
         }
         
-        if (stocksSortOrder === 'asc') {
-            return (b.stocks || 0) - (a.stocks || 0);
-        } else if (stocksSortOrder === 'desc') {
-            return (a.stocks || 0) - (b.stocks || 0);
+        if (stocksSortOrder) {
+            const aVal = a.stocks || 0;
+            const bVal = b.stocks || 0;
+            if (aVal !== bVal) {
+                return stocksSortOrder === 'asc'
+                    ? bVal - aVal  // ↑ = most stocks first
+                    : aVal - bVal;  // ↓ = least stocks first
+            }
         }
         
-        return 0;
+        // Default: newest first
+        const dateA = new Date(a.createdAt).getTime();
+        const dateB = new Date(b.createdAt).getTime();
+        return dateB - dateA;
     });
+
+
 
     const uniqueProductTypes = [...new Set(listProducts.map(p => p.productType))];
     const unuqueProductCategories = [...new Set(listProducts.map(p => p.category))];
@@ -810,7 +829,9 @@ const ListReports = () => {
                                 <span className="text-muted small">Total Farmers</span>
                             </div>
                             <h3 className="mb-0 fw-bold">
-                                {[...new Set(listProducts.map(p => p.seller?._id || p.seller?.name).filter(Boolean))].length}
+                                {
+                                    [...new Set(listProducts.map(p => p.seller?.id?._id))].length
+                                }
                             </h3>
                         </div>
                     </div>

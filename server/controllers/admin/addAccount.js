@@ -70,12 +70,31 @@ const sendRiderAppEmail = async (email, firstname, lastname) => {
                                 Your rider account is ready. Tap the button below to download the Rider App and start delivering.
                             </p>
 
+                            <!-- Step by step instructions -->
+                            <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f0faf3; border-radius: 8px; margin-bottom: 20px;">
+                                <tr>
+                                    <td style="padding: 20px; text-align: left;">
+                                        <p style="color: #333333; font-size: 14px; font-weight: 600; margin: 0 0 12px 0;"> How to Install the Rider App:</p>
+                                        <p style="color: #555555; font-size: 13px; line-height: 1.8; margin: 0 0 6px 0;">
+                                            <strong>Step 1:</strong> Tap the <strong>"Download Rider App"</strong> button below.
+                                        </p>
+                                      
+                                        <p style="color: #555555; font-size: 13px; line-height: 1.8; margin: 0 0 6px 0;">
+                                            <strong>Step 2:</strong> If Chrome shows a warning, don't worry — the app is safe. Tap <strong>"Download anyway"</strong> to continue.
+                                        </p>
+                                        <p style="color: #555555; font-size: 13px; line-height: 1.8; margin: 0;">
+                                            <strong>Step 3:</strong> Once downloaded, open the file to install. You're all set! 
+                                        </p>
+                                    </td>
+                                </tr>
+                            </table>
+
                             <!-- Download Button -->
                             <table width="100%" cellpadding="0" cellspacing="0">
                                 <tr>
                                     <td align="center">
                                         <a 
-                                            href="https://expo.dev/accounts/buuuu012/projects/rider-app/builds/a14fba15-e02d-40c5-a25b-356230b79ab8" 
+                                            href="${process.env.DOWNLOAD_RIDER_APP_LINK}" 
                                             style="display: inline-block; background-color: #28a745; color: #ffffff; text-decoration: none; padding: 14px 48px; border-radius: 6px; font-size: 16px; font-weight: 600;"
                                         >
                                             📱 Download Rider App
@@ -118,7 +137,6 @@ const sendRiderAppEmail = async (email, firstname, lastname) => {
         return { success: false, error: error.message };
     }
 };
-
 
 const addAccount = async (req, res) => {
     try {

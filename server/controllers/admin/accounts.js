@@ -114,15 +114,16 @@ const sendApprovalEmail = async (email, name, accountType) => {
 
                             <!-- CTA Button -->
                             <table width="100%" cellpadding="0" cellspacing="0" style="margin: 30px 0;">
-                                <tr>
-                                    <td align="center">
-                                        <a href="https://www.efarmershub.com/" style="display: inline-block; background-color: #28a745; color: #ffffff; text-decoration: none; padding: 14px 40px; border-radius: 6px; font-size: 16px; font-weight: 600;">
-                                            Login to Your Account
-                                        </a>
-                                    </td>
-                                </tr>
 
-                                ${accountType === 'rider' ? `
+                                ${accountType === 'seller' ? `
+                                    <tr>
+                                        <td align="center">
+                                            <a href="https://www.efarmershub.com/" style="display: inline-block; background-color: #28a745; color: #ffffff; text-decoration: none; padding: 14px 40px; border-radius: 6px; font-size: 16px; font-weight: 600;">
+                                                Login to Your Account
+                                            </a>
+                                        </td>
+                                    </tr>
+                                ` : `
                                     <tr>
                                         <td style="padding-top: 15px;">
                                             
@@ -135,13 +136,10 @@ const sendApprovalEmail = async (email, name, accountType) => {
                                                             <strong>Step 1:</strong> Tap the <strong>"Download Rider App"</strong> button below.
                                                         </p>
                                                         <p style="color: #555555; font-size: 13px; line-height: 1.8; margin: 0 0 6px 0;">
-                                                            <strong>Step 2:</strong> You will be redirected to a page — tap the <strong>"Install"</strong> button.
-                                                        </p>
-                                                        <p style="color: #555555; font-size: 13px; line-height: 1.8; margin: 0 0 6px 0;">
-                                                            <strong>Step 3:</strong> If Chrome shows a warning, don't worry — the app is safe. Tap <strong>"Download anyway"</strong> to continue.
+                                                            <strong>Step 2:</strong> If Chrome shows a warning, don't worry — the app is safe. Tap <strong>"Download anyway"</strong> to continue.
                                                         </p>
                                                         <p style="color: #555555; font-size: 13px; line-height: 1.8; margin: 0;">
-                                                            <strong>Step 4:</strong> Once downloaded, open the file to install. You're all set! 
+                                                            <strong>Step 3:</strong> Once downloaded, open the file to install. You're all set! 
                                                         </p>
                                                     </td>
                                                 </tr>
@@ -151,7 +149,7 @@ const sendApprovalEmail = async (email, name, accountType) => {
                                             <table width="100%" cellpadding="0" cellspacing="0">
                                                 <tr>
                                                     <td align="center">
-                                                        <a href="https://expo.dev/accounts/buuuu012/projects/rider-app/builds/ec8f574a-d2c7-48ab-a3af-2a2eb125fe01" 
+                                                        <a href="${process.env.DOWNLOAD_RIDER_APP_LINK}" 
                                                         style="display: inline-block; background-color: #ffffff; color: #28a745; text-decoration: none; padding: 14px 40px; border-radius: 6px; font-size: 16px; font-weight: 600; border: 2px solid #28a745;">
                                                             📱 Download Rider App
                                                         </a>
@@ -160,7 +158,8 @@ const sendApprovalEmail = async (email, name, accountType) => {
                                             </table>
                                         </td>
                                     </tr>
-                                ` : ''}
+                                `}
+
                             </table>
                         </td>
                     </tr>
@@ -198,138 +197,6 @@ const sendApprovalEmail = async (email, name, accountType) => {
     }
 };
 
-
-
-
-
-// ============================================
-// COMMENTED OUT - NODEMAILER CONFIGURATION
-// ============================================
-/*
-import nodemailer from "nodemailer";
-
-// Email configuration with better error handling
-const createTransporter = () => {
-    try {
-        // Validate environment variables
-        if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
-            console.warn('Email credentials not configured. Email notifications will be disabled.');
-            return null;
-        }
-
-        const transporter = nodemailer.createTransport({
-            service: 'gmail', // or use custom SMTP for production
-            auth: {
-                user: process.env.EMAIL_USER,
-                pass: process.env.EMAIL_PASSWORD
-            },
-            // For production SMTP (optional)
-            // host: process.env.SMTP_HOST,
-            // port: process.env.SMTP_PORT || 587,
-            // secure: process.env.SMTP_SECURE === 'true', // true for 465, false for other ports
-        });
-
-        
-        // Verify transporter configuration
-        transporter.verify((error, success) => {
-            if (error) {
-                console.error('Email transporter verification failed:', error.message);
-            } else {
-                console.log('Email server is ready to send messages');
-            }
-        });
-
-        return transporter;
-    } catch (error) {
-        console.error('Failed to create email transporter:', error.message);
-        return null;
-    }
-};
-
-const transporter = createTransporter();
-
-
-
-// Email sending function with comprehensive error handling
-const sendApprovalEmail = async (email, name, accountType) => {
-    // Check if transporter is available
-    if (!transporter) {
-        console.warn('Email transporter not configured. Skipping email notification.');
-        return { success: false, error: 'Email service not configured' };
-    }
-
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!email || !emailRegex.test(email)) {
-        console.error('Invalid email address:', email);
-        return { success: false, error: 'Invalid email address' };
-    }
-
-    const mailOptions = {
-        from: {
-            name: "E-Farmers Hub",
-            address: process.env.EMAIL_USER
-        },
-        to: email,
-        subject: `Account Approved - ${accountType === 'seller' ? 'Farmer' : 'Rider'} Account Verification`,
-        html: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-                <div style="background-color: #28a745; padding: 20px; text-align: center; border-radius: 10px 10px 0 0;">
-                    <h1 style="color: white; margin: 0;">Account Approved! ✓</h1>
-                </div>
-                
-                <div style="background-color: #f8f9fa; padding: 30px; border-radius: 0 0 10px 10px;">
-                    <h2 style="color: #333;">Hello ${name},</h2>
-                    
-                    <p style="font-size: 16px; color: #555; line-height: 1.6;">
-                        Great news! Your ${accountType === 'seller' ? 'farmer' : 'rider'} account has been successfully verified and approved.
-                    </p>
-                    
-                    <div style="background-color: white; padding: 20px; border-left: 4px solid #28a745; margin: 20px 0;">
-                        <p style="margin: 0; color: #333;">
-                            <strong>Account Status:</strong> <span style="color: #28a745;">✓ Verified</span><br>
-                            <strong>Account Type:</strong> ${accountType === 'seller' ? 'Farmer' : 'Rider'}<br>
-                            <strong>Email:</strong> ${email}
-                        </p>
-                    </div>
-                    
-                    <p style="font-size: 16px; color: #555; line-height: 1.6;">
-                        You can now access all features available for ${accountType === 'seller' ? 'farmers' : 'riders'}. 
-                        Log in to your account to get started!
-                    </p>
-                    
-                    <hr style="border: none; border-top: 1px solid #ddd; margin: 20px 0;">
-                    
-                    <p style="font-size: 12px; color: #999; text-align: center;">
-                        This is an automated message, please do not reply to this email.
-                    </p>
-                </div>
-            </div>
-        `
-    };
-
-
-    try {
-        const info = await transporter.sendMail(mailOptions);
-        console.log('Approval email sent successfully to:', email);
-        console.log('Message ID:', info.messageId);
-        return { success: true, messageId: info.messageId };
-    } catch (error) {
-        console.error('Error sending approval email:', error.message);
-        
-        // Log specific error types
-        if (error.code === 'EAUTH') {
-            console.error('Authentication failed. Check EMAIL_USER and EMAIL_PASSWORD.');
-        } else if (error.code === 'ECONNECTION') {
-            console.error('Connection failed. Check your internet connection or SMTP settings.');
-        } else if (error.responseCode === 550) {
-            console.error('Email address does not exist or is invalid.');
-        }
-        
-        return { success: false, error: error.message };
-    }
-};
-*/
 
 
 

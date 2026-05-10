@@ -276,14 +276,44 @@ const ProductDetails = () =>{
                             ? "col-12 col-md-6 col-lg-6 col-xl-6 " 
                             : "col-12 col-md-6 col-lg-6 col-xl-5 col-xxl-5 "}>
                             
-                            <div className="rounded-5 overflow-hidden" 
+                            <div className="rounded-5 overflow-hidden position-relative " 
                             style={{ aspectRatio: "4/3" }}>
                                 <img 
                                     src={productDetails.imageFile} 
                                     alt={productDetails.imageFile}  
                                     className="img-fluid h-100 w-100"
-                                    style={{ objectFit: "cover" }}
+                                    style={{ 
+                                        objectFit: "cover",
+                                        filter: productDetails.status === "expired"  ? "grayscale(100%)" : "none"
+                                        
+                                    }}
                                 />
+
+
+                                {productDetails.status === "expired" && (
+                                    <div className="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
+                                        style={{ 
+                                            backgroundColor: "rgba(0,0,0,0.35)",
+                                            pointerEvents: "none"   // ← hindi na naka-block yung click
+                                        }}>
+                                        <span className="text-white text-uppercase fw-bold"
+                                            style={{ 
+                                                fontSize: "18px", 
+                                                letterSpacing: "4px",
+                                                transform: "rotate(-35deg)",
+                                                opacity: 0.9,
+                                                textShadow: "1px 1px 4px rgba(0,0,0,0.8)",
+                                                border: "2px solid white",
+                                                padding: "2px 10px",
+                                                borderRadius: "4px"
+                                            }}>
+                                            Expired
+                                        </span>
+                                    </div>
+                                )}
+
+
+
                             </div>
                         </div>
 
