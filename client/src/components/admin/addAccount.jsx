@@ -5,6 +5,9 @@ import { useContext } from "react";
 import Toast from "../toastNotif.jsx";
 import philippinesAddress from "../../data/philippinesAddress.js";
 
+// ── Red asterisk helper ────────────────────────────────────────────────────────
+const Req = () => <span style={{ color: "red", marginLeft: "2px" }}>*</span>;
+
 // ── AddressFields declared OUTSIDE AddAccount to prevent unmount/remount on every re-render ──
 const AddressFields = ({
     selectedProvince,
@@ -19,7 +22,7 @@ const AddressFields = ({
     <>
         <div className="row mt-3">
             <div className="col-md-6">
-                <label className="text-capitalize small fw-bold">Province:</label>
+                <label className="text-capitalize small fw-bold">Province:<Req /></label>
                 <select
                     className="mt-2 form-control form-select small"
                     style={{ fontSize: "14px" }}
@@ -34,7 +37,7 @@ const AddressFields = ({
                 </select>
             </div>
             <div className="col-md-6 mt-2 mt-md-0">
-                <label className="text-capitalize small fw-bold">City/Municipality:</label>
+                <label className="text-capitalize small fw-bold">City/Municipality:<Req /></label>
                 <select
                     className="mt-2 form-control form-select small"
                     style={{ fontSize: "14px" }}
@@ -54,7 +57,7 @@ const AddressFields = ({
 
         <div className="row mt-3">
             <div className="col-md-6">
-                <label className="text-capitalize small fw-bold">Barangay:</label>
+                <label className="text-capitalize small fw-bold">Barangay:<Req /></label>
                 <select
                     className="mt-2 form-control form-select small"
                     style={{ fontSize: "14px" }}
@@ -84,7 +87,7 @@ const AddressFields = ({
         </div>
 
         <div className="mt-3">
-            <label className="text-capitalize small fw-bold">Detailed Address:</label>
+            <label className="text-capitalize small fw-bold">Detailed Address:<Req /></label>
             <textarea
                 className="mt-2 form-control small"
                 style={{ fontSize: "14px" }}
@@ -440,6 +443,11 @@ const AddAccount = ({ isOpen, onClose, onSuccess }) => {
                                     <p className="m-0" style={{ color: "#4caf50" }}>Back to account selection</p>
                                 </div>
 
+                                {/* Required fields legend */}
+                                <p className="text-muted mb-3" style={{ fontSize: "12px" }}>
+                                    Fields marked with <span style={{ color: "red" }}>*</span> are required.
+                                </p>
+
                                 {/* ══════════════════════════════════════════════
                                     SECTION 1 — NAME FIELDS (all roles)
                                 ══════════════════════════════════════════════ */}
@@ -450,14 +458,17 @@ const AddAccount = ({ isOpen, onClose, onSuccess }) => {
 
                                 <div className="row mt-3">
                                     {[
-                                        { label: 'First name',  name: 'firstname',  holder: 'Enter first name' },
-                                        { label: 'Middle name', name: 'middlename', holder: 'Enter middle name', optional: true },
-                                        { label: 'Last name',   name: 'lastname',   holder: 'Enter last name' },
+                                        { label: 'First name',  name: 'firstname',  holder: 'Enter first name',  required: true  },
+                                        { label: 'Middle name', name: 'middlename', holder: 'Enter middle name', optional: true  },
+                                        { label: 'Last name',   name: 'lastname',   holder: 'Enter last name',   required: true  },
                                     ].map((field, i) => (
                                         <div key={i} className="col-12 col-md-6 mt-2">
                                             <label className="text-capitalize small fw-bold" htmlFor={field.name}>
                                                 {field.label}:
-                                                {field.optional && <span className="text-muted small ms-1">(optional)</span>}
+                                                {field.optional
+                                                    ? <span className="text-muted small ms-1">(optional)</span>
+                                                    : <Req />
+                                                }
                                             </label>
                                             <input
                                                 className="mt-2 form-control small"
@@ -508,7 +519,7 @@ const AddAccount = ({ isOpen, onClose, onSuccess }) => {
                                     <>
                                         {/* Contact Number */}
                                         <div className="mt-3">
-                                            <label className="text-capitalize small fw-bold" htmlFor="contact">Contact Number:</label>
+                                            <label className="text-capitalize small fw-bold" htmlFor="contact">Contact Number:<Req /></label>
                                             <div className="input-group mt-2">
                                                 <span className="input-group-text small" style={{ fontSize: "14px" }}>+63</span>
                                                 <input
@@ -561,7 +572,7 @@ const AddAccount = ({ isOpen, onClose, onSuccess }) => {
                                         </div>
 
                                         <div className="mt-3">
-                                            <label className="text-capitalize small fw-bold" htmlFor="plateNumber">Plate Number:</label>
+                                            <label className="text-capitalize small fw-bold" htmlFor="plateNumber">Plate Number:<Req /></label>
                                             <input
                                                 className="mt-2 form-control small text-uppercase"
                                                 style={{ fontSize: "14px" }}
@@ -577,7 +588,9 @@ const AddAccount = ({ isOpen, onClose, onSuccess }) => {
 
                                         {/* Plate Image */}
                                         <div className="mt-3">
-                                            <label className="text-capitalize small fw-bold" htmlFor="plateImage">Vehicle with plate number photo:</label>
+                                            <label className="text-capitalize small fw-bold" htmlFor="plateImage">
+                                                Vehicle with plate number photo:<Req />
+                                            </label>
                                             {!plateImagePreview ? (
                                                 <div className="mt-2">
                                                     <label htmlFor="plateImage" className="d-flex flex-column align-items-center justify-content-center border-2 rounded p-4"
@@ -601,7 +614,9 @@ const AddAccount = ({ isOpen, onClose, onSuccess }) => {
 
                                         {/* License Image */}
                                         <div className="mt-3">
-                                            <label className="text-capitalize small fw-bold" htmlFor="licenseImage">Driver's License Photo:</label>
+                                            <label className="text-capitalize small fw-bold" htmlFor="licenseImage">
+                                                Driver's License Photo:<Req />
+                                            </label>
                                             {!licenseImagePreview ? (
                                                 <div className="mt-2">
                                                     <label htmlFor="licenseImage" className="d-flex flex-column align-items-center justify-content-center border-2 rounded p-4"
@@ -637,7 +652,7 @@ const AddAccount = ({ isOpen, onClose, onSuccess }) => {
 
                                         <div className="row mt-2">
                                             <div className="col">
-                                                <label className="text-capitalize small fw-bold" htmlFor="wallet_type">e-wallet type:</label>
+                                                <label className="text-capitalize small fw-bold" htmlFor="wallet_type">e-wallet type:<Req /></label>
                                                 <select className="form-select mt-2 opacity-75 text-capitalize" style={{ fontSize: "14px" }} name="wallet_type" id="wallet_type" onChange={handleChange} required>
                                                     <option value="">select wallet</option>
                                                     {["g-cash", "maya"].map((w, i) => (
@@ -646,7 +661,7 @@ const AddAccount = ({ isOpen, onClose, onSuccess }) => {
                                                 </select>
                                             </div>
                                             <div className="col">
-                                                <label className="text-capitalize small fw-bold" htmlFor="wallet_number">e-wallet number:</label>
+                                                <label className="text-capitalize small fw-bold" htmlFor="wallet_number">e-wallet number:<Req /></label>
                                                 <div className="input-group mt-2">
                                                     <span className="input-group-text small" style={{ fontSize: "14px" }}>+63</span>
                                                     <input
@@ -676,13 +691,13 @@ const AddAccount = ({ isOpen, onClose, onSuccess }) => {
                                 </div>
 
                                 <div className="mt-3">
-                                    <label className="text-capitalize small fw-bold" htmlFor="email">Email:</label>
+                                    <label className="text-capitalize small fw-bold" htmlFor="email">Email:<Req /></label>
                                     <input className="mt-2 form-control small" style={{ fontSize: "14px" }} type="email" name="email" id="email" placeholder="Enter Email" onChange={handleChange} required />
                                     <small className="d-flex mt-1 text-muted text-capitalize" style={{ fontSize: "12px" }}>*preferred gmail account.</small>
                                 </div>
 
                                 <div className="mt-3">
-                                    <label className="text-capitalize small fw-bold" htmlFor="password">Create Password:</label>
+                                    <label className="text-capitalize small fw-bold" htmlFor="password">Create Password:<Req /></label>
                                     <div className="position-relative">
                                         <input className="mt-2 form-control small" style={{ fontSize: "14px", paddingRight: "40px" }}
                                             type={showPassword ? "text" : "password"} name="password" id="password"
@@ -695,7 +710,7 @@ const AddAccount = ({ isOpen, onClose, onSuccess }) => {
                                 </div>
 
                                 <div className="mt-3">
-                                    <label className="text-capitalize small fw-bold" htmlFor="confirmPassword">Confirm Password:</label>
+                                    <label className="text-capitalize small fw-bold" htmlFor="confirmPassword">Confirm Password:<Req /></label>
                                     <div className="position-relative">
                                         <input className="mt-2 form-control small" style={{ fontSize: "14px", paddingRight: "40px" }}
                                             type={showConfirmPassword ? "text" : "password"} name="confirmPassword" id="confirmPassword"

@@ -4,6 +4,10 @@ import Toast from "../toastNotif.jsx";
 import { appContext } from "../../context/appContext.jsx";
 import philippinesAddress from "../../data/philippinesAddress.js";
 
+// Helper component for required asterisk
+const Required = () => (
+    <span style={{ color: "red", marginLeft: "2px" }}>*</span>
+);
 
 const Register = () => {
     const {
@@ -28,30 +32,20 @@ const Register = () => {
     const navigate = useNavigate();
     const [licenseImagePreview, setLicenseImagePreview] = useState(null);
 
-
-    
-    // Add these new states after your existing useState declarations
     const [showTermsModal, setShowTermsModal] = useState(false);
     const [allTermsAgreed, setAllTermsAgreed] = useState(false);
 
-     
-    // Add after existing rider terms states
     const [showSellerTermsModal, setShowSellerTermsModal] = useState(false);
     const [sellerTermsAgreed, setSellerTermsAgreed] = useState(false);
-
-
 
     const [showBuyerTermsModal, setShowBuyerTermsModal] = useState(false);
     const [buyerTermsAgreed, setBuyerTermsAgreed] = useState(false);
 
-    // Address dropdown states
     const [selectedProvince, setSelectedProvince] = useState("");
     const [selectedCity, setSelectedCity] = useState("");
     const [selectedBarangay, setSelectedBarangay] = useState("");
     
-    
     const [submitting, setSubmitting] = useState(false); 
-
 
     const userTypes = [
         {
@@ -74,10 +68,6 @@ const Register = () => {
         }
     ];
 
-
-
-
-    
     const handleRoleSelect = (role) => {
         setSelectedRole(role);
         setFormData({ ...formData, role });
@@ -98,7 +88,6 @@ const Register = () => {
 
     const handleSuffixChange = (e) => {
         const value = e.target.value;
-        // Allow typing pero i-sanitize: letters, dots, spaces lang
         const cleaned = value.replace(/[^a-zA-Z.\s]/g, '');
         setFormData({ ...formData, suffix: cleaned });
     };
@@ -106,7 +95,6 @@ const Register = () => {
     const handlePlateImageChange = (e) => {
         const file = e.target.files[0];
         if (file) {
-            // Validate file type
             const validTypes = ['image/jpeg', 'image/jpg', 'image/png'];
             if (!validTypes.includes(file.type)) {
                 alert('Please upload a valid image (JPEG, JPG, or PNG)');
@@ -118,7 +106,6 @@ const Register = () => {
                 plateImage: file
             });
 
-            // Create preview
             const reader = new FileReader();
             reader.onloadend = () => {
                 setPlateImagePreview(reader.result);
@@ -126,8 +113,6 @@ const Register = () => {
             reader.readAsDataURL(file);
         }
     };
-
-
 
     const handleLicenseImageChange = (e) => {
         const file = e.target.files[0];
@@ -161,31 +146,19 @@ const Register = () => {
         if (fileInput) fileInput.value = '';
     };
 
-
-    
-
-
-
-
     const removePlateImage = () => {
         setPlateImagePreview(null);
         setFormData({
             ...formData,
             plateImage: null
         });
-        // Reset file input
         const fileInput = document.getElementById('plateImage');
         if (fileInput) fileInput.value = '';
     };
 
-
-
-
-
-
     const handleTextOnlyChange = (e) => {
         const { name, value } = e.target;
-        const regex = /^[A-Za-z\s]*$/; // Regex to allow only letters and spaces        
+        const regex = /^[A-Za-z\s]*$/;
         if (regex.test(value) || value === "") {
             setFormData({
                 ...formData,
@@ -194,28 +167,21 @@ const Register = () => {
         }
     };
 
-
-    // Format number with spaces for display
     const formatPhoneNumber = (value) => {
         if (!value) return '';
-        // Remove all non-digits
         const cleaned = value.replace(/\D/g, '');
-        // Add spaces: 9XX XXX XXXX
         if (cleaned.length <= 3) return cleaned;
         if (cleaned.length <= 6) return `${cleaned.slice(0, 3)} ${cleaned.slice(3)}`;
         return `${cleaned.slice(0, 3)} ${cleaned.slice(3, 6)} ${cleaned.slice(6, 10)}`;
     };
 
-    // Updated Contact Number Handler with formatting
     const handleContactChange = (e) => {
-        let value = e.target.value.replace(/\D/g, ''); // Remove non-digits
+        let value = e.target.value.replace(/\D/g, '');
         
-        // Remove 63 prefix if user types it
         if (value.startsWith('63')) {
             value = value.substring(2);
         }
         
-        // Ensure it starts with 9
         if (value.length > 0 && !value.startsWith('9')) {
             if (value.startsWith('0')) {
                 value = value.substring(1);
@@ -225,7 +191,6 @@ const Register = () => {
             }
         }
         
-        // Limit to 10 digits
         if (value.length <= 10) {
             setFormData({
                 ...formData,
@@ -234,7 +199,6 @@ const Register = () => {
         }
     };
 
-    // Same for wallet
     const handleWalletNumberChange = (e) => {
         let value = e.target.value.replace(/\D/g, '');
         
@@ -259,12 +223,6 @@ const Register = () => {
         }
     };
 
-
-
-
-
-
-    // Address dropdown handlers
     const handleProvinceChange = (e) => {
         const province = e.target.value;
         setSelectedProvince(province);
@@ -284,7 +242,6 @@ const Register = () => {
         setSelectedCity(city);
         setSelectedBarangay("");
         
-        // Get zip code from selected city
         const province = selectedProvince;
         const cityData = philippinesAddress[province]?.cities[city];
         const zipCode = cityData?.zipCode || "";
@@ -330,8 +287,6 @@ const Register = () => {
     const handleForm = async (e) => {
         e.preventDefault();
 
-
-
         setSubmitting(true);
 
         const passwordValidationError = validatePassword(formData.password);
@@ -347,7 +302,6 @@ const Register = () => {
             return;
         }
 
-        // Validate rider-specific fields
         if (selectedRole === "rider") {
             if (!formData.plateNumber || formData.plateNumber.trim() === "") {
                 setErrorMessage("Please enter your plate number");
@@ -359,25 +313,19 @@ const Register = () => {
                 setErrorMessage("Please upload a photo of your plate number");
                 setShowErrorModal(true);
                 setSubmitting(false);
-
                 return;
             }
             if (!formData.licenseImage) {
                 setErrorMessage("Please upload a photo of your driver's license");
                 setShowErrorModal(true);
                 setSubmitting(false);
-
                 return;
             }
         }
 
-
-
         try {
-            // Prepare FormData for file upload
             const dataToSend = new FormData();
             
-            // Add all form fields
             Object.keys(formData).forEach(key => {
                 if (key === 'plateImage') {
                     if (formData[key]) {
@@ -388,13 +336,11 @@ const Register = () => {
                         dataToSend.append('licenseImage', formData[key]);
                     }
                 } else if (key === 'contact') {
-                    // Convert 9XXXXXXXXX to 09XXXXXXXXX
                     const contactNumber = formData[key].startsWith('9') 
                         ? `0${formData[key]}` 
                         : formData[key];
                     dataToSend.append('contact', contactNumber);
                 } else if (key === 'wallet_number') {
-                    // Convert 9XXXXXXXXX to 09XXXXXXXXX
                     const walletNumber = formData[key].startsWith('9') 
                         ? `0${formData[key]}` 
                         : formData[key];
@@ -406,7 +352,7 @@ const Register = () => {
 
             const res = await fetch(`${import.meta.env.VITE_API_URL}/api/register`, {
                 method: "POST",
-                body: dataToSend // Don't set Content-Type header, browser will set it automatically with boundary
+                body: dataToSend
             });
             const data = await res.json();
             if (!res.ok) throw new Error(data.message);
@@ -441,14 +387,6 @@ const Register = () => {
         setErrorMessage("");
     };
 
-
-
-
-
-
-    // Add this after handleErrorModalClose function
- 
-
     const handleOpenTermsModal = () => {
         setShowTermsModal(true);
     };
@@ -456,8 +394,6 @@ const Register = () => {
     const handleCloseTermsModal = () => {
         setShowTermsModal(false);
     };
-
-
 
     const handleOpenSellerTermsModal = () => {
         setShowSellerTermsModal(true);
@@ -467,8 +403,6 @@ const Register = () => {
         setShowSellerTermsModal(false);
     };
 
-
-
     const handleOpenBuyerTermsModal = () => {
         setShowBuyerTermsModal(true);
     };
@@ -476,9 +410,6 @@ const Register = () => {
     const handleCloseBuyerTermsModal = () => {
         setShowBuyerTermsModal(false);
     };
-
-
-
 
     const needsEWallet = selectedRole.toLowerCase() === "farmer" || selectedRole.toLowerCase() === "rider";
     const isRider = selectedRole.toLowerCase() === "rider";
@@ -500,7 +431,6 @@ const Register = () => {
                                 </h1>
                                 
                                 <div className="card-body p-4">
-                                    {/* Direct content - no more nested boxes */}
                                     <div className="mb-4">
                                         <div className="d-flex align-items-start gap-3 mb-3">
                                             <i className="fa fa-envelope text-success mt-1" style={{ fontSize: "1.5rem" }}></i>
@@ -645,6 +575,11 @@ const Register = () => {
                                         </p>
                                     </div>
 
+                                    {/* Required fields legend */}
+                                    <p className="text-muted mb-3" style={{ fontSize: "12px" }}>
+                                        Fields marked with <span style={{ color: "red" }}>*</span> are required.
+                                    </p>
+
                                     <form onSubmit={handleForm}>
 
                                         <div className="row mt-3">
@@ -656,8 +591,10 @@ const Register = () => {
                                                 <div key={i} className="col-12 col-md-6 mt-2 mt-md-0">
                                                     <label className="text-capitalize small mt-2 fw-bold" htmlFor={data.name}>
                                                         {data.label}:
-                                                        {data.optional && (
+                                                        {data.optional ? (
                                                             <span className="text-normal text-muted small ms-1">{'(optional)'}</span>
+                                                        ) : (
+                                                            <Required />
                                                         )}
                                                     </label>
                                                     <input
@@ -674,8 +611,6 @@ const Register = () => {
                                                 </div>
                                             ))}
                                             
-                                            
-
                                             {/* Suffix Field */}
                                             <div className="col-12 col-md-6 mt-2 mt-md-0">
                                                 <label className="text-capitalize small mt-2 fw-bold" htmlFor="suffix">
@@ -719,7 +654,7 @@ const Register = () => {
                                                 <div className="row mt-3">
                                                     <div className="col-md-6">
                                                         <label className="text-capitalize small fw-bold" htmlFor="province">
-                                                            Province:
+                                                            Province:<Required />
                                                         </label>
                                                         <select
                                                             className="mt-2 form-control form-select small"
@@ -740,7 +675,7 @@ const Register = () => {
                                                     </div>
                                                     <div className="col-md-6 mt-2 mt-md-0">
                                                         <label className="text-capitalize small fw-bold" htmlFor="city">
-                                                            City/Municipality:
+                                                            City/Municipality:<Required />
                                                         </label>
                                                         <select
                                                             className="mt-2 form-control form-select small"
@@ -765,7 +700,7 @@ const Register = () => {
                                                 <div className="row mt-3">
                                                     <div className="col-md-6">
                                                         <label className="text-capitalize small fw-bold" htmlFor="barangay">
-                                                            Barangay:
+                                                            Barangay:<Required />
                                                         </label>
                                                         <select
                                                             className="mt-2 form-control form-select small"
@@ -804,7 +739,7 @@ const Register = () => {
                                                 
                                                 <div className="mt-3">
                                                     <label className="text-capitalize small fw-bold" htmlFor="detailAddress">
-                                                        Detailed Address:
+                                                        Detailed Address:<Required />
                                                     </label>
                                                     <textarea
                                                         className="mt-2 form-control small"
@@ -823,8 +758,6 @@ const Register = () => {
                                                 </div>
                                             </>
                                         )}
-                                        
-                                        
 
                                         {/* Rider Vehicle Information */}
                                         {isRider && (
@@ -839,7 +772,7 @@ const Register = () => {
 
                                                 <div className="mt-3">
                                                     <label className="text-capitalize small fw-bold" 
-                                                        htmlFor="plateNumber">Plate Number:
+                                                        htmlFor="plateNumber">Plate Number:<Required />
                                                     </label>
                                                     <input
                                                         className="mt-2 form-control small text-uppercase"
@@ -858,7 +791,7 @@ const Register = () => {
 
                                                 <div className="mt-3">
                                                     <label className="text-capitalize small fw-bold" 
-                                                        htmlFor="plateImage">vehicle with plate number photo:
+                                                        htmlFor="plateImage">Vehicle with Plate Number Photo:<Required />
                                                     </label>
                                                     
                                                     {!plateImagePreview ? (
@@ -913,10 +846,9 @@ const Register = () => {
                                                     </small>
                                                 </div>
 
-
                                                 <div className="mt-3">
                                                     <label className="text-capitalize small fw-bold" htmlFor="licenseImage">
-                                                        Driver's License Photo:
+                                                        Driver's License Photo:<Required />
                                                     </label>
                                                     
                                                     {!licenseImagePreview ? (
@@ -973,7 +905,6 @@ const Register = () => {
                                             </>
                                         )}
                                         
-                                        
                                         {needsEWallet && (
                                             <div className="d-flex align-items-center gap-2 opacity-75 mt-4">
                                                 <i className="fa fa-info-circle small"></i>
@@ -988,7 +919,7 @@ const Register = () => {
                                                 <div className="row mt-2">
                                                     <div className="col">
                                                         <label className="text-capitalize small fw-bold" 
-                                                            htmlFor="wallet_type">e-wallet type:
+                                                            htmlFor="wallet_type">e-wallet type:<Required />
                                                         </label>
 
                                                         <select className="form-select mt-2 opacity-75 text-capitalize"
@@ -1006,7 +937,7 @@ const Register = () => {
 
                                                     <div className="col">
                                                         <label className="text-capitalize small fw-bold" 
-                                                            htmlFor="wallet_number">e-wallet number:
+                                                            htmlFor="wallet_number">e-wallet number:<Required />
                                                         </label>
                                                         <div className="input-group mt-2">
                                                             <span className="input-group-text" style={{fontSize: "14px"}}>+63</span>
@@ -1030,7 +961,7 @@ const Register = () => {
 
                                                 <div className="mt-3">
                                                     <label className="text-capitalize small fw-bold" 
-                                                        htmlFor="email">Email:
+                                                        htmlFor="email">Email:<Required />
                                                     </label>
                                                     <input
                                                         className="mt-2 form-control small "
@@ -1050,7 +981,7 @@ const Register = () => {
 
                                                 <div className="mt-3">
                                                     <label className="text-capitalize small fw-bold" 
-                                                        htmlFor="password">Create Password:
+                                                        htmlFor="password">Create Password:<Required />
                                                     </label>
                                                     <div className="position-relative">
                                                         <input
@@ -1082,7 +1013,7 @@ const Register = () => {
 
                                                 <div className="mt-3">
                                                     <label className="text-capitalize small fw-bold" 
-                                                        htmlFor="confirmPassword">Confirm Password:
+                                                        htmlFor="confirmPassword">Confirm Password:<Required />
                                                     </label>
                                                     <div className="position-relative">
                                                         <input
@@ -1118,13 +1049,11 @@ const Register = () => {
                                             </>
                                         )}
 
-                                        {/* Address Section - for farmers and riders */}
-
                                         {!needsEWallet && (
                                             <>
                                                 <div className="mt-3">
                                                     <label className="text-capitalize small fw-bold" 
-                                                        htmlFor="contact">contact no:
+                                                        htmlFor="contact">contact no:<Required />
                                                     </label>
                                                     <div className="input-group mt-2">
                                                         <span className="input-group-text" style={{fontSize: "14px"}}>+63</span>
@@ -1147,7 +1076,7 @@ const Register = () => {
 
                                                 <div className="mt-3">
                                                     <label className="text-capitalize small fw-bold" 
-                                                        htmlFor="email">Email:
+                                                        htmlFor="email">Email:<Required />
                                                     </label>
                                                     <input
                                                         className="mt-2 form-control small "
@@ -1166,7 +1095,7 @@ const Register = () => {
 
                                                 <div className="mt-3">
                                                     <label className="text-capitalize small fw-bold " 
-                                                        htmlFor="password">Create Password:
+                                                        htmlFor="password">Create Password:<Required />
                                                     </label>
                                                     <div className="position-relative">
                                                         <input
@@ -1198,7 +1127,7 @@ const Register = () => {
 
                                                 <div className="mt-3">
                                                     <label className="text-capitalize small fw-bold" 
-                                                        htmlFor="confirmPassword">Confirm Password:
+                                                        htmlFor="confirmPassword">Confirm Password:<Required />
                                                     </label>
                                                     <div className="position-relative">
                                                         <input
@@ -1243,8 +1172,6 @@ const Register = () => {
                                             </div>
                                         </div>
 
-
-                                        {/* Replace your existing register button div with this */}
                                         <div className="mt-4">
                                             {isRider && (
                                                 <div className="mb-3 p-3 rounded" style={{ backgroundColor: "#fff3cd", border: "1px solid #ffc107" }}>
@@ -1261,7 +1188,6 @@ const Register = () => {
                                                 </div>
                                             )}
 
-
                                             {isFarmer && (
                                                 <div className="mb-3 p-3 rounded" style={{ backgroundColor: "#fff3cd", border: "1px solid #ffc107" }}>
                                                     <p className="mb-0" style={{ fontSize: "13px" }}>
@@ -1276,7 +1202,6 @@ const Register = () => {
                                                     </p>
                                                 </div>
                                             )}
-
 
                                             {isBuyer && (
                                                 <div className="mb-3 p-3 rounded" style={{ backgroundColor: "#fff3cd", border: "1px solid #ffc107" }}>
@@ -1293,7 +1218,6 @@ const Register = () => {
                                                 </div>
                                             )}
                                             
-
                                             <button
                                                 type="submit"
                                                 className="p-2 shadow-sm text-light rounded w-100 border-0 text-capitalize"
@@ -1302,12 +1226,10 @@ const Register = () => {
                                                     (isFarmer && !sellerTermsAgreed) ||
                                                     (isBuyer && !buyerTermsAgreed) || 
                                                     submitting
-                                                    
                                                 }
                                                 style={{
                                                     outline: "none",
                                                     fontWeight: "500",
-
                                                     cursor: ((isRider && !allTermsAgreed) || (isFarmer && !sellerTermsAgreed) || (isBuyer && !buyerTermsAgreed) || submitting) ? "not-allowed" : "pointer",
                                                     background: ((isRider && !allTermsAgreed) || (isFarmer && !sellerTermsAgreed) || (isBuyer && !buyerTermsAgreed)) ? "#cccccc" : "#4CAF50",
                                                     opacity: ((isRider && !allTermsAgreed) || (isFarmer && !sellerTermsAgreed) || (isBuyer && !buyerTermsAgreed) || submitting) ? 0.6 : 1
@@ -1339,7 +1261,7 @@ const Register = () => {
                 </div>
             </div>
 
-            {showSuccessModal  && (
+            {showSuccessModal && (
                 <div
                     className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
                     style={{ backgroundColor: "rgba(0,0,0,0.5)", zIndex: 9999 }}
@@ -1347,14 +1269,11 @@ const Register = () => {
                     <div
                         className="bg-white rounded shadow-lg p-4 text-center"
                         style={{ maxWidth: "400px", width: "90%" }}
-                        // onClick={(e) => e.stopPropagation()}
                     >
                         <div className="mb-3">
-                            <i className="fa fa-check-circle text-green fs-1" 
-                            >
-                            </i>
+                            <i className="fa fa-check-circle text-green fs-1"></i>
                         </div>
-                         <h5 className="fw-bold text-capitalize mb-2">registration successful!</h5>
+                        <h5 className="fw-bold text-capitalize mb-2">registration successful!</h5>
 
                         {(selectedRole === "farmer" || selectedRole === "rider") ? (
                             <>
@@ -1377,7 +1296,7 @@ const Register = () => {
                             </p>
                         )}
                         <button
-                            className="btn text-capitalize  btn-outline-success btn-sm "
+                            className="btn text-capitalize btn-outline-success btn-sm"
                             onClick={handleModalClose}
                         >
                             {(selectedRole === "farmer" || selectedRole === "rider") ? "understood" : "go to sign in"}
@@ -1398,8 +1317,7 @@ const Register = () => {
                         onClick={(e) => e.stopPropagation()}
                     >
                         <div className="mb-3">
-                            <i className="fa fa-times-circle text-danger fs-1 " 
-                            ></i>
+                            <i className="fa fa-times-circle text-danger fs-1"></i>
                         </div>
                         <h5 className="fw-bold text-capitalize mb-2">registration failed</h5>
                         <p className="text-muted small mb-4">
@@ -1415,37 +1333,35 @@ const Register = () => {
                 </div>
             )}
 
-        {showTermsModal && (
-            <RiderTermsModal
-                show={showTermsModal}
-                onClose={handleCloseTermsModal}
-                agreedToTerms={allTermsAgreed}
-                setAgreedToTerms={setAllTermsAgreed}
-                onAccept={handleCloseTermsModal}
-            />
-        )}
+            {showTermsModal && (
+                <RiderTermsModal
+                    show={showTermsModal}
+                    onClose={handleCloseTermsModal}
+                    agreedToTerms={allTermsAgreed}
+                    setAgreedToTerms={setAllTermsAgreed}
+                    onAccept={handleCloseTermsModal}
+                />
+            )}
 
+            {showSellerTermsModal && (
+                <SellerTermsModal
+                    show={showSellerTermsModal}
+                    onClose={handleCloseSellerTermsModal}
+                    agreedToTerms={sellerTermsAgreed}
+                    setAgreedToTerms={setSellerTermsAgreed}
+                    onAccept={handleCloseSellerTermsModal}
+                />
+            )}
 
-        {showSellerTermsModal && (
-            <SellerTermsModal
-                show={showSellerTermsModal}
-                onClose={handleCloseSellerTermsModal}
-                agreedToTerms={sellerTermsAgreed}
-                setAgreedToTerms={setSellerTermsAgreed}
-                onAccept={handleCloseSellerTermsModal}
-            />
-        )}
-        {showBuyerTermsModal && (
-            <BuyerTermsModal
-                show={showBuyerTermsModal}
-                onClose={handleCloseBuyerTermsModal}
-                agreedToTerms={buyerTermsAgreed}
-                setAgreedToTerms={setBuyerTermsAgreed}
-                onAccept={handleCloseBuyerTermsModal}
-            />
-        )}
-
-
+            {showBuyerTermsModal && (
+                <BuyerTermsModal
+                    show={showBuyerTermsModal}
+                    onClose={handleCloseBuyerTermsModal}
+                    agreedToTerms={buyerTermsAgreed}
+                    setAgreedToTerms={setBuyerTermsAgreed}
+                    onAccept={handleCloseBuyerTermsModal}
+                />
+            )}
         </>
     );
 };
@@ -1453,26 +1369,21 @@ const Register = () => {
 export default Register;
 
 
-
-
-
+// ─────────────────────────────────────────────
 // Buyer Terms Modal Component
+// ─────────────────────────────────────────────
 const BuyerTermsModal = ({ show, onClose, agreedToTerms, setAgreedToTerms, onAccept }) => {
-
     const scrollRef = useRef(null);
     const [hasScrolledToBottom, setHasScrolledToBottom] = useState(false);
-    
-    
+
     if (!show) return null;
 
     const handleScroll = () => {
         const el = scrollRef.current;
         if (!el) return;
-        const isAtBottom = el.scrollHeight - el.scrollTop <= el.clientHeight + 10; // +10 tolerance
+        const isAtBottom = el.scrollHeight - el.scrollTop <= el.clientHeight + 10;
         if (isAtBottom) setHasScrolledToBottom(true);
     };
-
-
 
     const termsData = [
         {
@@ -1525,65 +1436,34 @@ const BuyerTermsModal = ({ show, onClose, agreedToTerms, setAgreedToTerms, onAcc
             number: '6',
             title: 'Delivery, and Replacement',
             content: [
-                'Replacement requests will only be processed if the damage is caused by the delivery rider ',
+                'Replacement requests will only be processed if the damage is caused by the delivery rider.',
                 'Buyers are required to provide evidence supporting their claim, such as photos or descriptions of the issue.'
             ]
         }
     ];
-    
-        
+
     return (
         <div
             className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
             style={{ backgroundColor: "rgba(0,0,0,0.5)", zIndex: 9999 }}
-            onClick={() => {
-                setAgreedToTerms(false);
-                onClose();
-            }}
+            onClick={() => { setAgreedToTerms(false); onClose(); }}
         >
             <div
                 className="bg-white rounded shadow-lg"
-                style={{ 
-                    maxWidth: "800px", 
-                    width: "90%", 
-                    height: "90vh", 
-                    display: "flex", 
-                    flexDirection: "column", 
-                    overflow: "hidden"
-                }}
+                style={{ maxWidth: "800px", width: "90%", height: "90vh", display: "flex", flexDirection: "column", overflow: "hidden" }}
                 onClick={(e) => e.stopPropagation()}
             >
-                {/* Header */}
                 <div className="p-4 border-bottom" style={{ backgroundColor: "#4CAF50" }}>
                     <div className="d-flex justify-content-between align-items-center">
                         <div>
                             <h4 className="mb-1 fw-bold text-white">E-FARMERS' HUB</h4>
                             <p className="mb-0 text-white">Buyer Terms and Conditions</p>
                         </div>
-                        <button
-
-                            onClick={() => {
-                                setAgreedToTerms(false);
-                                onClose();
-                            }}
-                            className="btn-close btn-close-white"
-                            aria-label="Close"
-                        ></button>
+                        <button onClick={() => { setAgreedToTerms(false); onClose(); }} className="btn-close btn-close-white" aria-label="Close"></button>
                     </div>
                 </div>
 
-                {/* Scrollable Content */}
-
-                <div 
-                    ref={scrollRef}
-                    onScroll={handleScroll}
-                    className="p-4 show-scrollbar" 
-                    style={{ 
-                        overflowY: "scroll",
-                        flex: "1 1 0",
-                        minHeight: 0,
-                    }}
-                >
+                <div ref={scrollRef} onScroll={handleScroll} className="p-4 show-scrollbar" style={{ overflowY: "scroll", flex: "1 1 0", minHeight: 0 }}>
                     <p className="mb-4" style={{ lineHeight: "1.6" }}>
                         These Terms and Conditions govern the registration and participation of buyers 
                         in E-FARMERS' HUB: A Web-Based E-Commerce Platform for Crop Products in Lupang Ramos, 
@@ -1594,9 +1474,7 @@ const BuyerTermsModal = ({ show, onClose, agreedToTerms, setAgreedToTerms, onAcc
                     {termsData.map((term, index) => (
                         <div key={index} className="mb-4">
                             <div className="mb-2">
-                                <h6 className="fw-bold mb-2">
-                                    {term.number}. {term.title}
-                                </h6>
+                                <h6 className="fw-bold mb-2">{term.number}. {term.title}</h6>
                                 <div style={{ lineHeight: "1.6", color: "#555" }}>
                                     {term.content.map((line, i) => (
                                         <p key={i} className="mb-2">{line}</p>
@@ -1614,11 +1492,10 @@ const BuyerTermsModal = ({ show, onClose, agreedToTerms, setAgreedToTerms, onAcc
                     </div>
                 </div>
 
-                {/* Footer */}
                 <div className="p-4 border-top">
-                    <div 
-                        className="d-flex align-items-center gap-2 mb-3 p-3 rounded" 
-                        style={{ 
+                    <div
+                        className="d-flex align-items-center gap-2 mb-3 p-3 rounded"
+                        style={{
                             backgroundColor: !hasScrolledToBottom ? "#f0f0f0" : agreedToTerms ? "#d4edda" : "#fff3cd",
                             cursor: hasScrolledToBottom ? "pointer" : "not-allowed",
                             opacity: hasScrolledToBottom ? 1 : 0.5
@@ -1629,40 +1506,26 @@ const BuyerTermsModal = ({ show, onClose, agreedToTerms, setAgreedToTerms, onAcc
                             type="checkbox"
                             checked={agreedToTerms}
                             onChange={() => hasScrolledToBottom && setAgreedToTerms(!agreedToTerms)}
-                            disabled={!hasScrolledToBottom}  // ✅ DISABLED hanggang hindi pa naka-scroll
+                            disabled={!hasScrolledToBottom}
                             style={{ cursor: hasScrolledToBottom ? "pointer" : "not-allowed" }}
                         />
-                        <label className="mb-0 " style={{ cursor: hasScrolledToBottom ? "pointer" : "not-allowed" }}>
-                            {!hasScrolledToBottom 
-                                ? "Please scroll down to read all terms before agreeing" // ✅ hint message
+                        <label className="mb-0" style={{ cursor: hasScrolledToBottom ? "pointer" : "not-allowed" }}>
+                            {!hasScrolledToBottom
+                                ? "Please scroll down to read all terms before agreeing"
                                 : "By checking this box, I agree that I have read and accepted the terms and conditions"
                             }
                         </label>
                     </div>
-                    
-                    <div className="d-flex gap-2">
-                        <button
-                            onClick={() => {
-                                setAgreedToTerms(false);  // ✅ i-reset pag cancel
-                                onClose();
-                            }} 
 
-                            className="btn btn-secondary flex-fill"
-                            style={{ fontSize: "14px" }}
-                        >
+                    <div className="d-flex gap-2">
+                        <button onClick={() => { setAgreedToTerms(false); onClose(); }} className="btn btn-secondary flex-fill" style={{ fontSize: "14px" }}>
                             Cancel
                         </button>
-
-                        
                         <button
-                            onClick={() => {
-                                if (agreedToTerms) {
-                                    onAccept();
-                                }
-                            }}
+                            onClick={() => { if (agreedToTerms) onAccept(); }}
                             disabled={!agreedToTerms}
                             className="btn flex-fill"
-                            style={{ 
+                            style={{
                                 fontSize: "14px",
                                 backgroundColor: agreedToTerms ? "#4CAF50" : "#cccccc",
                                 color: "white",
@@ -1680,7 +1543,9 @@ const BuyerTermsModal = ({ show, onClose, agreedToTerms, setAgreedToTerms, onAcc
 };
 
 
-
+// ─────────────────────────────────────────────
+// Seller Terms Modal Component
+// ─────────────────────────────────────────────
 const SellerTermsModal = ({ show, onClose, agreedToTerms, setAgreedToTerms, onAccept }) => {
     const scrollRef = useRef(null);
     const [hasScrolledToBottom, setHasScrolledToBottom] = useState(false);
@@ -1780,55 +1645,24 @@ const SellerTermsModal = ({ show, onClose, agreedToTerms, setAgreedToTerms, onAc
         <div
             className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
             style={{ backgroundColor: "rgba(0,0,0,0.5)", zIndex: 9999 }}
-            onClick={() => {
-                setAgreedToTerms(false);
-                onClose();
-            }}
+            onClick={() => { setAgreedToTerms(false); onClose(); }}
         >
             <div
                 className="bg-white rounded shadow-lg"
-                style={{
-                    maxWidth: "800px",
-                    width: "90%",
-                    height: "90vh",        // ✅ FIXED: height, hindi lang maxHeight
-                    display: "flex",
-                    flexDirection: "column",
-                    overflow: "hidden",    // ✅ Clips ang content sa loob ng modal
-                }}
+                style={{ maxWidth: "800px", width: "90%", height: "90vh", display: "flex", flexDirection: "column", overflow: "hidden" }}
                 onClick={(e) => e.stopPropagation()}
             >
-                {/* Header - hindi mag-shrink */}
-                <div
-                    className="p-4 border-bottom"
-                    style={{ backgroundColor: "#4CAF50", flexShrink: 0 }}
-                >
+                <div className="p-4 border-bottom" style={{ backgroundColor: "#4CAF50", flexShrink: 0 }}>
                     <div className="d-flex justify-content-between align-items-center">
                         <div>
                             <h4 className="mb-1 fw-bold text-white">E-FARMERS' HUB</h4>
                             <p className="mb-0 text-white">Seller Terms and Conditions</p>
                         </div>
-                        <button
-                            onClick={() => {
-                                setAgreedToTerms(false);
-                                onClose();
-                            }}
-                            className="btn-close btn-close-white"
-                            aria-label="Close"
-                        ></button>
+                        <button onClick={() => { setAgreedToTerms(false); onClose(); }} className="btn-close btn-close-white" aria-label="Close"></button>
                     </div>
                 </div>
 
-                {/* Scrollable Content */}
-                <div
-                    ref={scrollRef}
-                    onScroll={handleScroll}
-                    className="p-4 show-scrollbar"
-                    style={{
-                        overflowY: "scroll",
-                        flex: "1 1 0",
-                        minHeight: 0,
-                    }}  
-                >
+                <div ref={scrollRef} onScroll={handleScroll} className="p-4 show-scrollbar" style={{ overflowY: "scroll", flex: "1 1 0", minHeight: 0 }}>
                     <p className="mb-4" style={{ lineHeight: "1.6" }}>
                         These Terms and Conditions govern the registration and participation of sellers
                         in E-FARMERS' HUB: A Web-Based E-Commerce Platform for Crop Products in Lupang Ramos,
@@ -1839,9 +1673,7 @@ const SellerTermsModal = ({ show, onClose, agreedToTerms, setAgreedToTerms, onAc
                     {termsData.map((term, index) => (
                         <div key={index} className="mb-4">
                             <div className="mb-2">
-                                <h6 className="fw-bold mb-2">
-                                    {term.number}. {term.title}
-                                </h6>
+                                <h6 className="fw-bold mb-2">{term.number}. {term.title}</h6>
                                 <div>
                                     {term.content.map((line, i) => (
                                         <p key={i} className="mb-2">{line}</p>
@@ -1859,11 +1691,7 @@ const SellerTermsModal = ({ show, onClose, agreedToTerms, setAgreedToTerms, onAc
                     </div>
                 </div>
 
-                {/* Footer - hindi mag-shrink */}
-                <div
-                    className="p-4 border-top"
-                    style={{ flexShrink: 0 }}
-                >
+                <div className="p-4 border-top" style={{ flexShrink: 0 }}>
                     <div
                         className="d-flex align-items-center gap-2 mb-3 p-3 rounded"
                         style={{
@@ -1889,20 +1717,11 @@ const SellerTermsModal = ({ show, onClose, agreedToTerms, setAgreedToTerms, onAc
                     </div>
 
                     <div className="d-flex gap-2">
-                        <button
-                            onClick={() => {
-                                setAgreedToTerms(false);
-                                onClose();
-                            }}
-                            className="btn btn-secondary flex-fill"
-                            style={{ fontSize: "14px" }}
-                        >
+                        <button onClick={() => { setAgreedToTerms(false); onClose(); }} className="btn btn-secondary flex-fill" style={{ fontSize: "14px" }}>
                             Cancel
                         </button>
                         <button
-                            onClick={() => {
-                                if (agreedToTerms) onAccept();
-                            }}
+                            onClick={() => { if (agreedToTerms) onAccept(); }}
                             disabled={!agreedToTerms}
                             className="btn flex-fill"
                             style={{
@@ -1923,28 +1742,21 @@ const SellerTermsModal = ({ show, onClose, agreedToTerms, setAgreedToTerms, onAc
 };
 
 
-
-// Separate Terms Modal Component
+// ─────────────────────────────────────────────
+// Rider Terms Modal Component
+// ─────────────────────────────────────────────
 const RiderTermsModal = ({ show, onClose, agreedToTerms, setAgreedToTerms, onAccept }) => {
-    
-    
-    
     const scrollRef = useRef(null);
     const [hasScrolledToBottom, setHasScrolledToBottom] = useState(false);
-    
-
 
     if (!show) return null;
-    
 
     const handleScroll = () => {
         const el = scrollRef.current;
         if (!el) return;
-        const isAtBottom = el.scrollHeight - el.scrollTop <= el.clientHeight + 10; // +10 tolerance
+        const isAtBottom = el.scrollHeight - el.scrollTop <= el.clientHeight + 10;
         if (isAtBottom) setHasScrolledToBottom(true);
     };
-
-
 
     const termsData = [
         {
@@ -2085,59 +1897,24 @@ const RiderTermsModal = ({ show, onClose, agreedToTerms, setAgreedToTerms, onAcc
         <div
             className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
             style={{ backgroundColor: "rgba(0,0,0,0.5)", zIndex: 9999 }}
-            
-            onClick={() => {
-                setAgreedToTerms(false);  // ✅ i-reset pag cancel
-                onClose();
-            }} 
-
-
+            onClick={() => { setAgreedToTerms(false); onClose(); }}
         >
             <div
                 className="bg-white rounded shadow-lg"
-                style={{ 
-                    maxWidth: "800px", 
-                    width: "90%", 
-                    height: "90vh", 
-                    display: "flex", 
-                    flexDirection: "column", 
-                    overflow: "hidden"
-                
-                }}
+                style={{ maxWidth: "800px", width: "90%", height: "90vh", display: "flex", flexDirection: "column", overflow: "hidden" }}
                 onClick={(e) => e.stopPropagation()}
             >
-                {/* Header */}
                 <div className="p-4 border-bottom" style={{ backgroundColor: "#4CAF50" }}>
                     <div className="d-flex justify-content-between align-items-center">
                         <div>
                             <h4 className="mb-1 fw-bold text-white">E-FARMERS' HUB</h4>
-                            <p className="mb-0 text-white" >Rider Terms and Conditions</p>
+                            <p className="mb-0 text-white">Rider Terms and Conditions</p>
                         </div>
-                        <button
-                            onClick={() => {
-                                setAgreedToTerms(false);  // ✅ i-reset pag cancel
-                                onClose();
-                            }} 
-                            className="btn-close btn-close-white"
-                            aria-label="Close"
-                        ></button>
+                        <button onClick={() => { setAgreedToTerms(false); onClose(); }} className="btn-close btn-close-white" aria-label="Close"></button>
                     </div>
                 </div>
 
-
-
-                {/* Scrollable Content */}
-
-                <div
-                    ref={scrollRef}
-                    onScroll={handleScroll}
-                    className="p-4 show-scrollbar"
-                    style={{
-                        overflowY: "scroll",
-                        flex: "1 1 0",
-                        minHeight: 0,
-                    }}
-                >
+                <div ref={scrollRef} onScroll={handleScroll} className="p-4 show-scrollbar" style={{ overflowY: "scroll", flex: "1 1 0", minHeight: 0 }}>
                     <p className="mb-4" style={{ lineHeight: "1.6" }}>
                         These Terms and Conditions govern the registration and participation of riders in E-FARMERS' HUB: 
                         A Web-Based E-Commerce Platform for Crop Products in Lupang Ramos, Langkaan I, Dasmariñas, Cavite. 
@@ -2148,9 +1925,7 @@ const RiderTermsModal = ({ show, onClose, agreedToTerms, setAgreedToTerms, onAcc
                     {termsData.map((term, index) => (
                         <div key={index} className="mb-4">
                             <div className="mb-2">
-                                <h6 className="fw-bold mb-2">
-                                    {term.number}. {term.title}
-                                </h6>
+                                <h6 className="fw-bold mb-2">{term.number}. {term.title}</h6>
                                 <div style={{ lineHeight: "1.6", color: "#555" }}>
                                     {term.content.map((line, i) => (
                                         <p key={i} className="mb-2">{line}</p>
@@ -2168,11 +1943,10 @@ const RiderTermsModal = ({ show, onClose, agreedToTerms, setAgreedToTerms, onAcc
                     </div>
                 </div>
 
-                {/* Footer */}
                 <div className="p-4 border-top">
-                    <div 
-                        className="d-flex align-items-center gap-2 mb-3 p-3 rounded" 
-                        style={{ 
+                    <div
+                        className="d-flex align-items-center gap-2 mb-3 p-3 rounded"
+                        style={{
                             backgroundColor: !hasScrolledToBottom ? "#f0f0f0" : agreedToTerms ? "#d4edda" : "#fff3cd",
                             cursor: hasScrolledToBottom ? "pointer" : "not-allowed",
                             opacity: hasScrolledToBottom ? 1 : 0.5
@@ -2183,41 +1957,26 @@ const RiderTermsModal = ({ show, onClose, agreedToTerms, setAgreedToTerms, onAcc
                             type="checkbox"
                             checked={agreedToTerms}
                             onChange={() => hasScrolledToBottom && setAgreedToTerms(!agreedToTerms)}
-                            disabled={!hasScrolledToBottom}  // ✅ DISABLED hanggang hindi pa naka-scroll
+                            disabled={!hasScrolledToBottom}
                             style={{ cursor: hasScrolledToBottom ? "pointer" : "not-allowed" }}
                         />
                         <label className="mb-0" style={{ cursor: hasScrolledToBottom ? "pointer" : "not-allowed" }}>
-                            {!hasScrolledToBottom 
-                                ? "Please scroll down to read all terms before agreeing" // ✅ hint message
+                            {!hasScrolledToBottom
+                                ? "Please scroll down to read all terms before agreeing"
                                 : "By checking this box, I agree that I have read and accepted the terms and conditions"
                             }
                         </label>
                     </div>
 
-                    
                     <div className="d-flex gap-2">
-                        <button
-                            
-                            onClick={() => {
-                                setAgreedToTerms(false);
-                                onClose();
-                            }}
-
-
-                            className="btn btn-secondary flex-fill"
-                            style={{ fontSize: "14px" }}
-                        >
+                        <button onClick={() => { setAgreedToTerms(false); onClose(); }} className="btn btn-secondary flex-fill" style={{ fontSize: "14px" }}>
                             Cancel
                         </button>
                         <button
-                            onClick={() => {
-                                if (agreedToTerms) {
-                                    onAccept();
-                                }
-                            }}
+                            onClick={() => { if (agreedToTerms) onAccept(); }}
                             disabled={!agreedToTerms}
                             className="btn flex-fill"
-                            style={{ 
+                            style={{
                                 fontSize: "14px",
                                 backgroundColor: agreedToTerms ? "#4CAF50" : "#cccccc",
                                 color: "white",
@@ -2233,4 +1992,3 @@ const RiderTermsModal = ({ show, onClose, agreedToTerms, setAgreedToTerms, onAcc
         </div>
     );
 };
-
