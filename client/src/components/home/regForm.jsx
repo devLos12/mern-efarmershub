@@ -629,7 +629,7 @@ const Register = () => {
                                                     list="suffix-options"
                                                 />
                                                 <datalist id="suffix-options">
-                                                    {['Jr.', 'Sr.', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X',
+                                                    {['jr.','sr.','Jr.', 'Sr.', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X',
                                                     'MD', 'DDS', 'DMD', 'RN', 'PhD', 'EdD', 'JD', 'Esq.', 'CPA', 'Ret.'
                                                     ].map((s, i) => (
                                                         <option key={i} value={s} />

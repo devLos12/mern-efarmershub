@@ -34,19 +34,32 @@ const register = async (req, res) => {
             zipCode
         } = req.body;
         
-
-        const validSuffixes = [
-            'Jr.', 'Sr.',
+        const validSuffixes = [ 
+            'jr.','Jr.','Sr.', 'sr.',
             'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X',
             'MD', 'DDS', 'DMD', 'RN',
             'PhD', 'EdD', 'JD',
             'Esq.', 'CPA', 'Ret.'
         ];
 
-        if (suffix && suffix.trim() && !validSuffixes.includes(suffix.trim())) {
-            return res.status(400).json({ message: "Invalid suffix!" });
+        if (suffix && suffix.trim()) {
+            const trimmedSuffix = suffix.trim();
+            
+            if (!validSuffixes.includes(trimmedSuffix)) {
+                // Check if they forgot the dot
+                const suffixWithDot = trimmedSuffix + '.';
+                
+                if (validSuffixes.includes(suffixWithDot)) {
+                    return res.status(400).json({ 
+                        message: `Invalid suffix! Did you mean "${suffixWithDot}"? Please add a period.` 
+                    });
+                }
+                
+                return res.status(400).json({ 
+                    message: "Invalid suffix! Please use a valid suffix like 'Jr.', 'Sr.', 'PhD', etc." 
+                });
+            }
         }
-
 
         if(contact && !/^\d{11}$/.test(contact)) {
             return res.status(400).json({ message: "Invalid contact number format! Must be 11 digits." });

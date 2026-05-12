@@ -505,12 +505,13 @@ const AddAccount = ({ isOpen, onClose, onSuccess }) => {
                                             list="suffix-options"
                                         />
                                         <datalist id="suffix-options">
-                                            {['Jr.', 'Sr.', 'II', 'III', 'IV', 'V', 'MD', 'DDS', 'DMD', 'RN', 'PhD', 'EdD', 'JD', 'Esq.', 'CPA', 'Ret.']
+                                            {['jr.','sr.','Jr.', 'Sr.', 'II', 'III', 'IV', 'V', 'MD', 'DDS', 'DMD', 'RN', 'PhD', 'EdD', 'JD', 'Esq.', 'CPA', 'Ret.']
                                                 .map((s, i) => <option key={i} value={s} />)}
                                         </datalist>
                                         <small className="text-muted d-block mt-1" style={{ fontSize: "12px" }}>Type or select from suggestions</small>
                                     </div>
                                 </div>
+
 
                                 {/* ══════════════════════════════════════════════
                                     SECTION 2A — ADMIN FIELDS

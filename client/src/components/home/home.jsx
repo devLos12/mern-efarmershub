@@ -2,6 +2,9 @@ import React from "react";
 import image from "../../assets/images/home_bg.png"
 import { useBreakpoint } from "../breakpoint";
 
+
+
+
 const Home = ({signIn}) => {
     const width = useBreakpoint();
 
