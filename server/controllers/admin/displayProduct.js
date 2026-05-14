@@ -7,7 +7,7 @@ import cloudinary from "../../config/cloudinary.js";
 export const getProducts = async(req, res) =>{
     try{
         
-        const products = await Product.find();
+        const products = await Product.find().sort( { createdAt: -1 });
         
         if(!products || products.length === 0){ 
             return res.status(404).json({message : "No crops display"});

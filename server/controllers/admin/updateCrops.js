@@ -15,6 +15,8 @@ export const updateCrops = async (req, res) => {
     try {
         const { id, name, category, disc, image, kg, lifeSpan, productType } = req.body;
         
+
+        
         // Convert to numbers para mag-match yung comparison
         const price = Number(req.body.price);
         const stocks = Number(req.body.stocks);
@@ -52,7 +54,7 @@ export const updateCrops = async (req, res) => {
 
         const shouldReset = lifeSpan === "reset";
         const effectiveLifeSpan = shouldReset ? oldProduct.lifeSpan : Number(lifeSpan);
-
+        
 
         const updateData = { 
             name, 
@@ -60,7 +62,7 @@ export const updateCrops = async (req, res) => {
             stocks,
             totalStocks: stocks, 
             kg, 
-            lifeSpan: effectiveLifeSpan, // ✅ hindi na "reset" string ang mase-save
+            lifeSpan: effectiveLifeSpan, 
             category, 
             disc, 
             imageFile,

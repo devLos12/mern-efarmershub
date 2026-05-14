@@ -29,18 +29,15 @@ const ContactInput = ({ value, onChange }) => {
     };
 
     return (
-        <div className="input-group">
-            <span className="input-group-text bg-light fw-semibold" style={{ fontSize: 14 }}>+63</span>
-            <input
-                type="tel"
-                className="form-control border-success border-opacity-25"
-                style={{ fontSize: 14 }}
-                value={formatPhoneDisplay(localDigits)}
-                onChange={handleChange}
-                maxLength={12}
-                placeholder="9XX XXX XXXX"
-            />
-        </div>
+        <input
+            type="tel"
+            className="form-control form-control-sm"
+            style={{ fontSize: 14, borderColor: "#d1e7d1", borderRadius: 8 }}
+            value={formatPhoneDisplay(localDigits)}
+            onChange={handleChange}
+            maxLength={12}
+            placeholder="9XX XXX XXXX"
+        />
     );
 };
 // ─────────────────────────────────────────────────────────────────────────────
@@ -52,13 +49,14 @@ const OfflineFarmerUpload = ({ onClose }) => {
     const height = useBreakpointHeight();
     const fileUploadRef = useRef(null);
 
-    const [step, setStep] = useState(1);
+    const [step, setStep] = useState(1); // Step 1: Farmer, Step 2: Product
     const [isUploading, setIsUploading] = useState(false);
     const [imgPreview, setImgPreview] = useState(null);
     const [searchTerm, setSearchTerm] = useState("");
     const [searchResults, setSearchResults] = useState([]);
     const [isSearching, setIsSearching] = useState(false);
 
+    // ── Farmer Data ──
     const [farmerData, setFarmerData] = useState({
         id: "",
         firstname: "",
@@ -69,6 +67,7 @@ const OfflineFarmerUpload = ({ onClose }) => {
         isNew: false,
     });
 
+    // ── Product Data ──
     const [productData, setProductData] = useState({
         name: "",
         price: "",
@@ -81,6 +80,8 @@ const OfflineFarmerUpload = ({ onClose }) => {
         image: null,
     });
 
+    // ── Validation ──
+    const isFarmerSelected = farmerData.id || (farmerData.isNew && farmerData.firstname && farmerData.lastname);
     const isProductFilled =
         productData.name &&
         productData.price &&
@@ -92,11 +93,7 @@ const OfflineFarmerUpload = ({ onClose }) => {
         productData.disc &&
         productData.image;
 
-    const isFarmerSelected = farmerData.id || (farmerData.isNew && farmerData.firstname && farmerData.lastname);
-
-    // ── Strict input handlers ─────────────────────────────────────────────────
-
-    // ✅ Letters only — firstname, middlename, lastname (allow hyphen + apostrophe)
+    // ── Input Handlers ──
     const handleFarmerChange = (e) => {
         const { name, value } = e.target;
         const nameFields = ["firstname", "middlename", "lastname"];
@@ -108,41 +105,29 @@ const OfflineFarmerUpload = ({ onClose }) => {
         setFarmerData((prev) => ({ ...prev, [name]: value }));
     };
 
-    // ✅ Letters only — product name and product type (no numbers)
     const handleProductNameChange = (e) => {
         const { name, value } = e.target;
         const cleaned = value.replace(/[^a-zA-Z\s\-']/g, "");
         setProductData((prev) => ({ ...prev, [name]: cleaned }));
     };
 
-    // ✅ Numbers only for price — prevent negative, scientific notation, decimals beyond 2 places
     const handleProductPriceChange = (e) => {
         let value = e.target.value.replace(/[^0-9.]/g, "");
-        
-        // Remove leading zeros but keep single zero
         if (value.startsWith("0") && value.length > 1 && value[1] !== ".") {
             value = value.replace(/^0+/, "0");
         }
-        
-        // Prevent multiple decimal points
         const parts = value.split(".");
         if (parts.length > 2) {
             value = parts[0] + "." + parts.slice(1).join("");
         }
-        
-        // Limit to 2 decimal places
         if (parts.length === 2 && parts[1].length > 2) {
             value = parts[0] + "." + parts[1].slice(0, 2);
         }
-
         setProductData((prev) => ({ ...prev, price: value }));
     };
 
-    // ✅ Positive integers only for stocks (1-999)
     const handleProductStocksChange = (e) => {
         let value = e.target.value.replace(/[^0-9]/g, "");
-        
-        // Prevent negative or -1
         if (value === "" || value === "-") {
             value = "";
         } else if (parseInt(value, 10) < 1) {
@@ -150,41 +135,81 @@ const OfflineFarmerUpload = ({ onClose }) => {
         } else if (value.length > 3) {
             value = value.slice(0, 3);
         }
-
         setProductData((prev) => ({ ...prev, stocks: value }));
     };
 
-    // ✅ Positive numbers only for kg — prevent negative
+
+
+
+
+
+    // const handleProductKgChange = (e) => {
+    //     let value = e.target.value.replace(/[^0-9.]/g, "");
+    //     if (value.startsWith("0") && value.length > 1 && value[1] !== ".") {
+    //         value = value.replace(/^0+/, "0");
+    //     }
+    //     const parts = value.split(".");
+    //     if (parts.length > 2) {
+    //         value = parts[0] + "." + parts.slice(1).join("");
+    //     }
+    //     if (parts.length === 2 && parts[1].length > 2) {
+    //         value = parts[0] + "." + parts[1].slice(0, 2);
+    //     }
+    //     setProductData((prev) => ({ ...prev, kg: value }));
+    // };
+
+
+
+
+
     const handleProductKgChange = (e) => {
         let value = e.target.value.replace(/[^0-9.]/g, "");
-        
-        // If starts with 0, handle properly
         if (value.startsWith("0") && value.length > 1 && value[1] !== ".") {
             value = value.replace(/^0+/, "0");
         }
-        
-        // Prevent multiple decimal points
         const parts = value.split(".");
         if (parts.length > 2) {
             value = parts[0] + "." + parts.slice(1).join("");
         }
-        
-        // Limit to 2 decimal places
         if (parts.length === 2 && parts[1].length > 2) {
             value = parts[0] + "." + parts[1].slice(0, 2);
         }
-
+        // ✅ ADD THIS - Limit to max 25 kg
+        if (value && parseFloat(value) > 25) {
+            value = "";
+        }
         setProductData((prev) => ({ ...prev, kg: value }));
     };
 
-    // General product change — selects, textarea
+    
+
+
+    const handleProductLifeSpanChange = (e) => {
+        let value = e.target.value.replace(/[^0-9]/g, "");
+        
+        // Prevent zero
+        if (value === "0") {
+            value = "";
+        }
+        
+        // Limit to max 40 days
+        if (value && parseInt(value, 10) > 40) {
+            value = "";
+        }
+        setProductData((prev) => ({ ...prev, lifeSpan: value }));
+    };
+
+
+
+
     const handleProductChange = (e) => {
         const { name, value } = e.target;
         setProductData((prev) => ({ ...prev, [name]: value }));
     };
 
-    // ─────────────────────────────────────────────────────────────────────────
 
+
+    // ── Farmer Search ──
     const handleSearch = async (value) => {
         setSearchTerm(value);
         if (!value.trim()) return setSearchResults([]);
@@ -215,6 +240,7 @@ const OfflineFarmerUpload = ({ onClose }) => {
         });
         setSearchTerm(`${farmer.firstname} ${farmer.lastname}`);
         setSearchResults([]);
+        setStep(2); // Move to step 2
     };
 
     const handleNewFarmer = () => {
@@ -231,12 +257,15 @@ const OfflineFarmerUpload = ({ onClose }) => {
         setSearchResults([]);
     };
 
-    const handleBackOrCancel = () => {
+    const handleBackFromStep2 = () => {
         if (farmerData.isNew) {
+            // Reset new farmer form
             setFarmerData({ id: "", firstname: "", middlename: "", lastname: "", suffix: "", contact: "", isNew: false });
-        } else {
-            onClose();
         }
+        // Reset product data
+        setProductData({ name: "", price: "", category: "", productType: "", stocks: "", kg: "", lifeSpan: "", disc: "", image: null });
+        setImgPreview(null);
+        setStep(1);
     };
 
     const handleFile = async (e) => {
@@ -257,7 +286,19 @@ const OfflineFarmerUpload = ({ onClose }) => {
         }
     };
 
-    const handleSubmit = async () => {
+    const handleFileRemove = () => {
+        setImgPreview(null);
+        setProductData((prev) => ({ ...prev, image: null }));
+        if (fileUploadRef.current) fileUploadRef.current.value = null;
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        if (!isFarmerSelected || !isProductFilled) {
+            showNotification("Please fill out all required fields.", "error");
+            return;
+        }
+
         setIsUploading(true);
         try {
             const normalizeContact = (val) => {
@@ -301,91 +342,94 @@ const OfflineFarmerUpload = ({ onClose }) => {
         }
     };
 
+    const currentImage = imgPreview;
+
     return (
         <div
-            className="container-fluid position-fixed top-0 start-0 end-0 vh-100 bg-darken"
-            style={{ zIndex: 99 }}
+            className="position-fixed top-0 start-0 end-0 bottom-0 d-flex align-items-start justify-content-center"
+            style={{ zIndex: 99, backgroundColor: "rgba(0,0,0,0.45)", padding: "1.25rem 1rem", overflowY: "auto" }}
         >
-            <div className="row justify-content-center mt-4">
-                <div className="col-12 col-md-8 col-lg-6">
-                    <div className="card shadow-lg border-0 position-relative" style={{ overflow: "hidden" }}>
-
-                        {/* Close Button */}
-                        <button
-                            className="btn btn-link position-absolute top-0 end-0 p-3 text-decoration-none"
-                            style={{ cursor: "pointer", zIndex: 1 }}
-                            onClick={onClose}
-                            disabled={isUploading}
-                        >
-                            <i className="bx bx-x fs-3 text-dark"></i>
-                        </button>
-
-                        {/* Header */}
-                        <div className="card-header border-0 text-center pt-4 pb-2">
-                            <h5 className="m-0 fw-bold text-success text-capitalize">
-                                upload product for offline farmer
-                            </h5>
-
-                            {/* Stepper */}
-                            <div className="d-flex align-items-center justify-content-center gap-2 mt-3">
-                                <div className="d-flex align-items-center gap-1">
-                                    <div
-                                        style={{
-                                            width: 28, height: 28, fontSize: 13,
-                                            backgroundColor: step >= 1 ? "#198754" : "#e9ecef",
-                                            color: step >= 1 ? "#fff" : "#6c757d",
-                                        }}
-                                        className="rounded-circle d-flex align-items-center justify-content-center fw-bold"
-                                    >
-                                        {step > 1 ? <i className="bx bx-check"></i> : "1"}
-                                    </div>
-                                    <span className={`small text-capitalize ${step >= 1 ? "text-success fw-semibold" : "text-muted"}`}>
-                                        select farmer
-                                    </span>
-                                </div>
-
-                                <div style={{ width: 40, height: 2, backgroundColor: step > 1 ? "#198754" : "#dee2e6" }}></div>
-
-                                <div className="d-flex align-items-center gap-1">
-                                    <div
-                                        style={{
-                                            width: 28, height: 28, fontSize: 13,
-                                            backgroundColor: step >= 2 ? "#198754" : "#e9ecef",
-                                            color: step >= 2 ? "#fff" : "#6c757d",
-                                        }}
-                                        className="rounded-circle d-flex align-items-center justify-content-center fw-bold"
-                                    >
-                                        2
-                                    </div>
-                                    <span className={`small text-capitalize ${step >= 2 ? "text-success fw-semibold" : "text-muted"}`}>
-                                        product details
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Body */}
+            <div
+                className="w-100 bg-white rounded-4 shadow-lg"
+                style={{ maxWidth: "560px", marginTop: "auto", marginBottom: "auto" }}
+            >
+                {/* ── Header ── */}
+                <div className="d-flex align-items-center justify-content-between px-4 pt-4 pb-3 border-bottom">
+                    <div className="d-flex align-items-center gap-2">
                         <div
-                            className="card-body px-4"
-                            style={{ overflowY: "auto", maxHeight: height - 220 }}
+                            className="d-flex align-items-center justify-content-center rounded-3 bg-success bg-opacity-10"
+                            style={{ width: 36, height: 36 }}
                         >
+                            <i className={`bx ${step === 1 ? "bx-user-plus" : "bx-package"} text-success fs-5`}></i>
+                        </div>
+                        <h6 className="mb-0 fw-bold text-dark text-capitalize" style={{ letterSpacing: "-0.2px" }}>
+                            {step === 1 ? "Select Farmer" : "Upload Product"}
+                        </h6>
+                    </div>
+                    <button
+                        type="button"
+                        className="btn btn-sm btn-light rounded-circle d-flex align-items-center justify-content-center p-0"
+                        style={{ width: 32, height: 32 }}
+                        onClick={onClose}
+                        disabled={isUploading}
+                    >
+                        <i className="bx bx-x fs-5 text-secondary"></i>
+                    </button>
+                </div>
 
-                            {/* ───── STEP 1: SELECT FARMER ───── */}
-                            {step === 1 && (
-                                <div>
-                                    {!farmerData.isNew && (
-                                        <div className="mb-3">
-                                            <label className="form-label fw-semibold text-success small text-capitalize">
+                {/* ── Stepper ── */}
+                <div className="d-flex align-items-center justify-content-center gap-2 px-4 py-3" style={{ borderBottom: "1px solid #e9ecef" }}>
+                    <div
+                        style={{
+                            width: 28, height: 28, fontSize: 13,
+                            backgroundColor: step >= 1 ? "#198754" : "#e9ecef",
+                            color: step >= 1 ? "#fff" : "#6c757d",
+                        }}
+                        className="rounded-circle d-flex align-items-center justify-content-center fw-bold"
+                    >
+                        {step > 1 ? <i className="bx bx-check"></i> : "1"}
+                    </div>
+                    <div style={{ width: 40, height: 2, backgroundColor: step > 1 ? "#198754" : "#dee2e6" }}></div>
+                    <div
+                        style={{
+                            width: 28, height: 28, fontSize: 13,
+                            backgroundColor: step >= 2 ? "#198754" : "#e9ecef",
+                            color: step >= 2 ? "#fff" : "#6c757d",
+                        }}
+                        className="rounded-circle d-flex align-items-center justify-content-center fw-bold"
+                    >
+                        2
+                    </div>
+                </div>
+
+                {/* ── Form ── */}
+                <form onSubmit={handleSubmit}>
+                    <div
+                        className="px-4 py-3"
+                        style={{ overflowY: "auto", maxHeight: height - 260 }}
+                    >
+                        {/* ══════════════════════════════════════════════════════════════════════════════════ */}
+                        {/* STEP 1: SELECT FARMER */}
+                        {/* ══════════════════════════════════════════════════════════════════════════════════ */}
+                        {step === 1 && (
+                            <div>
+                                {!farmerData.isNew && (
+                                    <>
+                                        {/* Search Section */}
+                                        <div className="mb-4">
+                                            <label className="form-label fw-semibold text-dark small mb-2">
                                                 <i className="bx bx-search me-1"></i>
-                                                search existing farmer
+                                                Search Existing Farmer
                                             </label>
                                             <div className="position-relative">
                                                 <input
                                                     type="text"
-                                                    className="form-control border-success border-opacity-25"
+                                                    className="form-control form-control-sm"
                                                     placeholder="Type farmer name..."
                                                     value={searchTerm}
                                                     onChange={(e) => handleSearch(e.target.value)}
+                                                    style={{ borderColor: "#d1e7d1", borderRadius: 8 }}
+                                                    disabled={isUploading}
                                                 />
                                                 {isSearching && (
                                                     <div className="position-absolute end-0 top-50 translate-middle-y pe-3">
@@ -395,353 +439,498 @@ const OfflineFarmerUpload = ({ onClose }) => {
                                             </div>
 
                                             {searchResults.length > 0 && (
-                                                <div className="border rounded mt-1 bg-white shadow-sm" style={{ maxHeight: 180, overflowY: "auto" }}>
+                                                <div className="border rounded mt-2 bg-white shadow-sm" style={{ maxHeight: 200, overflowY: "auto" }}>
                                                     {searchResults.map((f) => (
                                                         <div
                                                             key={f._id}
                                                             className="px-3 py-2 small d-flex justify-content-between align-items-center"
-                                                            style={{ cursor: "pointer" }}
+                                                            style={{ cursor: "pointer", borderBottom: "1px solid #f0f0f0" }}
                                                             onClick={() => handleSelectFarmer(f)}
                                                         >
-                                                            <span>{f.firstname} {f.middlename} {f.lastname} {f.suffix !== "N/A" ? f.suffix : ""}</span>
-                                                            {f.contact && <span className="text-muted">{f.contact}</span>}
+                                                            <span className="fw-semibold">{f.firstname} {f.middlename} {f.lastname} {f.suffix !== "N/A" ? f.suffix : ""}</span>
+                                                            {f.contact && <span className="text-muted small">{f.contact}</span>}
                                                         </div>
                                                     ))}
                                                 </div>
                                             )}
 
                                             {searchResults.length === 0 && searchTerm && !isSearching && (
-                                                <p className="text-muted small mt-1 mb-0">No farmer found.</p>
+                                                <p className="text-muted small mt-2 mb-0">No farmer found.</p>
                                             )}
                                         </div>
-                                    )}
 
-                                    {farmerData.id && !farmerData.isNew && (
-                                        <div className="alert alert-success py-2 d-flex justify-content-between align-items-center">
-                                            <span className="small fw-semibold">
-                                                <i className="bx bx-user-check me-1"></i>
-                                                {farmerData.firstname} {farmerData.lastname}
-                                                {farmerData.contact && ` — ${farmerData.contact}`}
-                                            </span>
-                                            <button
-                                                className="btn btn-sm btn-outline-success py-0"
-                                                onClick={() => {
-                                                    setFarmerData({ id: "", firstname: "", middlename: "", lastname: "", suffix: "", contact: "", isNew: false });
-                                                    setSearchTerm("");
-                                                }}
-                                            >
-                                                change
-                                            </button>
+                                        {/* Divider */}
+                                        <div className="d-flex align-items-center gap-2 my-3">
+                                            <hr className="flex-grow-1 m-0" />
+                                            <span className="text-muted small">or</span>
+                                            <hr className="flex-grow-1 m-0" />
                                         </div>
-                                    )}
 
-                                    {!farmerData.isNew && (
-                                        <>
-                                            <div className="d-flex align-items-center gap-2 my-3">
-                                                <hr className="flex-grow-1 m-0" />
-                                                <span className="text-muted small">or</span>
-                                                <hr className="flex-grow-1 m-0" />
+                                        {/* Register New Button */}
+                                        <button
+                                            type="button"
+                                            className="btn btn-outline-success w-100 text-capitalize btn-sm"
+                                            onClick={handleNewFarmer}
+                                            style={{ borderRadius: 8 }}
+                                            disabled={isUploading}
+                                        >
+                                            <i className="bx bx-user-plus me-1"></i>
+                                            Register New Offline Farmer
+                                        </button>
+                                    </>
+                                )}
+
+                                {/* New Farmer Form */}
+                                {farmerData.isNew && (
+                                    <div>
+                                        <span className="fw-semibold text-success small text-capitalize mb-3 d-block">
+                                            <i className="bx bx-user-plus me-1"></i>
+                                            New Farmer Information
+                                        </span>
+
+                                        <div className="row g-3 mb-3">
+                                            <div className="col-md-6">
+                                                <label className="form-label small fw-semibold text-dark mb-1">
+                                                    First Name <span className="text-danger ms-1">*</span>
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    className="form-control form-control-sm"
+                                                    name="firstname"
+                                                    value={farmerData.firstname}
+                                                    onChange={handleFarmerChange}
+                                                    placeholder="First name"
+                                                    disabled={isUploading}
+                                                    style={{ borderColor: "#d1e7d1", borderRadius: 8 }}
+                                                />
+                                                <small className="text-muted" style={{ fontSize: 11 }}>Letters only</small>
                                             </div>
+                                            <div className="col-md-6">
+                                                <label className="form-label small fw-semibold text-dark mb-1">
+                                                    Last Name <span className="text-danger ms-1">*</span>
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    className="form-control form-control-sm"
+                                                    name="lastname"
+                                                    value={farmerData.lastname}
+                                                    onChange={handleFarmerChange}
+                                                    placeholder="Last name"
+                                                    disabled={isUploading}
+                                                    style={{ borderColor: "#d1e7d1", borderRadius: 8 }}
+                                                />
+                                                <small className="text-muted" style={{ fontSize: 11 }}>Letters only</small>
+                                            </div>
+                                        </div>
 
-                                            {!farmerData.id && (
+                                        <div className="row g-3 mb-3">
+                                            <div className="col-md-6">
+                                                <label className="form-label small fw-semibold text-dark mb-1">
+                                                    Middle Name <span className="text-muted fw-normal">(optional)</span>
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    className="form-control form-control-sm"
+                                                    name="middlename"
+                                                    value={farmerData.middlename}
+                                                    onChange={handleFarmerChange}
+                                                    placeholder="Middle name"
+                                                    disabled={isUploading}
+                                                    style={{ borderColor: "#d1e7d1", borderRadius: 8 }}
+                                                />
+                                                <small className="text-muted" style={{ fontSize: 11 }}>Letters only</small>
+                                            </div>
+                                            <div className="col-md-6">
+                                                <label className="form-label small fw-semibold text-dark mb-1">
+                                                    Suffix <span className="text-muted fw-normal">(optional)</span>
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    className="form-control form-control-sm"
+                                                    name="suffix"
+                                                    value={farmerData.suffix}
+                                                    onChange={(e) => {
+                                                        const cleaned = e.target.value.replace(/[^a-zA-Z.\s]/g, '');
+                                                        setFarmerData((prev) => ({ ...prev, suffix: cleaned }));
+                                                    }}
+                                                    placeholder="e.g., Jr., Sr., MD..."
+                                                    maxLength={10}
+                                                    disabled={isUploading}
+                                                    style={{ borderColor: "#d1e7d1", borderRadius: 8 }}
+                                                    list="suffix-options"
+                                                />
+                                                <datalist id="suffix-options">
+                                                    {['Jr.', 'Sr.', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X',
+                                                    'MD', 'DDS', 'DMD', 'RN', 'PhD', 'EdD', 'JD', 'Esq.', 'CPA', 'Ret.'
+                                                    ].map((s, i) => <option key={i} value={s} />)}
+                                                </datalist>
+                                                <small className="text-muted" style={{ fontSize: 11 }}>Type or select</small>
+                                            </div>
+                                        </div>
+
+                                        <div className="mb-3">
+                                            <label className="form-label small fw-semibold text-dark mb-1">
+                                                Contact No. <span className="text-muted fw-normal">(optional)</span>
+                                            </label>
+                                            <ContactInput
+                                                value={farmerData.contact}
+                                                onChange={(val) =>
+                                                    setFarmerData((prev) => ({ ...prev, contact: val }))
+                                                }
+                                            />
+                                            <small className="text-muted">Enter 10-digit mobile number</small>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {/* ══════════════════════════════════════════════════════════════════════════════════ */}
+                        {/* STEP 2: PRODUCT DETAILS */}
+                        {/* ══════════════════════════════════════════════════════════════════════════════════ */}
+                        {step === 2 && (
+                            <div>
+                                {/* Farmer Info Alert */}
+                                <div className="alert alert-success py-2 mb-4 small">
+                                    <i className="bx bx-user me-1"></i>
+                                    <span className="fw-semibold">Farmer: </span>
+                                    {farmerData.firstname} {farmerData.middlename} {farmerData.lastname}
+                                    {farmerData.suffix && farmerData.suffix !== "N/A" ? ` ${farmerData.suffix}` : ""}
+                                    {farmerData.contact && ` — ${farmerData.contact}`}
+                                </div>
+
+                                {/* IMAGE UPLOAD */}
+                                <div className="mb-4">
+                                    <label className="form-label fw-semibold text-dark small mb-2">
+                                        Product Image
+                                        <span className="text-danger ms-1">*</span>
+                                    </label>
+
+                                    {currentImage ? (
+                                        /* Preview state */
+                                        <div className="position-relative rounded-3 overflow-hidden border border-success border-opacity-25"
+                                            style={{ aspectRatio: "16/7", background: "#f8f9fa" }}
+                                        >
+                                            <img
+                                                src={currentImage}
+                                                alt="preview"
+                                                className="w-100 h-100"
+                                                style={{ objectFit: "cover" }}
+                                            />
+                                            {!isUploading && (
                                                 <button
-                                                    className="btn btn-outline-success w-100 text-capitalize"
-                                                    onClick={handleNewFarmer}
+                                                    type="button"
+                                                    className="btn btn-sm btn-dark position-absolute d-flex align-items-center gap-1"
+                                                    style={{ bottom: 10, right: 10, fontSize: "0.75rem", borderRadius: 8, opacity: 0.85 }}
+                                                    onClick={handleFileRemove}
                                                 >
-                                                    <i className="bx bx-user-plus me-1"></i>
-                                                    register new offline farmer
+                                                    <i className="bx bx-trash-alt"></i> Remove
                                                 </button>
                                             )}
-                                        </>
-                                    )}
-
-                                    {farmerData.isNew && (
-                                        <div>
-                                            <div className="mb-3">
-                                                <span className="fw-semibold text-success small text-capitalize">
-                                                    <i className="bx bx-user-plus me-1"></i>
-                                                    new farmer info
-                                                </span>
+                                        </div>
+                                    ) : (
+                                        /* Upload dropzone */
+                                        <label
+                                            htmlFor="inputFile"
+                                            className="d-flex flex-column align-items-center justify-content-center rounded-3 border border-2 border-dashed gap-2"
+                                            style={{
+                                                aspectRatio: "16/7",
+                                                borderColor: "#c4e0c4",
+                                                background: "#f6fbf6",
+                                                cursor: isUploading ? "not-allowed" : "pointer",
+                                                transition: "background 0.2s",
+                                            }}
+                                        >
+                                            <div
+                                                className="d-flex align-items-center justify-content-center rounded-circle bg-success bg-opacity-10"
+                                                style={{ width: 48, height: 48 }}
+                                            >
+                                                <i className="bx bx-cloud-upload text-success fs-4"></i>
                                             </div>
-
-                                            <div className="row mb-3">
-                                                <div className="col-6">
-                                                    <label className="form-label small fw-semibold text-success text-capitalize">
-                                                        first name <span className="text-danger">*</span>
-                                                    </label>
-                                                    <input
-                                                        type="text"
-                                                        className="form-control border-success border-opacity-25"
-                                                        name="firstname"
-                                                        value={farmerData.firstname}
-                                                        onChange={handleFarmerChange}
-                                                        placeholder="First name"
-                                                    />
-                                                    <small className="text-muted" style={{ fontSize: 11 }}>Letters only</small>
-                                                </div>
-                                                <div className="col-6">
-                                                    <label className="form-label small fw-semibold text-success text-capitalize">
-                                                        last name <span className="text-danger">*</span>
-                                                    </label>
-                                                    <input
-                                                        type="text"
-                                                        className="form-control border-success border-opacity-25"
-                                                        name="lastname"
-                                                        value={farmerData.lastname}
-                                                        onChange={handleFarmerChange}
-                                                        placeholder="Last name"
-                                                    />
-                                                    <small className="text-muted" style={{ fontSize: 11 }}>Letters only</small>
-                                                </div>
+                                            <div className="text-center">
+                                                <p className="mb-0 small fw-semibold text-success">Click to upload image</p>
+                                                <p className="mb-0 text-muted" style={{ fontSize: "0.72rem" }}>PNG, JPG, WEBP — max 0.75 MB</p>
                                             </div>
-
-                                            <div className="row mb-3">
-                                                <div className="col-6">
-                                                    <label className="form-label small fw-semibold text-success text-capitalize">
-                                                        middle name <span className="text-muted fw-normal">(optional)</span>
-                                                    </label>
-                                                    <input
-                                                        type="text"
-                                                        className="form-control border-success border-opacity-25"
-                                                        name="middlename"
-                                                        value={farmerData.middlename}
-                                                        onChange={handleFarmerChange}
-                                                        placeholder="Middle name"
-                                                    />
-                                                    <small className="text-muted" style={{ fontSize: 11 }}>Letters only</small>
-                                                </div>
-                                                <div className="col-6">
-                                                    <label className="form-label small fw-semibold text-success text-capitalize">
-                                                        suffix <span className="text-muted fw-normal">(optional)</span>
-                                                    </label>
-                                                    <input
-                                                        type="text"
-                                                        className="form-control border-success border-opacity-25"
-                                                        name="suffix"
-                                                        value={farmerData.suffix}
-                                                        onChange={(e) => {
-                                                            const cleaned = e.target.value.replace(/[^a-zA-Z.\s]/g, '');
-                                                            setFarmerData((prev) => ({ ...prev, suffix: cleaned }));
-                                                        }}
-                                                        placeholder="e.g. Jr., Sr., MD..."
-                                                        maxLength={10}
-                                                        list="suffix-options"
-                                                    />
-                                                    <datalist id="suffix-options">
-                                                        {['Jr.', 'Sr.', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X',
-                                                        'MD', 'DDS', 'DMD', 'RN', 'PhD', 'EdD', 'JD', 'Esq.', 'CPA', 'Ret.'
-                                                        ].map((s, i) => <option key={i} value={s} />)}
-                                                    </datalist>
-                                                    <small className="text-muted" style={{ fontSize: 11 }}>Type or select</small>
-                                                </div>
-                                            </div>
-
-                                            {/* ✅ Contact — same approach as ViewProfile edit mode */}
-                                            <div className="mb-3">
-                                                <label className="form-label small fw-semibold text-success text-capitalize">
-                                                    contact no. <span className="text-muted fw-normal">(optional)</span>
-                                                </label>
-                                                <ContactInput
-                                                    value={farmerData.contact}
-                                                    onChange={(val) =>
-                                                        setFarmerData((prev) => ({ ...prev, contact: val }))
-                                                    }
-                                                />
-                                                <small className="text-muted">Enter 10-digit mobile number (e.g., 912 345 6789)</small>
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-
-                            {/* ───── STEP 2: PRODUCT DETAILS ───── */}
-                            {step === 2 && (
-                                <div>
-                                    <div className="alert alert-success py-2 mb-4 small">
-                                        <i className="bx bx-user me-1"></i>
-                                        <span className="fw-semibold">Farmer: </span>
-                                        {farmerData.firstname} {farmerData.middlename} {farmerData.lastname}
-                                        {farmerData.suffix && farmerData.suffix !== "N/A" ? ` ${farmerData.suffix}` : ""}
-                                        {farmerData.contact && ` — ${farmerData.contact}`}
-                                    </div>
-
-                                    <div className="row mb-4">
-                                        <div className="col-md-6 mb-3 mb-md-0">
-                                            <label className="form-label fw-semibold text-success small text-capitalize">
-                                                <i className="bx bx-package me-1"></i>
-                                                product name <span className="text-muted fw-normal">(variety)</span>
-                                            </label>
-                                            {/* ✅ Letters only */}
-                                            <input
-                                                type="text"
-                                                className="form-control border-success border-opacity-25"
-                                                name="name"
-                                                value={productData.name}
-                                                onChange={handleProductNameChange}
-                                                placeholder="e.g. Lakatan, Red Tomato"
-                                            />
-                                            <small className="text-muted" style={{ fontSize: 11 }}>Letters only</small>
-                                        </div>
-                                        <div className="col-md-6">
-                                            <label className="form-label fw-semibold text-success small text-capitalize">
-                                                <i className="bx bx-money me-1"></i>
-                                                price
-                                            </label>
-                                            <input type="text" className="form-control border-success border-opacity-25" name="price" value={productData.price} onChange={handleProductPriceChange} placeholder="Enter price" />
-                                        </div>
-                                    </div>
-
-                                    <div className="row mb-4">
-                                        <div className="col-md-6 mb-3 mb-md-0">
-                                            <label className="form-label fw-semibold text-success small text-capitalize">
-                                                <i className="bx bx-shape-circle me-1"></i>
-                                                product type <span className="text-muted fw-normal">(generic)</span>
-                                            </label>
-                                            {/* ✅ Letters only */}
-                                            <input
-                                                type="text"
-                                                className="form-control border-success border-opacity-25"
-                                                name="productType"
-                                                value={productData.productType}
-                                                onChange={handleProductNameChange}
-                                                placeholder="e.g. Banana, Tomato"
-                                            />
-                                            <small className="text-muted" style={{ fontSize: 11 }}>Letters only</small>
-                                        </div>
-                                        <div className="col-md-6">
-                                            <label className="form-label fw-semibold text-success small text-capitalize">
-                                                <i className="bx bx-category me-1"></i>
-                                                category
-                                            </label>
-                                            <select className="form-select border-success border-opacity-25" name="category" value={productData.category} onChange={handleProductChange}>
-                                                <option value="" hidden>select category</option>
-                                                {['fruits','fruit vegetables','leafy vegetables','root crops','grains','legumes'].map((c, i) => (
-                                                    <option key={i} value={c}>{c}</option>
-                                                ))}
-                                            </select>
-                                        </div>
-                                    </div>
-
-                                    <div className="row mb-4">
-                                        <div className="col-md-6 mb-3 mb-md-0">
-                                            <label className="form-label fw-semibold text-success small text-capitalize">
-                                                <i className="bx bx-box me-1"></i>
-                                                stocks (bundles)
-                                            </label>
-                                            <input type="text" className="form-control border-success border-opacity-25" name="stocks" value={productData.stocks} onChange={handleProductStocksChange} placeholder="Number of bundles" />
-                                        </div>
-                                        <div className="col-md-6">
-                                            <label className="form-label fw-semibold text-success small text-capitalize">
-                                                <i className="bx bx-package me-1"></i>
-                                                kg per bundle
-                                            </label>
-                                            <select className="form-select border-success border-opacity-25" name="kg" value={productData.kg} onChange={handleProductChange}>
-                                                <option value="" hidden>select kg</option>
-                                                {Array.from({ length: 25 * 4 }, (_, i) => {
-                                                    const kg = 1 + i * 0.25;
-                                                    if (kg <= 25) return <option key={i} value={kg}>{kg % 1 === 0 ? kg : kg.toFixed(2).replace(/\.?0+$/, "")} kg</option>;
-                                                    return null;
-                                                }).filter(Boolean)}
-                                            </select>
-                                        </div>
-                                    </div>
-
-                                    <div className="mb-4">
-                                        <label className="form-label fw-semibold text-success small text-capitalize">
-                                            <i className="bx bx-time me-1"></i>
-                                            life span (days)
                                         </label>
-                                        <select className="form-select border-success border-opacity-25" name="lifeSpan" value={productData.lifeSpan} onChange={handleProductChange}>
-                                            <option value="" hidden>select life span</option>
-                                            {Array.from({ length: 14 }, (_, i) => (
-                                                <option key={i} value={i + 1}>{i + 1} days</option>
+                                    )}
+
+                                    <input
+                                        type="file"
+                                        id="inputFile"
+                                        name="image"
+                                        accept="image/*"
+                                        onChange={handleFile}
+                                        ref={fileUploadRef}
+                                        disabled={isUploading}
+                                        className="d-none"
+                                    />
+                                </div>
+
+                                {/* Divider */}
+                                <div className="d-flex align-items-center gap-2 mb-4">
+                                    <hr className="flex-grow-1 m-0" style={{ borderColor: "#e9ecef" }} />
+                                    <span className="text-muted small">Product Details</span>
+                                    <hr className="flex-grow-1 m-0" style={{ borderColor: "#e9ecef" }} />
+                                </div>
+
+                                {/* Row 1: Name + Price */}
+                                <div className="row g-3 mb-3">
+                                    <div className="col-md-6">
+                                        <label className="form-label small fw-semibold text-dark mb-1">
+                                            Product Name <span className="text-muted fw-normal">(variety)</span>
+                                            <span className="text-danger ms-1">*</span>
+                                        </label>
+                                        <input
+                                            type="text"
+                                            className="form-control form-control-sm"
+                                            name="name"
+                                            value={productData.name || ""}
+                                            onChange={handleProductNameChange}
+                                            placeholder="e.g., Lakatan, Red Tomato"
+                                            disabled={isUploading}
+                                            style={{ borderColor: "#d1e7d1", borderRadius: 8 }}
+                                        />
+                                    </div>
+                                    <div className="col-md-6">
+                                        <label className="form-label small fw-semibold text-dark mb-1">
+                                            Price (₱) <span className="text-danger ms-1">*</span>
+                                        </label>
+                                        <input
+                                            type="text"
+                                            className="form-control form-control-sm"
+                                            name="price"
+                                            value={productData.price || ""}
+                                            onChange={handleProductPriceChange}
+                                            placeholder="0.00"
+                                            disabled={isUploading}
+                                            style={{ borderColor: "#d1e7d1", borderRadius: 8 }}
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Row 2: Product Type + Category */}
+                                <div className="row g-3 mb-3">
+                                    <div className="col-md-6">
+                                        <label className="form-label small fw-semibold text-dark mb-1">
+                                            Product Type <span className="text-muted fw-normal">(generic)</span>
+                                            <span className="text-danger ms-1">*</span>
+                                        </label>
+                                        <input
+                                            type="text"
+                                            className="form-control form-control-sm"
+                                            name="productType"
+                                            value={productData.productType || ""}
+                                            onChange={handleProductNameChange}
+                                            placeholder="e.g., Banana, Tomato"
+                                            disabled={isUploading}
+                                            style={{ borderColor: "#d1e7d1", borderRadius: 8 }}
+                                        />
+                                    </div>
+                                    <div className="col-md-6">
+                                        <label className="form-label small fw-semibold text-dark mb-1">
+                                            Category <span className="text-danger ms-1">*</span>
+                                        </label>
+                                        <select
+                                            className="form-select form-select-sm"
+                                            name="category"
+                                            value={productData.category || ""}
+                                            onChange={handleProductChange}
+                                            disabled={isUploading}
+                                            style={{ borderColor: "#d1e7d1", borderRadius: 8 }}
+                                        >
+                                            <option value="" hidden>Select category</option>
+                                            {["fruits", "fruit vegetables", "leafy vegetables", "root crops", "grains", "legumes"].map((d, i) => (
+                                                <option key={i} value={d}>{d}</option>
                                             ))}
                                         </select>
                                     </div>
+                                </div>
 
-                                    <div className="mb-4">
-                                        <label className="form-label fw-semibold text-success small text-capitalize">
-                                            <i className="bx bx-detail me-1"></i>
-                                            description
+                                {/* Row 3: Stocks + KG per Bundle */}
+                                <div className="row g-3 mb-3">
+                                    <div className="col-md-6">
+                                        <label className="form-label small fw-semibold text-dark mb-1">
+                                            Stocks (bundles) <span className="text-danger ms-1">*</span>
                                         </label>
-                                        <textarea className="form-control border-success border-opacity-25" name="disc" value={productData.disc} onChange={handleProductChange} rows="4" placeholder="Enter product description" style={{ resize: "none" }} />
+                                        <input
+                                            type="text"
+                                            className="form-control form-control-sm"
+                                            name="stocks"
+                                            value={productData.stocks || ""}
+                                            onChange={handleProductStocksChange}
+                                            placeholder="e.g., 50"
+                                            disabled={isUploading}
+                                            style={{ borderColor: "#d1e7d1", borderRadius: 8 }}
+                                        />
                                     </div>
 
-                                    <div className="mb-3">
-                                        <label className="form-label fw-semibold text-success small text-capitalize">
-                                            <i className="bx bx-image me-1"></i>
-                                            product image
+                                    {/* 
+                                    <div className="col-md-6">
+                                        <label className="form-label small fw-semibold text-dark mb-1">
+                                            Kg per Bundle <span className="text-danger ms-1">*</span>
                                         </label>
-                                        <input type="file" className="form-control border-success border-opacity-25" accept="image/*" onChange={handleFile} ref={fileUploadRef} />
-                                        {imgPreview && (
-                                            <div className="mt-3 position-relative d-inline-block py-2 pe-2">
-                                                <i
-                                                    className="bx bx-x text-dark fs-5 position-absolute top-0 end-0 bg-white d-flex align-items-center justify-content-center rounded-circle shadow"
-                                                    style={{ cursor: "pointer", width: 25, height: 25 }}
-                                                    onClick={() => {
-                                                        setImgPreview(null);
-                                                        setProductData(p => ({ ...p, image: null }));
-                                                        fileUploadRef.current.value = null;
-                                                    }}
-                                                ></i>
-                                                <div className="overflow-hidden rounded-2 shadow-sm" style={{ aspectRatio: "4/3" }}>
-                                                    <img src={imgPreview} className="img-fluid w-100 h-100" style={{ objectFit: "cover", maxHeight: 150 }} />
-                                                </div>
-                                            </div>
-                                        )}
+                                        <select
+                                            className="form-select form-select-sm"
+                                            name="kg"
+                                            value={productData.kg || ""}
+                                            onChange={handleProductChange}
+                                            disabled={isUploading}
+                                            style={{ borderColor: "#d1e7d1", borderRadius: 8 }}
+                                        >
+                                            <option value="" hidden>Select kg per bundle</option>
+                                            {Array.from({ length: 25 * 4 }, (_, i) => {
+                                                const kg = 1 + i * 0.25;
+                                                if (kg <= 25) {
+                                                    return (
+                                                        <option key={i} value={kg}>
+                                                            {kg % 1 === 0 ? kg : kg.toFixed(2).replace(/\.?0+$/, "")} kg
+                                                        </option>
+                                                    );
+                                                }
+                                                return null;
+                                            }).filter(Boolean)}
+                                        </select>
+                                    </div> */}
+
+                                    <div className="col-md-6">
+                                        <label className="form-label small fw-semibold text-dark mb-1">
+                                            Kg per Bundle <span className="text-danger ms-1">*</span>
+                                            <span className="text-muted fw-normal" style={{ fontSize: "0.75rem" }}>(0.25 - 25)</span>
+                                        </label>
+                                        <input
+                                            type="text"
+                                            className="form-control form-control-sm"
+                                            name="kg"
+                                            value={productData.kg || ""}
+                                            onChange={handleProductKgChange}
+                                            placeholder="e.g., 5.5"
+                                            disabled={isUploading}
+                                            style={{ borderColor: "#d1e7d1", borderRadius: 8 }}
+                                        />
+                                        <small className="text-muted" style={{ fontSize: "0.72rem" }}>Max 25 kg, decimals allowed (e.g., 0.5, 1.25)</small>
                                     </div>
                                 </div>
-                            )}
-                        </div>
 
-                        {/* Footer */}
-                        <div className="card-footer border-0 d-flex gap-2 justify-content-end">
-                            {step === 1 ? (
-                                <button
-                                    className="btn btn-outline-secondary px-4 text-capitalize d-flex align-items-center"
-                                    onClick={handleBackOrCancel}
-                                    disabled={isUploading}
-                                >
-                                    {farmerData.isNew
-                                        ? <><i className="bx bx-chevron-left me-1"></i> back</>
-                                        : <><i className="bx bx-x-circle me-1"></i> cancel</>
-                                    }
-                                </button>
-                            ) : (
-                                <button
-                                    className="btn btn-outline-secondary px-4 text-capitalize d-flex align-items-center"
-                                    onClick={() => setStep(1)}
-                                    disabled={isUploading}
-                                >
-                                    <i className="bx bx-chevron-left me-1"></i> back
-                                </button>
-                            )}
+                                {/* Life Span */}
+                                {/* <div className="mb-3">
+                                    <label className="form-label small fw-semibold text-dark mb-1">
+                                        Life Span (days) <span className="text-danger ms-1">*</span>
+                                    </label>
+                                    <select
+                                        className="form-select form-select-sm"
+                                        name="lifeSpan"
+                                        value={productData.lifeSpan || ""}
+                                        onChange={handleProductChange}
+                                        disabled={isUploading}
+                                        style={{ borderColor: "#d1e7d1", borderRadius: 8 }}
+                                    >
+                                        <option value="" hidden>Select life span</option>
+                                        {Array.from({ length: 14 }, (_, i) => (
+                                            <option key={i} value={i + 1}>{i + 1} {i + 1 === 1 ? "day" : "days"}</option>
+                                        ))}
+                                    </select>
+                                </div> */}
 
-                            {step === 1 ? (
+
+                                <div className="mb-3">
+                                    <label className="form-label small fw-semibold text-dark mb-1">
+                                        Life Span (days) <span className="text-danger ms-1">*</span>
+                                        <span className="text-muted fw-normal" style={{ fontSize: "0.75rem" }}>(1 - 40)</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        className="form-control form-control-sm"
+                                        name="lifeSpan"
+                                        value={productData.lifeSpan || ""}
+                                        onChange={handleProductLifeSpanChange}
+                                        placeholder="e.g., 7"
+                                        disabled={isUploading}
+                                        required
+                                        style={{ borderColor: "#d1e7d1", borderRadius: 8 }}
+                                    />
+                                    <small className="text-muted" style={{ fontSize: "0.72rem" }}>Max 40 days</small>
+                                </div>
+                                
+
+                                {/* Description */}
+                                <div className="mb-1">
+                                    <label className="form-label small fw-semibold text-dark mb-1">
+                                        Description <span className="text-danger ms-1">*</span>
+                                    </label>
+                                    <textarea
+                                        className="form-control form-control-sm"
+                                        name="disc"
+                                        value={productData.disc || ""}
+                                        onChange={handleProductChange}
+                                        rows={3}
+                                        placeholder="Describe the product — freshness, origin, or notes for buyers..."
+                                        disabled={isUploading}
+                                        style={{ resize: "none", borderColor: "#d1e7d1", borderRadius: 8 }}
+                                    />
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* ── Footer ── */}
+                    <div
+                        className="d-flex justify-content-end gap-2 px-4 py-3 border-top"
+                        style={{ background: "#fafafa", borderRadius: "0 0 1rem 1rem" }}
+                    >
+                        {step === 1 ? (
+                            <>
                                 <button
-                                    className="btn btn-success px-4 text-capitalize d-flex align-items-center"
+                                    type="button"
+                                    className="btn btn-sm btn-light px-4 text-capitalize fw-semibold"
+                                    onClick={onClose}
+                                    disabled={isUploading}
+                                    style={{ borderRadius: 8 }}
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="button"
+                                    className="btn btn-sm btn-success px-4 fw-semibold d-flex align-items-center gap-2"
                                     onClick={() => setStep(2)}
-                                    disabled={!isFarmerSelected}
+                                    disabled={!isFarmerSelected || isUploading}
+                                    style={{ borderRadius: 8, minWidth: 110 }}
                                 >
-                                    next <i className="bx bx-chevron-right ms-1"></i>
+                                    Next <i className="bx bx-chevron-right"></i>
                                 </button>
-                            ) : (
+                            </>
+                        ) : (
+                            <>
                                 <button
-                                    className="btn btn-success px-4 text-capitalize d-flex align-items-center"
-                                    onClick={handleSubmit}
+                                    type="button"
+                                    className="btn btn-sm btn-light px-4 text-capitalize fw-semibold"
+                                    onClick={handleBackFromStep2}
+                                    disabled={isUploading}
+                                    style={{ borderRadius: 8 }}
+                                >
+                                    <i className="bx bx-chevron-left me-1"></i>Back
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="btn btn-sm btn-success px-4 fw-semibold d-flex align-items-center gap-2"
                                     disabled={isUploading || !isProductFilled}
+                                    style={{ borderRadius: 8, minWidth: 110 }}
                                 >
                                     {isUploading ? (
-                                        <><span className="spinner-border spinner-border-sm me-2"></span>uploading...</>
+                                        <>
+                                            <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                            Uploading…
+                                        </>
                                     ) : (
-                                        <><i className="bx bx-check-circle me-1"></i>upload product</>
+                                        <>
+                                            <i className="bx bx-check-circle"></i>
+                                            Upload Product
+                                        </>
                                     )}
                                 </button>
-                            )}
-                        </div>
-
+                            </>
+                        )}
                     </div>
-                </div>
+                </form>
             </div>
         </div>
     );

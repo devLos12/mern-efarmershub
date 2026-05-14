@@ -17,6 +17,7 @@ export const updateCrops = async(req, res) => {
             return res.status(404).json({ message: "Product not found" });
         }
 
+        
         // Duplicate name check
         const existingProduct = await Product.findOne({ 
             name, 

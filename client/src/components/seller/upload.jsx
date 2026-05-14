@@ -26,6 +26,17 @@ const Upload = () => {
     const dataPreFill = role === "seller" ? sellerUpload : editProduct;
     const isUpdate = Object.keys(dataPreFill?.data ?? {}).length > 0;
 
+    const [oldLifeSpan, setOldLifeSpan] = useState(0);
+
+
+
+    useLayoutEffect(() => {
+        if (isUpdate) {
+            setOldLifeSpan(dataPreFill?.data?.lifeSpan || 0);  // ← Here!
+        }
+    }, [isUpdate, dataPreFill]);
+
+
     useEffect(() => {
         if (isUpdate) {
             const originalData = {
@@ -50,6 +61,7 @@ const Upload = () => {
                 image: formData?.image || null,
                 productType: formData?.productType || "",
             };
+
             setIsChanged(JSON.stringify(originalData) !== JSON.stringify(currentData));
         }
     }, [formData, isUpdate, dataPreFill]);
@@ -108,14 +120,63 @@ const Upload = () => {
         setFormData({ ...formData, stocks: value });
     };
 
+
+    // const handleKgChange = (e) => {
+    //     let value = e.target.value.replace(/[^0-9.]/g, "");
+    //     if (value.startsWith("0") && value.length > 1 && value[1] !== ".") value = value.replace(/^0+/, "0");
+    //     const parts = value.split(".");
+    //     if (parts.length > 2) value = parts[0] + "." + parts.slice(1).join("");
+    //     if (parts.length === 2 && parts[1].length > 2) value = parts[0] + "." + parts[1].slice(0, 2);
+    //     setFormData({ ...formData, kg: value });
+    // };
+
+
+    // ✅ KG input with limit (0.25 - 25)
     const handleKgChange = (e) => {
         let value = e.target.value.replace(/[^0-9.]/g, "");
-        if (value.startsWith("0") && value.length > 1 && value[1] !== ".") value = value.replace(/^0+/, "0");
+        
+        // Handle leading zeros
+        if (value.startsWith("0") && value.length > 1 && value[1] !== ".") {
+            value = value.replace(/^0+/, "0");
+        }
+        
+        // Prevent multiple decimal points
         const parts = value.split(".");
-        if (parts.length > 2) value = parts[0] + "." + parts.slice(1).join("");
-        if (parts.length === 2 && parts[1].length > 2) value = parts[0] + "." + parts[1].slice(0, 2);
+        if (parts.length > 2) {
+            value = parts[0] + "." + parts.slice(1).join("");
+        }
+        
+        // Limit to 2 decimal places
+        if (parts.length === 2 && parts[1].length > 2) {
+            value = parts[0] + "." + parts[1].slice(0, 2);
+        }
+        
+        // Limit to max 25 kg
+        if (value && parseFloat(value) > 25) {
+            value = "";
+        }
+        
         setFormData({ ...formData, kg: value });
     };
+
+
+
+
+    const handleLifeSpanChange = (e) => {
+        let value = e.target.value.replace(/[^0-9]/g, "");
+
+        // Prevent zero
+        if (value === "0") {
+            value = "";
+        }
+        // Limit to max 14 days
+        if (value && parseInt(value, 10) > 40) {
+            value = "";
+        }
+        setFormData({ ...formData, lifeSpan: value });
+    };
+
+
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -155,6 +216,7 @@ const Upload = () => {
 
     const handleForm = async (e) => {
         e.preventDefault();
+
         if (!formData.name || !formData.price || !formData.category || !formData.stocks || !formData.kg || !formData.lifeSpan || !formData.disc || !formData.image) {
             showNotification("Please fill out all required fields.", "error");
             return;
@@ -166,8 +228,15 @@ const Upload = () => {
         sendData.append("price", formData.price);
         sendData.append("category", formData.category);
         sendData.append("stocks", formData.stocks);
-        sendData.append("kg", formData.kg);
-        sendData.append("lifeSpan", formData.lifeSpan);
+        sendData.append("kg", formData.kg); 
+
+
+        if (isUpdate && Number(formData.lifeSpan) === oldLifeSpan) {
+            sendData.append("lifeSpan", "reset");
+        } else {
+            sendData.append("lifeSpan", formData.lifeSpan);
+        }
+
         sendData.append("disc", formData.disc);
         sendData.append("image", formData.image);
         sendData.append("productType", formData.productType);
@@ -234,7 +303,7 @@ const Upload = () => {
                     <div
                         className="px-4 py-3"
                         style={{ overflowY: "auto", maxHeight: height - 160 }}
-                    >
+                    >-
 
                         {/* ── IMAGE UPLOAD (top) ── */}
                         <div className="mb-4">
@@ -406,7 +475,9 @@ const Upload = () => {
                                     style={{ borderColor: "#d1e7d1", borderRadius: 8 }}
                                 />
                             </div>
-                            <div className="col-md-6">
+
+
+                            {/* <div className="col-md-6">
                                 <label className="form-label small fw-semibold text-dark mb-1">
                                     Kg per Bundle <span className="text-danger ms-1">*</span>
                                 </label>
@@ -432,11 +503,31 @@ const Upload = () => {
                                         return null;
                                     }).filter(Boolean)}
                                 </select>
+                            </div> */}
+
+                            <div className="col-md-6">
+                                <label className="form-label small fw-semibold text-dark mb-1">
+                                    Kg per Bundle <span className="text-danger ms-1">*</span>
+                                    <span className="text-muted fw-normal" style={{ fontSize: "0.75rem" }}>(0.25 - 25)</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    className="form-control form-control-sm"
+                                    name="kg"
+                                    value={formData.kg || ""}
+                                    onChange={handleKgChange}
+                                    placeholder="e.g., 5.5"
+                                    disabled={isUploading}
+                                    required
+                                    style={{ borderColor: "#d1e7d1", borderRadius: 8 }}
+                                />
+                                <small className="text-muted" style={{ fontSize: "0.72rem" }}>Max 25 kg, decimals allowed (e.g., 0.5, 1.25)</small>
                             </div>
                         </div>
+                        
 
                         {/* ── Life Span ── */}
-                        <div className="mb-3">
+                        {/* <div className="mb-3">
                             <label className="form-label small fw-semibold text-dark mb-1">
                                 Life Span (days)
                             </label>
@@ -454,6 +545,27 @@ const Upload = () => {
                                     <option key={i} value={i + 1}>{i + 1} {i + 1 === 1 ? "day" : "days"}</option>
                                 ))}
                             </select>
+                        </div> */}
+
+
+
+                        <div className="mb-3">
+                            <label className="form-label small fw-semibold text-dark mb-1">
+                                Life Span (days) <span className="text-danger ms-1">*</span>
+                                <span className="text-muted fw-normal" style={{ fontSize: "0.75rem" }}>(1 - 40)</span>
+                            </label>
+                            <input
+                                type="text"
+                                className="form-control form-control-sm"
+                                name="lifeSpan"
+                                value={formData.lifeSpan || ""}
+                                onChange={handleLifeSpanChange}
+                                placeholder="e.g., 7"
+                                disabled={isUploading}
+                                required
+                                style={{ borderColor: "#d1e7d1", borderRadius: 8 }}
+                            />
+                            <small className="text-muted" style={{ fontSize: "0.72rem" }}>Max 40 days</small>
                         </div>
 
                         {/* ── Description ── */}
@@ -488,7 +600,7 @@ const Upload = () => {
                             style={{ borderRadius: 8 }}
                         >
                             Cancel
-                        </button>
+                        </button>   
                         <button
                             type="submit"
                             className="btn btn-sm btn-success px-4 fw-semibold d-flex align-items-center gap-2"

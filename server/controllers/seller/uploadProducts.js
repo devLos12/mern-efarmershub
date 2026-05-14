@@ -18,6 +18,7 @@ export const uploadProducts = async(req, res) => {
 
         const { name, price, category, productType, stocks, kg, lifeSpan, disc } = req.body;
 
+        
         // Check duplicate name FIRST (before upload)
         const existingNameProduct = await Product.findOne({ 
             name, 
@@ -29,7 +30,7 @@ export const uploadProducts = async(req, res) => {
                 { message: "You already have a product with this name!" }
             );
         }
-
+        
         // Direct upload to Cloudinary using base64
         const base64 = req.file.buffer.toString('base64');
         const dataURI = `data:${req.file.mimetype};base64,${base64}`;
