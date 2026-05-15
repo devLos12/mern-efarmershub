@@ -795,7 +795,6 @@ const OfflineFarmerUpload = ({ onClose }) => {
                                     <div className="col-md-6">
                                         <label className="form-label small fw-semibold text-dark mb-1">
                                             Kg per Bundle <span className="text-danger ms-1">*</span>
-                                            <span className="text-muted fw-normal" style={{ fontSize: "0.75rem" }}>(0.25 - 25)</span>
                                         </label>
                                         <input
                                             type="text"
@@ -831,11 +830,9 @@ const OfflineFarmerUpload = ({ onClose }) => {
                                     </select>
                                 </div> */}
 
-
                                 <div className="mb-3">
                                     <label className="form-label small fw-semibold text-dark mb-1">
                                         Life Span (days) <span className="text-danger ms-1">*</span>
-                                        <span className="text-muted fw-normal" style={{ fontSize: "0.75rem" }}>(1 - 40)</span>
                                     </label>
                                     <input
                                         type="text"

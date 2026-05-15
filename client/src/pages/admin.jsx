@@ -226,7 +226,6 @@ const Admin = ({setAdminAuth})=>{
             socket.disconnect();
         };
 
-
     }, []);
     
 
@@ -280,6 +279,9 @@ const Admin = ({setAdminAuth})=>{
         }
     }
     
+
+    
+
     useEffect(()=>{
         const socket = io(`${import.meta.env.VITE_API_URL}`);
         getNotification();
@@ -289,8 +291,14 @@ const Admin = ({setAdminAuth})=>{
             getNotification();
         });
 
+        socket.on('replacement_requested: admin', (e) => {
+            console.log(e.message);
+            getNotification();
+        })
+
         return () => {
             socket.off("admin:notifier");
+            socket.off('replacement_requested: admin');
         };
 
     },[]);

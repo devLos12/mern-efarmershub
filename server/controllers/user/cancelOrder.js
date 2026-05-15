@@ -1,20 +1,22 @@
 // controllers/orderController.js
 import Order from "../../models/order.js";
 import Product from "../../models/products.js";
+import Notification from "../../models/notification.js";
+import Admin from "../../models/admin.js";
 import multer from "multer";
 import { v2 as cloudinary } from "cloudinary";
+
 
 const storage = multer.memoryStorage();
 
 export const uploadRefundFile = multer({ storage: storage });
 
-export const replacementImagesUpload = multer({ 
+export const replacementImagesUpload = multer({
     storage: storage,
-    limits: { 
+    limits: {
         files: 20,
     }
 }).any();
-
 
 
 export const cancelOrder = async (req, res) => {
@@ -202,6 +204,7 @@ export const requestReplacement = async (req, res) => {
         const { orderId, replacementItems } = req.body;
         const userId = req.account.id;
 
+
         // Validate required fields
         if (!orderId || !replacementItems) {
             return res.status(400).json({ 
@@ -311,24 +314,24 @@ export const requestReplacement = async (req, res) => {
             // ✅ CHANGE: Upload replacement images to Cloudinary
             const itemImages = [];
             
-            if (req.files) {
-                const fieldsForItem = req.files.filter(file => file.fieldname === `replacement_images_${itemId}`);
+            // if (req.files) {
+            //     const fieldsForItem = req.files.filter(file => file.fieldname === `replacement_images_${itemId}`);
                 
-                for (const file of fieldsForItem) {
-                    try {
-                        const base64Image = file.buffer.toString('base64');
-                        const dataURIImage = `data:${file.mimetype};base64,${base64Image}`;
+            //     for (const file of fieldsForItem) {
+            //         try {
+            //             const base64Image = file.buffer.toString('base64');
+            //             const dataURIImage = `data:${file.mimetype};base64,${base64Image}`;
                         
-                        const imageResult = await cloudinary.uploader.upload(dataURIImage, {
-                            folder: `replacement-images/${orderId}/${itemId}`
-                        });
-                        itemImages.push(imageResult.secure_url); // ✅ Store Cloudinary URL
-                    } catch (uploadError) {
-                        errors.push(`${orderItem.prodName}: Failed to upload image to Cloudinary`);
-                        continue;
-                    }
-                }
-            }
+            //             const imageResult = await cloudinary.uploader.upload(dataURIImage, {
+            //                 folder: `replacement-images/${orderId}/${itemId}`
+            //             });
+            //             itemImages.push(imageResult.secure_url); // ✅ Store Cloudinary URL
+            //         } catch (uploadError) {
+            //             errors.push(`${orderItem.prodName}: Failed to upload image to Cloudinary`);
+            //             continue;
+            //         }
+            //     }
+            // }
                 
             // Update item with replacement request
             orderItem.replacement = {
@@ -375,8 +378,33 @@ export const requestReplacement = async (req, res) => {
                 hour12: true
             })
         });
-        
-        await order.save();
+
+        // await order.save();
+        // Create notification for all admins
+        try {
+            const allAdmins = await Admin.find({}, '_id');
+            const itemNames = processedItems.map(p => p.prodName).join(', ');
+
+            for (const admin of allAdmins) {
+                await Notification.create({
+                    sender: { id: userId, role: "user" },
+                    recipient: { id: admin._id, role: "admin" },
+                    message: `${order.firstname} ${order.lastname} requested replacement for order #${order.orderId}.`,
+                    link: "orderdetails",
+                    type: "replacement requested",
+                    meta: {
+                        orderId: order._id,
+                        orderIdShort: order.orderId,
+                        itemCount: processedItems.length,
+                        customerName: `${order.firstname} ${order.lastname}`
+                    }
+                });
+            }
+        } catch (notifError) {
+            console.error('Error creating admin notifications:', notifError);
+        }
+
+        io.emit('replacement_requested: admin', { message: "new replacement requested."});
 
         const response = {
             success: true,

@@ -1258,11 +1258,11 @@ const Transactions = () => {
                                     <table className="w-100">
                                         <thead className="position-sticky top-0 z-1">
                                             <tr className="bg-white">
+                                                {/* ─────── ADMIN - FARMER WITH DEVICE ─────── */}
                                                 {role === "admin" && source === "payout/seller"
-                                                    && ["#", "payout no.", "Farmer name", "total orders", "gross amount", "tax amount", "e-wallet", "status", "date payout", "actions"]
-
+                                                    && ["#", "payout no.", "Farmer name", "total orders", "gross amount", "tax amount", "net amount", "e-wallet", "status", "date payout", "actions"]
                                                         .map((data, i) => (
-                                                            <th key={i} className={`text-capitalize p-3 text-success ${i === 9 && "text-center"} ${i === 9 && "text-center"} ${i === 0 && "text-center"} small`}>
+                                                            <th key={i} className={`text-capitalize p-3 text-success ${i === 10 && "text-center"} ${i === 0 && "text-center"} small`}>
                                                                 {data}
                                                                 {i === 5 && <span 
                                                                 title="tax for system maintenance"
@@ -1270,10 +1270,11 @@ const Transactions = () => {
                                                             </th>
                                                         ))}
 
+                                                {/* ─────── ADMIN - RIDER ─────── */}
                                                 {role === "admin" && source === "payout/rider"
-                                                    && ["#", "payout no.", "rider name", "total delivery", "gross amount", "tax amount", "e-wallet", "status", "date payout", "actions"]
+                                                    && ["#", "payout no.", "rider name", "total delivery", "gross amount", "tax amount", "net amount", "e-wallet", "status", "date payout", "actions"]
                                                         .map((data, i) => (
-                                                            <th key={i} className={`text-capitalize p-3 text-success ${i === 9 && "text-center"} ${i === 9 && "text-center"} ${i === 0 && "text-center"} small`}>
+                                                            <th key={i} className={`text-capitalize p-3 text-success ${i === 10 && "text-center"} ${i === 0 && "text-center"} small`}>
                                                                 {data}
                                                                 {i === 5 && <span 
                                                                 title="Tax for system maintenance"
@@ -1281,19 +1282,9 @@ const Transactions = () => {
                                                             </th>
                                                         ))}
 
+                                                {/* ─────── ADMIN - FARMER NO DEVICE (OFFLINE) ─────── */}
                                                 {role === "admin" && source === "payout/offlineFarmer"
-                                                    && ["#", "payout no.", "farmer name", "total orders", "gross amount", "tax amount", "status", "date payout", "actions"]
-                                                        .map((data, i) => (
-                                                            <th key={i} className={`text-capitalize p-3 text-success ${i === 8 && "text-center"} ${i === 8 && "text-center"} ${i === 0 && "text-center"} small`}>
-                                                                {data}
-                                                                {i === 5 && <span
-                                                                title="Tax for system maintenance"
-                                                                className="small ms-2">(5%)</span>}
-                                                            </th>
-                                                        ))}
-
-                                                {role === "seller" && source === "payout"
-                                                    && ["#", "payout no.", "Farmer name", "total orders", "gross amount", "tax amount", "e-wallet", "status", "date payout", "actions"]
+                                                    && ["#", "payout no.", "farmer name", "total orders", "gross amount", "tax amount", "net amount", "status", "date payout", "actions"]
                                                         .map((data, i) => (
                                                             <th key={i} className={`text-capitalize p-3 text-success ${i === 9 && "text-center"} ${i === 0 && "text-center"} small`}>
                                                                 {data}
@@ -1303,6 +1294,19 @@ const Transactions = () => {
                                                             </th>
                                                         ))}
 
+                                                {/* ─────── SELLER - FARMER PAYOUT ─────── */}
+                                                {role === "seller" && source === "payout"
+                                                    && ["#", "payout no.", "Farmer name", "total orders", "gross amount", "tax amount", "net amount", "e-wallet", "status", "date payout", "actions"]
+                                                        .map((data, i) => (
+                                                            <th key={i} className={`text-capitalize p-3 text-success ${i === 10 && "text-center"} ${i === 0 && "text-center"} small`}>
+                                                                {data}
+                                                                {i === 5 && <span
+                                                                title="Tax for system maintenance"
+                                                                className="small ms-2">(5%)</span>}
+                                                            </th>
+                                                        ))}
+
+                                                {/* ─────── PAYMENT TABLE ─────── */}
                                                 {source === "payment" && role === "admin"
                                                     && ["reference id", "account name", "total amount", "payment method", "status", "date paid", 'payment receipt', "type of transaction"]
                                                         .map((data, i) => (
@@ -1330,6 +1334,7 @@ const Transactions = () => {
                                         <tbody>
                                             {currentItems?.map((data, i) => (
                                                 <tr key={i}>
+                                                    {/* ─────── ADMIN - FARMER WITH DEVICE ─────── */}
                                                     {role === "admin" && source === "payout/seller" &&
                                                         [
                                                             { data: indexOfFirstItem + i + 1 },
@@ -1338,6 +1343,7 @@ const Transactions = () => {
                                                             { data: data.orders.length },
                                                             { data: `₱${data.totalAmount.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` },
                                                             { data: `₱${data.taxAmount?.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` ?? 0 },
+                                                            { data: `₱${data.netAmount?.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` },
                                                             { data: { type: data?.e_WalletAcc?.type, number: data?.e_WalletAcc?.number } },
                                                             { data: data.status },
                                                             { data: new Date(data.date).toLocaleDateString('en-PH', { year: 'numeric', month: 'short', day: 'numeric' }) },
@@ -1345,8 +1351,8 @@ const Transactions = () => {
                                                         ].map((info, i) => (
                                                             <td key={i} className={`text-capitalize p-3 small ${i === 0 && "text-center"}`}>
                                                                 {i === 2 ? (<>{info.data.name}<p className="m-0 text-lowercase opacity-75 small">{info.data.email}</p></>)
-                                                                    : i === 6 ? (<>{info.data.number}<p className="m-0 text-capitalize opacity-75 small">{info.data.type}</p></>)
-                                                                        : i === 9 ? (
+                                                                    : i === 7 ? (<>{info.data.number}<p className="m-0 text-capitalize opacity-75 small">{info.data.type}</p></>)
+                                                                        : i === 10 ? (
                                                                                 <div className="d-flex align-items-center justify-content-center gap-2">
                                                                                     <button
                                                                                         className={`btn btn-sm ${info.data.transaction.status === 'paid' ? 'btn-outline-success' : 'btn-success'}`}
@@ -1376,6 +1382,7 @@ const Transactions = () => {
                                                             </td>
                                                         ))}
 
+                                                    {/* ─────── ADMIN - RIDER ─────── */}
                                                     {role === "admin" && source === "payout/rider" &&
                                                         [
                                                             { data: indexOfFirstItem + i + 1 },
@@ -1384,6 +1391,7 @@ const Transactions = () => {
                                                             { data: data.totalDelivery },
                                                             { data: `₱${data.totalAmount.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` },
                                                             { data: `₱${data.taxAmount?.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` ?? 0 },
+                                                            { data: `₱${data.netAmount?.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` },
                                                             { data: { type: data?.e_WalletAcc?.type, number: data?.e_WalletAcc?.number } },
                                                             { data: data.status },
                                                             { data: new Date(data.date).toLocaleDateString('en-PH', { year: 'numeric', month: 'short', day: 'numeric' }) },
@@ -1391,8 +1399,8 @@ const Transactions = () => {
                                                         ].map((info, i) => (
                                                             <td key={i} className={`text-capitalize p-3 small ${i === 0 && "text-center"}`}>
                                                                 {i === 2 ? (<>{info.data.name}<p className="m-0 text-lowercase opacity-75 small">{info.data.email}</p></>)
-                                                                    : i === 6 ? (<>{info.data.number}<p className="m-0 text-capitalize opacity-75 small">{info.data.type}</p></>)
-                                                                        : i === 9 ? (
+                                                                    : i === 7 ? (<>{info.data.number}<p className="m-0 text-capitalize opacity-75 small">{info.data.type}</p></>)
+                                                                        : i === 10 ? (
                                                                             <div className="d-flex align-items-center justify-content-center">
                                                                                 <button 
                                                                                 title={info.data.transaction.status === 'paid' ? 'View Details' : 'Process'}
@@ -1404,6 +1412,7 @@ const Transactions = () => {
                                                             </td>
                                                         ))}
 
+                                                    {/* ─────── SELLER - FARMER PAYOUT ─────── */}
                                                     {role === "seller" && source === "payout" &&
                                                         [
                                                             { data: indexOfFirstItem + i + 1 },
@@ -1412,6 +1421,7 @@ const Transactions = () => {
                                                             { data: data.orders.length },
                                                             { data: `₱${data.totalAmount.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` },
                                                             { data: `₱${data.taxAmount?.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` ?? 0 },
+                                                            { data: `₱${data.netAmount?.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` },
                                                             { data: { type: data?.e_WalletAcc?.type, number: data?.e_WalletAcc?.number } },
                                                             { data: data.status },
                                                             { data: new Date(data.date).toLocaleDateString('en-PH', { year: 'numeric', month: 'short', day: 'numeric' }) },
@@ -1419,8 +1429,8 @@ const Transactions = () => {
                                                         ].map((info, i) => (
                                                             <td key={i} className={`text-capitalize p-3 small ${i === 0 && "text-center"}`}>
                                                                 {i === 2 ? (<>{info.data.name}<p className="m-0 text-lowercase opacity-75 small">{info.data.email}</p></>)
-                                                                    : i === 6 ? (<>{info.data.number}<p className="m-0 text-capitalize opacity-75 small">{info.data.type}</p></>)
-                                                                        : i === 9 ? (
+                                                                    : i === 7 ? (<>{info.data.number}<p className="m-0 text-capitalize opacity-75 small">{info.data.type}</p></>)
+                                                                        : i === 10 ? (
                                                                             <div className="d-flex align-items-center justify-content-center">
                                                                                 <button 
                                                                                 title="view details"
@@ -1433,6 +1443,7 @@ const Transactions = () => {
                                                             </td>
                                                         ))}
 
+                                                    {/* ─────── ADMIN - FARMER NO DEVICE (OFFLINE) ─────── */}
                                                     {role === "admin" && source === "payout/offlineFarmer" &&
                                                         [
                                                             { data: indexOfFirstItem + i + 1 },
@@ -1441,13 +1452,14 @@ const Transactions = () => {
                                                             { data: data.totalOrders || data.orders?.length || 0 },
                                                             { data: `₱${data.totalAmount.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` },
                                                             { data: `₱${data.taxAmount?.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` ?? 0 },
+                                                            { data: `₱${data.netAmount?.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` },
                                                             { data: data.status },
                                                             { data: new Date(data.date).toLocaleDateString('en-PH', { year: 'numeric', month: 'short', day: 'numeric' }) },
                                                             { data: { transaction: data } }
                                                         ].map((info, i) => (
                                                             <td key={i} className={`text-capitalize p-3 small ${i === 0 && "text-center"}`}>
                                                                 {i === 2 ? (<>{info.data.name}<p className="m-0 text-uppercase opacity-75 small" style={{fontSize: "10px"}}>{info.data.contact || "N/A"}</p></>)
-                                                                    : i === 8 ? (
+                                                                    : i === 9 ? (
                                                                         <div className="d-flex align-items-center  gap-2">
                                                                             <button
                                                                                 className={`btn btn-sm ${info.data.transaction.status === 'paid' ? 'btn-outline-success' : 'btn-success'}`}
@@ -1477,6 +1489,7 @@ const Transactions = () => {
                                                         ))}
 
 
+                                                    {/* ─────── PAYMENT TABLE - ADMIN ─────── */}
                                                     {source === "payment" && role === "admin" && (
                                                         [
                                                             { data: data.refNo },
@@ -1511,6 +1524,7 @@ const Transactions = () => {
                                                         ))
                                                     )}
 
+                                                    {/* ─────── PAYMENT TABLE - SELLER ─────── */}
                                                     {source === "payment" && role === "seller" && (
                                                         [
                                                             { data: data.refNo },

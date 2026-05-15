@@ -214,7 +214,7 @@ const Notification = () => {
                                 if (role === "user") {
                                     if (data.type === "checkout" || data.type === "replacement approved" || data.type === "replacement rejected") {
                                         navigate(`/user/${data.link}`, { state: { orderId: data.meta.orderId } });
-                                    } else if (data.type === "system notice") {
+                                    } else if (data.type === "system") {
                                         setOpenNotif(false);
                                         navigate(`/user/${data.link}`, { state: { productId: data.meta.prodId } });
                                     }
@@ -231,8 +231,13 @@ const Notification = () => {
                                 }
 
                                 if (role === 'admin') {
-                                    setOpenNotif(false);
-                                    navigate(`/admin/${data.link}`, { state: { productId: data.meta.prodId } });
+                                    if(data.type === 'replacement requested'){
+                                        setOpenNotif(false);
+                                        navigate(`/admin/${data.link}`, { state: { orderId: data.meta.orderId }})
+                                    } else {
+                                        setOpenNotif(false);
+                                        navigate(`/admin/${data.link}`, { state: { productId: data.meta.prodId } });
+                                    }
                                 }
 
                                 if (isUnread) {
@@ -253,7 +258,7 @@ const Notification = () => {
                                         </div>
                                     )}
 
-                                    {(data.type === "checkout" || data.type === "replacement approved" || data.type === "replacement rejected" || data.type === 'new order') && (
+                                    {(data.type === "checkout" || data.type === "replacement approved" || data.type === "replacement rejected" || data.type === 'new order' || data.type === 'replacement requested') && (
                                         <div className="bg-success bg-opacity-10 border border-success border-opacity-25 d-flex align-items-center justify-content-center rounded"
                                         style={{ width: "55px", height: "55px" }}>
                                             <i className="fa fa-shopping-bag fs-4 text-success"></i>

@@ -386,7 +386,7 @@ const OrderDetails = () => {
             setShowReplacementModal(false);
             showNotification("Replacement request submitted successfully!", "success");
 
-
+            
 
             // Reset states
             setSelectedItemsForReplacement([]);
