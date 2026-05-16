@@ -10,6 +10,7 @@ import { inboxChats, markAsRead, deleteChat } from "../controllers/chats.js";
 import { riderPayout, deleteRiderPayout } from "../controllers/rider/payouts.js";
 import { getQrCodes } from "../controllers/rider/qrpayment.js";
 import savePushToken from "../controllers/rider/savePushToken.js";
+import changePassword from "../controllers/rider/change-password.js";
 
 
 
@@ -43,8 +44,7 @@ riderRouter.patch('/riderDeletePayout', authRiderMiddleWares, deleteRiderPayout)
 riderRouter.get('/getRiderQrPayment', authRiderMiddleWares, getQrCodes);
 riderRouter.patch("/deleteRiderChat/:id", authRiderMiddleWares, deleteChat);
 riderRouter.post('/save-token', authRiderMiddleWares, savePushToken);
-
-
+riderRouter.patch("/change-password", authRiderMiddleWares, changePassword);
 
 
 
