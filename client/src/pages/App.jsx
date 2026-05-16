@@ -18,6 +18,7 @@ import Footer from "../components/home/footer.jsx";
 import ForgotPassword from "../components/home/forgorpassword.jsx";
 import SeasonAnnouncement from "../components/user/seasonAnnouncement.jsx";
 import BestSellerProducts from "../components/bestSeller.jsx";
+import Download_Rider_App from "./download_app_page.jsx";
 
 
 
@@ -122,7 +123,9 @@ const  App = ()=> {
       )}/> 
       <Route path="/register" element={<Register/>}/>
       <Route path="/forgot-password" element={<ForgotPassword/>}/>
+      <Route path="/download-rider-app" element={<Download_Rider_App/>}/>
 
+      
       <Route path="/admin/*" element={
         <ProtectedRoute isAuthenticated={isAdminAuth}>
           <MyAdminContext>
