@@ -250,6 +250,9 @@ const Admin = ({setAdminAuth})=>{
     },[refetchAdminInfo]);
 
     
+
+
+
     //api call for orders;
     const getNotification = async() =>{
 
@@ -263,9 +266,7 @@ const Admin = ({setAdminAuth})=>{
             setError((prev) => ({...prev, notification : null}));
             setNotifList(data.reverse());
 
-            const unreadCount = data.filter(
-                notif => !notif.readBy.includes(id)  // kung hindi kasama ang id sa readBy = unread
-            ).length;
+            const unreadCount = data.filter( notif => notif.isRead === false ).length;
 
             setNotifBadge({
                 number: unreadCount,
@@ -279,7 +280,6 @@ const Admin = ({setAdminAuth})=>{
         }
     }
     
-
     
 
     useEffect(()=>{
