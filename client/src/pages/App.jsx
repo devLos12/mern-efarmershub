@@ -123,9 +123,9 @@ const  App = ()=> {
       )}/> 
       <Route path="/register" element={<Register/>}/>
       <Route path="/forgot-password" element={<ForgotPassword/>}/>
-      <Route path="/download-rider-app" element={<Download_Rider_App/>}/>
+      <Route path="/download-rider" element={<Download_Rider_App/>}/>
 
-      
+
       <Route path="/admin/*" element={
         <ProtectedRoute isAuthenticated={isAdminAuth}>
           <MyAdminContext>
