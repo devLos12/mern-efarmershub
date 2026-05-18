@@ -279,12 +279,22 @@ const OfflineFarmerPaymentTransactions = () => {
             {filteredTransactions.length > 0 && (
                 <div className="row g-0 border-top bg-white">
                     <div className="col-12 col-lg-4 p-3 d-flex align-items-center justify-content-center justify-content-lg-start">
-                        <div className="text-muted small">
-                            Showing {indexOfFirstItem + 1} to {Math.min(indexOfLastItem, filteredTransactions.length)} of {filteredTransactions.length} transactions
-                            <span className="ms-2 fw-bold text-success">
-                                · Total: ₱{totalAmount.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                            </span>
+
+                        <div className="text-muted small d-flex flex-column gap-1">
+                            <p className="m-0">
+                                Showing {indexOfFirstItem + 1} to {Math.min(indexOfLastItem, filteredTransactions.length)} of {filteredTransactions.length} transactions
+                            </p>
+                            <p className="m-0 fw-bold text-dark">
+                                Gross amount: ₱{payoutGross?.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </p>
+                            <p className="m-0 fw-bold text-dark">
+                                Tax amount: ₱{payoutTax?.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </p>
+                            <p className="m-0 fw-bold text-dark">
+                                Net amount: ₱{payoutNet?.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </p>
                         </div>
+
                     </div>
                     <div className="col-12 col-lg-8 p-3">
                         <div className="d-flex gap-2 align-items-center flex-wrap justify-content-center justify-content-lg-end">
