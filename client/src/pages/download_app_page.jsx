@@ -2,7 +2,8 @@ import { useEffect } from "react";
 
 const Download_Rider_App = () => {
 
-    const APK_LINK = "https://github.com/devLos12/mern-efarmershub/releases/download/v1.0.0/application-7121180f-4c5d-48ad-b8bd-c04602f61679.apk"
+
+    const APK_LINK = "https://github.com/devLos12/mern-efarmershub/releases/download/v1.0.0/application-fbb31280-02ef-439e-b834-d627c9e98330.apk"
 
     useEffect(() => {
         const a = document.createElement("a");
