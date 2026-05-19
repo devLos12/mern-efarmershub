@@ -95,6 +95,7 @@ const sendRiderAppEmail = async (email, firstname, lastname) => {
                                     <td align="center">
                                         <a 
                                             href="${process.env.DOWNLOAD_RIDER_APP_LINK}" 
+                                            target="_blank"
                                             style="display: inline-block; background-color: #28a745; color: #ffffff; text-decoration: none; padding: 14px 48px; border-radius: 6px; font-size: 16px; font-weight: 600;"
                                         >
                                             📱 Download Rider App

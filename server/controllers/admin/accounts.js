@@ -149,7 +149,8 @@ const sendApprovalEmail = async (email, name, accountType) => {
                                             <table width="100%" cellpadding="0" cellspacing="0">
                                                 <tr>
                                                     <td align="center">
-                                                        <a href="${process.env.DOWNLOAD_RIDER_APP_LINK}" 
+                                                        <a href="${process.env.DOWNLOAD_RIDER_APP_LINK}"
+                                                        target="_blank" 
                                                         style="display: inline-block; background-color: #ffffff; color: #28a745; text-decoration: none; padding: 14px 40px; border-radius: 6px; font-size: 16px; font-weight: 600; border: 2px solid #28a745;">
                                                             📱 Download Rider App
                                                         </a>
@@ -196,7 +197,6 @@ const sendApprovalEmail = async (email, name, accountType) => {
         return { success: false, error: error.message };
     }
 };
-
 
 
 
