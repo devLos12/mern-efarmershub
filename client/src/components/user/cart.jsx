@@ -11,7 +11,7 @@ import { appContext } from "../../context/appContext.jsx";
 
 
 const Cart = () => {
-    const { products, setProducts } = useContext(userContext);
+    const { products, setProducts, setOpenCart } = useContext(userContext);
     const { cart , setCart, setCartBadge } = useContext(userContext);
     const { loading, error } = useContext(userContext);
     const navigate = useNavigate();
@@ -167,7 +167,14 @@ const Cart = () => {
                     <>
                     <div>
                     <div className="row rounded">
-                        <div className="col-md-6 ">
+                        <div className="col-md-6 d-flex align-items-center gap-1">
+                            <button 
+                                className="btn btn-outline-success"
+                                onClick={()=> setOpenCart(false)}
+                            >
+                                <i className="fa fa-arrow-left"></i>
+                            </button>
+
                             <p className="m-0 fw-bold text-capitalize fs-3 p-2 text-success">Cart item</p>
                         </div>
                     </div>

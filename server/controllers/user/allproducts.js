@@ -6,7 +6,8 @@ export const AllProducts = async (req, res) => {
         const products = await Product.find({ 
             statusApprove: "approved",
             status: { $ne: "expired" }
-        });
+        })
+        .sort({ createdAt: -1 });
 
         if (products.length === 0) {
             return res.status(404).json({ message: "No products available" }); 
