@@ -46,7 +46,7 @@ const Sidebar = () => {
             { group: "MANAGEMENT" },
             { label: 'dashboard',       link: '/admin',                     icon: "fa fa-table",                        source: undefined },
             { label: 'sales report',    link: '/admin/sales',               icon: "fa fa-chart-bar",                    source: undefined },
-            { label: 'inventory',       link: '/admin/inventory',           icon: "fa-solid fa-boxes-stacked",          source: undefined },
+            { label: 'inventory',       link: '/admin/inventory',           icon: "fa-solid fa-boxes-stacked",          source: 'pending' },
             { label: 'accounts',        link: '/admin/accounts',            icon: "fa fa-user",                         source: "user" },
 
             { group: "COMMUNICATION" },

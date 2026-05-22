@@ -105,7 +105,7 @@ export const addAnnouncement = async (req, res) => {
 
 export const getAnnouncement = async(req, res) => {
     try {
-        const allAnnoucement = await SeasonalAnnouncement.find();
+        const allAnnoucement = await SeasonalAnnouncement.find().sort({ createdAt: -1 });
 
         if(!allAnnoucement || allAnnoucement.length === 0) {
             return res.status(404).json({ message: "no announcement." });

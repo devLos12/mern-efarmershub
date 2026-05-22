@@ -10,8 +10,9 @@ export const displayAnnouncement = async(req, res) => {
         const annoucement = await SeasonalAnnoucement.find({
             startDate: { $lte: currentDate },
             endDate: { $gte: currentDate }
-        });
-
+        })
+        .sort({ createdAt: -1 });
+        
 
         if(!annoucement || annoucement.length === 0 ){
             return res.status(404).json({ message: "No announcement yet."});
