@@ -2529,7 +2529,7 @@ const OrderDetails = () => {
                                                                 className={`text-capitalize p-2 border-0 bg-dark text-white rounded shadow-sm w-100 mt-3 ${item.isReviewed ? "opacity-50" : "opacity-100"}`}
                                                                 style={{ fontSize: "12px" }}
                                                                 disabled={item.isReviewed}
-                                                                onClick={() => navigate("/user/reviews", { state: { item: item } })}
+                                                                onClick={() => navigate("/user/reviews", { state: { item: { ...item, orderId: orderData._id },  } })}
                                                             >
                                                                 {item.isReviewed ? "review sent" : "leave review ⭐"}
                                                             </button>

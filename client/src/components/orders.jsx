@@ -617,8 +617,14 @@ const Orders = () => {
                                             )}
                                         </td>
                                         <td className="align-middle small">
+
                                             <p className="m-0">{new Date(data.createdAt).toLocaleDateString('en-PH', { year: 'numeric', month: 'short', day: 'numeric' })}</p>
-                                            <p className="m-0 text-muted">{new Date(data.createdAt).toLocaleTimeString()}</p>
+                                            <p className="m-0 text-muted">{new Date(data.createdAt).toLocaleTimeString('en-PH', {
+                                                hour: '2-digit',
+                                                minute: '2-digit',
+                                                hour12: true  // ✅ 10:14:57 PM
+                                                })}
+                                            </p>
                                         </td>
                                         <td className="align-middle text-center">
                                             <div

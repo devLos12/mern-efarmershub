@@ -314,24 +314,24 @@ export const requestReplacement = async (req, res) => {
             // ✅ CHANGE: Upload replacement images to Cloudinary
             const itemImages = [];
             
-            // if (req.files) {
-            //     const fieldsForItem = req.files.filter(file => file.fieldname === `replacement_images_${itemId}`);
+            if (req.files) {
+                const fieldsForItem = req.files.filter(file => file.fieldname === `replacement_images_${itemId}`);
                 
-            //     for (const file of fieldsForItem) {
-            //         try {
-            //             const base64Image = file.buffer.toString('base64');
-            //             const dataURIImage = `data:${file.mimetype};base64,${base64Image}`;
+                for (const file of fieldsForItem) {
+                    try {
+                        const base64Image = file.buffer.toString('base64');
+                        const dataURIImage = `data:${file.mimetype};base64,${base64Image}`;
                         
-            //             const imageResult = await cloudinary.uploader.upload(dataURIImage, {
-            //                 folder: `replacement-images/${orderId}/${itemId}`
-            //             });
-            //             itemImages.push(imageResult.secure_url); // ✅ Store Cloudinary URL
-            //         } catch (uploadError) {
-            //             errors.push(`${orderItem.prodName}: Failed to upload image to Cloudinary`);
-            //             continue;
-            //         }
-            //     }
-            // }
+                        const imageResult = await cloudinary.uploader.upload(dataURIImage, {
+                            folder: `replacement-images/${orderId}/${itemId}`
+                        });
+                        itemImages.push(imageResult.secure_url); // ✅ Store Cloudinary URL
+                    } catch (uploadError) {
+                        errors.push(`${orderItem.prodName}: Failed to upload image to Cloudinary`);
+                        continue;
+                    }
+                }
+            }
                 
             // Update item with replacement request
             orderItem.replacement = {
@@ -379,7 +379,9 @@ export const requestReplacement = async (req, res) => {
             })
         });
 
-        // await order.save();
+        await order.save();
+
+        
         // Create notification for all admins
         try {
             const allAdmins = await Admin.find({}, '_id');

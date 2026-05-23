@@ -3,6 +3,7 @@ import Order from "../../models/order.js";
 import multer from "multer";
 import { v2 as cloudinary } from "cloudinary";
 import User from "../../models/user.js";
+import mongoose from "mongoose";
 
 
 const storage = multer.memoryStorage();
@@ -13,7 +14,7 @@ export const uploadImgReview = multer({ storage: storage });
 export const productReview = async (req, res) => {
   try {
     const userId = req.account.id;
-    const { prodId, rate, comment } = req.body;
+    const { prodId, orderId, rate, comment } = req.body;
 
 
     
@@ -37,13 +38,22 @@ export const productReview = async (req, res) => {
 
     if (!product) return res.status(404).json({ message: "Product not found!" });
 
-    // Check if already reviewed
-    const alreadyReviewed = product.reviews.find(
-      (review) => review.user.id.toString() === userId
-    );
-    if (alreadyReviewed) {
-      return res.status(400).json({ message: "You already reviewed this product." });
+    // Verify muna na hindi pa reviewed yung specific order item
+    const order = await Order.findOne({
+      _id: new mongoose.Types.ObjectId(orderId),
+      userId,
+      orderItems: {
+        $elemMatch: {
+          prodId: new mongoose.Types.ObjectId(prodId),
+          isReviewed: false,
+        },
+      },
+    });
+
+    if (!order) {
+      return res.status(400).json({ message: "Already reviewed or order not found." });
     }
+
 
 
     // // Add review to product
@@ -65,14 +75,14 @@ export const productReview = async (req, res) => {
     product.averageRating = totalRatings / product.reviews.length;
     await product.save();
     
-
-
-    await Order.findOneAndUpdate(
+    
+    const isUpdate = await Order.findOneAndUpdate(
       {
+        _id: new mongoose.Types.ObjectId(orderId),
         userId,
         orderItems: {
           $elemMatch: {
-            prodId: prodId,
+            prodId: new mongoose.Types.ObjectId(prodId),
             isReviewed: false,
           },
         },
@@ -82,7 +92,6 @@ export const productReview = async (req, res) => {
       },
       { new: true }
     );
-
 
 
 

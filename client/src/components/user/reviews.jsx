@@ -29,6 +29,10 @@ const Reviews = () => {
 
 
 
+
+
+
+
     const submitReview = async(e) => {
       e.preventDefault();
       setIsSubmitting(true);
@@ -40,6 +44,7 @@ const Reviews = () => {
 
       const sendData = new FormData();
       sendData.append("prodId", data?.prodId);
+      sendData.append('orderId', data?.orderId);
       sendData.append("rate", rating);
       sendData.append("comment", form?.comment || null);
       sendData.append("image", form?.image || null);
