@@ -164,9 +164,7 @@ const Order = () => {
 
     const isCashOnDelivery = selectedOrder?.paymentType?.toLowerCase() === "cash on delivery";
 
-    useEffect(() => {
-        console.log(orders[0]);
-    },[orders[0]]);
+    
 
     return (
         <>

@@ -33,7 +33,7 @@ const IconCard = () => {
     
     
     return (
-        <div className="position-absolute vh-100 bg-darken"
+        <div className="container position-absolute vh-100 bg-darken"
          onClick={closeAll}
           style={{
             position: 'absolute',

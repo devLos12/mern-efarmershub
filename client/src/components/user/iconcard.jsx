@@ -25,7 +25,7 @@ const IconCard = () => {
             <div className="row ">
                 <div className="col g-0 d-flex justify-content-end">
                     <div className="bg-light  mt-1 rounded shadow"
-                    style={{width : "430px", height: height-80}}>
+                    style={{width: "min(430px, 100vw)", height: height-80, overflow: "hidden"}}>
                         {openCart && <Cart/>}
                         {openProfile && <Profile/>}
                         {openNotif && <Notifications/>}
