@@ -378,19 +378,21 @@ const createActivityLog = async (adminId, action, description, req) => {
 
 
 
-const getPHTime = () => {
-    const now = new Date();
-    const phTime = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Manila" }));
-    
-    return {
-        date: phTime.toISOString().split("T")[0], // YYYY-MM-DD
-        time: phTime.toLocaleTimeString("en-PH", { 
-            hour: "2-digit", 
-            minute: "2-digit", 
-            hour12: true 
-        })
-    };
-};
+const getPHTDateStr = () =>
+    new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Manila" });
+
+const getPHTime = () => ({
+    date: getPHTDateStr(),
+    time: new Date().toLocaleTimeString("en-PH", {
+        timeZone: "Asia/Manila",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true
+    })
+});
+
+
+
 
 
 const createTransaction = async(orderId, items, payment, userId, firstname, lastname, email, totalPrice, refNo, proofOfPayment) => {
@@ -497,8 +499,6 @@ const generatePayoutNumber = async (date, type) => {
 
 
 
-
-
 const createOrUpdatePayout = async(items, order)=>{
     const SELLER_TAX_RATE = process.env.SELLER_TAX_RATE;
 
@@ -513,7 +513,8 @@ const createOrUpdatePayout = async(items, order)=>{
         const taxAmount = grossAmount * SELLER_TAX_RATE;
         const netAmount = grossAmount - taxAmount;
         
-        const today = new Date().toISOString().split("T")[0];
+        const today = getPHTDateStr();
+
         const payout = await PayoutTransaction.findOne({ sellerId, date: today, status: "pending"})
 
 
@@ -568,7 +569,7 @@ const createOrUpdateOfflineFarmerPayout = async(items, order) => {
         const grossAmount = item.prodPrice * item.quantity;
         const taxAmount = grossAmount * SELLER_TAX_RATE;
         const netAmount = grossAmount - taxAmount;
-        const today = new Date().toISOString().split("T")[0];
+        const today = getPHTDateStr();
 
         const payout = await OfflineFarmerPayout.findOne({ 
             farmerId, 
@@ -1104,7 +1105,7 @@ export const reviewReplacement = async (req, res) => {
 
                 if (faultAssignedTo === "seller") {
                     const sellerId = item.seller.id;
-                    const today = new Date().toISOString().split("T")[0];
+                    const today = getPHTDateStr();
 
                     const payout = await PayoutTransaction.findOne({ 
                         sellerId, 
@@ -1154,7 +1155,7 @@ export const reviewReplacement = async (req, res) => {
 
                 if (faultAssignedTo === "seller") {
                     const sellerId = item.seller.id;
-                    const today = new Date().toISOString().split("T")[0];
+                    const today = getPHTDateStr();
 
                     const payout = await PayoutTransaction.findOne({ 
                         sellerId, 

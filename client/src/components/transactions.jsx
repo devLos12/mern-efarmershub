@@ -764,7 +764,9 @@ const Transactions = () => {
                                 onClick={() => { openPayoutModal(data); setOpenMenuId(null); }}
                             >
                                 <i className={`fa ${isPaid ? 'fa-eye text-success' : 'fa-edit text-success'} small`}></i>
-                                <p className="m-0 small">{isPaid ? 'View Details' : 'Process Payout'}</p>
+                                <p className="m-0 small">
+                                    {role === "admin" ? (isPaid ? 'View Details' : 'Process Payout') : 'View Details'}
+                                </p>
                             </div>
                         )}
 

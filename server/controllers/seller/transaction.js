@@ -7,41 +7,40 @@ import multer from "multer";
 // `date` field is String ("YYYY-MM-DD") — string comparison = chronological order
 const getDateStringRange = (period, startDate, endDate) => {
     const now = new Date();
-    const toDateStr = (d) => d.toISOString().split('T')[0];
-    const todayStr = toDateStr(now);
+    // ✅ PHT
+    const todayStr = now.toLocaleDateString("en-CA", { timeZone: "Asia/Manila" });
+    const toPHTDateStr = (d) => d.toLocaleDateString("en-CA", { timeZone: "Asia/Manila" });
 
     switch (period) {
-
-        
-        case "today": {
+        case "today":
             return { start: todayStr, end: todayStr };
-        }
 
         case "thisweek": {
-            const dayOfWeek = now.getDay();
-            const daysFromMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Monday-based
-            const weekStart = new Date(now);
-            weekStart.setDate(now.getDate() - daysFromMonday);
-            return { start: toDateStr(weekStart), end: todayStr };
+            const phNow = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Manila" }));
+            const dayOfWeek = phNow.getDay();
+            const daysFromMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+            const weekStart = new Date(phNow);
+            weekStart.setDate(phNow.getDate() - daysFromMonday);
+            return { start: toPHTDateStr(weekStart), end: todayStr };
         }
         case "thismonth": {
-            const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-            return { start: toDateStr(monthStart), end: todayStr };
+            const phNow = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Manila" }));
+            const monthStart = new Date(phNow.getFullYear(), phNow.getMonth(), 1);
+            return { start: toPHTDateStr(monthStart), end: todayStr };
         }
         case "thisyear": {
-            const yearStart = new Date(now.getFullYear(), 0, 1);
-            return { start: toDateStr(yearStart), end: todayStr };
+            const phNow = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Manila" }));
+            const yearStart = new Date(phNow.getFullYear(), 0, 1);
+            return { start: toPHTDateStr(yearStart), end: todayStr };
         }
-        case "custom": {
+        case "custom":
             if (startDate && endDate) return { start: startDate, end: endDate };
             return null;
-        }
         default:
-            return null; // no filter — return all
+            return null;
     }
 };
 // ─────────────────────────────────────────────────────────────────────────────
-
 
 
 

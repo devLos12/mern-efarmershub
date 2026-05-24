@@ -16,39 +16,38 @@ import { createActivityLog } from "./activity-log.js";
 // ISO date string comparison is lexicographic = chronological, so $gte/$lte works correctly
 const getDateStringRange = (period, startDate, endDate) => {
     const now = new Date();
-    const toDateStr = (d) => d.toISOString().split('T')[0];
-    const todayStr = toDateStr(now);
+    // ✅ PHT date string — hindi mag-o-off ng 1 day
+    const todayStr = now.toLocaleDateString("en-CA", { timeZone: "Asia/Manila" });
+
+    const toPHTDateStr = (d) => d.toLocaleDateString("en-CA", { timeZone: "Asia/Manila" });
 
     switch (period) {
-
-
-        case "today": {                              // ← DAGDAG LANG ITO
+        case "today":
             return { start: todayStr, end: todayStr };
-        }
-
-
 
         case "thisweek": {
-            const dayOfWeek = now.getDay();
-            const daysFromMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Monday-based
-            const weekStart = new Date(now);
-            weekStart.setDate(now.getDate() - daysFromMonday);
-            return { start: toDateStr(weekStart), end: todayStr };
+            const phNow = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Manila" }));
+            const dayOfWeek = phNow.getDay();
+            const daysFromMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+            const weekStart = new Date(phNow);
+            weekStart.setDate(phNow.getDate() - daysFromMonday);
+            return { start: toPHTDateStr(weekStart), end: todayStr };
         }
         case "thismonth": {
-            const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-            return { start: toDateStr(monthStart), end: todayStr };
+            const phNow = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Manila" }));
+            const monthStart = new Date(phNow.getFullYear(), phNow.getMonth(), 1);
+            return { start: toPHTDateStr(monthStart), end: todayStr };
         }
         case "thisyear": {
-            const yearStart = new Date(now.getFullYear(), 0, 1);
-            return { start: toDateStr(yearStart), end: todayStr };
+            const phNow = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Manila" }));
+            const yearStart = new Date(phNow.getFullYear(), 0, 1);
+            return { start: toPHTDateStr(yearStart), end: todayStr };
         }
-        case "custom": {
+        case "custom":
             if (startDate && endDate) return { start: startDate, end: endDate };
             return null;
-        }
         default:
-            return null; // no filter — return all
+            return null;
     }
 };
 // ─────────────────────────────────────────────────────────────────────────────
@@ -146,6 +145,12 @@ export const transaction = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
+
+
+
+
+
+
 
 
 
@@ -281,7 +286,7 @@ export const updatePayout = async (req, res) => {
             await OfflineFarmerPayout.findByIdAndUpdate(id, { $set: { status: "paid" } }); // ✅ walang imageFile para sa offline farmer
         }
 
-        const date = new Date().toISOString().split("T")[0].replace(/-/g, "");
+        const date = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Manila" }).replace(/-/g, "");
         const random = Math.floor(10000 + Math.random() * 90000);
         const refNo = `REF${date}-${random}`;
 
@@ -294,10 +299,13 @@ export const updatePayout = async (req, res) => {
             paymentMethod: offlineFarmer ? " cash payout" : seller?.e_WalletAcc?.type ?? rider?.e_WalletAcc?.type, // ✅ offline farmer = cash, seller/rider = gcash
             totalAmount: seller?.totalAmount ?? rider?.totalAmount ?? offlineFarmer?.totalAmount,
             status: "paid",
+
+
             paidAt: {
-                date: new Date().toISOString().split("T")[0],
-                time: new Date().toLocaleTimeString("en-PH", { hour: "2-digit", minute: "2-digit", hour12: true })
+                date: new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Manila" }),
+                time: new Date().toLocaleTimeString("en-PH", { timeZone: "Asia/Manila", hour: "2-digit", minute: "2-digit", hour12: true })
             },
+
             refNo,
             imageFile: imageFile ?? null
         });
@@ -314,8 +322,8 @@ export const updatePayout = async (req, res) => {
                 totalAmount: seller.totalAmount,
                 status: "paid",
                 paidAt: {
-                    date: new Date().toISOString().split("T")[0],
-                    time: new Date().toLocaleTimeString("en-PH", { hour: "2-digit", minute: "2-digit", hour12: true })
+                    date: new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Manila" }), // ✅
+                    time: new Date().toLocaleTimeString("en-PH", { timeZone: "Asia/Manila", hour: "2-digit", minute: "2-digit", hour12: true }) // ✅
                 },
                 refNo
             });

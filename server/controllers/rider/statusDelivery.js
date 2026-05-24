@@ -55,16 +55,23 @@ const sendSMS = async (firstname, contact, totalAmount, riderName, riderContact)
 }
 
 
+
+// ✅ Isang helper para sa PHT date — gamitin sa lahat
+const getPHTDateStr = () => 
+    new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Manila" });
+// "en-CA" = "YYYY-MM-DD" format natively
+
+
+// ✅ Fix getPHTime
 const getPHTime = () => {
     const now = new Date();
-    const phTime = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Manila" }));
-    
     return {
-        date: phTime.toISOString().split("T")[0], // YYYY-MM-DD
-        time: phTime.toLocaleTimeString("en-PH", { 
-            hour: "2-digit", 
-            minute: "2-digit", 
-            hour12: true 
+        date: getPHTDateStr(),  // ✅ PHT na
+        time: now.toLocaleTimeString("en-PH", {
+            timeZone: "Asia/Manila",
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: true
         })
     };
 };
@@ -198,7 +205,9 @@ const createOrUpdatePayout = async(items, orderId) => {
         const taxAmount = grossAmount * SELLER_TAX_RATE;
         const netAmount = grossAmount - taxAmount;
         
-        const today = new Date().toISOString().split("T")[0];
+        const today = getPHTDateStr()
+
+
         const payout = await PayoutTransaction.findOne({ 
             sellerId, 
             date: today, 
@@ -272,7 +281,7 @@ const createOrUpdateOfflineFarmerPayout = async(items, orderId) => {
         const grossAmount = item.prodPrice * item.quantity;
         const taxAmount = grossAmount * SELLER_TAX_RATE;
         const netAmount = grossAmount - taxAmount;
-        const today = new Date().toISOString().split("T")[0];
+        const today = getPHTDateStr();
 
         const payout = await OfflineFarmerPayout.findOne({ 
             farmerId, 
@@ -344,7 +353,7 @@ const createOrUpdateRiderPayout = async(riderId, orderId) => {
     const shippingFeeRecord = await ShippingFee.findOne();
     const deliveryFee = shippingFeeRecord?.amount || 30;
 
-    const today = new Date().toISOString().split("T")[0];
+    const today = getPHTDateStr()
 
     // Check if rider has existing payout for today
     const payout = await RiderPayout.findOne({ riderId, date: today, status: "pending" });
