@@ -174,10 +174,17 @@ const OfflineFarmerUpload = ({ onClose }) => {
         if (parts.length === 2 && parts[1].length > 2) {
             value = parts[0] + "." + parts[1].slice(0, 2);
         }
-        // ✅ ADD THIS - Limit to max 25 kg
-        if (value && parseFloat(value) > 25) {
+
+
+        // Limit to min 1 kg and max 100 kg
+        if (value && !value.endsWith(".") && parseFloat(value) > 100) {
             value = "";
         }
+        if (value && !value.endsWith(".") && parseFloat(value) < 1) {
+            value = "";
+        }
+
+
         setProductData((prev) => ({ ...prev, kg: value }));
     };
 
@@ -806,7 +813,9 @@ const OfflineFarmerUpload = ({ onClose }) => {
                                             disabled={isUploading}
                                             style={{ borderColor: "#d1e7d1", borderRadius: 8 }}
                                         />
-                                        <small className="text-muted" style={{ fontSize: "0.72rem" }}>Max 25 kg, decimals allowed (e.g., 0.5, 1.25)</small>
+                                        <small className="text-muted" style={{ fontSize: "0.72rem" }}>
+                                            Min 1 kg – Max 100 kg
+                                        </small>
                                     </div>
                                 </div>
 

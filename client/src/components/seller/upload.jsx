@@ -27,6 +27,7 @@ const Upload = () => {
     const isUpdate = Object.keys(dataPreFill?.data ?? {}).length > 0;
 
     const [oldLifeSpan, setOldLifeSpan] = useState(0);
+    const [lifeSpanTouched, setLifeSpanTouched] = useState(false);
 
 
 
@@ -151,10 +152,16 @@ const Upload = () => {
             value = parts[0] + "." + parts[1].slice(0, 2);
         }
         
-        // Limit to max 25 kg
-        if (value && parseFloat(value) > 25) {
+
+
+        // Limit to min 1 kg and max 100 kg
+        if (value && !value.endsWith(".") && parseFloat(value) > 100) {
             value = "";
         }
+        if (value && !value.endsWith(".") && parseFloat(value) < 1) {
+            value = "";
+        }
+            
         
         setFormData({ ...formData, kg: value });
     };
@@ -164,15 +171,13 @@ const Upload = () => {
 
     const handleLifeSpanChange = (e) => {
         let value = e.target.value.replace(/[^0-9]/g, "");
-
-        // Prevent zero
         if (value === "0") {
             value = "";
         }
-        // Limit to max 14 days
         if (value && parseInt(value, 10) > 40) {
             value = "";
         }
+        setLifeSpanTouched(true);
         setFormData({ ...formData, lifeSpan: value });
     };
 
@@ -231,9 +236,10 @@ const Upload = () => {
         sendData.append("kg", formData.kg); 
 
 
-        if (isUpdate && Number(formData.lifeSpan) === oldLifeSpan) {
-            sendData.append("lifeSpan", "reset");
-        } else {
+
+        if (!isUpdate) {
+            sendData.append("lifeSpan", formData.lifeSpan);
+        } else if (lifeSpanTouched) {
             sendData.append("lifeSpan", formData.lifeSpan);
         }
         
@@ -254,6 +260,7 @@ const Upload = () => {
             const data = await res.json();
             if (!res.ok) throw new Error(data.message);
             setTrigger((prev) => !prev);
+            setLifeSpanTouched(false);
             if (role === "seller") setSellerUpload((prev) => ({ ...prev, isShow: false, data: null }));
             else setEditProduct((prev) => ({ ...prev, isShow: false, data: null }));
             showNotification(data.message, "success");
@@ -522,7 +529,9 @@ const Upload = () => {
                                     required
                                     style={{ borderColor: "#d1e7d1", borderRadius: 8 }}
                                 />
-                                <small className="text-muted" style={{ fontSize: "0.72rem" }}>Max 25 kg, decimals allowed (e.g., 0.5, 1.25)</small>
+                                <small className="text-muted" style={{ fontSize: "0.72rem" }}>
+                                    Min 1 kg – Max 100 kg   
+                                </small>
                             </div>
                         </div>
                         

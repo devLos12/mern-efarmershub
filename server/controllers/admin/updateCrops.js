@@ -16,7 +16,8 @@ export const updateCrops = async (req, res) => {
         const { id, name, category, disc, image, kg, lifeSpan, productType } = req.body;
         
 
-        
+
+
         // Convert to numbers para mag-match yung comparison
         const price = Number(req.body.price);
         const stocks = Number(req.body.stocks);
@@ -56,24 +57,27 @@ export const updateCrops = async (req, res) => {
         const effectiveLifeSpan = shouldReset ? oldProduct.lifeSpan : Number(lifeSpan);
         
 
-        const updateData = { 
-            name, 
-            price, 
+        const updateData = {
+            name,
+            price,
             stocks,
-            totalStocks: stocks, 
-            kg, 
-            lifeSpan: effectiveLifeSpan, 
-            category, 
-            disc, 
+            totalStocks: stocks,
+            kg,
+            category,
+            disc,
             imageFile,
             productType,
-            expiryDate: new Date(Date.now() + effectiveLifeSpan * 24 * 60 * 60 * 1000), // ✅ always reset
-            notified: false,
-            status: "active"
         };
 
 
-        
+        if (lifeSpan) {
+            updateData.status = 'active';
+            updateData.notified = false;
+            updateData.lifeSpan = Number(lifeSpan);
+            updateData.expiryDate = new Date(Date.now() + Number(lifeSpan) * 24 * 60 * 60 * 1000);
+        }
+
+
         if (newCloudinaryId) {
             updateData.cloudinaryId = newCloudinaryId;
         }

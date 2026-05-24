@@ -10,6 +10,8 @@ export const updateCrops = async(req, res) => {
         const { id, name, price, stocks, category, productType, disc, image, kg, lifeSpan } = req.body;
         const { id: sellerId } = req.account;
 
+        
+
         // Single query — kuha lahat ng kailangan
         const oldProduct = await Product.findById(id).select('cloudinaryId totalStocks lifeSpan seller');
 
@@ -42,18 +44,17 @@ export const updateCrops = async(req, res) => {
         }
 
 
-        const shouldReset = lifeSpan === "reset";
-        const effectiveLifeSpan = shouldReset ? oldProduct.lifeSpan : Number(lifeSpan);
-
         const updateData = { 
             name, price, stocks, kg, category, productType, disc, imageFile,
-            lifeSpan: effectiveLifeSpan, // ✅ gamitin yung effective, hindi yung raw "reset" string
-            expiryDate: new Date(Date.now() + effectiveLifeSpan * 24 * 60 * 60 * 1000), // ✅ always reset
-            notified: false,
-            status: "active"
         };
-
         
+
+        if (lifeSpan) {
+            updateData.status = "active",
+            updateData.notified = false;
+            updateData.lifeSpan = Number(lifeSpan);
+            updateData.expiryDate = new Date(Date.now() + Number(lifeSpan) * 24 * 60 * 60 * 1000);
+        }
 
         
         // Update totalStocks kung mas mataas ang bagong stocks
