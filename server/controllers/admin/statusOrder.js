@@ -1041,6 +1041,34 @@ const sendReplacementSMS = async (contact, firstname, orderId, productList, faul
 }
 
 
+
+const sendOfflineFarmerReplacementSMS = async (contact, firstname, orderId, productList) => {
+    const name = firstname.charAt(0).toUpperCase() + firstname.slice(1).toLowerCase();
+    const message = `E-FARMERS HUB: Hello ${name}! Replacement needed for Order #${orderId}: ${productList}. Please prepare the replacement items. Thank you!`;
+
+    const submitData = {
+        "api_token": process.env.SMS_TOKEN,
+        "phone_number": contact,
+        "message": message
+    };
+
+    try {
+        const res = await fetch(process.env.IPROG_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(submitData)
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message);
+        console.log(`Offline farmer replacement SMS sent →`, contact);
+    } catch (error) {
+        console.log("Offline farmer replacement SMS error:", error.message);
+    }
+};
+
+
+
+
 // ============================================================
 // REVIEW REPLACEMENT
 // ============================================================
@@ -1277,6 +1305,43 @@ export const reviewReplacement = async (req, res) => {
             );
         }
 
+        // GROUP BY OFFLINE FARMER AND SEND SMS
+        const farmerReplacementGroups = {};
+
+        for (const reviewItem of reviewItems) {
+            const { itemId, decision } = reviewItem;
+            const item = order.orderItems.find(i => i._id.toString() === itemId);
+            
+            if (!item || decision !== "approve") continue;
+            
+            const farmerId = item.seller.id;
+            const farmer = await OfflineFarmer.findById(farmerId);
+            if (!farmer) continue; // skip if not offline farmer
+            
+            if (!farmerReplacementGroups[farmerId]) {
+                farmerReplacementGroups[farmerId] = { farmer, items: [] };
+            }
+            
+            farmerReplacementGroups[farmerId].items.push({
+                prodName: item.prodName,
+                quantity: item.quantity
+            });
+        }
+
+        
+
+        for (const farmerId in farmerReplacementGroups) {
+            const { farmer, items } = farmerReplacementGroups[farmerId];
+            if (!farmer.contact) continue;
+
+            const productList = items.map(item =>
+                `${item.prodName} (${item.quantity} bundle${item.quantity > 1 ? 's' : ''})`
+            ).join(', ');
+
+            await sendOfflineFarmerReplacementSMS(farmer.contact, farmer.firstname, order.orderId, productList);
+        }
+
+
         // CHECK IF ALL REVIEWED
         const allItemsReviewed = order.orderItems.every(item => {
             if (!item.replacement?.isRequested) return true;
@@ -1302,12 +1367,6 @@ export const reviewReplacement = async (req, res) => {
                     status: "replacement confirmed",
                     description: statusDescription,
                     location: "Admin Office",
-                    date: new Date().toLocaleDateString("en-PH", { 
-                        timeZone: "Asia/Manila", // ✅ dagdag lang ito
-                        month: "short", 
-                        day: "numeric" 
-                    }),
-                    timestamp: new Date().toLocaleTimeString("en-PH", { timeZone: "Asia/Manila", hour: "2-digit", minute: "2-digit", hour12: true }),
                     performedBy: { id: adminId, role: "Admin", name: adminName }
                 });
 
@@ -1331,12 +1390,6 @@ export const reviewReplacement = async (req, res) => {
                     status: "replacement rejected",
                     description: `We have rejected your replacement ${rejectedCount === 1 ? 'request' : 'requests'} (${rejectedCount} ${rejectedCount === 1 ? 'item' : 'items'}). Admin Note: ${rejectionReason}`,
                     location: "Admin Office",
-                    date: new Date().toLocaleDateString("en-PH", { 
-                        timeZone: "Asia/Manila", // ✅ nandito na
-                        month: "short", 
-                        day: "numeric" 
-                    }),
-                    timestamp: new Date().toLocaleTimeString("en-PH", { timeZone: "Asia/Manila", hour: "2-digit", minute: "2-digit", hour12: true }),
                     performedBy: { id: adminId, role: "Admin", name: adminName }
                 });
 

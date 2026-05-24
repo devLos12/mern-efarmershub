@@ -242,7 +242,7 @@ const OrderDetails = () => {
     };
 
 
-    
+
 
 
     // Handle item selection for replacement
@@ -1221,8 +1221,6 @@ const OrderDetails = () => {
                                                                             <option value="Missing Item Upon Delivery">Missing Item Upon Delivery</option>
                                                                             <option value="Late Delivery Caused Spoilage">Late Delivery Caused Spoilage</option>
                                                                             <option value="Temperature Mishandling by Rider">Temperature Mishandling by Rider</option>
-                                                                            <option value="Other Rider-Related Issue">Other Rider-Related Issue</option>
-                                                                            <option value="Other">Other</option>
                                                                         </select>
                                                                     </div>
                                                                     
