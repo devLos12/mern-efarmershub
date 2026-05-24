@@ -243,11 +243,8 @@ export const deletePayment = async (req, res) => {
 
 
 
-
-
 const storage = multer.memoryStorage();
 export const payout = multer({ storage: storage });
-
 
 
 

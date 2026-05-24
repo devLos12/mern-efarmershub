@@ -1302,7 +1302,11 @@ export const reviewReplacement = async (req, res) => {
                     status: "replacement confirmed",
                     description: statusDescription,
                     location: "Admin Office",
-                    date: new Date().toLocaleDateString("en-PH", { month: "short", day: "numeric" }),
+                    date: new Date().toLocaleDateString("en-PH", { 
+                        timeZone: "Asia/Manila", // ✅ dagdag lang ito
+                        month: "short", 
+                        day: "numeric" 
+                    }),
                     timestamp: new Date().toLocaleTimeString("en-PH", { timeZone: "Asia/Manila", hour: "2-digit", minute: "2-digit", hour12: true }),
                     performedBy: { id: adminId, role: "Admin", name: adminName }
                 });
@@ -1327,7 +1331,11 @@ export const reviewReplacement = async (req, res) => {
                     status: "replacement rejected",
                     description: `We have rejected your replacement ${rejectedCount === 1 ? 'request' : 'requests'} (${rejectedCount} ${rejectedCount === 1 ? 'item' : 'items'}). Admin Note: ${rejectionReason}`,
                     location: "Admin Office",
-                    date: new Date().toLocaleDateString("en-PH", { month: "short", day: "numeric" }),
+                    date: new Date().toLocaleDateString("en-PH", { 
+                        timeZone: "Asia/Manila", // ✅ nandito na
+                        month: "short", 
+                        day: "numeric" 
+                    }),
                     timestamp: new Date().toLocaleTimeString("en-PH", { timeZone: "Asia/Manila", hour: "2-digit", minute: "2-digit", hour12: true }),
                     performedBy: { id: adminId, role: "Admin", name: adminName }
                 });

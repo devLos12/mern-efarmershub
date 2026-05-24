@@ -136,6 +136,9 @@ export const checkOut = async(req, res) => {
 
         let imageFile = null;
         let cloudinaryId = null;
+
+
+        const getPHTDateStr = () => new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Manila" });
         
         
         // ✅ Upload proof of payment to Cloudinary using memoryStorage buffer
@@ -156,7 +159,7 @@ export const checkOut = async(req, res) => {
         }
         
         // ✅ Generate date for reference number (YYYYMMDD format)
-        const date = new Date().toISOString().split("T")[0].replace(/-/g, ""); // 20260215
+        const date = getPHTDateStr().replace(/-/g, "");; // 20260215
 
         // ✅ Find last order with today's date in refNo to get sequential number
         const lastOrderWithRefNo = await Order.findOne({

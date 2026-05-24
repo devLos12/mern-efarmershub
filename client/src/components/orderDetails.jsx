@@ -217,7 +217,6 @@ const OrderDetails = () => {
 
 
 
-
     const isWithin24Hours = () => {
         if (orderData.statusDelivery !== "delivered") return false;
         
@@ -227,27 +226,23 @@ const OrderDetails = () => {
         
         if (!deliveredStatus) return false;
         
-        // ✅ ADD CURRENT YEAR
         const currentYear = new Date().getFullYear();
-        const dateString = `${deliveredStatus.date} ${currentYear} ${deliveredStatus.timestamp}`;
         
-        
-        const deliveredDate = new Date(dateString);
+        // ✅ Force PHT — GMT+0800
+        const phtDateString = `${deliveredStatus.date} ${currentYear} ${deliveredStatus.timestamp} GMT+0800`;
+        const deliveredDate = new Date(phtDateString);
         
         if (isNaN(deliveredDate.getTime())) {
-            return false;
+            return true; // default allow kung hindi ma-parse
         }
-        
         
         const now = new Date();
         const hoursDiff = (now - deliveredDate) / (1000 * 60 * 60);
-        
-        
         return hoursDiff <= 24;
     };
 
 
-
+    
 
 
     // Handle item selection for replacement

@@ -140,6 +140,7 @@ const orderSchema = new mongoose.Schema({
             
             date: { type: String, 
                 default: () => new Date().toLocaleDateString("en-PH", {
+                    timeZone: "Asia/Manila",
                     month: "short",
                     day: "numeric"
                 })
@@ -174,6 +175,7 @@ const orderSchema = new mongoose.Schema({
                 description: "order received, waiting for confirmation.",
                 location: "unknown",
                 date: new Date().toLocaleDateString("en-PH", {
+                    timeZone: "Asia/Manila", 
                     month: "short",
                     day: "numeric"
                 }),
