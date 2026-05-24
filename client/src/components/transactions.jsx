@@ -220,8 +220,6 @@ const Transactions = () => {
     const context = role === 'admin' ? admin : seller;
     const { setTextHeader } = context;
 
-
-
     const location = useLocation();
     const navigate = useNavigate();
     const [transactions, setTransactions] = useState([]);
@@ -251,6 +249,12 @@ const Transactions = () => {
     const [showPayoutModal, setShowPayoutModal] = useState(false);
     const [selectedTransaction, setSelectedTransaction] = useState(null);
 
+    // ── Ellipsis menu state ─────────────────────────────────────────────────────
+    const [openMenuId, setOpenMenuId] = useState(null);
+    const menuRefs = useRef({});
+    const buttonRefs = useRef({});
+    // ───────────────────────────────────────────────────────────────────────────
+
     // ── Date Filter States ──────────────────────────────────────────────────────
     const [period, setPeriod] = useState('today');
     const [customStartDate, setCustomStartDate] = useState('');
@@ -267,9 +271,23 @@ const Transactions = () => {
 
     useLayoutEffect(() => {
         setTextHeader(location?.state?.title);
-    },[location?.state?.title]);
+    }, [location?.state?.title]);
 
 
+    // ── Close ellipsis menu on outside click ────────────────────────────────────
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (!openMenuId) return;
+            const menuEl = menuRefs.current[openMenuId];
+            const buttonEl = buttonRefs.current[openMenuId];
+            if (menuEl && buttonEl && !menuEl.contains(event.target) && !buttonEl.contains(event.target)) {
+                setOpenMenuId(null);
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, [openMenuId]);
+    // ───────────────────────────────────────────────────────────────────────────
 
 
     // ── Period Label ────────────────────────────────────────────────────────────
@@ -294,8 +312,6 @@ const Transactions = () => {
     };
 
 
-
-
     // ── Custom Range Handlers ───────────────────────────────────────────────────
     const handleCustomRangeApply = (startDate, endDate) => {
         setCustomStartDate(startDate);
@@ -315,19 +331,16 @@ const Transactions = () => {
 
     const handlePrint = () => {
         const printContent = printRef.current.cloneNode(true);
-
         const elementsToRemove = printContent.querySelectorAll('img, input[type="file"], label[for*="inputFile"]');
         elementsToRemove.forEach(el => {
             const td = el.closest('td');
             if (td) td.innerHTML = '<span class="text-muted small">-</span>';
         });
-
         const imageContainers = printContent.querySelectorAll('.border.rounded.shadow-sm');
         imageContainers.forEach(container => {
             const td = container.closest('td');
             if (td) td.innerHTML = '<span class="text-muted small">-</span>';
         });
-
         const windowPrint = window.open('', '', 'width=900,height=650');
         windowPrint.document.write(`
             <html>
@@ -367,7 +380,6 @@ const Transactions = () => {
 
     const handleDownloadPDF = () => {
         const printContent = printRef.current.cloneNode(true);
-
         const elementsToRemove = printContent.querySelectorAll('img, input[type="file"], label[for*="inputFile"]');
         elementsToRemove.forEach(el => {
             const td = el.closest('td');
@@ -378,7 +390,6 @@ const Transactions = () => {
             const td = container.closest('td');
             if (td) td.innerHTML = '<span class="text-muted small">-</span>';
         });
-
         const wrapper = document.createElement('div');
         wrapper.innerHTML = `
             <div style="text-align: center; margin-bottom: 20px;">
@@ -390,15 +401,13 @@ const Transactions = () => {
             </div>
         `;
         wrapper.appendChild(printContent);
-
-        const opt = {
+        html2pdf().set({
             margin: 10,
             filename: `transactions_${period}_${new Date().getTime()}.pdf`,
             image: { type: 'jpeg', quality: 0.98 },
             html2canvas: { scale: 2 },
             jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
-        };
-        html2pdf().set(opt).from(wrapper).save();
+        }).from(wrapper).save();
     };
 
     const toggleSelectAll = () => {
@@ -435,8 +444,6 @@ const Transactions = () => {
         });
     }, [transactions, debouncedSearch]);
 
-
-
     useEffect(() => {
         const result = setTimeout(() => {
             setDebouncedSearch(search.trim().toLowerCase());
@@ -450,25 +457,17 @@ const Transactions = () => {
     const totalPages = Math.ceil(filteredTransactions.length / itemsPerPage);
 
     const riderTab = location.state?.riderTab || 'delivered';
-
-    // ── Farmer Payout Tabs (With Device / No Device) ───────────────────────────
     const farmerTab = location.state?.farmerTab || 'with-device';
 
     useEffect(() => {
         setCurrentPage(1);
     }, [search, source, period]);
 
-
-
-
-
     const handleRemoveFile = (id) => {
         setImageFile(prev => { const n = { ...prev }; delete n[id]; return n; });
         setImagePrev(prev => { const n = { ...prev }; delete n[id]; return n; });
         if (fileUploadRef.current[id]) fileUploadRef.current[id].value = null;
     };
-
-
 
     const handleFile = async (e, id) => {
         const { name } = e.target;
@@ -486,21 +485,16 @@ const Transactions = () => {
             const options = { maxSizeMB: 0.5, maxWidthOrHeight: 1920, useWebWorker: true };
             const compressedFile = await imageCompression(file, options);
 
-            // Preview agad
             const reader = new FileReader();
             reader.onload = (e) => setImagePrev((prev) => ({ ...prev, [id]: e.target.result }));
             reader.readAsDataURL(compressedFile);
 
-            // Set validating state
             setImageFile((prev) => ({ ...prev, [id]: { validating: true } }));
 
-            // E-wallet type ng selected transaction
-
             const eWalletType = selectedTransaction?.e_WalletAcc?.type
-            ?.toLowerCase()
-            .replace("g-cash", "gcash")  // ← normalize
-            .replace("pay maya", "maya");
-
+                ?.toLowerCase()
+                .replace("g-cash", "gcash")
+                .replace("pay maya", "maya");
 
             const formData = new FormData();
             formData.append("image", compressedFile);
@@ -514,19 +508,15 @@ const Transactions = () => {
             const result = await res.json();
 
             if (!result.isValid) {
-                // Invalid — clear preview, store reason para sa badge
                 setImagePrev((prev) => { const n = { ...prev }; delete n[id]; return n; });
                 setImageFile((prev) => ({
                     ...prev,
-                    [id]: {
-                        validationResult: { isValid: false, reason: result.reason }
-                    }
+                    [id]: { validationResult: { isValid: false, reason: result.reason } }
                 }));
                 if (fileUploadRef.current[id]) fileUploadRef.current[id].value = null;
                 return;
             }
 
-            // Valid — store file + result
             setImageFile((prev) => ({
                 ...prev,
                 [id]: {
@@ -538,7 +528,6 @@ const Transactions = () => {
 
         } catch (error) {
             console.error("Validation error:", error);
-            // Fallback — i-allow na lang kung may network issue
             const compressedFile = await imageCompression(file, { maxSizeMB: 0.5, maxWidthOrHeight: 1920, useWebWorker: true });
             setImageFile((prev) => ({
                 ...prev,
@@ -546,11 +535,6 @@ const Transactions = () => {
             }));
         }
     };
-
-
-
-
-
 
     const openImageModal = (imageSrc, title) => {
         setModalImage(imageSrc);
@@ -574,30 +558,19 @@ const Transactions = () => {
         setSelectedTransaction(null);
     };
 
-
-
-
-    // ✅ Fix
     const handlePayout = async (id) => {
         const isOfflineFarmer = selectedTransaction?.farmerName;
-
-        // ✅ Skip image check para sa offline farmer
         if (!isOfflineFarmer && !imageFile[id]?.preview) {
             showNotification("Receipt file is required", "error");
             return;
         }
-
         if (isProcessingPayout) return;
         setIsProcessingPayout(true);
         setTransactions((items) => items.map((item) => item._id === id ? ({ ...item, status: "paid" }) : item));
 
         const formData = new FormData();
         formData.append("id", id);
-
-        // ✅ I-append lang yung image kung may image (regular seller/rider)
-        if (imageFile[id]?.image) {
-            formData.append("image", imageFile[id]?.image);
-        }
+        if (imageFile[id]?.image) formData.append("image", imageFile[id]?.image);
 
         try {
             const res = await fetch(`${import.meta.env.VITE_API_URL}/api/updatePayout`, {
@@ -607,11 +580,10 @@ const Transactions = () => {
             });
             const data = await res.json();
             if (!res.ok) throw new Error(data.message);
-
             setImageFile(prev => { const n = { ...prev }; delete n[id]; return n; });
             if (fileUploadRef.current[id]) fileUploadRef.current[id].value = null;
             closePayoutModal();
-            setRefresh(prev => !prev); // ✅ mag-ti-trigger na ng refetch
+            setRefresh(prev => !prev);
             showNotification(data.message || "Payout completed successfully!", "success");
         } catch (error) {
             showNotification(error.message || "Failed to process payout", "error");
@@ -619,12 +591,6 @@ const Transactions = () => {
             setIsProcessingPayout(false);
         }
     };
-
-
-
-
-
-
 
     const handleDelete = async () => {
         if (selectedIds.size === 0) {
@@ -656,10 +622,6 @@ const Transactions = () => {
         }
     };
 
-
-
-    // ── Fetch Transactions (with period + custom date query params) ──────────────
-  
     useEffect(() => {
         if (isInitialLoad) {
             handleLoading();
@@ -667,13 +629,11 @@ const Transactions = () => {
         } else {
             handleTabChange();
         }
-    }, [location?.state?.source, period, customStartDate, customEndDate, location?.state?.farmerTab, location?.state?.riderTab, refresh]); // ✅
-
+    }, [location?.state?.source, period, customStartDate, customEndDate, location?.state?.farmerTab, location?.state?.riderTab, refresh]);
 
     const handleRefresh = async () => {
         setIsRefreshing(true);
         try {
-            
             await fetchTransactions();
         } catch (error) {
             console.log("Refresh error:", error.message);
@@ -693,7 +653,7 @@ const Transactions = () => {
         }
     };
 
-    const handleLoading= async() => {
+    const handleLoading = async () => {
         setIsLoading(true);
         try {
             await fetchTransactions();
@@ -702,19 +662,14 @@ const Transactions = () => {
         } finally {
             setIsLoading(false);
         }
-    }
-
+    };
 
     const fetchTransactions = async () => {
-
         const endPoint = role === "admin" ? "getTransactions" : "getSellerTransactions";
-
-        // Build query string with period filter
         let queryParams = `period=${period}`;
         if (period === 'custom' && customStartDate && customEndDate) {
             queryParams += `&startDate=${customStartDate}&endDate=${customEndDate}`;
         }
-
         try {
             const res = await fetch(`${import.meta.env.VITE_API_URL}/api/${endPoint}?${queryParams}`, {
                 method: "GET",
@@ -726,17 +681,13 @@ const Transactions = () => {
             let transactions = [];
 
             if (location?.state?.source === `payout${role === "admin" ? "/seller" : ""}`) {
-                // ── Farmer Payout with Device ─────────────────────────────────
                 if (role === "admin" && farmerTab === 'with-device') {
                     transactions = data.payout?.reverse() || [];
                     setSource(`payout/seller`);
-                }
-                // ── Farmer Payout No Device (Offline Farmer) ──────────────────
-                else if (role === "admin" && farmerTab === 'no-device') {
+                } else if (role === "admin" && farmerTab === 'no-device') {
                     transactions = data.offlineFarmerPayout?.reverse() || [];
                     setSource(`payout/offlineFarmer`);
-                }
-                else {
+                } else {
                     transactions = data.payout?.reverse() || [];
                     setSource(`payout${role === "admin" ? "/seller" : ""}`);
                 }
@@ -744,7 +695,6 @@ const Transactions = () => {
             if (location?.state?.source === `payout/rider`) {
                 transactions = data.riderPayout?.reverse() || [];
                 setSource(`payout${role === "admin" ? "/rider" : ""}`);
-
             }
             if (location?.state?.source === "payment") {
                 transactions = data.payment?.reverse() || [];
@@ -754,42 +704,122 @@ const Transactions = () => {
             setTransactions(transactions);
         } catch (err) {
             console.log("Error:", err.message);
-        } 
-    };
-
-
-
-
-
-
-    // ───────────────────────────────────────────────────────────────────────────
-
-    const Height = () => {
-        if (height < 574) return height;
-        return height - 152;
+        }
     };
 
     const taxPercentage = selectedTransaction?.totalAmount > 0
         ? ((selectedTransaction?.taxAmount / selectedTransaction?.totalAmount) * 100).toFixed(0)
         : 0;
 
-    
-
-    if(isLoading) return (
+    if (isLoading) return (
         <div className="d-flex align-items-center justify-content-center vh-100">
             <div className="text-center">
-                <div className="spinner-border text-success" role="status">     
+                <div className="spinner-border text-success" role="status">
                     <span className="visually-hidden">Loading...</span>
                 </div>
-                <p className="small text-muted mt-2">{
-                location?.state?.source === "payment"
-                ? "Loading Payment..."
-                : "Loading Payout..."
-                }</p>
+                <p className="small text-muted mt-2">
+                    {location?.state?.source === "payment" ? "Loading Payment..." : "Loading Payout..."}
+                </p>
             </div>
         </div>
-    )
+    );
 
+
+    // ── Ellipsis menu renderer ──────────────────────────────────────────────────
+    const renderEllipsisMenu = (data, i, source) => {
+        const isMenuOpen = openMenuId === data._id;
+        const popUp = i === currentItems.length - 1;
+        const oneItem = currentItems.length === 1;
+
+        const isPayout = source === "payout/seller" || source === "payout/rider" || source === "payout/offlineFarmer" || source === "payout";
+        const isPaid = data.status === 'paid';
+
+        return (
+            <div
+                ref={(el) => (buttonRefs.current[data._id] = el)}
+                className="position-relative mx-auto d-flex align-items-center justify-content-center shadow-sm border rounded-circle"
+                onClick={() => setOpenMenuId(isMenuOpen ? null : data._id)}
+                style={{ cursor: "pointer", width: "30px", height: "30px" }}
+            >
+                <i className="fa fa-ellipsis"></i>
+                {isMenuOpen && (
+                    <div
+                        ref={(el) => (menuRefs.current[data._id] = el)}
+                        className="card position-absolute p-2 z-3"
+                        style={{
+                            width: "200px",
+                            cursor: "default",
+                            boxShadow: "0px 2px 10px rgba(0,0,0,0.25)",
+                            right: 0,
+                            top: oneItem ? "100%" : popUp ? "auto" : "100%",
+                            bottom: oneItem ? "auto" : popUp ? "100%" : "auto",
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        {/* View / Process Payout */}
+                        {isPayout && (
+                            <div
+                                className="px-2 bg-hover rounded text-capitalize p-1 d-flex align-items-center gap-2"
+                                style={{ cursor: "pointer" }}
+                                onClick={() => { openPayoutModal(data); setOpenMenuId(null); }}
+                            >
+                                <i className={`fa ${isPaid ? 'fa-eye text-success' : 'fa-edit text-success'} small`}></i>
+                                <p className="m-0 small">{isPaid ? 'View Details' : 'Process Payout'}</p>
+                            </div>
+                        )}
+
+                        {/* View Transactions — payout/seller with device */}
+                        {source === "payout/seller" && (
+                            <div
+                                className="px-2 bg-hover rounded text-capitalize p-1 d-flex align-items-center gap-2"
+                                style={{ cursor: "pointer" }}
+                                onClick={() => {
+                                    navigate("/admin/with-device-transactions", {
+                                        state: {
+                                            payoutNumber: data.payoutNumber,
+                                            payoutId: data._id,
+                                            payoutDate: data.date,
+                                            totalAmount: data.totalAmount,
+                                            taxAmount: data.taxAmount,
+                                            netAmount: data.netAmount
+                                        }
+                                    });
+                                    setOpenMenuId(null);
+                                }}
+                            >
+                                <i className="fa fa-list small text-primary"></i>
+                                <p className="m-0 small">View Transactions</p>
+                            </div>
+                        )}
+
+                        {/* View Transactions — payout/offlineFarmer */}
+                        {source === "payout/offlineFarmer" && (
+                            <div
+                                className="px-2 bg-hover rounded text-capitalize p-1 d-flex align-items-center gap-2"
+                                style={{ cursor: "pointer" }}
+                                onClick={() => {
+                                    navigate("/admin/transactions", {
+                                        state: {
+                                            payoutId: data._id,
+                                            payoutDate: data.date,
+                                            totalAmount: data.totalAmount,
+                                            taxAmount: data.taxAmount,
+                                            netAmount: data.netAmount
+                                        }
+                                    });
+                                    setOpenMenuId(null);
+                                }}
+                            >
+                                <i className="fa fa-list small text-primary"></i>
+                                <p className="m-0 small">View Transactions</p>
+                            </div>
+                        )}
+                    </div>
+                )}
+            </div>
+        );
+    };
+    // ───────────────────────────────────────────────────────────────────────────
 
 
     return (
@@ -820,7 +850,6 @@ const Transactions = () => {
                             <div className="mb-4">
                                 <h6 className="fw-bold text-muted mb-3">Transaction Information</h6>
                                 <div className="row g-2">
-                                    {/* Total Orders / Delivery */}
                                     <div className="col-6">
                                         <p className="m-0 small text-muted">
                                             {selectedTransaction?.totalDelivery !== undefined ? 'Total Delivery' : 'Total Orders'}
@@ -835,22 +864,16 @@ const Transactions = () => {
                                             }
                                         </p>
                                     </div>
-
-                                    {/* Date */}
                                     <div className="col-6">
                                         <p className="m-0 small text-muted">Date Payout</p>
                                         <p className="m-0">{new Date(selectedTransaction.date).toLocaleDateString('en-PH', { year: 'numeric', month: 'short', day: 'numeric' })}</p>
                                     </div>
-
-                                    {/* Name */}
                                     <div className="col-6 mt-3">
                                         <p className="m-0 small text-muted">Name</p>
                                         <p className="m-0 fw-bold text-capitalize">
                                             {selectedTransaction.sellerName || selectedTransaction.riderName || selectedTransaction.farmerName}
                                         </p>
                                     </div>
-
-                                    {/* Email / Contact */}
                                     <div className="col-6 mt-3">
                                         <p className="m-0 small text-muted">
                                             {selectedTransaction.farmerName ? 'Contact' : 'Email'}
@@ -859,8 +882,6 @@ const Transactions = () => {
                                             {selectedTransaction.sellerEmail || selectedTransaction.riderEmail || selectedTransaction.farmerContact || "N/A"}
                                         </p>
                                     </div>
-
-                                    {/* E-Wallet — hide para sa offline farmer */}
                                     {!selectedTransaction.farmerName && (
                                         <div className="col-6 mt-3">
                                             <p className="m-0 small text-muted">E-Wallet</p>
@@ -868,8 +889,6 @@ const Transactions = () => {
                                             <p className="m-0 small text-capitalize text-muted">{selectedTransaction.e_WalletAcc?.type}</p>
                                         </div>
                                     )}
-
-                                    {/* Status */}
                                     <div className={`${!selectedTransaction.farmerName ? 'col-6' : 'col-12'} mt-3`}>
                                         <p className="m-0 small text-muted">Status</p>
                                         <span className={`badge text-capitalize ${selectedTransaction.status === 'paid' ? 'bg-success' : 'bg-warning'}`}>
@@ -879,7 +898,6 @@ const Transactions = () => {
                                 </div>
                             </div>
 
-                            {/* Amounts */}
                             <div className="mb-4 bg-light rounded p-3">
                                 <div className="d-flex justify-content-between mb-2">
                                     <span className="text-muted">Total Amount:</span>
@@ -900,7 +918,6 @@ const Transactions = () => {
                             </div>
                             <hr />
 
-                            {/* ── Receipt section — skip para sa offline farmer ── */}
                             {!selectedTransaction.farmerName && (
                                 <div className="mb-4">
                                     <h6 className="fw-bold text-muted mb-3">Payment Receipt</h6>
@@ -930,68 +947,48 @@ const Transactions = () => {
                                                             <button className="btn btn-sm btn-outline-danger" onClick={() => handleRemoveFile(selectedTransaction._id)}><i className="fa fa-trash"></i></button>
                                                         </div>
                                                     ) : (
-
                                                         <>
-                                                        {/* ← DAGDAG DITO — validating indicator */}
-                                                        {imageFile[selectedTransaction._id]?.validating && (
-                                                            <div className="alert alert-info py-2 px-3 d-flex align-items-center gap-2 mb-3" style={{ fontSize: "12px" }}>
-                                                                <div className="spinner-border spinner-border-sm text-info" role="status"></div>
-                                                                <span>Validating receipt...</span>
+                                                            {imageFile[selectedTransaction._id]?.validating && (
+                                                                <div className="alert alert-info py-2 px-3 d-flex align-items-center gap-2 mb-3" style={{ fontSize: "12px" }}>
+                                                                    <div className="spinner-border spinner-border-sm text-info" role="status"></div>
+                                                                    <span>Validating receipt...</span>
+                                                                </div>
+                                                            )}
+                                                            {!imageFile[selectedTransaction._id]?.validating && imageFile[selectedTransaction._id]?.validationResult && (
+                                                                <div
+                                                                    className={`alert py-2 px-3 mb-2 d-flex align-items-center gap-2 ${imageFile[selectedTransaction._id]?.validationResult?.isValid ? "alert-success" : "alert-danger"}`}
+                                                                    style={{ fontSize: "12px" }}
+                                                                >
+                                                                    <i className={`fa-solid ${imageFile[selectedTransaction._id]?.validationResult?.isValid ? "fa-circle-check" : "fa-circle-xmark"}`}></i>
+                                                                    <span>
+                                                                        <strong>{imageFile[selectedTransaction._id]?.validationResult?.isValid ? "Valid receipt!" : "Invalid image!"}</strong>
+                                                                        {" "}{imageFile[selectedTransaction._id]?.validationResult?.reason}
+                                                                    </span>
+                                                                </div>
+                                                            )}
+                                                            <div className="border border-dashed rounded p-4 text-center">
+                                                                <i className="fa fa-cloud-upload-alt fs-1 text-muted mb-3"></i>
+                                                                <p className="m-0 mb-3 text-muted text-capitalize small">Upload payment receipt</p>
+                                                                <label
+                                                                    htmlFor={`modalInputFile-${selectedTransaction._id}`}
+                                                                    className={`btn btn-outline-success btn-sm ${imageFile[selectedTransaction._id]?.validating ? "disabled" : ""}`}
+                                                                    style={{ cursor: imageFile[selectedTransaction._id]?.validating ? "not-allowed" : "pointer" }}
+                                                                >
+                                                                    <i className="fa fa-paperclip me-2"></i>
+                                                                    {imageFile[selectedTransaction._id]?.validating ? "Validating..." : "Choose File"}
+                                                                </label>
+                                                                <input
+                                                                    id={`modalInputFile-${selectedTransaction._id}`}
+                                                                    name="image"
+                                                                    type="file"
+                                                                    accept="image/*"
+                                                                    hidden
+                                                                    disabled={imageFile[selectedTransaction._id]?.validating}
+                                                                    onChange={(e) => handleFile(e, selectedTransaction._id)}
+                                                                    ref={(el) => (fileUploadRef.current[selectedTransaction._id] = el)}
+                                                                />
                                                             </div>
-                                                        )}
-
-                                                        {/* Validation result badge */}
-                                                        {!imageFile[selectedTransaction._id]?.validating && imageFile[selectedTransaction._id]?.validationResult && (
-                                                            <div
-                                                                className={`alert py-2 px-3 mb-2 d-flex align-items-center gap-2 ${
-                                                                    imageFile[selectedTransaction._id]?.validationResult?.isValid 
-                                                                        ? "alert-success" 
-                                                                        : "alert-danger"
-                                                                }`}
-                                                                style={{ fontSize: "12px" }}
-                                                            >
-                                                                <i className={`fa-solid ${
-                                                                    imageFile[selectedTransaction._id]?.validationResult?.isValid 
-                                                                        ? "fa-circle-check" 
-                                                                        : "fa-circle-xmark"
-                                                                }`}></i>
-                                                                <span>
-                                                                    <strong>
-                                                                        {imageFile[selectedTransaction._id]?.validationResult?.isValid 
-                                                                            ? "Valid receipt!" 
-                                                                            : "Invalid image!"}
-                                                                    </strong>
-                                                                    {" "}{imageFile[selectedTransaction._id]?.validationResult?.reason}
-                                                                </span>
-                                                            </div>
-                                                        )}
-
-
-                                                        <div className="border border-dashed rounded p-4 text-center">
-                                                          
-                                                            <i className="fa fa-cloud-upload-alt fs-1 text-muted mb-3"></i>
-                                                            <p className="m-0 mb-3 text-muted text-capitalize small">Upload payment receipt</p>
-                                                            <label 
-                                                                htmlFor={`modalInputFile-${selectedTransaction._id}`} 
-                                                                className={`btn btn-outline-success btn-sm ${imageFile[selectedTransaction._id]?.validating ? "disabled" : ""}`}
-                                                                style={{ cursor: imageFile[selectedTransaction._id]?.validating ? "not-allowed" : "pointer" }}
-                                                            >
-                                                                <i className="fa fa-paperclip me-2"></i>
-                                                                {imageFile[selectedTransaction._id]?.validating ? "Validating..." : "Choose File"}
-                                                            </label>
-                                                            <input 
-                                                                id={`modalInputFile-${selectedTransaction._id}`} 
-                                                                name="image" 
-                                                                type="file" 
-                                                                accept="image/*" 
-                                                                hidden 
-                                                                disabled={imageFile[selectedTransaction._id]?.validating}
-                                                                onChange={(e) => handleFile(e, selectedTransaction._id)} 
-                                                                ref={(el) => (fileUploadRef.current[selectedTransaction._id] = el)} 
-                                                            />
-                                                        </div>
                                                         </>
-
                                                     )}
                                                 </div>
                                             ) : (
@@ -1006,7 +1003,6 @@ const Transactions = () => {
                                 </div>
                             )}
 
-                            {/* ── Offline farmer — simple note kung paid na ── */}
                             {selectedTransaction.farmerName && selectedTransaction.status === 'paid' && (
                                 <div className="alert alert-success py-2 px-3 mb-4">
                                     <i className="fa fa-check-circle me-2"></i>
@@ -1014,13 +1010,9 @@ const Transactions = () => {
                                 </div>
                             )}
 
-                            {/* ── Footer buttons ── */}
                             {role === "admin" && selectedTransaction.status === 'pending' ? (
                                 <div className="d-flex gap-2 justify-content-end">
-                                    <button className="btn btn-secondary btn-sm" onClick={closePayoutModal} disabled={isProcessingPayout}>
-                                        Cancel
-                                    </button>
-                                    {/* Offline farmer — no receipt needed, confirm lang */}
+                                    <button className="btn btn-secondary btn-sm" onClick={closePayoutModal} disabled={isProcessingPayout}>Cancel</button>
                                     {selectedTransaction.farmerName ? (
                                         <button
                                             className="btn btn-success btn-sm d-flex align-items-center gap-2"
@@ -1080,24 +1072,18 @@ const Transactions = () => {
                         <>
                             <div className="col-12">
                                 <div className="d-flex align-items-center gap-2">
-                                    <div className={`text-capitalize rounded p-2 px-3 d-flex align-items-center transition-all ${location.state?.source === "payout/seller" || location.state?.source === "payout/offlineFarmer" ? "bg-success text-white shadow-sm" : "bg-white text-success border border-success border-opacity-25"}`} style={{ cursor: "pointer", transition: "all 0.2s ease" }} 
-                                    onClick={() => navigate('/admin/payout/seller', { state: 
-                                        { 
-                                            source: 'payout/seller', 
-                                            farmerTab: 'with-device',
-                                            title: location?.state?.title
-                                        } 
-                                    })}>
+                                    <div
+                                        className={`text-capitalize rounded p-2 px-3 d-flex align-items-center transition-all ${location.state?.source === "payout/seller" || location.state?.source === "payout/offlineFarmer" ? "bg-success text-white shadow-sm" : "bg-white text-success border border-success border-opacity-25"}`}
+                                        style={{ cursor: "pointer", transition: "all 0.2s ease" }}
+                                        onClick={() => navigate('/admin/payout/seller', { state: { source: 'payout/seller', farmerTab: 'with-device', title: location?.state?.title } })}
+                                    >
                                         <i className="fa fa-store me-2 small"></i>
                                         <p className="m-0 small fw-bold">Farmer</p>
                                     </div>
-                                    <div className={`text-capitalize rounded p-2 px-3 d-flex align-items-center transition-all ${location.state?.source === "payout/rider" ? "bg-success text-white shadow-sm" : "bg-white text-success border border-success border-opacity-25"}`} style={{ cursor: "pointer", transition: "all 0.2s ease" }} 
-                                    onClick={() => navigate('/admin/payout/rider', { state: 
-                                        { 
-                                            source: 'payout/rider',
-                                            title: location?.state?.title 
-                                        } 
-                                    })}
+                                    <div
+                                        className={`text-capitalize rounded p-2 px-3 d-flex align-items-center transition-all ${location.state?.source === "payout/rider" ? "bg-success text-white shadow-sm" : "bg-white text-success border border-success border-opacity-25"}`}
+                                        style={{ cursor: "pointer", transition: "all 0.2s ease" }}
+                                        onClick={() => navigate('/admin/payout/rider', { state: { source: 'payout/rider', title: location?.state?.title } })}
                                     >
                                         <i className="fa fa-bicycle me-2 small"></i>
                                         <p className="m-0 small fw-bold">rider</p>
@@ -1107,22 +1093,18 @@ const Transactions = () => {
 
                             {(source === "payout/seller" || source === "payout/offlineFarmer") && (
                                 <div className="d-flex align-items-center gap-4 mt-3 border-bottom">
-                                    <div className={`pb-2 ${farmerTab === "with-device" ? "border-bottom border-success border-3 text-success" : "text-muted"}`} style={{ cursor: "pointer", transition: "all 0.2s ease" }} 
-                                    onClick={() => navigate('/admin/payout/seller', { state: { 
-                                            source: 'payout/seller', 
-                                            farmerTab: 'with-device',
-                                            title: location?.state?.title 
-                                        } 
-                                    })}>
+                                    <div
+                                        className={`pb-2 ${farmerTab === "with-device" ? "border-bottom border-success border-3 text-success" : "text-muted"}`}
+                                        style={{ cursor: "pointer", transition: "all 0.2s ease" }}
+                                        onClick={() => navigate('/admin/payout/seller', { state: { source: 'payout/seller', farmerTab: 'with-device', title: location?.state?.title } })}
+                                    >
                                         <p className="m-0 small">With Device</p>
                                     </div>
-                                    <div className={`pb-2 ${farmerTab === "no-device" ? "border-bottom border-success border-3 text-success" : "text-muted"}`} style={{ cursor: "pointer", transition: "all 0.2s ease" }} 
-                                    onClick={() => navigate('/admin/payout/seller', { state: { 
-                                            source: 'payout/seller', 
-                                            farmerTab: 'no-device',
-                                            title: location?.state?.title 
-                                        } 
-                                    })}>
+                                    <div
+                                        className={`pb-2 ${farmerTab === "no-device" ? "border-bottom border-success border-3 text-success" : "text-muted"}`}
+                                        style={{ cursor: "pointer", transition: "all 0.2s ease" }}
+                                        onClick={() => navigate('/admin/payout/seller', { state: { source: 'payout/seller', farmerTab: 'no-device', title: location?.state?.title } })}
+                                    >
                                         <p className="m-0 small">No Device</p>
                                     </div>
                                 </div>
@@ -1130,23 +1112,18 @@ const Transactions = () => {
 
                             {source === "payout/rider" && (
                                 <div className="d-flex align-items-center gap-4 mt-3 border-bottom">
-                                    <div className={`pb-2 ${riderTab === "delivered" ? "border-bottom border-success border-3 text-success" : "text-muted"}`} style={{ cursor: "pointer", transition: "all 0.2s ease" }} 
-                                    onClick={() => navigate('/admin/payout/rider', { state: { 
-                                            source: 'payout/rider', 
-                                            riderTab: 'delivered',
-                                            title: location?.state?.title 
-                                        } 
-                                    })}>
+                                    <div
+                                        className={`pb-2 ${riderTab === "delivered" ? "border-bottom border-success border-3 text-success" : "text-muted"}`}
+                                        style={{ cursor: "pointer", transition: "all 0.2s ease" }}
+                                        onClick={() => navigate('/admin/payout/rider', { state: { source: 'payout/rider', riderTab: 'delivered', title: location?.state?.title } })}
+                                    >
                                         <p className="m-0 small">Delivered</p>
                                     </div>
-                                    <div className={`pb-2 ${riderTab === "damage-log" ? "border-bottom border-success border-3 text-success" : "text-muted"}`} style={{ cursor: "pointer", transition: "all 0.2s ease" }} 
-                                    onClick={() => navigate('/admin/payout/rider', { state: { 
-                                            source: 'payout/rider', 
-                                            riderTab: 'damage-log',
-                                            title: location?.state?.title 
-
-                                        } 
-                                    })}>
+                                    <div
+                                        className={`pb-2 ${riderTab === "damage-log" ? "border-bottom border-success border-3 text-success" : "text-muted"}`}
+                                        style={{ cursor: "pointer", transition: "all 0.2s ease" }}
+                                        onClick={() => navigate('/admin/payout/rider', { state: { source: 'payout/rider', riderTab: 'damage-log', title: location?.state?.title } })}
+                                    >
                                         <p className="m-0 small">Damage Log</p>
                                     </div>
                                 </div>
@@ -1156,7 +1133,6 @@ const Transactions = () => {
 
                     {!(source === "payout/rider" && riderTab === "damage-log") && (
                         <>
-                            {/* ── Date Filter Row ─────────────────────────────────────────────── */}
                             <div className="col-12">
                                 <div className="d-flex align-items-center gap-2 flex-wrap">
                                     <i className="fa fa-calendar text-success small"></i>
@@ -1174,11 +1150,11 @@ const Transactions = () => {
                                             }
                                         }}
                                     >
-                                        <option value="today">Today</option> 
+                                        <option value="today">Today</option>
                                         <option value="thisweek">This Week</option>
                                         <option value="thismonth">This Month</option>
                                         <option value="thisyear">This Year</option>
-                                        <option value="custom">Custom </option>
+                                        <option value="custom">Custom</option>
                                     </select>
 
                                     {period === 'custom' && customStartDate && customEndDate && (
@@ -1197,7 +1173,6 @@ const Transactions = () => {
                                 </div>
                             </div>
 
-                            {/* ────────────────────────────────────────────────────────────────── */}
                             <div className="col-12 col-md-6 d-flex flex-column justify-content-center">
                                 <input
                                     type="search"
@@ -1216,17 +1191,20 @@ const Transactions = () => {
                                                 <i className="bx bx-trash fs-6"></i> delete
                                             </button>
                                         )}
-                                        <button className="bg-hover d-flex border rounded align-items-center px-2 shadow-sm gap-2 border-1" 
-                                        onClick={handleRefresh}>
+                                        <button className="bg-hover d-flex border rounded align-items-center px-2 shadow-sm gap-2 border-1" onClick={handleRefresh}>
                                             <i className={`fa fa-sync small text-dark ${isRefreshing ? 'fa-spin' : ''}`}></i>
                                             <p className="m-0 small text-capitalize">refresh</p>
                                         </button>
-                                        <button className={`btn ${isSelect ? "btn-dark" : "btn-success"} btn-sm text-capitalize rounded-3 shadow-sm d-flex align-items-center gap-1`} onClick={() => { setIsAllSelected(false); setSelectedIds(new Set()); setIsSelect((prev) => !prev); }} style={{ cursor: "pointer" }}>
+                                        <button
+                                            className={`btn ${isSelect ? "btn-dark" : "btn-success"} btn-sm text-capitalize rounded-3 shadow-sm d-flex align-items-center gap-1`}
+                                            onClick={() => { setIsAllSelected(false); setSelectedIds(new Set()); setIsSelect((prev) => !prev); }}
+                                            style={{ cursor: "pointer" }}
+                                        >
                                             <i className={`bx ${isSelect ? "bx-x fs-6" : "bx-check-circle fs-6"}`}></i>
-                                            {`${isSelect ? "cancel" : "select"}`}
+                                            {isSelect ? "cancel" : "select"}
                                         </button>
                                     </div>
-                                    <p className="m-0 small opacity-50 text-end mt-2">{`${selectedIds.size} selected from ${filteredTransactions.length} Total`}</p>
+                                    <p className="m-0 small opacity-50 text-end mt-2">{selectedIds.size} selected from {filteredTransactions.length} Total</p>
                                 </div>
                             </div>
                         </>
@@ -1241,9 +1219,9 @@ const Transactions = () => {
                             {isRefreshing && (
                                 <div className="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center bg-white bg-opacity-100" style={{ zIndex: 10 }}>
                                     <div className="text-center">
-                                            <div className="spinner-border text-success mb-2" role="status">
-                                                <span className="visually-hidden">Loading...</span>
-                                            </div>
+                                        <div className="spinner-border text-success mb-2" role="status">
+                                            <span className="visually-hidden">Loading...</span>
+                                        </div>
                                         <p className="small text-muted mb-0">Refreshing transactions...</p>
                                     </div>
                                 </div>
@@ -1255,77 +1233,62 @@ const Transactions = () => {
                                 </div>
                             ) : (
                                 <div ref={printRef}>
-                                    <table className="w-100">
-                                        <thead className="position-sticky top-0 z-1">
-                                            <tr className="bg-white">
+                                    <table className="table table-hover" style={{ marginBottom: '100px'}}>
+                                        <thead className="bg-light">
+                                            <tr>
                                                 {/* ─────── ADMIN - FARMER WITH DEVICE ─────── */}
-                                                {role === "admin" && source === "payout/seller"
-                                                    && ["#", "payout no.", "Farmer name", "total orders", "gross amount", "tax amount", "net amount", "e-wallet", "status", "date payout", "actions"]
-                                                        .map((data, i) => (
-                                                            <th key={i} className={`text-capitalize p-3 text-success ${i === 10 && "text-center"} ${i === 0 && "text-center"} small`}>
-                                                                {data}
-                                                                {i === 5 && <span 
-                                                                title="tax for system maintenance"
-                                                                className="small ms-2">(5%)</span>}
-                                                            </th>
-                                                        ))}
+                                                {role === "admin" && source === "payout/seller" &&
+                                                    ["#", "Payout No.", "Farmer Name", "Total Orders", "Gross Amount", "Tax Amount (5%)", "Net Amount", "E-Wallet", "Status", "Date Payout", "Actions"]
+                                                        .map((col, i) => (
+                                                            <th key={i} className="text-uppercase small text-success">{col}</th>
+                                                        ))
+                                                }
 
                                                 {/* ─────── ADMIN - RIDER ─────── */}
-                                                {role === "admin" && source === "payout/rider"
-                                                    && ["#", "payout no.", "rider name", "total delivery", "gross amount", "tax amount", "net amount", "e-wallet", "status", "date payout", "actions"]
-                                                        .map((data, i) => (
-                                                            <th key={i} className={`text-capitalize p-3 text-success ${i === 10 && "text-center"} ${i === 0 && "text-center"} small`}>
-                                                                {data}
-                                                                {i === 5 && <span 
-                                                                title="Tax for system maintenance"
-                                                                className="small ms-2">(5%)</span>}
-                                                            </th>
-                                                        ))}
+                                                {role === "admin" && source === "payout/rider" &&
+                                                    ["#", "Payout No.", "Rider Name", "Total Delivery", "Gross Amount", "Tax Amount (5%)", "Net Amount", "E-Wallet", "Status", "Date Payout", "Actions"]
+                                                        .map((col, i) => (
+                                                            <th key={i} className="text-uppercase small text-success">{col}</th>
+                                                        ))
+                                                }
 
-                                                {/* ─────── ADMIN - FARMER NO DEVICE (OFFLINE) ─────── */}
-                                                {role === "admin" && source === "payout/offlineFarmer"
-                                                    && ["#", "payout no.", "farmer name", "total orders", "gross amount", "tax amount", "net amount", "status", "date payout", "actions"]
-                                                        .map((data, i) => (
-                                                            <th key={i} className={`text-capitalize p-3 text-success ${i === 9 && "text-center"} ${i === 0 && "text-center"} small`}>
-                                                                {data}
-                                                                {i === 5 && <span
-                                                                title="Tax for system maintenance"
-                                                                className="small ms-2">(5%)</span>}
-                                                            </th>
-                                                        ))}
+                                                {/* ─────── ADMIN - FARMER NO DEVICE ─────── */}
+                                                {role === "admin" && source === "payout/offlineFarmer" &&
+                                                    ["#", "Payout No.", "Farmer Name", "Total Orders", "Gross Amount", "Tax Amount (5%)", "Net Amount", "Status", "Date Payout", "Actions"]
+                                                        .map((col, i) => (
+                                                            <th key={i} className="text-uppercase small text-success">{col}</th>
+                                                        ))
+                                                }
 
-                                                {/* ─────── SELLER - FARMER PAYOUT ─────── */}
-                                                {role === "seller" && source === "payout"
-                                                    && ["#", "payout no.", "Farmer name", "total orders", "gross amount", "tax amount", "net amount", "e-wallet", "status", "date payout", "actions"]
-                                                        .map((data, i) => (
-                                                            <th key={i} className={`text-capitalize p-3 text-success ${i === 10 && "text-center"} ${i === 0 && "text-center"} small`}>
-                                                                {data}
-                                                                {i === 5 && <span
-                                                                title="Tax for system maintenance"
-                                                                className="small ms-2">(5%)</span>}
-                                                            </th>
-                                                        ))}
+                                                {/* ─────── SELLER - PAYOUT ─────── */}
+                                                {role === "seller" && source === "payout" &&
+                                                    ["#", "Payout No.", "Farmer Name", "Total Orders", "Gross Amount", "Tax Amount (5%)", "Net Amount", "E-Wallet", "Status", "Date Payout", "Actions"]
+                                                        .map((col, i) => (
+                                                            <th key={i} className="text-uppercase small text-success">{col}</th>
+                                                        ))
+                                                }
 
-                                                {/* ─────── PAYMENT TABLE ─────── */}
-                                                {source === "payment" && role === "admin"
-                                                    && ["reference id", "account name", "total amount", "payment method", "status", "date paid", 'payment receipt', "type of transaction"]
-                                                        .map((data, i) => (
-                                                            <th key={i} className={`text-capitalize p-3 text-success small`}>{data}</th>
-                                                        ))}
+                                                {/* ─────── PAYMENT - ADMIN ─────── */}
+                                                {source === "payment" && role === "admin" &&
+                                                    ["#", "Reference ID", "Account Name", "Total Amount", "Payment Method", "Status", "Date Paid", "Payment Receipt", "Type"]
+                                                        .map((col, i) => (
+                                                            <th key={i} className="text-uppercase small text-success">{col}</th>
+                                                        ))
+                                                }
 
-                                                {source === "payment" && role === "seller"
-                                                    && ["reference id", "account name", "total amount", "payment method", "status", "date paid", "type of transaction"]
-                                                        .map((data, i) => (
-                                                            <th key={i} className={`text-capitalize p-3 text-success small`}>{data}</th>
-                                                        ))}
+                                                {/* ─────── PAYMENT - SELLER ─────── */}
+                                                {source === "payment" && role === "seller" &&
+                                                    ["#", "Reference ID", "Account Name", "Total Amount", "Payment Method", "Status", "Date Paid", "Type"]
+                                                        .map((col, i) => (
+                                                            <th key={i} className="text-uppercase small text-success">{col}</th>
+                                                        ))
+                                                }
 
                                                 {isSelect && (
-                                                    <th className="p-3">
-                                                        <div className="d-flex flex-column align-items-center">
-                                                            <div className="d-flex gap-2">
-                                                                <p className="m-0 text-success text-capitalize">all</p>
-                                                                <input type="checkbox" checked={isAllSelected} onChange={toggleSelectAll} style={{ cursor: "pointer" }} />
-                                                            </div>
+                                                    <th className="text-uppercase small text-success">
+                                                        <div className="d-flex align-items-center gap-2">
+                                                            <span>All</span>
+                                                            <input type="checkbox" checked={isAllSelected} onChange={toggleSelectAll} style={{ cursor: "pointer" }} />
                                                         </div>
                                                     </th>
                                                 )}
@@ -1334,218 +1297,162 @@ const Transactions = () => {
                                         <tbody>
                                             {currentItems?.map((data, i) => (
                                                 <tr key={i}>
+
                                                     {/* ─────── ADMIN - FARMER WITH DEVICE ─────── */}
-                                                    {role === "admin" && source === "payout/seller" &&
-                                                        [
-                                                            { data: indexOfFirstItem + i + 1 },
-                                                            { data: data.payoutNumber || "—" },
-                                                            { data: { name: data.sellerName, email: data.sellerEmail } },
-                                                            { data: data.orders.length },
-                                                            { data: `₱${data.totalAmount.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` },
-                                                            { data: `₱${data.taxAmount?.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` ?? 0 },
-                                                            { data: `₱${data.netAmount?.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` },
-                                                            { data: { type: data?.e_WalletAcc?.type, number: data?.e_WalletAcc?.number } },
-                                                            { data: data.status },
-                                                            { data: new Date(data.date).toLocaleDateString('en-PH', { year: 'numeric', month: 'short', day: 'numeric' }) },
-                                                            { data: { transaction: data } }
-                                                        ].map((info, i) => (
-                                                            <td key={i} className={`text-capitalize p-3 small ${i === 0 && "text-center"}`}>
-                                                                {i === 2 ? (<>{info.data.name}<p className="m-0 text-lowercase opacity-75 small">{info.data.email}</p></>)
-                                                                    : i === 7 ? (<>{info.data.number}<p className="m-0 text-capitalize opacity-75 small">{info.data.type}</p></>)
-                                                                        : i === 10 ? (
-                                                                                <div className="d-flex align-items-center justify-content-center gap-2">
-                                                                                    <button
-                                                                                        className={`btn btn-sm ${info.data.transaction.status === 'paid' ? 'btn-outline-success' : 'btn-success'}`}
-                                                                                        onClick={() => openPayoutModal(info.data.transaction)}
-                                                                                        title={info.data.transaction.status === 'paid' ? 'View Details' : 'Process'}
-                                                                                    >
-                                                                                        <i className={`fa ${info.data.transaction.status === 'paid' ? 'fa-eye' : 'fa-edit'}`}></i>
-                                                                                    </button>
-                                                                                    <button
-                                                                                        className="btn btn-sm btn-outline-success"
-                                                                                        onClick={() => navigate("/admin/with-device-transactions", {
-                                                                                            state: { 
-                                                                                                payoutNumber: info.data.transaction.payoutNumber,
-                                                                                                payoutId: info.data.transaction._id, 
-                                                                                                payoutDate: info.data.transaction.date,
-                                                                                                totalAmount: info.data.transaction.totalAmount,
-                                                                                                taxAmount: info.data.transaction.taxAmount,
-                                                                                                netAmount: info.data.transaction.netAmount
-                                                                                            }
-                                                                                        })}
-                                                                                        title="View Transactions"
-                                                                                    >
-                                                                                        <i className="fa fa-list"></i>
-                                                                                    </button>
-                                                                                </div>
-                                                                ) : info.data}
+                                                    {role === "admin" && source === "payout/seller" && (
+                                                        <>
+                                                            <td className="align-middle small">{indexOfFirstItem + i + 1}</td>
+                                                            <td className="align-middle small">{data.payoutNumber || "—"}</td>
+                                                            <td className="align-middle small text-capitalize">
+                                                                {data.sellerName}
+                                                                <p className="m-0 text-lowercase opacity-75 small">{data.sellerEmail}</p>
                                                             </td>
-                                                        ))}
-
-                                                    {/* ─────── ADMIN - RIDER ─────── */}
-                                                    {role === "admin" && source === "payout/rider" &&
-                                                        [
-                                                            { data: indexOfFirstItem + i + 1 },
-                                                            { data: data.payoutNumber || "—" },
-                                                            { data: { name: data.riderName, email: data.riderEmail } },
-                                                            { data: data.totalDelivery },
-                                                            { data: `₱${data.totalAmount.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` },
-                                                            { data: `₱${data.taxAmount?.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` ?? 0 },
-                                                            { data: `₱${data.netAmount?.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` },
-                                                            { data: { type: data?.e_WalletAcc?.type, number: data?.e_WalletAcc?.number } },
-                                                            { data: data.status },
-                                                            { data: new Date(data.date).toLocaleDateString('en-PH', { year: 'numeric', month: 'short', day: 'numeric' }) },
-                                                            { data: { transaction: data } }
-                                                        ].map((info, i) => (
-                                                            <td key={i} className={`text-capitalize p-3 small ${i === 0 && "text-center"}`}>
-                                                                {i === 2 ? (<>{info.data.name}<p className="m-0 text-lowercase opacity-75 small">{info.data.email}</p></>)
-                                                                    : i === 7 ? (<>{info.data.number}<p className="m-0 text-capitalize opacity-75 small">{info.data.type}</p></>)
-                                                                        : i === 10 ? (
-                                                                            <div className="d-flex align-items-center justify-content-center">
-                                                                                <button 
-                                                                                title={info.data.transaction.status === 'paid' ? 'View Details' : 'Process'}
-                                                                                className={`btn btn-sm ${info.data.transaction.status === 'paid' ? 'btn-outline-success' : 'btn-success'}`} onClick={() => openPayoutModal(info.data.transaction)}>
-                                                                                    <i className={`fa ${info.data.transaction.status === 'paid' ? 'fa-eye' : 'fa-edit'} `}></i>
-                                                                                </button>
-                                                                            </div>
-                                                                        ) : info.data}
+                                                            <td className="align-middle small">{data.orders.length}</td>
+                                                            <td className="align-middle small">₱{data.totalAmount.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                                                            <td className="align-middle small">₱{(data.taxAmount ?? 0).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                                                            <td className="align-middle small">₱{data.netAmount?.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                                                            <td className="align-middle small">
+                                                                {data?.e_WalletAcc?.number}
+                                                                <p className="m-0 text-capitalize opacity-75 small">{data?.e_WalletAcc?.type}</p>
                                                             </td>
-                                                        ))}
-
-                                                    {/* ─────── SELLER - FARMER PAYOUT ─────── */}
-                                                    {role === "seller" && source === "payout" &&
-                                                        [
-                                                            { data: indexOfFirstItem + i + 1 },
-                                                            { data: data.payoutNumber},
-                                                            { data: { name: data.sellerName, email: data.sellerEmail } },
-                                                            { data: data.orders.length },
-                                                            { data: `₱${data.totalAmount.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` },
-                                                            { data: `₱${data.taxAmount?.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` ?? 0 },
-                                                            { data: `₱${data.netAmount?.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` },
-                                                            { data: { type: data?.e_WalletAcc?.type, number: data?.e_WalletAcc?.number } },
-                                                            { data: data.status },
-                                                            { data: new Date(data.date).toLocaleDateString('en-PH', { year: 'numeric', month: 'short', day: 'numeric' }) },
-                                                            { data: { transaction: data } }
-                                                        ].map((info, i) => (
-                                                            <td key={i} className={`text-capitalize p-3 small ${i === 0 && "text-center"}`}>
-                                                                {i === 2 ? (<>{info.data.name}<p className="m-0 text-lowercase opacity-75 small">{info.data.email}</p></>)
-                                                                    : i === 7 ? (<>{info.data.number}<p className="m-0 text-capitalize opacity-75 small">{info.data.type}</p></>)
-                                                                        : i === 10 ? (
-                                                                            <div className="d-flex align-items-center justify-content-center">
-                                                                                <button 
-                                                                                title="view details"
-                                                                                className="btn btn-sm btn-outline-success" 
-                                                                                onClick={() => openPayoutModal(info.data.transaction)}>
-                                                                                    <i className="fa fa-eye "></i> 
-                                                                                </button>
-                                                                            </div>
-                                                                        ) : info.data}
+                                                            <td className="align-middle small text-capitalize">
+                                                                <span className={`badge ${data.status === 'paid' ? 'bg-success' : 'bg-warning'}`}>{data.status}</span>
                                                             </td>
-                                                        ))}
-
-                                                    {/* ─────── ADMIN - FARMER NO DEVICE (OFFLINE) ─────── */}
-                                                    {role === "admin" && source === "payout/offlineFarmer" &&
-                                                        [
-                                                            { data: indexOfFirstItem + i + 1 },
-                                                            { data: data.payoutNumber || "—" },
-                                                            { data: { name: data.farmerName, contact: data.farmerContact } },
-                                                            { data: data.totalOrders || data.orders?.length || 0 },
-                                                            { data: `₱${data.totalAmount.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` },
-                                                            { data: `₱${data.taxAmount?.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` ?? 0 },
-                                                            { data: `₱${data.netAmount?.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` },
-                                                            { data: data.status },
-                                                            { data: new Date(data.date).toLocaleDateString('en-PH', { year: 'numeric', month: 'short', day: 'numeric' }) },
-                                                            { data: { transaction: data } }
-                                                        ].map((info, i) => (
-                                                            <td key={i} className={`text-capitalize p-3 small ${i === 0 && "text-center"}`}>
-                                                                {i === 2 ? (<>{info.data.name}<p className="m-0 text-uppercase opacity-75 small" style={{fontSize: "10px"}}>{info.data.contact || "N/A"}</p></>)
-                                                                    : i === 9 ? (
-                                                                        <div className="d-flex align-items-center  gap-2">
-                                                                            <button
-                                                                                className={`btn btn-sm ${info.data.transaction.status === 'paid' ? 'btn-outline-success' : 'btn-success'}`}
-                                                                                onClick={() => openPayoutModal(info.data.transaction)}
-                                                                                title={info.data.transaction.status === 'paid' ? 'View Details' : 'Process'}
-                                                                            >
-                                                                                <i className={`fa ${info.data.transaction.status === 'paid' ? 'fa-eye' : 'fa-edit'}`}></i>
-                                                                            </button>
-                                                                            <button
-                                                                                className="btn btn-sm btn-outline-success"
-                                                                                onClick={() => navigate("/admin/transactions", {
-                                                                                    state: { 
-                                                                                        payoutId: info.data.transaction._id, 
-                                                                                        payoutDate: info.data.transaction.date,
-                                                                                        totalAmount: info.data.transaction.totalAmount,
-                                                                                        taxAmount: info.data.transaction.taxAmount,
-                                                                                        netAmount: info.data.transaction.netAmount
-                                                                                    }
-                                                                                })}
-                                                                                title="View Transactions"
-                                                                            >
-                                                                                <i className="fa fa-list"></i>
-                                                                            </button>
-                                                                        </div>
-                                                                    ) : info.data}
-                                                            </td>
-                                                        ))}
-
-
-                                                    {/* ─────── PAYMENT TABLE - ADMIN ─────── */}
-                                                    {source === "payment" && role === "admin" && (
-                                                        [
-                                                            { data: data.refNo },
-                                                            { data: { name: data.accountName, email: data.accountEmail } },
-                                                            { data: `₱${data.totalAmount.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` },
-                                                            { data: data.paymentMethod },
-                                                            { data: data.status },
-                                                            { data: { date: data.paidAt.date, time: data.paidAt.time } },
-                                                            { data: data.imageFile },
-                                                            { data: data.type },
-                                                        ].map((info, i) => (
-                                                            <td key={i} className={`text-capitalize p-3 small`}>
-                                                                {i === 1 ? (<>{info.data.name}<p className="m-0 text-lowercase opacity-75 small">{info.data.email}</p></>)
-                                                                    : i === 5 ? (<><p className="m-0 small">{new Date(info.data.date).toLocaleDateString('en-PH', { year: 'numeric', month: 'short', day: 'numeric' })}</p><p className="m-0 small">{info.data.time}</p></>)
-                                                                        : i === 6 ? (
-                                                                            !info?.data ? <p className="m-0 text-muted text-center "
-                                                                            >_</p> : (
-                                                                                <div className="w-100 border rounded shadow-sm p-2 position-relative" style={{ maxWidth: "120px", cursor: "pointer" }} onClick={() => openImageModal(info.data)}>
-                                                                                    <div className="d-flex align-items-center gap-2">
-                                                                                        <div className="border shadow-sm rounded" style={{ width: "40px", height: "40px", overflow: "hidden", flexShrink: 0 }}>
-                                                                                            <img src={info.data} alt={info?.data} className="h-100 w-100" style={{ objectFit: "cover" }} />
-                                                                                        </div>
-                                                                                        <div className="flex-grow-1" style={{ minWidth: 0 }}>
-                                                                                            <p className="m-0 fw-bold text-truncate" style={{ fontSize: "0.75rem" }}>{info?.data.split('/').pop()}</p>
-                                                                                            <p className="m-0 text-muted" style={{ fontSize: "0.65rem" }}>Image</p>
-                                                                                        </div>
-                                                                                    </div>
-                                                                                </div>
-                                                                            )
-                                                                        ) : info.data}
-                                                            </td>
-                                                        ))
+                                                            <td className="align-middle small">{new Date(data.date).toLocaleDateString('en-PH', { year: 'numeric', month: 'short', day: 'numeric' })}</td>
+                                                            <td className="align-middle text-center">{renderEllipsisMenu(data, i, source)}</td>
+                                                        </>
                                                     )}
 
-                                                    {/* ─────── PAYMENT TABLE - SELLER ─────── */}
-                                                    {source === "payment" && role === "seller" && (
-                                                        [
-                                                            { data: data.refNo },
-                                                            { data: { name: data.accountName, email: data.accountEmail } },
-                                                            { data: `₱${data.totalAmount.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` },
-                                                            { data: data.paymentMethod },
-                                                            { data: data.status },
-                                                            { data: { date: data.paidAt.date, time: data.paidAt.time } },
-                                                            { data: data.type },
-                                                        ].map((info, i) => (
-                                                            <td key={i} className={`text-capitalize p-3 small `}>
-                                                                {i === 1 ? (<>{info.data.name}<p className="m-0 text-lowercase opacity-75 small">{info.data.email}</p></>)
-                                                                    : i === 5 ? (<><p className="m-0 small">{new Date(info.data.date).toLocaleDateString('en-PH', { year: 'numeric', month: 'short', day: 'numeric' })}</p><p className="m-0 small">{info.data.time}</p></>)
-                                                                        : info.data
-                                                                }
+                                                    {/* ─────── ADMIN - RIDER ─────── */}
+                                                    {role === "admin" && source === "payout/rider" && (
+                                                        <>
+                                                            <td className="align-middle small">{indexOfFirstItem + i + 1}</td>
+                                                            <td className="align-middle small">{data.payoutNumber || "—"}</td>
+                                                            <td className="align-middle small text-capitalize">
+                                                                {data.riderName}
+                                                                <p className="m-0 text-lowercase opacity-75 small">{data.riderEmail}</p>
                                                             </td>
-                                                        ))
+                                                            <td className="align-middle small">{data.totalDelivery}</td>
+                                                            <td className="align-middle small">₱{data.totalAmount.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                                                            <td className="align-middle small">₱{(data.taxAmount ?? 0).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                                                            <td className="align-middle small">₱{data.netAmount?.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                                                            <td className="align-middle small">
+                                                                {data?.e_WalletAcc?.number}
+                                                                <p className="m-0 text-capitalize opacity-75 small">{data?.e_WalletAcc?.type}</p>
+                                                            </td>
+                                                            <td className="align-middle small text-capitalize">
+                                                                <span className={`badge ${data.status === 'paid' ? 'bg-success' : 'bg-warning'}`}>{data.status}</span>
+                                                            </td>
+                                                            <td className="align-middle small">{new Date(data.date).toLocaleDateString('en-PH', { year: 'numeric', month: 'short', day: 'numeric' })}</td>
+                                                            <td className="align-middle text-center">{renderEllipsisMenu(data, i, source)}</td>
+                                                        </>
+                                                    )}
+
+                                                    {/* ─────── ADMIN - FARMER NO DEVICE ─────── */}
+                                                    {role === "admin" && source === "payout/offlineFarmer" && (
+                                                        <>
+                                                            <td className="align-middle small">{indexOfFirstItem + i + 1}</td>
+                                                            <td className="align-middle small">{data.payoutNumber || "—"}</td>
+                                                            <td className="align-middle small text-capitalize">
+                                                                {data.farmerName}
+                                                                <p className="m-0 text-uppercase opacity-75" style={{ fontSize: "10px" }}>{data.farmerContact || "N/A"}</p>
+                                                            </td>
+                                                            <td className="align-middle small">{data.totalOrders || data.orders?.length || 0}</td>
+                                                            <td className="align-middle small">₱{data.totalAmount.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                                                            <td className="align-middle small">₱{(data.taxAmount ?? 0).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                                                            <td className="align-middle small">₱{data.netAmount?.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                                                            <td className="align-middle small text-capitalize">
+                                                                <span className={`badge ${data.status === 'paid' ? 'bg-success' : 'bg-warning'}`}>{data.status}</span>
+                                                            </td>
+                                                            <td className="align-middle small">{new Date(data.date).toLocaleDateString('en-PH', { year: 'numeric', month: 'short', day: 'numeric' })}</td>
+                                                            <td className="align-middle text-center">{renderEllipsisMenu(data, i, source)}</td>
+                                                        </>
+                                                    )}
+
+                                                    {/* ─────── SELLER - PAYOUT ─────── */}
+                                                    {role === "seller" && source === "payout" && (
+                                                        <>
+                                                            <td className="align-middle small">{indexOfFirstItem + i + 1}</td>
+                                                            <td className="align-middle small">{data.payoutNumber}</td>
+                                                            <td className="align-middle small text-capitalize">
+                                                                {data.sellerName}
+                                                                <p className="m-0 text-lowercase opacity-75 small">{data.sellerEmail}</p>
+                                                            </td>
+                                                            <td className="align-middle small">{data.orders.length}</td>
+                                                            <td className="align-middle small">₱{data.totalAmount.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                                                            <td className="align-middle small">₱{(data.taxAmount ?? 0).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                                                            <td className="align-middle small">₱{data.netAmount?.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                                                            <td className="align-middle small">
+                                                                {data?.e_WalletAcc?.number}
+                                                                <p className="m-0 text-capitalize opacity-75 small">{data?.e_WalletAcc?.type}</p>
+                                                            </td>
+                                                            <td className="align-middle small text-capitalize">
+                                                                <span className={`badge ${data.status === 'paid' ? 'bg-success' : 'bg-warning'}`}>{data.status}</span>
+                                                            </td>
+                                                            <td className="align-middle small">{new Date(data.date).toLocaleDateString('en-PH', { year: 'numeric', month: 'short', day: 'numeric' })}</td>
+                                                            <td className="align-middle text-center">{renderEllipsisMenu(data, i, source)}</td>
+                                                        </>
+                                                    )}
+
+                                                    {/* ─────── PAYMENT - ADMIN ─────── */}
+                                                    {source === "payment" && role === "admin" && (
+                                                        <>
+                                                            <td className="align-middle small">{indexOfFirstItem + i + 1}</td>
+                                                            <td className="align-middle small">{data.refNo}</td>
+                                                            <td className="align-middle small text-capitalize">
+                                                                {data.accountName}
+                                                                <p className="m-0 text-lowercase opacity-75 small">{data.accountEmail}</p>
+                                                            </td>
+                                                            <td className="align-middle small">₱{data.totalAmount.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                                                            <td className="align-middle small text-capitalize">{data.paymentMethod}</td>
+                                                            <td className="align-middle small text-capitalize">{data.status}</td>
+                                                            <td className="align-middle small">
+                                                                <p className="m-0">{new Date(data.paidAt.date).toLocaleDateString('en-PH', { year: 'numeric', month: 'short', day: 'numeric' })}</p>
+                                                                <p className="m-0 text-muted">{data.paidAt.time}</p>
+                                                            </td>
+                                                            <td className="align-middle small">
+                                                                {!data.imageFile ? (
+                                                                    <p className="m-0 text-muted text-center">—</p>
+                                                                ) : (
+                                                                    <div className="w-100 border rounded shadow-sm p-2 position-relative" style={{ maxWidth: "120px", cursor: "pointer" }} onClick={() => openImageModal(data.imageFile)}>
+                                                                        <div className="d-flex align-items-center gap-2">
+                                                                            <div className="border shadow-sm rounded" style={{ width: "40px", height: "40px", overflow: "hidden", flexShrink: 0 }}>
+                                                                                <img src={data.imageFile} alt={data.imageFile} className="h-100 w-100" style={{ objectFit: "cover" }} />
+                                                                            </div>
+                                                                            <div className="flex-grow-1" style={{ minWidth: 0 }}>
+                                                                                <p className="m-0 fw-bold text-truncate" style={{ fontSize: "0.75rem" }}>{data.imageFile.split('/').pop()}</p>
+                                                                                <p className="m-0 text-muted" style={{ fontSize: "0.65rem" }}>Image</p>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                )}
+                                                            </td>
+                                                            <td className="align-middle small text-capitalize">{data.type}</td>
+                                                        </>
+                                                    )}
+
+                                                    {/* ─────── PAYMENT - SELLER ─────── */}
+                                                    {source === "payment" && role === "seller" && (
+                                                        <>
+                                                            <td className="align-middle small">{indexOfFirstItem + i + 1}</td>
+                                                            <td className="align-middle small">{data.refNo}</td>
+                                                            <td className="align-middle small text-capitalize">
+                                                                {data.accountName}
+                                                                <p className="m-0 text-lowercase opacity-75 small">{data.accountEmail}</p>
+                                                            </td>
+                                                            <td className="align-middle small">₱{data.totalAmount.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                                                            <td className="align-middle small text-capitalize">{data.paymentMethod}</td>
+                                                            <td className="align-middle small text-capitalize">{data.status}</td>
+                                                            <td className="align-middle small">
+                                                                <p className="m-0">{new Date(data.paidAt.date).toLocaleDateString('en-PH', { year: 'numeric', month: 'short', day: 'numeric' })}</p>
+                                                                <p className="m-0 text-muted">{data.paidAt.time}</p>
+                                                            </td>
+                                                            <td className="align-middle small text-capitalize">{data.type}</td>
+                                                        </>
                                                     )}
 
                                                     {isSelect && (
-                                                        <td className="p-3">
+                                                        <td className="align-middle">
                                                             <div className="d-flex align-items-center justify-content-center">
                                                                 <input type="checkbox" checked={selectedIds.has(data._id)} onChange={() => toggleSelect(data._id)} style={{ cursor: "pointer" }} />
                                                             </div>
@@ -1608,7 +1515,6 @@ const Transactions = () => {
                 )}
             </div>
 
-            {/* Custom Range Modal */}
             <CustomRangeModal
                 show={showCustomRangeModal}
                 onClose={handleCustomRangeClose}

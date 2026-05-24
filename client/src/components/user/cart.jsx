@@ -169,12 +169,11 @@ const Cart = () => {
                     <div className="row rounded">
                         <div className="col-md-6 d-flex align-items-center gap-1">
                             <button 
-                                className="btn btn-outline-success"
+                                className="btn btn-outline-success d-flex d-md-none"
                                 onClick={()=> setOpenCart(false)}
                             >
                                 <i className="fa fa-arrow-left"></i>
                             </button>
-
                             <p className="m-0 fw-bold text-capitalize fs-3 p-2 text-success">Cart item</p>
                         </div>
                     </div>
