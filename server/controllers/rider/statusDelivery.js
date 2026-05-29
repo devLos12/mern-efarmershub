@@ -13,7 +13,7 @@ import { v2 as cloudinary } from "cloudinary";
 import SalesList from "../../models/salesReport.js";
 import Product from "../../models/products.js";
 import ShippingFee from "../../models/shippingFee.js";
-
+import Notification from "../../models/notification.js";
 
 
 
@@ -541,8 +541,24 @@ const updateStatusDelivery = async (req, res) => {
             rider.status = "available";
 
 
+
             // Rider payout is still created regardless (para sa delivery fee)
             await createOrUpdateRiderPayout(riderId, order._id);
+
+            await Notification.create({
+                sender: { id: riderId, role: "rider" },
+                recipient: { id: order.userId, role: "user" },
+                message: `Your order #${order.orderId} has been delivered successfully! Thank you for shopping with E-Farmers Hub.`,
+                link: "orderdetails",
+                type: "order delivered",
+                meta: {
+                    orderId: order._id,
+                    orderIdShort: order.orderId
+                }
+            });
+            io.emit('user:order-delivered');
+            
+
             await order.save();
             await rider.save();
 

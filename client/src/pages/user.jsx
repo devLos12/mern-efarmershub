@@ -236,10 +236,16 @@ const User = ({setUserAuth}) => {
         getNotification();
     })
 
-    
+
+    socket.on('user:order-delivered', (e) => {
+        getNotification();
+    })
+
+      
     return ()=>{
         socket.off("user notif");
         socket.off("user:notifier");
+        socket.off("user:order-delivered");
     }
   },[userData?._id]);
 
