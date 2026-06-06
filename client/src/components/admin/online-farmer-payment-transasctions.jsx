@@ -199,10 +199,10 @@ const SellerPaymentTransactions = () => {
                 <div className="col">
                     <div className="mt-3 mt-md-0 text-end d-flex justify-content-end gap-2">
                         <button
-                            className="bg-hover d-flex border rounded align-items-center px-2 shadow-sm gap-2 border-1"
+                            className="btn btn-dark btn-sm d-flex align-items-center"
                             onClick={handleRefresh}
                         >
-                            <i className={`fa fa-sync small text-dark ${isRefreshing ? "fa-spin" : ""}`}></i>
+                            <i className={`fa fa-sync small  ${isRefreshing ? "fa-spin" : ""}`}></i>
                             <p className="m-0 small text-capitalize">refresh</p>
                         </button>
                     </div>

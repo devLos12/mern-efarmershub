@@ -389,14 +389,14 @@ const Inventory = () => {
                             </div>
 
                             {/* Refresh Button */}
-                            <div className="col justify-content-end d-flex ">
+                            <div className="col justify-content-end d-flex align-items-center ">
                                 <button 
-                                    className="btn btn-sm btn-success d-flex align-items-center gap-2 mt-2 mt-md-0  "
+                                    className="btn btn-sm btn-dark d-flex align-items-center gap-2 mt-2 mt-md-0  "
                                     onClick={handleRefresh}
                                     disabled={isRefreshing}
                                     style={{ fontSize: "14px" }}
                                 >
-                                    <i className={`fa fa-refresh ${isRefreshing ? 'fa-spin' : ''}`}></i>
+                                    <i className={`fa fa-refresh small ${isRefreshing ? 'fa-spin' : ''}`}></i>
                                     {isRefreshing ? 'Refreshing...' : 'Refresh'}
                                 </button>
                             </div>

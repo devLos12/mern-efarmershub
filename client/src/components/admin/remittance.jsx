@@ -760,15 +760,15 @@ const RiderRemittances = () => {
                             {/* Refresh */}
                             <button
                                 disabled={isRefreshing}
-                                className="bg-hover d-flex border rounded align-items-center px-2 shadow-sm gap-2 border-1"
+                                className="btn btn-sm btn-dark d-flex align-items-center gap-1 "
                                 onClick={handleRefresh}>
-                                <i className={`fa fa-sync small text-dark ${isRefreshing ? "fa-spin opacity-50" : ""}`}></i>
+                                <i className={`fa fa-sync small  ${isRefreshing ? "fa-spin opacity-50" : ""}`}></i>
                                 <p className="m-0 small text-capitalize">{isRefreshing ? "refreshing..." : "refresh"}</p>
                             </button>
 
                             {/* Select toggle */}
                             <button
-                                className={`btn ${isSelect ? "btn-dark" : "btn-success"} btn-sm text-capitalize rounded-3 shadow-sm d-flex align-items-center gap-1`}
+                                className={`btn ${isSelect ? "btn-danger" : "btn-success"} btn-sm text-capitalize  shadow-sm d-flex align-items-center gap-1`}
                                 onClick={() => { setIsAllSelected(false); setSelectedIds(new Set()); setIsSelect((prev) => !prev); }}
                                 style={{ cursor: "pointer" }}>
                                 <i className={`bx ${isSelect ? "bx-x fs-6" : "bx-check-circle fs-6"}`}></i>

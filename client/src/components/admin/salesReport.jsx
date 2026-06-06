@@ -934,12 +934,12 @@ const SalesReport = () => {
                             Sales Overview
                         </h6>
                         <button 
-                            className="btn btn-sm btn-success ms-auto d-flex gap-2 align-items-center"
+                            className="btn btn-sm btn-dark ms-auto d-flex gap-2 align-items-center"
                             onClick={handleRefresh}
                             disabled={isRefreshing}
                             title="Refresh Data"
                         >
-                            <i className={`fa fa-refresh ${isRefreshing ? 'fa-spin' : ''}`}></i>
+                            <i className={`fa fa-refresh small ${isRefreshing ? 'fa-spin' : ''}`}></i>
                             {isRefreshing? "Refreshing.." : "Refresh"}
                         </button>
                     </div>
@@ -1014,7 +1014,7 @@ const SalesReport = () => {
                                 )}
 
                                 <button 
-                                    className={`btn btn-sm ${isSelect ? "btn-dark" : "btn-success"} d-flex align-items-center gap-1`}
+                                    className={`btn btn-sm ${isSelect ? "btn-danger" : "btn-success"} d-flex align-items-center gap-1`}
                                     onClick={() => {
                                         setIsAllSelected(false);
                                         setSelectedIds(new Set());

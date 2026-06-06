@@ -25,10 +25,17 @@ const Announcement = () => {
     const height = useBreakpointHeight();
     const [openMenuId, setOpenMenuId] = useState(null);
     const [loading, setLoading] = useState(false);
+    const [isRefreshing, setisRefreshing] = useState(false);
+    
     
     // Pagination states
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage] = useState(10);
+    
+
+
+
+
 
     const menuRefs = useRef({});
     const buttonRefs = useRef({});
@@ -41,8 +48,7 @@ const Announcement = () => {
     },[location?.state?.title]);
 
     
-
-
+        
 
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -68,34 +74,63 @@ const Announcement = () => {
     }, [openMenuId]);
 
 
+    const fetchAnnoucement = () => {
+        
+        setLoading(true);
+
+        fetch(`${import.meta.env.VITE_API_URL}/api/getAnnouncement`, {
+            method: "GET",
+            credentials: "include"
+        })
+        .then(async(res) => {
+            const data = await res.json();
+            if(!res.ok) throw new Error(data.message);
+            return data;
+        })
+        .then((data) => {
+            setAnnouncement(data);
+        })
+        .catch((err) => {
+            setLoading(false);
+            console.log("Error: ", err.message)
+        })
+        .finally(() => setLoading(false));
+
+    }
+
+
+
+
+    const handleRefresh = () => {
+
+        setisRefreshing(true);
+
+        fetch(`${import.meta.env.VITE_API_URL}/api/getAnnouncement`, {
+            method: "GET",
+            credentials: "include"
+        })
+        .then(async(res) => {
+            const data = await res.json();
+            if(!res.ok) throw new Error(data.message);
+            return data;
+        })
+        .then((data) => {
+            setAnnouncement(data);
+        })
+        .catch((err) => {
+            setisRefreshing(false);
+            console.log("Error: ", err.message)
+        })
+        .finally(() => setisRefreshing(false));
+
+    }
+
+
+
+
+
     useEffect(() => {
-
-        const getAnnouncement = () => {
-
-
-            setLoading(true);
-
-            fetch(`${import.meta.env.VITE_API_URL}/api/getAnnouncement`, {
-                method: "GET",
-                credentials: "include"
-            })
-            .then(async(res) => {
-                const data = await res.json();
-                if(!res.ok) throw new Error(data.message);
-                return data;
-            })
-            .then((data) => {
-                setAnnouncement(data);
-            })
-            .catch((err) => {
-                setLoading(false);
-                console.log("Error: ", err.message)
-            })
-            .finally(() => setLoading(false));
-        }
-
-        getAnnouncement();
-
+        fetchAnnoucement();
     },[addAnnouncement?.trigger]);
 
 
@@ -110,6 +145,11 @@ const Announcement = () => {
     useEffect(() => {
         setCurrentPage(1);
     }, [announcement.length]);
+
+
+    
+
+
 
 
     if(loading) return (
@@ -127,170 +167,208 @@ const Announcement = () => {
     return (
         <>
         <div className="p-2">
-            {announcement?.length > 0 && (
-                <div className="row g-0 bg-white p-2 shadow-sm rounded justify-content-between border">
-                    <div className="col-auto">
-                        <button className="bg-success rounded border-0 p-2 
-                        text-capitalize text-white small px-3 shadow-sm"
-                        style={{outline: "none"}}
-                        onClick={()=> setAddAnnouncement((prev) => ({...prev, isShow: true, data: {} }))}
-                        >
-                            <i className="fa fa-plus-circle me-2"></i>
+            <div className="row g-0 bg-white p-2 shadow-sm rounded justify-content-end border">
+                <div className="col-auto d-flex gap-2  center">
+
+                    
+                    <button className="btn btn-dark btn-opacity-10 btn-sm d-flex align-items-center gap-2" 
+                    
+                    onClick={handleRefresh}>
+                        <i className={`fa fa-sync small ${isRefreshing ? 'fa-spin' : ''}`}></i>
+                        <p className="m-0 small text-capitalize">refresh</p>
+                    </button>
+
+
+                    <button className="btn btn-success btn-sm d-flex gap-2 align-items-center"
+                    style={{outline: "none"}}
+                    onClick={()=> setAddAnnouncement((prev) => ({...prev, isShow: true, data: {} }))}
+                    >
+                        <i className="fa fa-plus-circle"></i>
+                        <span className="d-none d-md-flex small">
                             add announcement
-                        </button>   
-                    </div>
-                    <div className="col-auto d-flex align-items-center">
-                        <p className="m-0 small text-muted mt-2 mt-lg-0">
-                            <i className="fa fa-bullhorn me-1 "></i>
-                            Total: {announcement.length} announcement{announcement.length !== 1 ? 's' : ''}
-                        </p>
-                    </div>
+                        </span>
+                    </button>   
                 </div>
-            )}
+            </div>
             
             
-            <div className="rounded  border mt-2"
-            >
                 {announcement.length > 0 ? (
                     <>
-                    <div className="bg-white" style={{overflowY: "auto"}}>
-                        <table className="w-100"
-                        >
-                            <thead className="position-sticky top-0 z-1 bg-white border-bottom shadow-sm">
-                                <tr>
-                                    {["#", "title" , "crop name", "description", "start date", "end date", "banner"]
-                                    .map((data, i) => (
-                                        <th key={i} className="text-capitalize p-3 small fw-semibold text-success ">{data}</th>
-                                    ))}
-                                    <th className="text-capitalize p-3 text-center small fw-semibold text-success">action</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {currentItems?.map((data, i) => {
-                                    const isMenuOpen = openMenuId === data._id;
-                                    const actualIndex = indexOfFirstItem + i + 1;
+                    <div className="rounded border shadow-sm mt-1 bg-white position-relative overflow-hidden">
 
-                                    return(
-                                        <tr key={i} className="border-bottom">
-                                            <td className="text-capitalize p-3 small">{actualIndex}</td>
-                                            <td className="text-capitalize p-3 small">{data.title}</td>
-                                            <td className="text-capitalize p-3 small">{data.cropName}</td>
+                        {isRefreshing && (
+                            <div className="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center bg-white bg-opacity-100" style={{ zIndex: 10 }}>
+                                <div className="text-center">
+                                    <div className="spinner-border text-success mb-2" role="status"><span className="visually-hidden">Loading...</span></div>
+                                    <p className="small text-muted mb-0">Refreshing orders...</p>
+                                </div>
+                            </div>
+                        )}
 
-                                            <td className="text-capitalize p-3 small">
-                                                <p className="m-0"
-                                                    style={{
-                                                    wordWrap: "break-word",
-                                                    whiteSpace: "normal",
-                                                    maxWidth: "160px",
-                                                }}
-                                                >{data.description}</p>
-                                            </td>
-                                            <td className="text-capitalize p-3 small">
-                                                {new Date(data.startDate).toLocaleDateString('en-PH', {
-                                                    year: 'numeric', 
-                                                    month: 'short', 
-                                                    day: 'numeric' 
-                                                })}
-                                            </td>
-                                            <td className="text-capitalize p-3 small">
-                                                {new Date(data.endDate).toLocaleDateString('en-PH', {
-                                                    year: 'numeric', 
-                                                    month: 'short', 
-                                                    day: 'numeric'
-                                                })}
-                                            </td>
-                                            <td className="text-capitalize p-3 small" >
-                                                {!data.imageFile ? (
-                                                    <p className="m-0 text-capitalize small text-muted">no image</p>
-                                                ) : (
-                                                <div className="border border-success border-opacity-25 shadow-sm rounded overflow-hidden " 
-                                                    style={{ height: "60px" , width: "100px"}}
-                                                >
-                                                    <img 
-                                                    src={data.imagePreview || data.imageFile.startsWith("https") ? data.imageFile : `${import.meta.env.VITE_API_URL}/api/Uploads/${data.imageFile}`}  
-                                                    alt={data.imagePreview || data.imageFile}
-                                                    className="w-100 h-100"
-                                                    style={{objectFit: "cover"}}
-                                                    />
-                                                </div>
-                                                )}
-                                            </td>
-                                            <td className="p-3 position-relative">
-                                                <div 
-                                                ref={(el) => (buttonRefs.current[data._id] = el )}
-                                                className="position-relative mx-auto d-flex align-items-center
-                                                justify-content-center shadow-sm border rounded-circle bg-white"
-                                                onClick={(e) => {
-                                                    setOpenMenuId(isMenuOpen ? null: data._id);
-                                                }}
-                                                style={{
-                                                    cursor: "pointer", 
-                                                    width: "32px", 
-                                                    height: "32px",
-                                                    transition: "all 0.2s ease"
-                                                }}
-                                                >
-                                                    <i className="fa fa-ellipsis"></i>
 
-                                                    {isMenuOpen && (
-                                                        <div 
-                                                        ref={(el) => (menuRefs.current[data._id] = el)} 
-                                                        className="card position-absolute top-100 end-0 p-2 z-1 border border-success border-opacity-25"
+                        <div className="table-responsive" style={{overflowY: "auto"}}>
+                            <table className="table table-hover mb-5"
+                            >
+                                <thead className="bg-light">
+                                    <tr>
+                                        {["#", "title" , "crop name", "description", "start date", "end date", "status", "banner"]
+                                        .map((data, i) => (
+                                            <th key={i} className="text-uppercase small text-success">{data}</th>
+                                        ))}
+                                        <th className="text-uppercase small text-success text-center">action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {currentItems?.map((data, i) => {
+                                        const isMenuOpen = openMenuId === data._id;
+                                        const actualIndex = indexOfFirstItem + i + 1;
+
+                                        return(
+                                            <tr key={i} className="border-bottom">
+                                                <td className="align-middle small">{actualIndex}</td>
+                                                <td className="align-middle small text-capitalize">{data.title}</td>
+                                                <td className="align-middle small text-capitalize">{data.cropName}</td>
+
+                                                <td className="align-middle small">
+                                                    <p className="m-0"
                                                         style={{
-                                                            width: "220px", 
-                                                            cursor: "default",
-                                                            boxShadow: "0px 2px 10px rgba(0, 0, 0, 0.25)",
-                                                        }}
-                                                        onClick={(e)=> e.stopPropagation()}
-                                                        >
-                                                            <div className="px-2 rounded 
-                                                            text-capitalize p-2 d-flex align-items-center gap-2"
-                                                            style={{
-                                                                cursor: "pointer",
-                                                                transition: "background-color 0.2s ease"
-                                                            }}
-                                                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f3f4f6'}
-                                                            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                                                            onClick={()=> {
-                                                                setAddAnnouncement((prev) => ({
-                                                                    ...prev, 
-                                                                    isShow: true,
-                                                                    data: data
-                                                                }))
-                                                                setOpenMenuId(null);
-                                                            }}
-                                                            >
-                                                                <i className="bx bx-pencil text-primary"></i>
-                                                                <p className="m-0 capitalize small text-primary">edit</p>
-                                                            </div>
+                                                        wordWrap: "break-word",
+                                                        whiteSpace: "normal",
+                                                        maxWidth: "160px",
+                                                    }}
+                                                    >{data.description}</p>
+                                                </td>
+                                                <td className="align-middle  small">
+                                                    {new Date(data.startDate).toLocaleDateString('en-PH', {
+                                                        year: 'numeric', 
+                                                        month: 'short', 
+                                                        day: 'numeric' 
+                                                    })}
+                                                </td>
+                                                <td className="align-middle  small">
+                                                    {new Date(data.endDate).toLocaleDateString('en-PH', {
+                                                        year: 'numeric', 
+                                                        month: 'short', 
+                                                        day: 'numeric'
+                                                    })}
+                                                </td>
+                                                <td className="align-middle small">
+                                                    {(() => {
 
-                                                            <div className="px-2 rounded 
-                                                            text-capitalize p-2 d-flex align-items-center gap-2"
-                                                            style={{
-                                                                cursor: "pointer",
-                                                                transition: "background-color 0.2s ease"
-                                                            }}
-                                                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#fee2e2'}
-                                                            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                                                            onClick={()=> {
-                                                                setText("do you want to delete?")
-                                                                setAnnouncementModal((prev) => ({...prev, isShow: true, id: data._id }));
-                                                                setOpenMenuId(null);    
-                                                            }}
-                                                            >
-                                                                <i className="bx bx-trash text-danger"></i>
-                                                                <p className="m-0 capitalize small text-danger">delete</p>
-                                                            </div>
-                                                        </div>
+                                                        const today = new Date(
+                                                            new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Manila" })
+                                                        );
+                                                        const start = new Date(data.startDate.slice(0, 10)); 
+                                                        const end = new Date(data.endDate.slice(0, 10));
+                                                        
+                                                        if (today < start) {
+                                                            return <span className="badge bg-warning bg-opacity-10 text-warning text-capitalize">upcoming</span>;
+                                                        } else if (today > end) {
+                                                            return <span className="badge bg-danger bg-opacity-10 text-danger text-capitalize">expired</span>;
+                                                        } else {
+                                                            return <span className="badge bg-success bg-opacity-10 text-success text-capitalize">active</span>;
+                                                        }
+                                                    })()}
+                                                </td>
+                                                <td className="align-middle  small" >
+
+                                                    {!data.imageFile ? (
+                                                        <p className="m-0 text-capitalize small text-muted">no image</p>
+                                                    ) : (
+                                                    <div className="border border-success border-opacity-25 shadow-sm rounded overflow-hidden " 
+                                                        style={{ height: "60px" , width: "100px"}}
+                                                    >
+                                                        <img 
+                                                        src={data.imagePreview || data.imageFile.startsWith("https") ? data.imageFile : `${import.meta.env.VITE_API_URL}/api/Uploads/${data.imageFile}`}  
+                                                        alt={data.imagePreview || data.imageFile}
+                                                        className="w-100 h-100"
+                                                        style={{objectFit: "cover"}}
+                                                        />
+                                                    </div>
                                                     )}
-                                                </div>
-                                            </td>
-                                        </tr>
+
+
+
+                                                </td>
+                                                <td className="align-middle position-relative">
+                                                    <div 
+                                                    ref={(el) => (buttonRefs.current[data._id] = el )}
+                                                    className="position-relative mx-auto d-flex align-items-center
+                                                    justify-content-center shadow-sm border rounded-circle bg-white"
+                                                    onClick={(e) => {
+                                                        setOpenMenuId(isMenuOpen ? null: data._id);
+                                                    }}
+                                                    style={{
+                                                        cursor: "pointer", 
+                                                        width: "32px", 
+                                                        height: "32px",
+                                                        transition: "all 0.2s ease"
+                                                    }}
+                                                    >
+                                                        <i className="fa fa-ellipsis"></i>
+
+                                                        {isMenuOpen && (
+                                                            <div 
+                                                            ref={(el) => (menuRefs.current[data._id] = el)} 
+                                                            className="card position-absolute top-100 end-0 p-2 z-1 border border-success border-opacity-25"
+                                                            style={{
+                                                                width: "220px", 
+                                                                cursor: "default",
+                                                                boxShadow: "0px 2px 10px rgba(0, 0, 0, 0.25)",
+                                                            }}
+                                                            onClick={(e)=> e.stopPropagation()}
+                                                            >
+                                                                <div className="px-2 rounded 
+                                                                text-capitalize p-2 d-flex align-items-center gap-2"
+                                                                style={{
+                                                                    cursor: "pointer",
+                                                                    transition: "background-color 0.2s ease"
+                                                                }}
+                                                                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f3f4f6'}
+                                                                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                                                                onClick={()=> {
+                                                                    setAddAnnouncement((prev) => ({
+                                                                        ...prev, 
+                                                                        isShow: true,
+                                                                        data: data
+                                                                    }))
+                                                                    setOpenMenuId(null);
+                                                                }}
+                                                                >
+                                                                    <i className="bx bx-pencil text-primary"></i>
+                                                                    <p className="m-0 capitalize small text-primary">edit</p>
+                                                                </div>
+
+                                                                <div className="px-2 rounded 
+                                                                text-capitalize p-2 d-flex align-items-center gap-2"
+                                                                style={{
+                                                                    cursor: "pointer",
+                                                                    transition: "background-color 0.2s ease"
+                                                                }}
+                                                                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#fee2e2'}
+                                                                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                                                                onClick={()=> {
+                                                                    setText("do you want to delete?")
+                                                                    setAnnouncementModal((prev) => ({...prev, isShow: true, id: data._id }));
+                                                                    setOpenMenuId(null);    
+                                                                }}
+                                                                >
+                                                                    <i className="bx bx-trash text-danger"></i>
+                                                                    <p className="m-0 capitalize small text-danger">delete</p>
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        )}
                                     )}
-                                )}
-                            </tbody>
-                        </table>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
+
+
                     {/* Pagination Controls */}
                     <div className="d-flex justify-content-between align-items-center border-top p-3 bg-white">
                         <div className="text-muted small">
@@ -364,7 +442,6 @@ const Announcement = () => {
                     )}
 
             </div>
-        </div>
 
         
         <Toast 

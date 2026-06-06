@@ -677,7 +677,7 @@ const Accounts = () => {
                                 </select>
                             )}
                             <button
-                                className="d-flex align-items-center px-3 py-1 shadow-sm border gap-2 rounded"
+                                className="btn btn-dark btn-sm d-flex gap-1 align-items-center"
                                 onClick={handleRefresh}
                                 disabled={isRefreshing}>
                                 <i className={`fa fa-sync small ${isRefreshing ? 'fa-spin' : ''}`}></i>

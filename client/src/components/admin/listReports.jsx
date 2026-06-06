@@ -790,7 +790,7 @@ const ListReports = () => {
                                 {getPeriodLabel()}
                             </span>
                             <button 
-                                className="btn btn-sm btn-success d-flex align-items-center gap-2"
+                                className="btn btn-sm btn-dark d-flex align-items-center gap-2"
                                 onClick={handleRefresh}
                                 disabled={isRefreshing}
                                 title="Refresh Data">

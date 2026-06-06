@@ -30,31 +30,25 @@ const AddAnnouncement = () => {
 
 
     const hasChanges = () => {
-        if (!isUpdate) return true; // For add mode, always allow submit
-        
+        if (!isUpdate) return true;
         const original = addAnnouncement?.data;
-        
         return (
             formData.cropName !== original?.cropName ||
             formData.title !== original?.title ||
             formData.description !== original?.description ||
             formData.startDate?.split('T')[0] !== original?.startDate?.split('T')[0] ||
             formData.endDate?.split('T')[0] !== original?.endDate?.split('T')[0] ||
-            imagePreview !== null // New image uploaded
+            imagePreview !== null
         );
     };
 
-
-    // ✅ Get today's date in YYYY-MM-DD format
     const getTodayDate = () => {
         const today = new Date();
         return today.toISOString().split('T')[0];
     };
 
-    // ✅ Get minimum end date (start date + 1 day)
     const getMinEndDate = () => {
         if (!formData.startDate) return getTodayDate();
-        
         const startDate = new Date(formData.startDate);
         startDate.setDate(startDate.getDate() + 1);
         return startDate.toISOString().split('T')[0];
@@ -62,7 +56,7 @@ const AddAnnouncement = () => {
 
 
     useEffect(() => {
-        if(isUpdate){
+        if (isUpdate) {
             setFormData(addAnnouncement?.data);
             setImagePreviuos(addAnnouncement?.data?.imageFile);
         } else {
@@ -73,118 +67,73 @@ const AddAnnouncement = () => {
                 startDate: "",
                 endDate: "",
                 imageFile: null,
-            })
+            });
             setImagePreview(null);
         }
     }, [isUpdate, addAnnouncement?.data]);
 
-  
+
     const handleChange = (e) => {
         const { name, value } = e.target;
-        
-    
-        setFormData(prev => ({
-            ...prev,
-            [name]: value
-        }));
+        setFormData(prev => ({ ...prev, [name]: value }));
     };
-
 
     const handleDateBlur = (e) => {
         const { name, value } = e.target;
-        
-        if (!value) return; // Skip if empty
-        
-        // ✅ Validate start date
+        if (!value) return;
+
         if (name === "startDate") {
             const selectedDate = new Date(value);
             const today = new Date();
             today.setHours(0, 0, 0, 0);
-            
             if (selectedDate < today) {
                 showNotification("Start date cannot be in the past", "error");
-                setFormData(prev => ({
-                    ...prev,
-                    startDate: ""
-                }));
+                setFormData(prev => ({ ...prev, startDate: "" }));
                 return;
             }
         }
-        
-        // ✅ Validate end date
+
         if (name === "endDate" && formData.startDate) {
             const endDate = new Date(value);
             const startDate = new Date(formData.startDate);
             startDate.setDate(startDate.getDate() + 1);
-            
             if (endDate < startDate) {
                 showNotification("End date must be at least 1 day after start date", "error");
-                setFormData(prev => ({
-                    ...prev,
-                    endDate: ""
-                }));
+                setFormData(prev => ({ ...prev, endDate: "" }));
                 return;
             }
         }
     };
 
-
     const handleFileChange = async (e) => {
         const file = e.target.files[0];
         if (!file) return;
-
-        try {   
-            const options = {
-                maxSizeMB: 0.5,
-                maxWidthOrHeight: 1920,
-                useWebWorker: true
-            };
-            
+        try {
+            const options = { maxSizeMB: 0.5, maxWidthOrHeight: 1920, useWebWorker: true };
             const compressedFile = await imageCompression(file, options);
-            
-            setFormData(prev => ({
-                ...prev,
-                imageFile: compressedFile
-            }));
-            
+            setFormData(prev => ({ ...prev, imageFile: compressedFile }));
             const reader = new FileReader();
             reader.onloadend = () => {
-                setFormData((prev) => ({
-                    ...prev,
-                    imagePreview: reader.result 
-                }))
+                setFormData(prev => ({ ...prev, imagePreview: reader.result }));
                 setImagePreview(reader.result);
             };
             reader.readAsDataURL(compressedFile);
-            
         } catch (error) {
             console.error('Compression error:', error);
             showNotification('Failed to compress image. Please try again.', 'error');
         }
     };
 
-
     const handleFileRemove = () => {
-        if(isUpdate){
-            setFormData((prev) => ({
-                ...prev, 
-                imageFile: imagePreview && imagePreviuos 
-            }))
+        if (isUpdate) {
+            setFormData(prev => ({ ...prev, imageFile: imagePreviuos }));
         }
-
         setImagePreview(null);
+        if (handleRefFile.current) handleRefFile.current.value = null;
+    };
 
-        if(handleRefFile.current){
-            handleRefFile.current.value = null
-        }
-    }
-
-
-    // ✅ Check if form is valid
     const isFormValid = () => {
         const { cropName, title, description, startDate, endDate } = formData;
-        
-        // Check if all required fields are filled
         const allFieldsFilled = (
             cropName?.trim() !== "" &&
             title?.trim() !== "" &&
@@ -192,67 +141,42 @@ const AddAnnouncement = () => {
             startDate !== "" &&
             endDate !== ""
         );
-        
-        // For add mode: all fields + image required
-        if (!isUpdate) {
-            return allFieldsFilled && imagePreview !== null;
-        }
-        
-        // For update mode: all fields required + must have changes + must have image (existing or new)
+        if (!isUpdate) return allFieldsFilled && imagePreview !== null;
         return (
             allFieldsFilled &&
-            hasChanges() && // ✅ Must have changes to enable save
+            hasChanges() &&
             (imagePreview !== null || imagePreviuos !== null)
         );
     };
 
-
-    
     const handleSubmit = async (e) => {
         e.preventDefault();
-        
         setIsUploading(true);
 
         const submitData = new FormData();
-        
-        if(formData?._id) {
-            submitData.append("id", formData?._id)
-        }
+        if (formData?._id) submitData.append("id", formData?._id);
         submitData.append('name', formData.cropName);
         submitData.append('title', formData.title);
         submitData.append('description', formData.description);
         submitData.append('startDate', formData.startDate);
         submitData.append('endDate', formData.endDate);
-        
-        if (formData.imageFile) {
-            submitData.append('image', formData.imageFile);
-        }
+        if (formData.imageFile) submitData.append('image', formData.imageFile);
 
-        const endPoint = isUpdate 
-        ? "editAnnouncement"
-        : "addAnnouncement"
+        const endPoint = isUpdate ? "editAnnouncement" : "addAnnouncement";
 
         try {
             const res = await fetch(`${import.meta.env.VITE_API_URL}/api/${endPoint}`, {
                 method: isUpdate ? "PATCH" : "POST",
                 body: submitData,
                 credentials: "include"
-            })
+            });
             const data = await res.json();
-
-            if(!res.ok) {
+            if (!res.ok) {
                 showNotification(data.message || 'Failed to save announcement', 'error');
                 return;
             }
-
-            showNotification(data.message || (isUpdate ? 'Announcement updated successfully!' : 'Announcement created successfully!'), 'success');
-            
-            setAddAnnouncement((prev) => ({
-                ...prev, 
-                trigger: !prev.trigger,
-                isShow: false
-            }));
-                        
+            showNotification(data.message || (isUpdate ? 'Announcement updated!' : 'Announcement created!'), 'success');
+            setAddAnnouncement(prev => ({ ...prev, trigger: !prev.trigger, isShow: false }));
         } catch (error) {
             console.error("Error:", error.message);
             showNotification(error.message, 'error');
@@ -261,231 +185,257 @@ const AddAnnouncement = () => {
         }
     };
 
-
+    // Resolve current banner image to display
+    const currentImage = (() => {
+        if (imagePreview) return imagePreview;
+        if (isUpdate && formData.imageFile && typeof formData.imageFile === 'string') return formData.imageFile;
+        return null;
+    })();
 
 
     return (
-        <>
-            <div className="container-fluid position-fixed top-0 start-0 end-0 vh-100 bg-darken"
-                style={{ zIndex: 99 }}
+        <div
+            className="position-fixed top-0 start-0 end-0 bottom-0 d-flex align-items-start justify-content-center"
+            style={{ zIndex: 99, backgroundColor: "rgba(0,0,0,0.45)", padding: "1.25rem 1rem", overflowY: "auto" }}
+        >
+            <div
+                className="w-100 bg-white rounded-4 shadow-lg"
+                style={{ maxWidth: "560px", marginTop: "auto", marginBottom: "auto" }}
             >
-                <div className="row justify-content-center mt-4">
-                    <div className="col-12 col-md-8 col-lg-6">
-                        <div className="card shadow-lg border-0 position-relative" 
-                            style={{ overflow: "hidden" }}
+                {/* ── Header ── */}
+                <div className="d-flex align-items-center justify-content-between px-4 pt-4 pb-3 border-bottom">
+                    <div className="d-flex align-items-center gap-2">
+                        <div
+                            className="d-flex align-items-center justify-content-center rounded-3 bg-success bg-opacity-10"
+                            style={{ width: 36, height: 36 }}
                         >
-                            <button 
-                                className="btn btn-link position-absolute top-0 end-0 p-3 text-decoration-none"
-                                style={{ cursor: "pointer", zIndex: 1 }}
-                                onClick={() => setAddAnnouncement((prev) => ({...prev, isShow: false }))}
-                                disabled={isUploading}
+                            <i className={`bx ${isUpdate ? "bx-edit" : "bx-plus"} text-success fs-5`}></i>
+                        </div>
+                        <h6 className="mb-0 fw-bold text-dark text-capitalize" style={{ letterSpacing: "-0.2px" }}>
+                            {isUpdate ? "Edit Announcement" : "Add Announcement"}
+                        </h6>
+                    </div>
+                    <button
+                        type="button"
+                        className="btn btn-sm btn-light rounded-circle d-flex align-items-center justify-content-center p-0"
+                        style={{ width: 32, height: 32 }}
+                        onClick={() => setAddAnnouncement(prev => ({ ...prev, isShow: false }))}
+                        disabled={isUploading}
+                    >
+                        <i className="bx bx-x fs-5 text-secondary"></i>
+                    </button>
+                </div>
+
+                {/* ── Scrollable Body ── */}
+                <div
+                    className="px-4 py-3"
+                    style={{ overflowY: "auto", maxHeight: height - 160 }}
+                >
+                    {/* ── IMAGE BANNER (top, same as Upload) ── */}
+                    <div className="mb-4">
+                        <label className="form-label fw-semibold text-dark small mb-2">
+                            Image Banner
+                            <span className="text-danger ms-1">*</span>
+                        </label>
+
+                        {currentImage ? (
+                            <div
+                                className="position-relative rounded-3 overflow-hidden border border-success border-opacity-25"
+                                style={{ aspectRatio: "16/7", background: "#f8f9fa" }}
                             >
-                                <i className="bx bx-x fs-3 text-dark"></i>
-                            </button>
-
-                            <div className="card-header border-0 text-center pt-4 pb-3">
-                                <h5 className="m-0 text-capitalize fw-bold text-success">
-                                    {isUpdate ? "edit seasonal announcement" : "add seasonal announcement"}
-                                </h5>
+                                <img
+                                    src={currentImage}
+                                    alt="banner preview"
+                                    className="w-100 h-100"
+                                    style={{ objectFit: "cover" }}
+                                />
+                                {!isUploading && (
+                                    <button
+                                        type="button"
+                                        className="btn btn-sm btn-dark position-absolute d-flex align-items-center gap-1"
+                                        style={{ bottom: 10, right: 10, fontSize: "0.75rem", borderRadius: 8, opacity: 0.85 }}
+                                        onClick={handleFileRemove}
+                                    >
+                                        <i className="bx bx-trash-alt"></i> Remove
+                                    </button>
+                                )}
                             </div>
-                            
-                            <div>
-                                <div className="card-body px-4" 
-                                    style={{
-                                        overflowY: "auto",
-                                        maxHeight: height - 190,
-                                    }}
+                        ) : (
+                            <label
+                                htmlFor="inputBannerFile"
+                                className="d-flex flex-column align-items-center justify-content-center rounded-3 border border-2 border-dashed gap-2"
+                                style={{
+                                    aspectRatio: "16/7",
+                                    borderColor: "#c4e0c4",
+                                    background: "#f6fbf6",
+                                    cursor: isUploading ? "not-allowed" : "pointer",
+                                    transition: "background 0.2s",
+                                }}
+                            >
+                                <div
+                                    className="d-flex align-items-center justify-content-center rounded-circle bg-success bg-opacity-10"
+                                    style={{ width: 48, height: 48 }}
                                 >
-                                    <div className="mb-4">
-                                        <label className="form-label text-capitalize fw-semibold text-success small">
-                                            <i className="bx bx-leaf me-1"></i>
-                                            crop name <span className="text-danger">*</span>
-                                        </label>
-                                        <input 
-                                            type="text"  
-                                            className="form-control border-success border-opacity-25"
-                                            style={{ backgroundColor: '#ffffff' }}
-                                            name="cropName"
-                                            value={formData.cropName}
-                                            onChange={handleChange}
-                                            placeholder="e.g., Rice, Corn, Vegetables"
-                                            disabled={isUploading}
-                                            required
-                                        />
-                                    </div>
-
-                                    <div className="mb-4">
-                                        <label className="form-label text-capitalize fw-semibold text-success small">
-                                            <i className="bx bx-text me-1"></i>
-                                            title <span className="text-danger">*</span>
-                                        </label>
-                                        <input 
-                                            type="text"  
-                                            className="form-control border-success border-opacity-25"
-                                            style={{ backgroundColor: '#ffffff' }}
-                                            name="title"
-                                            value={formData.title}
-                                            onChange={handleChange}
-                                            placeholder="Enter announcement title"
-                                            disabled={isUploading}
-                                            required
-                                        />
-                                    </div>
-
-                                    <div className="mb-4">
-                                        <label className="form-label text-capitalize fw-semibold text-success small">
-                                            <i className="bx bx-detail me-1"></i>
-                                            description <span className="text-danger">*</span>
-                                        </label>
-                                        <textarea 
-                                            className="form-control border-success border-opacity-25"
-                                            style={{ 
-                                                resize: "none",
-                                                backgroundColor: '#ffffff' 
-                                            }}
-                                            name="description"
-                                            value={formData.description}
-                                            onChange={handleChange}
-                                            rows="4"
-                                            placeholder="Enter announcement description"
-                                            disabled={isUploading}
-                                            required
-                                        />
-                                    </div>
-
-                                    <div className="row mb-4">
-                                        <div className="col-md-6 mb-3 mb-md-0">
-                                            <label className="form-label text-capitalize fw-semibold text-success small">
-                                                <i className="bx bx-calendar me-1"></i>
-                                                start date <span className="text-danger">*</span>
-                                            </label>
-                                            <input 
-                                                type="date"  
-                                                className="form-control border-success border-opacity-25"
-                                                style={{ backgroundColor: '#ffffff' }}
-                                                name="startDate"
-                                                value={formData.startDate ? formData?.startDate.split('T')[0] : ""}
-                                                onChange={handleChange}
-                                                onBlur={handleDateBlur}
-                                                min={getTodayDate()} // ✅ Minimum today
-                                                disabled={isUploading}
-                                                required
-                                            />
-                                        </div>
-                                        <div className="col-md-6">
-                                            <label className="form-label text-capitalize fw-semibold text-success small">
-                                                <i className="bx bx-calendar-check me-1"></i>
-                                                end date <span className="text-danger">*</span>
-                                            </label>
-                                            <input 
-                                                type="date"  
-                                                className="form-control border-success border-opacity-25"
-                                                style={{ backgroundColor: '#ffffff' }}
-                                                name="endDate"
-                                                value={formData.endDate ? formData?.endDate.split('T')[0] : ""}
-                                                onChange={handleChange}
-                                                onBlur={handleDateBlur}
-                                                min={getMinEndDate()} // ✅ Minimum start date + 1 day
-                                                disabled={isUploading || !formData.startDate} // ✅ Disabled until start date is selected
-                                                required
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <div className="mb-3">
-                                        <label className="form-label text-capitalize fw-semibold text-success small">
-                                            <i className="bx bx-image me-1"></i>
-                                            image banner <span className="text-danger">*</span>
-                                        </label>
-                                        <div className="input-group">
-                                            <input 
-                                                type="file" 
-                                                className="form-control border-success border-opacity-25"
-                                                style={{ backgroundColor: '#ffffff' }}
-                                                id="inputFile"
-                                                name="imageFile"
-                                                accept="image/*"
-                                                onChange={handleFileChange}
-                                                ref={handleRefFile}
-                                                disabled={isUploading}
-                                            />
-                                        </div>
-                                        
-                                        {(isUpdate || imagePreview) && (
-                                            <div className="mt-3">
-                                                <div className="position-relative d-inline-block py-2 pe-2">
-                                                    {imagePreview && !isUploading && (
-                                                        <i className="bx bx-x text-dark fs-5 position-absolute top-0 end-0 bg-white d-flex align-items-center justify-content-center rounded-circle shadow"
-                                                            style={{ 
-                                                                cursor: "pointer",
-                                                                width: '25px',
-                                                                height: '25px'
-                                                            }}
-                                                            onClick={handleFileRemove}
-                                                        ></i>
-                                                    )}
-                                                    <img 
-                                                        src={(() => {
-                                                            if (imagePreview) return imagePreview;
-                                                            
-                                                            if (isUpdate && formData.imageFile) {
-                                                                if (typeof formData.imageFile === 'string' && formData.imageFile.startsWith("https")) {
-                                                                    return formData.imageFile;
-                                                                }
-                                                                return formData.imageFile;
-                                                            }
-                                                            
-                                                            return imagePreview || "";
-                                                        })()}
-                                                                                                
-                                                        alt={imagePreview}
-                                                        className="img-fluid rounded border border-success border-opacity-25 shadow-sm"
-                                                        style={{ 
-                                                            maxHeight: '150px',
-                                                            backgroundColor: '#ffffff'
-                                                        }}
-                                                    />
-                                                </div>
-                                            </div>
-                                        )}
-                                    </div>
+                                    <i className="bx bx-cloud-upload text-success fs-4"></i>
                                 </div>
-                                        
-                                <div className="card-footer border-0 d-flex justify-content-end gap-2 py-3">
-                                    <button
-                                        type="button"
-                                        className="btn btn-outline-secondary px-4 text-capitalize"
-                                        onClick={() => setAddAnnouncement((prev) => ({...prev, isShow: false }))}
-                                        disabled={isUploading}
-                                    >
-                                        <i className="bx bx-x-circle me-1"></i>
-                                        cancel
-                                    </button>
-                                    <button
-                                        type="button"
-                                        className="btn btn-success px-4 text-capitalize"
-                                        onClick={handleSubmit}
-                                        disabled={isUploading || !isFormValid()} // ✅ Disabled if uploading OR form invalid
-                                    >
-                                        {isUploading ? (
-                                            <>
-                                                <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                                                {isUpdate ? "updating..." : "uploading..."}
-                                            </>
-                                        ) : (
-                                            <>
-                                                <i className="bx bx-check-circle me-1"></i>
-                                                {isUpdate ? "save" : "create"}
-                                            </>
-                                        )}
-                                    </button>
+                                <div className="text-center">
+                                    <p className="mb-0 small fw-semibold text-success">Click to upload banner</p>
+                                    <p className="mb-0 text-muted" style={{ fontSize: "0.72rem" }}>PNG, JPG, WEBP — max 0.5 MB</p>
                                 </div>
-                            </div>
+                            </label>
+                        )}
+
+                        <input
+                            type="file"
+                            id="inputBannerFile"
+                            name="imageFile"
+                            accept="image/*"
+                            onChange={handleFileChange}
+                            ref={handleRefFile}
+                            disabled={isUploading}
+                            className="d-none"
+                        />
+                    </div>
+
+                    {/* ── Divider ── */}
+                    <div className="d-flex align-items-center gap-2 mb-4">
+                        <hr className="flex-grow-1 m-0" style={{ borderColor: "#e9ecef" }} />
+                        <span className="text-muted small">Announcement Details</span>
+                        <hr className="flex-grow-1 m-0" style={{ borderColor: "#e9ecef" }} />
+                    </div>
+
+                    {/* ── Row 1: Crop Name + Title ── */}
+                    <div className="row g-3 mb-3">
+                        <div className="col-md-6">
+                            <label className="form-label small fw-semibold text-dark mb-1">
+                                Crop Name <span className="text-danger ms-1">*</span>
+                            </label>
+                            <input
+                                type="text"
+                                className="form-control form-control-sm"
+                                name="cropName"
+                                value={formData.cropName || ""}
+                                onChange={handleChange}
+                                placeholder="e.g., Rice, Corn"
+                                disabled={isUploading}
+                                required
+                                style={{ borderColor: "#d1e7d1", borderRadius: 8 }}
+                            />
+                        </div>
+                        <div className="col-md-6">
+                            <label className="form-label small fw-semibold text-dark mb-1">
+                                Title <span className="text-danger ms-1">*</span>
+                            </label>
+                            <input
+                                type="text"
+                                className="form-control form-control-sm"
+                                name="title"
+                                value={formData.title || ""}
+                                onChange={handleChange}
+                                placeholder="e.g., Rice Season 2026"
+                                disabled={isUploading}
+                                required
+                                style={{ borderColor: "#d1e7d1", borderRadius: 8 }}
+                            />
                         </div>
                     </div>
+
+                    {/* ── Row 2: Start Date + End Date ── */}
+                    <div className="row g-3 mb-3">
+                        <div className="col-md-6">
+                            <label className="form-label small fw-semibold text-dark mb-1">
+                                Start Date <span className="text-danger ms-1">*</span>
+                            </label>
+                            <input
+                                type="date"
+                                className="form-control form-control-sm"
+                                name="startDate"
+                                value={formData.startDate ? formData.startDate.split('T')[0] : ""}
+                                onChange={handleChange}
+                                onBlur={handleDateBlur}
+                                min={getTodayDate()}
+                                disabled={isUploading}
+                                required
+                                style={{ borderColor: "#d1e7d1", borderRadius: 8 }}
+                            />
+                        </div>
+                        <div className="col-md-6">
+                            <label className="form-label small fw-semibold text-dark mb-1">
+                                End Date <span className="text-danger ms-1">*</span>
+                            </label>
+                            <input
+                                type="date"
+                                className="form-control form-control-sm"
+                                name="endDate"
+                                value={formData.endDate ? formData.endDate.split('T')[0] : ""}
+                                onChange={handleChange}
+                                onBlur={handleDateBlur}
+                                min={getMinEndDate()}
+                                disabled={isUploading || !formData.startDate}
+                                required
+                                style={{ borderColor: "#d1e7d1", borderRadius: 8 }}
+                            />
+                            {!formData.startDate && (
+                                <small className="text-muted" style={{ fontSize: "0.72rem" }}>Select start date first</small>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* ── Description ── */}
+                    <div className="mb-1">
+                        <label className="form-label small fw-semibold text-dark mb-1">
+                            Description <span className="text-danger ms-1">*</span>
+                        </label>
+                        <textarea
+                            className="form-control form-control-sm"
+                            name="description"
+                            value={formData.description || ""}
+                            onChange={handleChange}
+                            rows={3}
+                            placeholder="Describe the announcement — season details, availability, or notes for buyers..."
+                            disabled={isUploading}
+                            required
+                            style={{ resize: "none", borderColor: "#d1e7d1", borderRadius: 8 }}
+                        />
+                    </div>
+                </div>
+
+                {/* ── Footer ── */}
+                <div
+                    className="d-flex justify-content-end gap-2 px-4 py-3 border-top"
+                    style={{ background: "#fafafa", borderRadius: "0 0 1rem 1rem" }}
+                >
+                    <button
+                        type="button"
+                        className="btn btn-sm btn-light px-4 text-capitalize fw-semibold"
+                        onClick={() => setAddAnnouncement(prev => ({ ...prev, isShow: false }))}
+                        disabled={isUploading}
+                        style={{ borderRadius: 8 }}
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        type="button"
+                        className="btn btn-sm btn-success px-4 fw-semibold d-flex align-items-center gap-2"
+                        onClick={handleSubmit}
+                        disabled={isUploading || !isFormValid()}
+                        style={{ borderRadius: 8, minWidth: 110 }}
+                    >
+                        {isUploading ? (
+                            <>
+                                <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                {isUpdate ? "Updating…" : "Creating…"}
+                            </>
+                        ) : (
+                            <>
+                                <i className={`bx ${isUpdate ? "bx-save" : "bx-plus-circle"}`}></i>
+                                {isUpdate ? "Save Changes" : "Create"}
+                            </>
+                        )}
+                    </button>
                 </div>
             </div>
-        </>
+        </div>
     );
 };
 

@@ -354,7 +354,7 @@ const Orders = () => {
     }, [showArchived, period, customStartDate, customEndDate]);
 
 
-
+    
 
     const handleRefresh = async () => {
         setIsRefreshing(true);
@@ -367,6 +367,7 @@ const Orders = () => {
             setIsRefreshing(false);
         }
     };
+
 
     const handleArchive = async (orderId) => {
         const endPoint = role === "admin" ? "archiveOrder" : "archiveSellerOrder";
@@ -549,12 +550,12 @@ const Orders = () => {
                         </button>
 
                         <button
-                            className="btn btn-sm btn-success d-flex align-items-center gap-2"
+                            className="btn btn-sm btn-dark d-flex align-items-center gap-1"
                             onClick={handleRefresh}
                             disabled={isRefreshing}
                             style={{ fontSize: "14px" }}
                         >
-                            <i className={`fa fa-refresh ${isRefreshing ? 'fa-spin' : ''}`}></i>
+                            <i className={`fa fa-refresh small ${isRefreshing ? 'fa-spin' : ''}`}></i>
                             {isRefreshing ? 'Refreshing...' : 'Refresh'}
                         </button>
                     </div>

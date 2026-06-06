@@ -1193,12 +1193,13 @@ const Transactions = () => {
                                                 <i className="bx bx-trash fs-6"></i> delete
                                             </button>
                                         )}
-                                        <button className="bg-hover d-flex border rounded align-items-center px-2 shadow-sm gap-2 border-1" onClick={handleRefresh}>
-                                            <i className={`fa fa-sync small text-dark ${isRefreshing ? 'fa-spin' : ''}`}></i>
+                                        <button className="btn btn-dark btn-sm d-flex align-items-center gap-1" 
+                                        onClick={handleRefresh}>
+                                            <i className={`fa fa-sync small ${isRefreshing ? 'fa-spin' : ''}`}></i>
                                             <p className="m-0 small text-capitalize">refresh</p>
                                         </button>
                                         <button
-                                            className={`btn ${isSelect ? "btn-dark" : "btn-success"} btn-sm text-capitalize rounded-3 shadow-sm d-flex align-items-center gap-1`}
+                                            className={`btn ${isSelect ? "btn-danger" : "btn-success"} btn-sm text-capitalize rounded-3 shadow-sm d-flex align-items-center gap-1`}
                                             onClick={() => { setIsAllSelected(false); setSelectedIds(new Set()); setIsSelect((prev) => !prev); }}
                                             style={{ cursor: "pointer" }}
                                         >
