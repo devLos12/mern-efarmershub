@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { appContext } from "../context/appContext.jsx";
 import Toast from "./toastNotif.jsx";
 import imageCompression from "browser-image-compression";
+import html2pdf from 'html2pdf.js';
 
 
 
@@ -104,8 +105,6 @@ const OrderDetails = () => {
     
 
 
-
-
     useEffect(() => {
         if (!orderId) {
             navigate("/", { replace: true });
@@ -113,7 +112,28 @@ const OrderDetails = () => {
     }, [orderId, navigate]);
 
 
+    const receiptRef = useRef(null);
 
+    const handleDownloadReceipt = () => {
+        const element = receiptRef.current;
+        element.style.position = "static";
+        element.style.left = "0";
+        element.style.top = "0";
+
+        const opt = {
+            margin: [10, 0, 10, 0],
+            filename: `receipt_${orderData?.orderId}.pdf`,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2, useCORS: true, allowTaint: true, width: 794 },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+
+        html2pdf().set(opt).from(element).save().then(() => {
+            element.style.position = "absolute";
+            element.style.left = "-9999px";
+            element.style.top = "0";
+        });
+    };
 
 
     // Image compression helper function
@@ -976,6 +996,8 @@ const OrderDetails = () => {
 
 
 
+
+
     return (
         <>
 
@@ -1738,10 +1760,20 @@ const OrderDetails = () => {
                                 </div>
 
                                 
-                                <div className="">
+                                <div className="d-flex align-items-center gap-2">
                                     <p className="m-0 fs-5 fw-semibold text-muted">
                                         {orderData?.orderId}
                                     </p>
+                                    {role === "user" && (
+                                        <button
+                                            className="btn btn-sm btn-outline-dark d-flex align-items-center gap-1"
+                                            onClick={handleDownloadReceipt}
+                                            style={{ fontSize: "12px" }}
+                                        >
+                                            <i className="fa-solid fa-download"></i>
+                                            <span className="d-none d-md-inline">Receipt</span>
+                                        </button>
+                                    )}
                                 </div>
                             </div>
 
@@ -2673,6 +2705,98 @@ const OrderDetails = () => {
                     </div>
                 </div>
             </div>
+
+
+            {/* Hidden Receipt for PDF */}
+            
+            <div ref={receiptRef} style={{ position: "fixed", left: "-9999px", top: 0, width: "794px", backgroundColor: "#fff", display: "flex", justifyContent: "center" }}>
+                <style>{`@import url('https://fonts.googleapis.com/css2?family=Noto+Sans&display=swap');`}</style>
+
+                <div style={{ padding: "30px", fontFamily: "'Noto Sans', Arial, sans-serif", width: "600px" }}>
+                    {/* Header */}
+                    <div style={{ textAlign: "center", marginBottom: "24px", borderBottom: "2px solid #198754", paddingBottom: "16px" }}>
+                        <h2 style={{ color: "#198754", margin: 0 }}>E-Farmers' Hub</h2>
+                        <p style={{ margin: "4px 0", color: "#666", fontSize: "13px" }}>Order Receipt</p>
+                    </div>
+
+                    {/* Order Info */}
+                    <div style={{ marginBottom: "20px" }}>
+                        <p style={{ margin: "4px 0", fontSize: "13px" }}><strong>Order ID:</strong> {orderData.orderId}</p>
+                        <p style={{ margin: "4px 0", fontSize: "13px" }}><strong>Date:</strong> {new Date(orderData.createdAt).toLocaleString("en-US", { year: "numeric", month: "long", day: "numeric", hour: "numeric", minute: "2-digit", hour12: true })}</p>
+                        <p style={{ margin: "4px 0", fontSize: "13px" }}><strong>Status:</strong> {orderData.statusDelivery}</p>
+                    </div>
+
+                    {/* Customer Info */}
+                    <div style={{ marginBottom: "20px", background: "#f9f9f9", padding: "12px", borderRadius: "6px" }}>
+                        <p style={{ margin: "0 0 8px", fontWeight: "bold", fontSize: "13px" }}>Customer Information</p>
+                        <p style={{ margin: "2px 0", fontSize: "12px" }}>{orderData.firstname} {orderData.lastname}</p>
+                        <p style={{ margin: "2px 0", fontSize: "12px" }}>{orderData.contact}</p>
+                        <p style={{ margin: "2px 0", fontSize: "12px" }}>{orderData.email}</p>
+                        <p style={{ margin: "2px 0", fontSize: "12px" }}>{orderData.address}</p>
+                    </div>
+
+                    {/* Items */}
+                    <div style={{ marginBottom: "20px" }}>
+                        <p style={{ margin: "0 0 10px", fontWeight: "bold", fontSize: "13px" }}>Order Items</p>
+                        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px" }}>
+                            <thead>
+                                <tr style={{ background: "#198754", color: "#fff" }}>
+                                    <th style={{ padding: "8px", textAlign: "left" }}>Item</th>
+                                    <th style={{ padding: "8px", textAlign: "center" }}>Qty</th>
+                                    <th style={{ padding: "8px", textAlign: "right" }}>Price</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {orderData.orderItems.map((item, i) => (
+                                    <tr key={i} style={{ borderBottom: "1px solid #eee" }}>
+                                        <td style={{ padding: "8px", textTransform: "capitalize" }}>{item.prodName}</td>
+                                        <td style={{ padding: "8px", textAlign: "center" }}>{item.quantity} bundle(s)</td>
+                                        <td style={{ padding: "8px", textAlign: "right" }}>₱{item.prodPrice.toLocaleString('en-PH')}.00</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {/* Summary */}
+                    <div style={{ borderTop: "1px solid #eee", paddingTop: "12px", fontSize: "13px" }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
+                            <span>Shipping Fee:</span>
+                            <span>{orderData.shippingFee === 0 ? "Free" : `₱${orderData.shippingFee.toFixed(2)}`}</span>
+                        </div>
+                        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
+                            <span>Payment Method:</span>
+                            <span style={{ textTransform: "capitalize" }}>{orderData.paymentType}</span>
+                        </div>
+                        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
+                            <span>Ref No:</span>
+                            <span>{orderData.refNo}</span>
+                        </div>
+                        <div style={{ display: "flex", justifyContent: "space-between", fontWeight: "bold", fontSize: "15px", marginTop: "8px", borderTop: "2px solid #198754", paddingTop: "8px" }}>
+                            <span>Total:</span>
+                            <span>₱{orderData.totalPrice.toLocaleString("en-PH")}.00</span>
+                        </div>
+                    </div>
+
+                    {/* Footer */}
+                    <div style={{ textAlign: "center", marginTop: "24px", color: "#999", fontSize: "11px", borderTop: "1px solid #eee", paddingTop: "12px" }}>
+                        <p style={{ margin: 0 }}>Thank you for your purchase!</p>
+                        <p style={{ margin: "4px 0" }}>E-Farmers' Hub — efarmershub.com</p>
+                        <p style={{ margin: "4px 0" }}>
+                            Generated at: {new Date().toLocaleString("en-US", {
+                                year: "numeric",
+                                month: "long",
+                                day: "numeric",
+                                hour: "numeric",
+                                minute: "2-digit",
+                                hour12: true
+                            })}
+                        </p>
+                    </div>
+
+                </div>
+            </div>
+
         </>
     );
 };

@@ -29,7 +29,7 @@ const Upload = () => {
     const [oldLifeSpan, setOldLifeSpan] = useState(0);
     const [lifeSpanTouched, setLifeSpanTouched] = useState(false);
 
-
+    const [removeImage, setRemoveImage] = useState(false);
 
     useLayoutEffect(() => {
         if (isUpdate) {
@@ -168,7 +168,6 @@ const Upload = () => {
 
 
 
-
     const handleLifeSpanChange = (e) => {
         let value = e.target.value.replace(/[^0-9]/g, "");
         if (value === "0") {
@@ -203,17 +202,20 @@ const Upload = () => {
             console.error("Error compressing image:", error);
             alert("Failed to compress image");
         }
+
+
+        setRemoveImage(false);
     };
 
     const handleFileRemove = () => {
-        if (isUpdate) {
-            setImgPreview(null);
-            setFormData((prev) => ({ ...prev, image: prevImg }));
-        } else {
-            setImgPreview(null);
-        }
+        setImgPreview(null);
+        setRemoveImage(true);
+        setFormData((prev) => ({ ...prev, image: null }));
         if (fileUploadRef.current) fileUploadRef.current.value = null;
     };
+
+
+
 
     const handleClose = () => {
         role === "seller" ? setSellerUpload({ isShow: false }) : setEditProduct({ isShow: false });
@@ -272,7 +274,16 @@ const Upload = () => {
         }
     };
 
-    const currentImage = isUpdate ? imgPreview || formData.image : imgPreview;
+
+    const currentImage = (() => {
+        if (removeImage) return null;
+        if (imgPreview) return imgPreview;
+        if (isUpdate && formData.image && typeof formData.image === 'string') return formData.image;
+        return null;
+    })();
+
+
+
 
     return (
         <div
@@ -336,7 +347,7 @@ const Upload = () => {
                                     {!isUploading && (
                                         <button
                                             type="button"
-                                            className="btn btn-sm btn-dark position-absolute d-flex align-items-center gap-1"
+                                            className="btn btn-sm btn-danger position-absolute d-flex align-items-center gap-1"
                                             style={{ bottom: 10, right: 10, fontSize: "0.75rem", borderRadius: 8, opacity: 0.85 }}
                                             onClick={handleFileRemove}
                                         >

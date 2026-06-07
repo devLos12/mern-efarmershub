@@ -627,7 +627,7 @@ const OfflineFarmerUpload = ({ onClose }) => {
                                             {!isUploading && (
                                                 <button
                                                     type="button"
-                                                    className="btn btn-sm btn-dark position-absolute d-flex align-items-center gap-1"
+                                                    className="btn btn-sm btn-danger position-absolute d-flex align-items-center gap-1"
                                                     style={{ bottom: 10, right: 10, fontSize: "0.75rem", borderRadius: 8, opacity: 0.85 }}
                                                     onClick={handleFileRemove}
                                                 >

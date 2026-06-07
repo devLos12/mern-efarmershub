@@ -184,7 +184,7 @@ const Announcement = () => {
                     onClick={()=> setAddAnnouncement((prev) => ({...prev, isShow: true, data: {} }))}
                     >
                         <i className="fa fa-plus-circle"></i>
-                        <span className="d-none d-md-flex small">
+                        <span className="d-none d-md-flex small text-capitalize">
                             add announcement
                         </span>
                     </button>   
@@ -279,10 +279,15 @@ const Announcement = () => {
                                                         style={{ height: "60px" , width: "100px"}}
                                                     >
                                                         <img 
-                                                        src={data.imagePreview || data.imageFile.startsWith("https") ? data.imageFile : `${import.meta.env.VITE_API_URL}/api/Uploads/${data.imageFile}`}  
-                                                        alt={data.imagePreview || data.imageFile}
-                                                        className="w-100 h-100"
-                                                        style={{objectFit: "cover"}}
+                                                            src={data.imagePreview || data.imageFile.startsWith("https") ? data.imageFile : `${import.meta.env.VITE_API_URL}/api/Uploads/${data.imageFile}`}  
+                                                            alt={data.imagePreview || data.imageFile}
+                                                            className="w-100 h-100"
+                                                            style={{
+                                                                objectFit: "cover",
+                                                                objectPosition: `${data.posX ?? 50}% ${data.posY ?? 50}%`,
+                                                                transform: `scale(${(data.zoom ?? 100) / 100})`,
+                                                                transformOrigin: `${data.posX ?? 50}% ${data.posY ?? 50}%`,
+                                                            }}
                                                         />
                                                     </div>
                                                     )}

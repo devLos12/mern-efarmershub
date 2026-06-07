@@ -23,10 +23,30 @@ const AddAnnouncement = () => {
     const [imagePreview, setImagePreview] = useState(null);
     const [imagePreviuos, setImagePreviuos] = useState(null);
     const [isUploading, setIsUploading] = useState(false);
+    const [removeImage, setRemoveImage] = useState(false);
+
     const height = useBreakpointHeight();
     const handleRefFile = useRef();
 
+
+
+
+    const [imgPosition, setImgPosition] = useState({ x: 50, y: 50 });
+    const [zoom, setZoom] = useState(100);
+    const isDragging = useRef(false);
+    const dragLast = useRef({ x: 0, y: 0 });
+    const bannerRef = useRef(null);
+
+
+
+
     const isUpdate = Object.keys(addAnnouncement?.data ?? {}).length > 0;
+    
+
+
+
+
+
 
 
     const hasChanges = () => {
@@ -38,7 +58,11 @@ const AddAnnouncement = () => {
             formData.description !== original?.description ||
             formData.startDate?.split('T')[0] !== original?.startDate?.split('T')[0] ||
             formData.endDate?.split('T')[0] !== original?.endDate?.split('T')[0] ||
-            imagePreview !== null
+            imagePreview !== null ||
+
+            imgPosition.x !== (original?.posX ?? 50) ||
+            imgPosition.y !== (original?.posY ?? 50) ||
+            zoom !== (original?.zoom ?? 100)
         );
     };
 
@@ -59,6 +83,15 @@ const AddAnnouncement = () => {
         if (isUpdate) {
             setFormData(addAnnouncement?.data);
             setImagePreviuos(addAnnouncement?.data?.imageFile);
+
+
+            setImgPosition({
+                x: addAnnouncement?.data?.posX ?? 50,
+                y: addAnnouncement?.data?.posY ?? 50,
+            });
+            setZoom(addAnnouncement?.data?.zoom ?? 100);
+
+
         } else {
             setFormData({
                 cropName: "",
@@ -69,6 +102,10 @@ const AddAnnouncement = () => {
                 imageFile: null,
             });
             setImagePreview(null);
+            
+            setImgPosition({ x: 50, y: 50 });
+            setZoom(100);
+
         }
     }, [isUpdate, addAnnouncement?.data]);
 
@@ -122,15 +159,20 @@ const AddAnnouncement = () => {
             console.error('Compression error:', error);
             showNotification('Failed to compress image. Please try again.', 'error');
         }
+
+        setRemoveImage(false);
     };
 
+
+
     const handleFileRemove = () => {
-        if (isUpdate) {
-            setFormData(prev => ({ ...prev, imageFile: imagePreviuos }));
-        }
         setImagePreview(null);
+        setRemoveImage(true); // ← flag na gusto tanggalin
+        setFormData(prev => ({ ...prev, imageFile: null }));
         if (handleRefFile.current) handleRefFile.current.value = null;
     };
+
+
 
     const isFormValid = () => {
         const { cropName, title, description, startDate, endDate } = formData;
@@ -160,6 +202,13 @@ const AddAnnouncement = () => {
         submitData.append('description', formData.description);
         submitData.append('startDate', formData.startDate);
         submitData.append('endDate', formData.endDate);
+        
+        submitData.append('posX', imgPosition.x);
+        submitData.append('posY', imgPosition.y);
+        submitData.append('zoom', zoom);
+
+
+
         if (formData.imageFile) submitData.append('image', formData.imageFile);
 
         const endPoint = isUpdate ? "editAnnouncement" : "addAnnouncement";
@@ -187,10 +236,57 @@ const AddAnnouncement = () => {
 
     // Resolve current banner image to display
     const currentImage = (() => {
+        if (removeImage) return null; // ← respected agad
         if (imagePreview) return imagePreview;
         if (isUpdate && formData.imageFile && typeof formData.imageFile === 'string') return formData.imageFile;
         return null;
     })();
+
+
+
+
+    const handleMouseDown = (e) => {
+        if (e.target.closest('[data-remove]')) return;
+        isDragging.current = true;
+        dragLast.current = { x: e.clientX, y: e.clientY };
+        e.preventDefault();
+    };
+
+    const handleMouseMove = (e) => {
+        if (!isDragging.current || !bannerRef.current) return;
+        const rect = bannerRef.current.getBoundingClientRect();
+        const dx = ((dragLast.current.x - e.clientX) / rect.width) * 100;
+        const dy = ((dragLast.current.y - e.clientY) / rect.height) * 100;
+        setImgPosition(prev => ({
+            x: Math.min(100, Math.max(0, prev.x + dx)),
+            y: Math.min(100, Math.max(0, prev.y + dy)),
+        }));
+        dragLast.current = { x: e.clientX, y: e.clientY };
+    };
+
+    const handleMouseUp = () => { isDragging.current = false; };
+
+    const handleTouchStart = (e) => {
+        if (e.target.closest('[data-remove]')) return;
+        const t = e.touches[0];
+        isDragging.current = true;
+        dragLast.current = { x: t.clientX, y: t.clientY };
+    };
+
+    const handleTouchMove = (e) => {
+        if (!isDragging.current || !bannerRef.current) return;
+        const t = e.touches[0];
+        const rect = bannerRef.current.getBoundingClientRect();
+        const dx = ((dragLast.current.x - t.clientX) / rect.width) * 100;
+        const dy = ((dragLast.current.y - t.clientY) / rect.height) * 100;
+        setImgPosition(prev => ({
+            x: Math.min(100, Math.max(0, prev.x + dx)),
+            y: Math.min(100, Math.max(0, prev.y + dy)),
+        }));
+        dragLast.current = { x: t.clientX, y: t.clientY };
+    };
+
+
 
 
     return (
@@ -239,20 +335,85 @@ const AddAnnouncement = () => {
                         </label>
 
                         {currentImage ? (
+                            // <div
+                            //     className="position-relative rounded-3 overflow-hidden border border-success border-opacity-25"
+                            //     style={{ aspectRatio: "16/7", background: "#f8f9fa" }}
+                            // >
+                            //     <img
+                            //         src={currentImage}
+                            //         alt="banner preview"
+                            //         className="w-100 h-100"
+                            //         style={{ objectFit: "cover" }}
+                            //     />
+                            //     {!isUploading && (
+                            //         <button
+                            //             type="button"
+                            //             className="btn btn-sm btn-dark position-absolute d-flex align-items-center gap-1"
+                            //             style={{ bottom: 10, right: 10, fontSize: "0.75rem", borderRadius: 8, opacity: 0.85 }}
+                            //             onClick={handleFileRemove}
+                            //         >
+                            //             <i className="bx bx-trash-alt"></i> Remove
+                            //         </button>
+                            //     )}
+                            // </div>
+
+
                             <div
+                                ref={bannerRef}
                                 className="position-relative rounded-3 overflow-hidden border border-success border-opacity-25"
-                                style={{ aspectRatio: "16/7", background: "#f8f9fa" }}
+                                style={{
+                                    aspectRatio: "16/7",
+                                    background: "#f8f9fa",
+                                    cursor: isDragging.current ? "grabbing" : "grab",
+                                }}
+                                onMouseDown={handleMouseDown}
+                                onMouseMove={handleMouseMove}
+                                onMouseUp={handleMouseUp}
+                                onMouseLeave={handleMouseUp}
+                                onTouchStart={handleTouchStart}
+                                onTouchMove={handleTouchMove}
+                                onTouchEnd={handleMouseUp}
                             >
+
                                 <img
                                     src={currentImage}
                                     alt="banner preview"
                                     className="w-100 h-100"
-                                    style={{ objectFit: "cover" }}
+                                    draggable={false}
+                                    style={{
+                                        objectFit: "cover",
+                                        objectPosition: `${imgPosition.x}% ${imgPosition.y}%`,
+                                        transform: `scale(${zoom / 100})`,
+                                        transformOrigin: `${imgPosition.x}% ${imgPosition.y}%`,
+                                        transition: isDragging.current ? "none" : "object-position 0.1s",
+                                        pointerEvents: "none",
+                                    }}
                                 />
+
+                                {/* drag hint overlay */}
+                                <div
+                                    className="position-absolute top-0 start-0 end-0 bottom-0 d-flex flex-column align-items-center justify-content-center gap-1"
+                                    style={{ background: "rgba(0,0,0,0.28)", opacity: 0, transition: "opacity 0.2s" }}
+                                    onMouseEnter={e => e.currentTarget.style.opacity = 1}
+                                    onMouseLeave={e => e.currentTarget.style.opacity = 0}
+                                >
+                                    <i className="bx bx-move text-white fs-4"></i>
+                                    <span style={{ fontSize: "0.75rem", color: "#fff", fontWeight: 500 }}>Drag to reposition</span>
+                                </div>
+
+                                {/* position badge */}
+                                <span
+                                    className="position-absolute"
+                                    style={{ top: 8, left: 8, background: "rgba(0,0,0,0.5)", color: "#fff", fontSize: "0.7rem", borderRadius: 6, padding: "2px 8px" }}
+                                >
+                                    {Math.round(imgPosition.x)}% · {Math.round(imgPosition.y)}%
+                                </span>
+
                                 {!isUploading && (
                                     <button
+                                        data-remove
                                         type="button"
-                                        className="btn btn-sm btn-dark position-absolute d-flex align-items-center gap-1"
+                                        className="btn btn-sm btn-danger position-absolute d-flex align-items-center gap-1"
                                         style={{ bottom: 10, right: 10, fontSize: "0.75rem", borderRadius: 8, opacity: 0.85 }}
                                         onClick={handleFileRemove}
                                     >
@@ -260,6 +421,18 @@ const AddAnnouncement = () => {
                                     </button>
                                 )}
                             </div>
+
+
+                            
+
+
+
+
+
+
+
+
+
                         ) : (
                             <label
                                 htmlFor="inputBannerFile"
@@ -296,6 +469,28 @@ const AddAnnouncement = () => {
                             className="d-none"
                         />
                     </div>
+
+                    {currentImage && (
+                        <div className="d-flex align-items-center gap-2 mt-2">
+                            <i className="bx bx-minus text-muted" style={{ fontSize: "0.85rem" }}></i>
+                            <input
+                                type="range"
+                                className="form-range flex-grow-1"
+                                min={100}
+                                max={200}
+                                step={1}
+                                value={zoom}
+                                onChange={e => setZoom(Number(e.target.value))}
+                                disabled={isUploading}
+                                style={{ accentColor: "#16a34a" }}
+                            />
+                            <i className="bx bx-plus text-muted" style={{ fontSize: "0.85rem" }}></i>
+                            <span style={{ fontSize: "0.75rem", color: "#6c757d", minWidth: 36 }}>{zoom}%</span>
+                        </div>
+                    )}
+
+
+
 
                     {/* ── Divider ── */}
                     <div className="d-flex align-items-center gap-2 mb-4">

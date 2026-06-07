@@ -30,6 +30,13 @@ const seasonalAnnouncementSchema = new mongoose.Schema({
     },
 
 
+
+        // ── Image position fields ──
+    posX: { type: Number, default: 50 },
+    posY: { type: Number, default: 50 },
+    zoom: { type: Number, default: 100 },
+
+    
     createdAt: { type: Date, default: Date.now },
 
     cloudinaryId: { 

@@ -37,6 +37,7 @@ const Inventory = () => {
 
 
     const [showOfflineUpload, setShowOfflineUpload] = useState(false);
+    const [farmerTypeFilter, setFarmerTypeFilter] = useState("all");
 
     // Get current view from location state (products or list-report)
     const currentView = location.state?.view || "products";
@@ -47,6 +48,8 @@ const Inventory = () => {
     // Get unique categories from products
     // const uniqueCategories = [...new Set(products.map(p => p.category?.toLowerCase()).filter(Boolean))];
     const uniqueCategories = ["all", "grains", "root crops", "fruits", "fruit vegetables", "leafy vegetables", "legumes"];;
+    const uniqueFarmerTypes = [...new Set(products.map(p => p.farmerType).filter(Boolean))];
+
 
     useLayoutEffect(() => {
         setTextHeader(location?.state?.title || textHeader)
@@ -152,6 +155,8 @@ const Inventory = () => {
             filteredProducts = products;
         }
 
+
+
         if (categoryFilter !== "all") {
             filteredProducts = filteredProducts.filter((p) => p.category?.toLowerCase() === categoryFilter.toLowerCase());
         }
@@ -160,9 +165,24 @@ const Inventory = () => {
         } else if (stockStatus === "outofstock") {
             filteredProducts = filteredProducts.filter((p) => p.stocks === 0);
         }
-        if (searchTerm.trim()) {
-            filteredProducts = filteredProducts.filter((p) => p.name?.toLowerCase().includes(searchTerm.toLowerCase()));
+    
+
+        if (farmerTypeFilter !== "all") {
+            filteredProducts = filteredProducts.filter((p) => p.farmerType === farmerTypeFilter);
         }
+
+
+        if (searchTerm.trim()) {
+            const term = searchTerm.toLowerCase();
+            filteredProducts = filteredProducts.filter((p) =>
+                p.name?.toLowerCase().includes(term) ||
+                p.prodId?.toLowerCase().includes(term) ||
+                p.seller?.name?.toLowerCase().includes(term) ||
+                p.farmerType?.toLowerCase().includes(term)
+            );
+        }
+
+
 
     } else {
         if (approvalStatus === "expired") {
@@ -185,9 +205,17 @@ const Inventory = () => {
         } else if (stockStatus === "outofstock") {
             filteredProducts = filteredProducts.filter((p) => p.stocks === 0);
         }
+
+
+
         if (searchTerm.trim()) {
-            filteredProducts = filteredProducts.filter((p) => p.name?.toLowerCase().includes(searchTerm.toLowerCase()));
+            const term = searchTerm.toLowerCase();
+            filteredProducts = filteredProducts.filter((p) =>
+                p.name?.toLowerCase().includes(term) ||
+                p.prodId?.toLowerCase().includes(term) 
+            );
         }
+
     }
 
 
@@ -333,8 +361,8 @@ const Inventory = () => {
                                         <i className="fa-solid fa-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
                                         <input
                                             type="text"
-                                            className="form-control ps-5  mt-2 mt-md-0"
-                                            placeholder="Search products..."
+                                            className="form-control  ps-5  mt-2 mt-md-0"
+                                            placeholder={role === 'admin' ? "Search product name, product id or farmer name...." : "Search Product name or Product id," }
                                             value={searchTerm}
                                             onChange={(e) => setSearchTerm(e.target.value)}
                                             style={{
@@ -388,6 +416,8 @@ const Inventory = () => {
                                 </select>
                             </div>
 
+                     
+
                             {/* Refresh Button */}
                             <div className="col justify-content-end d-flex align-items-center ">
                                 <button 
@@ -401,7 +431,29 @@ const Inventory = () => {
                                 </button>
                             </div>
 
+
+                            <div className="col-12">
+                                {role === "admin" && (
+                                    <div className="col-5 ">
+                                        <select
+                                            className="form-select form-select-sm text-capitalize"
+                                            value={farmerTypeFilter}
+                                            onChange={(e) => setFarmerTypeFilter(e.target.value)}
+                                        >
+                                            <option value="all">All Farmer Types</option>   
+                                            {uniqueFarmerTypes.map((type, i) => (
+                                                <option key={i} value={type}>
+                                                    {type === 'with-device' ? 'With Device' : 'No Device'}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                )}
+                                
+                            </div>
+
                         </div>
+
 
                         {/* Add Product Button - Seller Only */}
                         { ((role === 'admin' && currentApproved ) || role === "seller"  ) && (

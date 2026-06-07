@@ -15,7 +15,7 @@ export const uploadAnnouncement = multer({ storage: storage });
 
 export const addAnnouncement = async (req, res) => {
     try {
-        const { name, title, description, startDate, endDate } = req.body;
+        const { name, title, description, startDate, endDate, posX, posY, zoom } = req.body;
 
         // ✅ Validation
         if (!name || name.trim() === '') {
@@ -83,7 +83,11 @@ export const addAnnouncement = async (req, res) => {
             startDate, 
             endDate, 
             imageFile,
-            cloudinaryId
+            cloudinaryId,
+            posX: Number(posX),  
+            posY: Number(posY),
+            zoom: Number(zoom),
+
         });
 
         await createActivityLog(
@@ -102,7 +106,6 @@ export const addAnnouncement = async (req, res) => {
 
 
 
-
 export const getAnnouncement = async(req, res) => {
     try {
         const allAnnoucement = await SeasonalAnnouncement.find().sort({ createdAt: -1 });
@@ -117,9 +120,11 @@ export const getAnnouncement = async(req, res) => {
     }
 }
 
+
+
 export const editAnnouncement = async (req, res) => {
     try {
-        const { id, name, title, description, startDate, endDate, image } = req.body;
+        const { id, name, title, description, startDate, endDate, image, posX, posY, zoom } = req.body;
         
         let imageFile = image; // Keep old image by default
         let newCloudinaryId = null;
@@ -150,7 +155,13 @@ export const editAnnouncement = async (req, res) => {
             description, 
             imageFile, 
             startDate, 
-            endDate
+            endDate,
+
+            posX: Number(posX),  
+            posY: Number(posY),
+            zoom: Number(zoom),
+
+
         };
 
         if (newCloudinaryId) {

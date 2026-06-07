@@ -221,18 +221,21 @@ const SeasonAnnouncement = () => {
                   >
                     <div className="position-relative bg-transparent" style={{ overflow: "hidden" }}>
                       <img
-                        src={
-                          item.imageFile.startsWith("http")
-                            ? item.imageFile
-                            : `${import.meta.env.VITE_API_URL}/api/Uploads/${item.imageFile}` || "/fallback.jpg"
-                        }
-                        alt={item.title}
-                        className="w-100"
-                        style={{
-                          height: "400px",
-                          objectFit: "cover",
-                          display: "block",
-                        }}
+                          src={
+                              item.imageFile.startsWith("http")
+                                  ? item.imageFile
+                                  : `${import.meta.env.VITE_API_URL}/api/Uploads/${item.imageFile}` || "/fallback.jpg"
+                          }
+                          alt={item.title}
+                          className="w-100"
+                          style={{
+                              height: "460px",
+                              objectFit: "cover",
+                              display: "block",
+                              objectPosition: `${item.posX ?? 50}% ${item.posY ?? 50}%`,
+                              transform: `scale(${(item.zoom ?? 100) / 100})`,
+                              transformOrigin: `${item.posX ?? 50}% ${item.posY ?? 50}%`,
+                          }}
                       />
                       <div
                         className="position-absolute bottom-0 start-0 w-100"
