@@ -212,7 +212,7 @@ const Notification = () => {
                             style={{ cursor: "pointer", transition: "all 0.2s" }}
                             onClick={() => {
                                 if (role === "user") {
-                                    if (data.type === "checkout" || data.type === "replacement approved" || data.type === "replacement rejected" || data.type === 'order delivered') {
+                                    if (data.type === "checkout" || data.type === 'order cancelled' || data.type === "replacement approved" || data.type === "replacement rejected" || data.type === 'order delivered') {
                                         navigate(`/user/${data.link}`, { state: { orderId: data.meta.orderId } });
                                     } else if (data.type === "system notice") {
                                         setOpenNotif(false);
@@ -258,7 +258,7 @@ const Notification = () => {
                                         </div>
                                     )}
 
-                                    {(data.type === "checkout" || data.type === "replacement approved" || data.type === "replacement rejected" || data.type === 'new order' || data.type === 'replacement requested' || data.type === 'order delivered') && (
+                                    {(data.type === "checkout" || data.type === 'order cancelled' || data.type === "replacement approved" || data.type === "replacement rejected" || data.type === 'new order' || data.type === 'replacement requested' || data.type === 'order delivered') && (
                                         <div className="bg-success bg-opacity-10 border border-success border-opacity-25 d-flex align-items-center justify-content-center rounded"
                                         style={{ width: "55px", height: "55px" }}>
                                             <i className="fa fa-shopping-bag fs-4 text-success"></i>

@@ -18,6 +18,8 @@ import Rider from "../../models/rider.js";
 import { Resend } from "resend";
 import Remit from "../../models/remittance.js";
 
+import Chat from "../../models/chat.js";
+import Messages from "../../models/messages.js";
 
 
 
@@ -307,8 +309,6 @@ const sendSMS = async (contact, orderId, firstname, productList, totalAmount) =>
 
 
 
-
-
 const sendOfflineFarmerSMS = async (contact, firstname, orderId, productList, totalAmount, refNo) => {
     const name = firstname.charAt(0).toUpperCase() + firstname.slice(1).toLowerCase();
     const amount = totalAmount.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -334,9 +334,6 @@ const sendOfflineFarmerSMS = async (contact, firstname, orderId, productList, to
         console.log("Offline farmer SMS error:", error.message);
     }
 };
-
-
-
 
 
 
@@ -377,7 +374,6 @@ const createActivityLog = async (adminId, action, description, req) => {
 
 
 
-
 const getPHTDateStr = () =>
     new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Manila" });
 
@@ -390,6 +386,7 @@ const getPHTime = () => ({
         hour12: true
     })
 });
+
 
 
 
@@ -498,7 +495,6 @@ const generatePayoutNumber = async (date, type) => {
 
 
 
-
 const createOrUpdatePayout = async(items, order)=>{
     const SELLER_TAX_RATE = process.env.SELLER_TAX_RATE;
 
@@ -553,7 +549,6 @@ const createOrUpdatePayout = async(items, order)=>{
         }
     }
 }
-
 
 
 const createOrUpdateOfflineFarmerPayout = async(items, order) => {
@@ -908,6 +903,26 @@ export const statusOrder = async(req, res) => {
 
 
 
+
+
+
+
+// ============================================================
+// NOTIFICATION HELPER (unchanged)
+// ============================================================
+const createNotification = async(senderId, senderRole, recipientId, recipientRole, message, link, type, meta) => {
+    await Notification.create({
+        sender: { id: senderId, role: senderRole },
+        recipient: { id: recipientId, role: recipientRole },
+        message: message,
+        link: link,
+        type: type,
+        meta: meta
+    }); 
+}
+
+
+
 const storage = multer.memoryStorage();
 export const cancelOrderFile = multer({ storage: storage });
 
@@ -920,6 +935,8 @@ export const cancelOrder = async (req, res) => {
         const { orderId, reason, newStatus } = req.body;
         const adminId = req.account.id;
 
+
+
         if (!orderId || !reason || !reason.trim()) {
             return res.status(400).json({ message: "Order ID and reason are required" });
         }
@@ -929,6 +946,8 @@ export const cancelOrder = async (req, res) => {
         if (!order) {
             return res.status(404).json({ message: "Order not found" });
         }
+
+
 
         const orderIdShort = order.orderId || orderId.toString().slice(-8);
 
@@ -951,7 +970,7 @@ export const cancelOrder = async (req, res) => {
         order.statusDelivery = newStatus;
         order.statusHistory.push({
             status: newStatus,
-            description: `Order cancelled by admin. Reason: ${reason}`,
+            description: `Order cancelled by admin.`,
             location: "Admin Office",
             imageFile: proofImageUrl,
             timestamp: formatTime()
@@ -984,6 +1003,54 @@ export const cancelOrder = async (req, res) => {
             req
         );
 
+
+        await createNotification(
+            adminId, "admin", order.userId, "user",
+            `Your order #${orderIdShort} has been cancelled.`,
+            'orderdetails', "order cancelled",
+            { orderId, orderIdShort }
+        );
+
+        io.emit('user notif');
+
+
+
+        let chat = await Chat.findOne({
+            "participants.accountId": { $all: [adminId, order.userId] },
+        });
+
+        if(!chat) {
+            chat = await Chat.create({
+                participants: [
+                    { accountId: adminId, role: "Admin" },
+                    { accountId: order.userId, role: "User" }
+                ]
+            })
+        }
+        
+        const autoMessage = `Your order #${orderIdShort} has been cancelled. Reason: ${reason}`;
+
+        await Messages.create({
+            chatId: chat._id,
+            senderId: adminId,
+            role: "Admin",
+            text: autoMessage,
+             imageFiles: proofImageUrl ? [proofImageUrl] : [],
+            readBy: [adminId]
+        });
+
+        chat.lastMessage = autoMessage;
+        chat.lastSender = adminId;
+        chat.isEmpty = false;
+        chat.unreadCount["user"] = (chat.unreadCount?.["user"] || 0) + 1;
+        chat.markModified("unreadCount");
+        await chat.save();
+
+        io.emit("newChatInbox", { message: "new chat inbox" });
+        io.emit("newMessageSent", { message: "new message sent" });
+
+
+
         return res.status(200).json({ message: "Order cancelled successfully" });
 
     } catch (error) {
@@ -993,19 +1060,16 @@ export const cancelOrder = async (req, res) => {
 };
 
 
-// ============================================================
-// NOTIFICATION HELPER (unchanged)
-// ============================================================
-const createNotification = async(senderId, senderRole, recipientId, recipientRole, message, link, type, meta) => {
-    await Notification.create({
-        sender: { id: senderId, role: senderRole },
-        recipient: { id: recipientId, role: recipientRole },
-        message: message,
-        link: link,
-        type: type,
-        meta: meta
-    }); 
-}
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1095,6 +1159,8 @@ export const reviewReplacement = async (req, res) => {
         for (const reviewItem of reviewItems) {
             const { itemId, decision, faultAssignedTo, faultDetails, notes } = reviewItem;
 
+
+
             const item = order.orderItems.find(i => i._id.toString() === itemId);
 
             if (!item) continue;
@@ -1176,6 +1242,10 @@ export const reviewReplacement = async (req, res) => {
                 );
                 io.emit('user notif');
 
+
+
+
+
             } else {
                 rejectedCount++;
 
@@ -1241,8 +1311,8 @@ export const reviewReplacement = async (req, res) => {
                 }
 
                 const rejectionMessage = faultAssignedTo === "rider"
-                ? `Your replacement request for "${item.prodName}" has been rejected.${notes ? ` Reason: ${notes}` : ''} A refund of ₱${refundAmount.toFixed(2)} is being processed.`
-                : `Your replacement request for "${item.prodName}" has been rejected.${notes ? ` Reason: ${notes}` : ''} For more concerns, please contact our chat support. Thank you!`;
+                ? `Your replacement request for "${item.prodName}" has been rejected. A total refund amount is ₱${refundAmount.toFixed(2)}.`
+                : `Your replacement request for "${item.prodName}" has been rejected. For more concerns, please contact our chat support. Thank you!`;
                 
                                 
                 await createNotification(
@@ -1253,6 +1323,48 @@ export const reviewReplacement = async (req, res) => {
                 );
 
                 io.emit('user notif');
+
+
+                if (faultAssignedTo === "rider" && order.paymentType !== "cash on delivery") {
+
+                    // auto-message logic here
+                    let chat = await Chat.findOne({
+                        "participants.accountId": { $all: [adminId, buyerId] },
+                    });
+
+                    if (!chat) {
+                        chat = await Chat.create({
+                            participants: [
+                                { accountId: adminId, role: "Admin" },
+                                { accountId: buyerId, role: "User" }
+                            ],
+                        });
+                    }
+
+                    const autoMessage = `Your replacement request for "${item.prodName}" has been rejected due to unavailability of stock. However, since the damage was caused by our rider, a refund of ₱${refundAmount.toFixed(2)} will be processed externally via your agreed payment method. Please reply to this message for further assistance. Thank you.`;
+
+                    await Messages.create({
+                        chatId: chat._id,
+                        senderId: adminId,
+                        role: "Admin",
+                        text: autoMessage,
+                        readBy: [adminId]
+                    });
+
+                    chat.lastMessage = autoMessage;
+                    chat.lastSender = adminId;
+                    chat.isEmpty = false;
+                    chat.unreadCount["user"] = (chat.unreadCount?.["user"] || 0) + 1;
+                    chat.markModified("unreadCount");
+                    await chat.save();
+
+                    io.emit("newChatInbox", { message: "new chat inbox" });
+                    io.emit("newMessageSent", { message: "new message sent" });
+
+                }
+
+
+
             }
         }
 
@@ -1375,7 +1487,7 @@ export const reviewReplacement = async (req, res) => {
                     order.email,
                     order.firstname,
                     order.orderId,
-                    "replacement confirmed"
+                    "replacement confirmed",
                 );
 
             } else {
@@ -1388,7 +1500,7 @@ export const reviewReplacement = async (req, res) => {
 
                 order.statusHistory.push({
                     status: "replacement rejected",
-                    description: `We have rejected your replacement ${rejectedCount === 1 ? 'request' : 'requests'} (${rejectedCount} ${rejectedCount === 1 ? 'item' : 'items'}). Admin Note: ${rejectionReason}`,
+                    description: `We have rejected your replacement ${rejectedCount === 1 ? 'request' : 'requests'} (${rejectedCount} ${rejectedCount === 1 ? 'item' : 'items'}).`,
                     location: "Admin Office",
                     performedBy: { id: adminId, role: "Admin", name: adminName }
                 });

@@ -423,7 +423,6 @@ const OrderDetails = () => {
     // NEW function - add after handleSubmitReplacementRequest
     const handleSubmitReplacementReview = async () => {
 
-        
 
         // Validate that all items have decisions
         for (let itemId of selectedItemsForReplacement) {
@@ -443,13 +442,18 @@ const OrderDetails = () => {
         setIsSubmittingReview(true);
         
         try {
-            const reviewItems = selectedItemsForReplacement.map(itemId => ({
-                itemId,
-                decision: replacementReview[itemId].decision,
-                faultAssignedTo: replacementReview[itemId].faultAssignedTo || 'none',
-                faultDetails: replacementReview[itemId].faultDetails || '',
-                notes: replacementReview[itemId].notes || ''
-            }));
+            const reviewItems = selectedItemsForReplacement.map(itemId => {
+                const item = orderData.orderItems.find(i => i._id === itemId);
+
+                return {
+                    itemId,
+                    decision: replacementReview[itemId].decision,
+                    faultAssignedTo: replacementReview[itemId].faultAssignedTo || 'none',
+                    faultDetails: item?.replacement?.reason || '',
+                    notes: replacementReview[itemId].notes || ''
+                }
+
+            });
             
             const res = await fetch(`${import.meta.env.VITE_API_URL}/api/reviewReplacement`, {
                 method: "PATCH",
@@ -1059,44 +1063,44 @@ const OrderDetails = () => {
                                         Attach Proof (Optional)
                                     </label>
                                     
-                                    {cancelImagePreview ? (
-                                        <div className="mt-3">
-                                            <div className="d-flex align-items-start gap-2">
-                                                <img 
-                                                    src={cancelImagePreview} 
-                                                    alt="Proof Preview" 
-                                                    className="img-fluid rounded border"
-                                                    style={{ width: "150px", height: "150px", objectFit: "cover" }}
-                                                />
-                                                <button
-                                                    type="button"
-                                                    className="btn btn-danger btn-sm"
-                                                    onClick={handleRemoveCancelImage}
-                                                    disabled={isSubmittingCancel}
-                                                >
-                                                    <i className="fa fa-times"></i>
-                                                </button>
-                                            </div>
-                                            <small className="text-success d-block mt-2">
-                                                {cancelProofImage.name}
-                                            </small>
+                                {cancelImagePreview ? (
+                                    <div className="mt-2 d-flex align-items-center gap-3 p-2 border rounded bg-light">
+                                        <img 
+                                            src={cancelImagePreview} 
+                                            alt="Proof Preview" 
+                                            className="rounded border"
+                                            style={{ width: "48px", height: "48px", objectFit: "cover", flexShrink: 0 }}
+                                        />
+                                        <div className="flex-grow-1 overflow-hidden">
+                                            <p className="m-0 small fw-semibold text-truncate">{cancelProofImage.name}</p>
+                                            <small className="text-muted">Image proof</small>
                                         </div>
-                                    ) : (
-                                        <>
-                                            <input
-                                                ref={cancelFileInputRef}
-                                                type="file"
-                                                className="form-control"
-                                                accept="image/*"
-                                                onChange={handleCancelImageChange}
-                                                disabled={isSubmittingCancel}
-                                            />
-                                            <small className="text-muted d-block mt-1">
-                                                <i className="fa fa-info-circle me-1"></i>
-                                                Upload an image as proof (JPG, PNG, etc.)
-                                            </small>
-                                        </>
-                                    )}
+                                        <button
+                                            type="button"
+                                            className="btn btn-sm btn-outline-danger rounded-circle"
+                                            style={{ width: "28px", height: "28px", padding: 0, flexShrink: 0 }}
+                                            onClick={handleRemoveCancelImage}
+                                            disabled={isSubmittingCancel}
+                                        >
+                                            <i className="fa fa-times" style={{ fontSize: "11px" }}></i>
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <input
+                                            ref={cancelFileInputRef}
+                                            type="file"
+                                            className="form-control"
+                                            accept="image/*"
+                                            onChange={handleCancelImageChange}
+                                            disabled={isSubmittingCancel}
+                                        />
+                                        <small className="text-muted d-block mt-1">
+                                            <i className="fa fa-info-circle me-1"></i>
+                                            Upload an image as proof (JPG, PNG, etc.)
+                                        </small>
+                                    </>
+                                )}
                                 </div>
                             </div>
                             
@@ -1273,22 +1277,26 @@ const OrderDetails = () => {
                                                                     </div>
                                                                     
                                                                     {replacementData[itemId]?.images?.length > 0 && (
-                                                                        <div className="d-flex gap-2 flex-wrap mt-2">
+                                                                        <div className="d-flex flex-column gap-2 mt-2">
                                                                             {replacementData[itemId].images.map((img, imgIdx) => (
-                                                                                <div key={imgIdx} className="position-relative p-1">
+                                                                                <div key={imgIdx} className="d-flex align-items-center gap-3 p-2 border rounded bg-light">
                                                                                     <img
                                                                                         src={URL.createObjectURL(img)}
                                                                                         alt={`Preview ${imgIdx + 1}`}
                                                                                         className="rounded border"
-                                                                                        style={{width: "60px", height: "60px", objectFit: "cover"}}
+                                                                                        style={{ width: "48px", height: "48px", objectFit: "cover", flexShrink: 0 }}
                                                                                     />
+                                                                                    <div className="flex-grow-1 overflow-hidden">
+                                                                                        <p className="m-0 small fw-semibold text-truncate">{img.name}</p>
+                                                                                        <small className="text-muted">Image proof</small>
+                                                                                    </div>
                                                                                     <button
                                                                                         type="button"
-                                                                                        className="btn btn-danger btn-sm position-absolute top-0 end-0  rounded-circle"
-                                                                                        style={{width: "16px", height: "16px", padding: "0", fontSize: "8px"}}
+                                                                                        className="btn btn-sm btn-outline-danger rounded-circle"
+                                                                                        style={{ width: "28px", height: "28px", padding: 0, flexShrink: 0 }}
                                                                                         onClick={() => handleRemoveReplacementImage(itemId, imgIdx)}
                                                                                     >
-                                                                                        <i className="fa fa-times"></i>
+                                                                                        <i className="fa fa-times" style={{ fontSize: "11px" }}></i>
                                                                                     </button>
                                                                                 </div>
                                                                             ))}
@@ -1468,23 +1476,30 @@ const OrderDetails = () => {
                                                                     </div>
 
                                                                     
-                                                                    {/* Image Previews */}
                                                                     {item.replacement?.images?.length > 0 && (
                                                                         <div>
-                                                                            <div className="d-flex align-items-center gap-2 ">
+                                                                            <div className="d-flex align-items-center gap-2">
                                                                                 <i className="fa fa-image text-muted small"></i>
-                                                                                <p className="m-0 text-dark small ">{item.replacement.images.length} photo(s)</p>
+                                                                                <p className="m-0 text-dark small">{item.replacement.images.length} photo(s)</p>
                                                                             </div>
-                                                                            <div className="d-flex gap-2 flex-wrap mt-2">
+                                                                            <div className="d-flex flex-column gap-2 mt-2">
                                                                                 {item.replacement.images.map((imgFilename, imgIdx) => (
-                                                                                    <img
-                                                                                        key={imgIdx}
-                                                                                        src={imgFilename}
-                                                                                        alt={`Evidence ${imgIdx + 1}`}
-                                                                                        className="rounded border shadow-sm p-2"
-                                                                                        style={{width: "80px", height: "80px", objectFit: "cover", cursor: "pointer"}}
+                                                                                    <div key={imgIdx} className="d-flex align-items-center gap-3 p-2 border rounded bg-light"
+                                                                                        style={{ cursor: "pointer" }}
                                                                                         onClick={() => window.open(imgFilename, '_blank')}
-                                                                                    />
+                                                                                    >
+                                                                                        <img
+                                                                                            src={imgFilename}
+                                                                                            alt={`Evidence ${imgIdx + 1}`}
+                                                                                            className="rounded border"
+                                                                                            style={{ width: "48px", height: "48px", objectFit: "cover", flexShrink: 0 }}
+                                                                                        />
+                                                                                        <div className="flex-grow-1 overflow-hidden">
+                                                                                            <p className="m-0 small fw-semibold text-truncate">{imgFilename}</p>
+                                                                                            <small className="text-primary">Click to view full size</small>
+                                                                                        </div>
+                                                                                        <i className="fa fa-external-link text-muted" style={{ fontSize: "12px", flexShrink: 0 }}></i>
+                                                                                    </div>
                                                                                 ))}
                                                                             </div>
                                                                         </div>
@@ -1518,6 +1533,11 @@ const OrderDetails = () => {
                                                                                             value={faultParty}
                                                                                             onChange={(e) => {
                                                                                                 handleReviewDataChange(itemId, 'faultAssignedTo', e.target.value);
+                                                                                                
+                                                                                                if (e.target.value === 'none') {
+                                                                                                    handleReviewDataChange(itemId, 'decision', 'reject'); // ← auto reject
+                                                                                                }
+
                                                                                                 // Clear fault details if switching away from rider
                                                                                                 if (e.target.value !== 'rider') {
                                                                                                     handleReviewDataChange(itemId, 'faultDetails', '');
@@ -1535,26 +1555,6 @@ const OrderDetails = () => {
                                                                                         </small>
                                                                                     </div>
 
-                                                                                    {/* Fault Details - Only show if RIDER is selected */}
-                                                                                    {faultParty === 'rider' && (
-                                                                                        <div className="mb-3">
-                                                                                            <label className="form-label fw-bold small">
-                                                                                                Fault Details <span className="text-danger">*</span>
-                                                                                            </label>
-                                                                                            <textarea
-                                                                                                style={{fontSize: "14px"}}
-                                                                                                className="form-control"
-                                                                                                rows="3"
-                                                                                                placeholder="Describe the rider's fault or issue..."
-                                                                                                value={reviewData.faultDetails || ''}
-                                                                                                onChange={(e) => handleReviewDataChange(itemId, 'faultDetails', e.target.value)}
-                                                                                            ></textarea>
-                                                                                            <small className="text-muted">
-                                                                                                <i className="fa fa-info-circle me-1"></i>
-                                                                                                Explain why the rider is at fault (e.g., mishandling, late delivery)
-                                                                                            </small>
-                                                                                        </div>
-                                                                                    )}
                                                                                     
                                                                                     {/* Decision Radio Buttons */}
                                                                                     <div className="mb-3">
@@ -1570,7 +1570,7 @@ const OrderDetails = () => {
                                                                                                     id={`approve-${itemId}`}
                                                                                                     checked={isApproved}
                                                                                                     onChange={() => handleReviewDataChange(itemId, 'decision', 'approve')}
-                                                                                                    disabled={!faultParty}
+                                                                                                    disabled={!faultParty || faultParty === 'none'}
                                                                                                 />
                                                                                                 <label className="form-check-label small" htmlFor={`approve-${itemId}`}>
                                                                                                     <i className="fa fa-check-circle text-success me-2"></i>
@@ -1708,9 +1708,7 @@ const OrderDetails = () => {
                                                 if (!review?.faultAssignedTo) return true; // walang fault
                                                 // kung reject, required ang notes
                                                 if (!review?.notes?.trim()) return true;
-                                                // kung rider fault, required ang faultDetails
-                                                if (review.faultAssignedTo === 'rider' && !review?.faultDetails?.trim()) return true;
-                                                return false;
+
                                             })
                                         }
                                     >
@@ -2444,7 +2442,7 @@ const OrderDetails = () => {
                                                     <div className="d-flex justify-content-between align-items-start gap-3">
                                                         {/* Left: Item Info */}
                                                         <div className="flex-grow-1">
-                                                            <p className="m-0 fw-bold mb-1">{refund.itemName}</p>
+                                                            <p className="m-0 fw-bold mb-1 text-capitalize">{refund.itemName}</p>
                                                             <p className="m-0 small text-muted mb-2">{refund.pid}</p>
                                                             
                                                             <p className="m-0 small mb-1">

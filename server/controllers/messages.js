@@ -5,6 +5,10 @@ import Admin from "../models/admin.js";
 import multer from "multer";
 import { v2 as cloudinary } from "cloudinary";
 
+
+
+
+
 // Changed to memory storage
 const storage = multer.memoryStorage();
 
@@ -17,7 +21,6 @@ export const sendMessage = async (req, res) => {
         const { receiverId, receiverRole, textMessage } = req.body;
         const files = req.files;
         
-
                 
         let imageFiles = [];
 
