@@ -393,6 +393,8 @@ const ListReports = () => {
         }
     };
 
+
+    
     const filteredProducts = listProducts.filter(product => {
         const matchesSearch = product.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                             product.productType?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -442,6 +444,13 @@ const ListReports = () => {
         const dateB = new Date(b.createdAt).getTime();
         return dateB - dateA;
     });
+
+
+
+    useEffect(() => {
+        console.log(listProducts);
+    },[listProducts]);
+
 
 
 

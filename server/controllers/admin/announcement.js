@@ -38,9 +38,11 @@ export const addAnnouncement = async (req, res) => {
             return res.status(400).json({ message: "End date is required." });
         }
 
-        // ✅ Date validation
         const start = new Date(startDate);
         const end = new Date(endDate);
+        end.setUTCHours(23, 59, 59, 999);
+
+
 
         if (isNaN(start.getTime())) {
             return res.status(400).json({ message: "Invalid start date format." });
@@ -58,7 +60,7 @@ export const addAnnouncement = async (req, res) => {
         if (!req.file) {
             return res.status(400).json({ message: "Image is required." });
         }
-
+    
         let imageFile = null;
         let cloudinaryId = null;
 
@@ -76,12 +78,16 @@ export const addAnnouncement = async (req, res) => {
             cloudinaryId = result.public_id;
         }
 
+
+
+
+
         await SeasonalAnnouncement.create({
             cropName: name, 
             title, 
             description, 
-            startDate, 
-            endDate, 
+            startDate: start, 
+            endDate: end, 
             imageFile,
             cloudinaryId,
             posX: Number(posX),  
@@ -149,13 +155,20 @@ export const editAnnouncement = async (req, res) => {
             newCloudinaryId = result.public_id;
         }
 
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        end.setUTCHours(23, 59, 59, 999);
+
+
+
+
         const updateData = {
             cropName: name, 
             title, 
             description, 
             imageFile, 
-            startDate, 
-            endDate,
+            startDate: start, 
+            endDate: end,
 
             posX: Number(posX),  
             posY: Number(posY),

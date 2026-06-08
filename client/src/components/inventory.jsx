@@ -139,6 +139,7 @@ const Inventory = () => {
     };
 
 
+    
     let filteredProducts = [];
 
     if (role === "admin") {
@@ -176,6 +177,8 @@ const Inventory = () => {
             const term = searchTerm.toLowerCase();
             filteredProducts = filteredProducts.filter((p) =>
                 p.name?.toLowerCase().includes(term) ||
+                p.productType.toLowerCase().includes(term) ||
+                p.category.toLowerCase().includes(term) || 
                 p.prodId?.toLowerCase().includes(term) ||
                 p.seller?.name?.toLowerCase().includes(term) ||
                 p.farmerType?.toLowerCase().includes(term)
@@ -183,8 +186,9 @@ const Inventory = () => {
         }
 
 
-
     } else {
+
+
         if (approvalStatus === "expired") {
             filteredProducts = products.filter((p) => p.status === "expired");
         } else if (approvalStatus === "pending") {
@@ -206,18 +210,23 @@ const Inventory = () => {
             filteredProducts = filteredProducts.filter((p) => p.stocks === 0);
         }
 
-
-
+    
         if (searchTerm.trim()) {
             const term = searchTerm.toLowerCase();
             filteredProducts = filteredProducts.filter((p) =>
+                p.prodId?.toLowerCase().includes(term) || 
                 p.name?.toLowerCase().includes(term) ||
-                p.prodId?.toLowerCase().includes(term) 
+                p.productType?.toLowerCase().includes(term) ||
+                p.category?.toLowerCase().includes(term)
             );
         }
 
     }
 
+    
+    useEffect(() => {
+        console.log(products);
+    },[products]);
 
     if(loading) return (
         <div className="d-flex align-items-center justify-content-center h-100" 

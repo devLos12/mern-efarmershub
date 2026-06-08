@@ -23,13 +23,18 @@ const Upload = () => {
     const [prevImg, setPrevImg] = useState("");
     const [isChanged, setIsChanged] = useState(false);
 
-    const dataPreFill = role === "seller" ? sellerUpload : editProduct;
-    const isUpdate = Object.keys(dataPreFill?.data ?? {}).length > 0;
 
     const [oldLifeSpan, setOldLifeSpan] = useState(0);
     const [lifeSpanTouched, setLifeSpanTouched] = useState(false);
-
     const [removeImage, setRemoveImage] = useState(false);
+
+
+    const dataPreFill = role === "seller" ? sellerUpload : editProduct;
+    const isUpdate = Object.keys(dataPreFill?.data ?? {}).length > 0;
+    
+    const isApproved = role === 'seller' && isUpdate && dataPreFill?.data.statusApprove === 'approved';
+
+    
 
     useLayoutEffect(() => {
         if (isUpdate) {
@@ -344,7 +349,7 @@ const Upload = () => {
                                         style={{ objectFit: "cover" }}
                                     />
                                     {/* overlay on hover-ish, always show remove btn */}
-                                    {!isUploading && (
+                                    {!isUploading && !isApproved && (
                                         <button
                                             type="button"
                                             className="btn btn-sm btn-danger position-absolute d-flex align-items-center gap-1"
@@ -358,7 +363,7 @@ const Upload = () => {
                             ) : (
                                 /* Upload dropzone */
                                 <label
-                                    htmlFor="inputFile"
+                                    htmlFor={isApproved ? undefined : "inputFile"}
                                     className="d-flex flex-column align-items-center justify-content-center rounded-3 border border-2 border-dashed gap-2"
                                     style={{
                                         aspectRatio: "16/7",
@@ -414,7 +419,7 @@ const Upload = () => {
                                     value={formData.name || ""}
                                     onChange={handleProductNameChange}
                                     placeholder="e.g., Lakatan, Red Tomato"
-                                    disabled={isUploading}
+                                    disabled={isUploading || isApproved}
                                     required
                                     style={{ borderColor: "#d1e7d1", borderRadius: 8 }}
                                 />
@@ -451,7 +456,7 @@ const Upload = () => {
                                     value={formData.productType || ""}
                                     onChange={handleProductNameChange}
                                     placeholder="e.g., Banana, Tomato"
-                                    disabled={isUploading}
+                                    disabled={isUploading || isApproved}
                                     required
                                     style={{ borderColor: "#d1e7d1", borderRadius: 8 }}
                                 />
@@ -465,7 +470,7 @@ const Upload = () => {
                                     name="category"
                                     value={formData.category || ""}
                                     onChange={handleChange}
-                                    disabled={isUploading}
+                                    disabled={isUploading || isApproved}
                                     required
                                     style={{ borderColor: "#d1e7d1", borderRadius: 8 }}
                                 >
@@ -581,7 +586,7 @@ const Upload = () => {
                                 value={formData.lifeSpan || ""}
                                 onChange={handleLifeSpanChange}
                                 placeholder="e.g., 7"
-                                disabled={isUploading}
+                                disabled={isUploading || isApproved}
                                 required
                                 style={{ borderColor: "#d1e7d1", borderRadius: 8 }}
                             />
@@ -600,7 +605,7 @@ const Upload = () => {
                                 onChange={handleChange}
                                 rows={3}
                                 placeholder="Describe the product — freshness, origin, or notes for buyers..."
-                                disabled={isUploading}
+                                disabled={isUploading || isApproved}
                                 required
                                 style={{ resize: "none", borderColor: "#d1e7d1", borderRadius: 8 }}
                             />

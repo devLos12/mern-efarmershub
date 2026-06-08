@@ -413,7 +413,7 @@ const ProductDetails = () =>{
 
 
                                 <div className={"row  gap-2 g-0 mt-4"}>
-                                    {productDetails.statusApprove !== "rejected" && (
+                                    {productDetails.statusApprove !== "rejected" && productDetails.status !== 'expired' && (
                                     <div className="col">
                                         <button className={`text-capitalize p-2 d-flex justify-content-center align-items-center 
                                         w-100 gap-2

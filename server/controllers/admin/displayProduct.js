@@ -7,13 +7,39 @@ import cloudinary from "../../config/cloudinary.js";
 export const getProducts = async(req, res) =>{
     try{
         
-        const products = await Product.find().sort( { createdAt: -1 });
+        const products = await Product.find()
         
+        
+        .populate({
+            path: 'seller.id',
+            refPath: "seller.sellerType",
+            select: "firstname lastname email imageFile"
+
+        })
+        .sort( { createdAt: -1 });
+        
+        
+
+
         if(!products || products.length === 0){ 
             return res.status(404).json({message : "No crops display"});
         }
 
-        res.status(200).json(products);
+        const populated = products.map(p => {
+            const doc = p.toObject();
+            if(doc.seller?.id){
+                const { firstname, lastname, email, imageFile } = doc.seller.id;
+                doc.seller.name = `${firstname} ${lastname} burat`.trim();
+                doc.seller.email = email;
+                doc.seller.imageFile = imageFile;
+            }
+            return doc;
+                        
+        })
+
+
+
+        res.status(200).json(populated);
     }catch(error){
         res.status(500).json(error.message)
     }

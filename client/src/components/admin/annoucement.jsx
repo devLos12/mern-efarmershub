@@ -147,7 +147,14 @@ const Announcement = () => {
     }, [announcement.length]);
 
 
-    
+    const formatDate = (dateStr) => {
+        const [year, month, day] = dateStr.slice(0, 10).split('-');
+        return new Date(year, month - 1, day).toLocaleDateString('en-CA', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+        });
+    }
 
 
 
@@ -238,19 +245,12 @@ const Announcement = () => {
                                                     }}
                                                     >{data.description}</p>
                                                 </td>
-                                                <td className="align-middle  small">
-                                                    {new Date(data.startDate).toLocaleDateString('en-PH', {
-                                                        year: 'numeric', 
-                                                        month: 'short', 
-                                                        day: 'numeric' 
-                                                    })}
+                                                <td className="align-middle small">
+                                                    {formatDate(data.startDate)}
                                                 </td>
-                                                <td className="align-middle  small">
-                                                    {new Date(data.endDate).toLocaleDateString('en-PH', {
-                                                        year: 'numeric', 
-                                                        month: 'short', 
-                                                        day: 'numeric'
-                                                    })}
+
+                                                <td className="align-middle small">
+                                                    {formatDate(data.endDate)}
                                                 </td>
                                                 <td className="align-middle small">
                                                     {(() => {
@@ -270,7 +270,7 @@ const Announcement = () => {
                                                         }
                                                     })()}
                                                 </td>
-                                                <td className="align-middle  small" >
+                                                <td className="align-middle small" >
 
                                                     {!data.imageFile ? (
                                                         <p className="m-0 text-capitalize small text-muted">no image</p>

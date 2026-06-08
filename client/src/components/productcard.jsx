@@ -64,6 +64,9 @@ const ProductCard = ({ products })=>{
         return "14px"
     } 
     
+
+
+
     return (
         <div className={`row g-0`}>
             {products.map((data, i) => (
@@ -114,9 +117,6 @@ const ProductCard = ({ products })=>{
                                 </div>
                             )}
                         </div>
-
-
-
 
 
 
@@ -176,11 +176,14 @@ const ProductButton = ({role, data, FontSize, updateStatus, deleteProduct, updat
     const isPending = status => status === "pending"; 
     const isApproved = status => status === "approved";
     const isRejected = status => status === "rejected";
+    const isExpired = status => status === 'expired';
+
+    
 
     if(role === "admin"){
         return (
               <div className="row g-0 gap-2 mt-2 rounded ">
-                {isRejected(data.statusApprove) ? (
+                {isRejected(data.statusApprove) || isExpired(data.status) ? (
                     undefined
                 ) : (
                     <div className="col">
@@ -200,7 +203,7 @@ const ProductButton = ({role, data, FontSize, updateStatus, deleteProduct, updat
                         </button>
                     </div>
                 )}
-
+                
                 <div className="col">
                     <button className={`p-1 d-none d-md-flex bg-danger rounded-pill d-flex align-items-center justify-content-center 
                     border border-danger border-opacity-25 w-100 bg-danger bg-opacity-10 gap-2`}
@@ -227,7 +230,7 @@ const ProductButton = ({role, data, FontSize, updateStatus, deleteProduct, updat
         return (
             <div className="row g-0 gap-2 gap-md-3 mt-3 rounded ">
 
-                {isRejected(data.statusApprove) ? (
+                {isRejected(data.statusApprove) || isExpired(data.status) ? (
                     undefined
                 ) : (
                     

@@ -12,7 +12,7 @@ export const getProducts = async(req, res) =>{
         const id = req.params.id;
 
         const products = await Product.find({"seller.id" : id }).sort({ createdAt: -1 });
-
+        
         if(!products || products.length === 0){ 
             return res.status(404).json({message : "No crops display"});
         }
@@ -27,14 +27,14 @@ export const getProducts = async(req, res) =>{
 export const removeProducts = async(req, res)=>{
     try{
         const id = req.params.id;
-
+        
 
         if (!mongoose.Types.ObjectId.isValid(id)) {
             return res.status(400).json({ message: "Invalid product ID" });
         }
 
         // Find the product first to get cloudinaryId
-        const product = await Product.findById(id);
+        const product = await Product.findById(id)
 
         if (!product) {
             return res.status(404).json({ message: "Product not found" });

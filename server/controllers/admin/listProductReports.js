@@ -88,8 +88,18 @@ export const getListProducts = async (req, res) => {
         }).lean();
 
 
+
+        const normalizedProducts = products.map(p => {
+            if(p.seller?.id?.firstname) {
+                p.seller.name = `${p.seller.id.firstname} ${p.seller.id.lastname}`.trim();
+            }
+
+            return p;
+        })
+
+
         // Map products with sold count
-        const productsWithSales = products.map(product => {
+        const productsWithSales = normalizedProducts.map(product => {
             let soldCount = 0;
             
             orders.forEach(order => {
@@ -108,6 +118,9 @@ export const getListProducts = async (req, res) => {
                 soldToday: soldCount,
             };
         });
+
+
+
 
 
         res.status(200).json(productsWithSales);
