@@ -32,16 +32,16 @@ const sendSMS = async (firstname, contact, totalAmount, riderName, riderContact,
 
     let pay = '';
 
-    if(paymentType === 'gcash'){
+    if(modePayment === 'gcash'){
         pay = ''
-    } else if ( paymentType === 'maya'){
+    } else if ( modePayment === 'maya'){
         pay = ''
     } else {
         pay = ''
     }
 
 
-    const message = `E-FARMERS HUB: Hello ${buyer} your order is in transit now. Rider: ${rider}. Contact: ${message}. COD Amount: Php${pay} Pls prepare exact amount. Thank you and be safe!`
+    const message = `E-FARMERS HUB: Hello ${buyer} your order is in transit now. Rider: ${rider}. Contact: ${message}. ${pay}: Php${totalAmount} Pls prepare exact amount. Thank you and be safe!`
 
     const submitData = {
         "api_token": process.env.SMS_TOKEN,
@@ -86,6 +86,14 @@ const getPHTime = () => {
         })
     };
 };
+
+
+
+
+
+
+
+
 
 
 
