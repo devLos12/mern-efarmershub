@@ -33,11 +33,11 @@ const sendSMS = async (firstname, contact, totalAmount, riderName, riderContact,
     let pay = '';
 
     if(modePayment === 'gcash'){
-        pay = ''
+        pay = 'Gcash'
     } else if ( modePayment === 'maya'){
-        pay = ''
+        pay = 'MAYA'
     } else {
-        pay = ''
+        pay = 'COD'
     }
 
 
