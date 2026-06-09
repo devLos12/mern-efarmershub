@@ -18,7 +18,7 @@ import Notification from "../../models/notification.js";
 
 
 
-const sendSMS = async (firstname, contact, totalAmount, riderName, riderContact) => {
+const sendSMS = async (firstname, contact, totalAmount, riderName, riderContact, modePayment) => {
 
 
     const buyer = firstname.charAt(0).toUpperCase() + firstname.slice(1).toLowerCase();
@@ -30,7 +30,18 @@ const sendSMS = async (firstname, contact, totalAmount, riderName, riderContact)
         maximumFractionDigits: 2
     });
 
-    const message = `E-FARMERS HUB: Hello ${buyer} your order is in transit now. Rider: ${rider}. Contact: ${riderContact}. COD Amount: Php${amount} Pls prepare exact amount. Thank you and be safe!`
+    let pay = '';
+
+    if(paymentType === 'gcash'){
+        pay = ''
+    } else if ( paymentType === 'maya'){
+        pay = ''
+    } else {
+        pay = ''
+    }
+
+
+    const message = `E-FARMERS HUB: Hello ${buyer} your order is in transit now. Rider: ${rider}. Contact: ${message}. COD Amount: Php${pay} Pls prepare exact amount. Thank you and be safe!`
 
     const submitData = {
         "api_token": process.env.SMS_TOKEN,
@@ -468,7 +479,10 @@ const updateStatusDelivery = async (req, res) => {
             const rider = await Rider.findOne({_id: riderId });
             rider.status = "on delivery";
 
-            await sendSMS(order.firstname, order.contact, order.totalPrice, order.riderName, rider.contact );
+
+            
+            
+            await sendSMS(order.firstname, order.contact, order.totalPrice, order.riderName, rider.contact, order.paymentType );
             await order.save();
             await rider.save();
 
