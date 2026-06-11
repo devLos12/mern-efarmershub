@@ -53,6 +53,24 @@ const chatSchema = new mongoose.Schema({
             type : Date,
             default : Date.now
         }
+    }],
+
+
+    archivedBy: [{
+        accountId: {
+            type: mongoose.Schema.Types.ObjectId,
+            refPath: 'archivedBy.role',
+            required: false
+        },
+        role: {
+            type: String,
+            enum: ["Admin", "Seller", "User", "Rider"],
+            required: false
+        },
+        archivedAt: {
+            type: Date,
+            default: Date.now
+        }
     }]
     
 

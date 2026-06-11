@@ -11,13 +11,10 @@ const AllProductCards = () => {
     const [selectedCategory, setSelectedCategory] = useState("all");
     const [pendingCartItems, setPendingCartItems] = useState([]);
 
-    // Auto scroll to top when component mounts
     useEffect(() => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }, []);
 
-        
-    // Add to cart function
     const addToCart = async(pid, prodId, prodName, prodDisc, prodPrice, imageFile, seller) => {
         setCartBadge((prev) => ({
             ...prev,
@@ -25,7 +22,6 @@ const AllProductCards = () => {
             show: true,
         }));
 
-        // Add to cart UI updates
         setCart((prev) => {
             const existing = prev.find((item) => item.prodId === prodId);
 
@@ -57,8 +53,6 @@ const AllProductCards = () => {
         setOpenCart(true);
     };
 
-
-    // Debounce cart data to backend
     useEffect(() => {
         if(pendingCartItems.length === 0) return;
 
@@ -84,32 +78,22 @@ const AllProductCards = () => {
         return () => clearTimeout(timeout);
     }, [pendingCartItems]);
 
-
-
-    // Fixed categories list
     const categories = ["all", "grains", "root crops", "fruits", "fruit vegetables", "leafy vegetables", "legumes"];
 
-    // Extract product types based on selected category
     const productTypes = useMemo(() => {
         const types = new Set();
-        
         products.forEach(p => {
-            // If "all" category is selected, show all product types
-            // Otherwise, only show product types that belong to the selected category
             if (selectedCategory === "all" || p.category === selectedCategory) {
                 if (p.productType) types.add(p.productType);
             }
         });
-        
         return ["all", ...Array.from(types).sort()];
     }, [products, selectedCategory]);
 
-    // Reset product type to "all" when category changes
     useEffect(() => {
         setSelectedProductType("all");
     }, [selectedCategory]);
 
-    // Filter products based on search, product type, and category
     const filteredProducts = useMemo(() => {
         return products.filter(p => {
             const matchesSearch = searchQuery.trim() === "" || 
@@ -172,7 +156,6 @@ const AllProductCards = () => {
                             )}
                         </div>
                         
-                        {/* Category Dropdown */}
                         <select 
                             className="form-select border-success text-capitalize rounded-4"
                             style={{maxWidth: "150px", fontSize: "14px"}}
@@ -209,9 +192,7 @@ const AllProductCards = () => {
                                         ? "bg-dark text-white" 
                                         : "btn-outline-dark"
                                 }`}
-                                style={{
-                                    flexShrink: 0
-                                }}
+                                style={{ flexShrink: 0 }}
                                 onClick={() => setSelectedProductType(type)}
                             >
                                 {type}
@@ -251,16 +232,10 @@ const AllProductCards = () => {
                                 style={{ aspectRatio: "4/3"}}
                                 >
                                     <img 
-                                        src={
-                                            data.imageFile?.startsWith("http") 
-                                            ? data.imageFile 
-                                            : `${import.meta.env.VITE_API_URL}/api/uploads/${data.imageFile}`}      
-                                        alt={data.imageFile} 
+                                        src={data.imageFile?.[0]?.url}
+                                        alt={data.name} 
                                         className="img-fluid h-100 w-100"
-                                        style={{
-                                            cursor: "pointer", 
-                                            objectFit: "cover"
-                                        }} 
+                                        style={{ cursor: "pointer", objectFit: "cover" }} 
                                         onClick={() => {
                                             navigate("/user/productdetails", {state: {productId: data._id}});
                                         }}
@@ -291,22 +266,29 @@ const AllProductCards = () => {
                                                 <p className="m-0 text-capitalize fw-bold small text-success">
                                                     {"₱" + data.price.toLocaleString('en-ph', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
                                                 </p>
-                                                <p className="m-0 small">/{`${data.kg} kg`}</p>
+                                                <p className="m-0 small">
+                                                    /{data.unit === "kg" ? `${data.kg} kg` : "1 bundle"}
+                                                </p>
+
                                             </div>
                                         </div>
 
                                         <div className="d-flex justify-content-between align-items-center">
                                             <p className="m-0 text-capitalize small">stocks:</p>
                                             <p className="m-0 text-capitalize fw-bold small">
-                                                {data.stocks > 1 ? data.stocks + " bundles" : data.stocks === 1 ? data.stocks + " bundle" : "out of stock"}
+                                                {data.stocks > 0
+                                                    ? `${data.stocks} ${data.stocks === 1 ? "stock" : "stocks"} (${data.unit === "kg" ? "kg" : "bundles"})`
+                                                    : "out of stock"
+                                                }
                                             </p>
                                         </div>
 
-                                        <div className="text-end mt-1">
-                                            <p className="m-0 text-muted" style={{fontSize: "12px"}}>
-                                                1 bundle = {data.kg || 2}kg
-                                            </p>
-                                        </div>
+                                        <p className="m-0 text-muted text-end my-2 text-capitalize" style={{ fontSize: "12px" }}>
+                                            {data.unit === "kg"
+                                                ? `1 stock = ${data.kg}kg`
+                                                : "1 stock = 1 bundle"
+                                            }
+                                        </p>
                                     </div>
 
                                     <div className="row mt-2 gap-2 g-0 d-none d-md-flex">
@@ -314,7 +296,7 @@ const AllProductCards = () => {
                                             <button 
                                                 className={`d-flex justify-content-center align-items-center text-capitalize border-1 bg-white w-100 p-1 rounded small ${data.stocks <= 0 ? "opacity-75" : ""}`} 
                                                 style={{outline: "none"}} 
-                                                onClick={() => addToCart(data.prodId, data._id, data.name, data.disc, data.price, data.imageFile, data.seller)}
+                                                onClick={() => addToCart(data.prodId, data._id, data.name, data.disc, data.price, data.imageFile?.[0]?.url, data.seller)}
                                                 disabled={data.stocks <= 0}
                                             >
                                                 <i className="fa-solid fa-cart-plus"></i>
@@ -337,7 +319,7 @@ const AllProductCards = () => {
                                                                 prodName: data.name,
                                                                 prodDisc: data.disc,
                                                                 prodPrice: data.price,
-                                                                imageFile: data.imageFile,
+                                                                imageFile: data.imageFile?.[0]?.url,
                                                                 seller: data.seller,
                                                                 quantity: 1,
                                                             }]

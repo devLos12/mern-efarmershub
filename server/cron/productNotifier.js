@@ -58,7 +58,7 @@ const startSchedule = () => {
                         link: "productDetails",
                         meta: { 
                             prodId: product._id,
-                            imageFile: product.imageFile,
+                            imageFile: product.imageFile?.[0]?.url || null,
                             sellerId: product.seller?.id  
                         }
                     })

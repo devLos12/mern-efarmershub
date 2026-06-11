@@ -1115,7 +1115,7 @@ const ListReports = () => {
                                             <td className="small">
                                                 <div className="d-flex align-items-center gap-2">
                                                     <img
-                                                        src={product.imageFile}
+                                                        src={product.imageFile?.[0]?.url}
                                                         alt={product.name}
                                                         className="rounded"
                                                         style={{ width: "40px", height: "40px", objectFit: "cover" }}

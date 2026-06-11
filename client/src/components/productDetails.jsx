@@ -41,7 +41,10 @@ const ProductDetails = () =>{
     const [hasError, setHasError] = useState(false);
     const navigate = useNavigate();  
 
-    
+    const [activeSlide, setActiveSlide] = useState(0);
+    const [showArrows, setShowArrows] = useState(false);
+
+
     useEffect(()=>{
         if(!prodId) {
             return navigate("/", { replace : true});
@@ -57,7 +60,14 @@ const ProductDetails = () =>{
         }
     }, [hasError, navigate]);
 
-    
+    // Auto-slide every 2 seconds
+    useEffect(() => {
+        if (!productDetails.imageFile?.length || productDetails.imageFile.length <= 1) return;
+        const interval = setInterval(() => {
+            setActiveSlide((prev) => (prev + 1) % productDetails.imageFile.length);
+        }, 5000);
+        return () => clearInterval(interval);
+    }, [productDetails.imageFile]);
 
 
     const handleButtons = (pid, prodId, prodName, prodDisc, prodPrice, imageFile, seller, data)=>{
@@ -74,12 +84,10 @@ const ProductDetails = () =>{
                 }));
             }else{
                 setEditProduct({ isShow: true, data: data })
-                // alert("maya ka na mag edit kupal")
             }
-
+        
 
         } else if (role === "seller"){
-            // alert(`${role} ako`);
             setSellerUpload({ isShow: true, data: data})
         } else {
 
@@ -102,7 +110,7 @@ const ProductDetails = () =>{
                 }else{
                     return [
                         ...prev,
-                        {pid, prodId, prodName, prodDisc, prodPrice,imageFile, seller, quantity: 1}
+                        {pid, prodId, prodName, prodDisc, prodPrice, imageFile, seller, quantity: 1}
                     ]
                 }
             })
@@ -202,7 +210,6 @@ const ProductDetails = () =>{
         return `${Math.floor(diff / 86400)} day(s) ago`;
     };
 
-    // Function to calculate remaining days before expiration
     const getRemainingDays = (expiryDate) => {
         if (!expiryDate) return 0;
 
@@ -213,9 +220,6 @@ const ProductDetails = () =>{
         const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
         return days > 0 ? days : 0;
     };
-
-
-
 
 
    if(loading) return (
@@ -276,29 +280,33 @@ const ProductDetails = () =>{
                             ? "col-12 col-md-6 col-lg-6 col-xl-6 " 
                             : "col-12 col-md-6 col-lg-6 col-xl-5 col-xxl-5 "}>
                             
-                            <div className="rounded-5 overflow-hidden position-relative " 
-                            style={{ aspectRatio: "4/3" }}>
-                                <img 
-                                    src={productDetails.imageFile} 
-                                    alt={productDetails.imageFile}  
+                            {/* Image container — hover here shows arrows */}
+                            <div
+                                className="rounded-5 overflow-hidden position-relative"
+                                style={{ aspectRatio: "4/3" }}
+                                onMouseEnter={() => setShowArrows(true)}
+                                onMouseLeave={() => setShowArrows(false)}
+                            >
+
+                                {/* Main Image */}
+                                <img
+                                    src={productDetails.imageFile?.[activeSlide]?.url}
+                                    alt={productDetails.name}
                                     className="img-fluid h-100 w-100"
-                                    style={{ 
+                                    style={{
                                         objectFit: "cover",
-                                        filter: productDetails.status === "expired"  ? "grayscale(100%)" : "none"
-                                        
+                                        filter: productDetails.status === "expired" ? "grayscale(100%)" : "none",
+                                        transition: "opacity 0.2s ease"
                                     }}
                                 />
 
-
+                                {/* Expired Overlay */}
                                 {productDetails.status === "expired" && (
                                     <div className="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
-                                        style={{ 
-                                            backgroundColor: "rgba(0,0,0,0.35)",
-                                            pointerEvents: "none"   // ← hindi na naka-block yung click
-                                        }}>
+                                        style={{ backgroundColor: "rgba(0,0,0,0.35)", pointerEvents: "none" }}>
                                         <span className="text-white text-uppercase fw-bold"
-                                            style={{ 
-                                                fontSize: "18px", 
+                                            style={{
+                                                fontSize: "18px",
                                                 letterSpacing: "4px",
                                                 transform: "rotate(-35deg)",
                                                 opacity: 0.9,
@@ -312,9 +320,62 @@ const ProductDetails = () =>{
                                     </div>
                                 )}
 
-
-
+                                {/* Prev / Next arrows — visible only on container hover */}
+                                {productDetails.imageFile?.length > 1 && (
+                                    <>
+                                        <button
+                                            type="button"
+                                            className="position-absolute top-50 start-0 translate-middle-y d-flex align-items-center justify-content-center"
+                                            onClick={() => setActiveSlide((prev) => (prev - 1 + productDetails.imageFile.length) % productDetails.imageFile.length)}
+                                            style={{
+                                                width: 32, height: 32, borderRadius: "50%",
+                                                background: "rgba(0,0,0,0.45)", border: "none",
+                                                marginLeft: 8, zIndex: 2, cursor: "pointer",
+                                                opacity: showArrows ? 1 : 0,
+                                                transition: "opacity 0.2s ease"
+                                            }}>
+                                            <i className="bx bx-chevron-left text-white fs-5"></i>
+                                        </button>
+                                        <button
+                                            type="button"
+                                            className="position-absolute top-50 end-0 translate-middle-y d-flex align-items-center justify-content-center"
+                                            onClick={() => setActiveSlide((prev) => (prev + 1) % productDetails.imageFile.length)}
+                                            style={{
+                                                width: 32, height: 32, borderRadius: "50%",
+                                                background: "rgba(0,0,0,0.45)", border: "none",
+                                                marginRight: 8, zIndex: 2, cursor: "pointer",
+                                                opacity: showArrows ? 1 : 0,
+                                                transition: "opacity 0.2s ease"
+                                            }}>
+                                            <i className="bx bx-chevron-right text-white fs-5"></i>
+                                        </button>
+                                    </>
+                                )}
                             </div>
+
+                            {/* Thumbnail dots */}
+                            {productDetails.imageFile?.length > 1 && (
+                                <div className="d-flex justify-content-center gap-2 mt-2">
+                                    {productDetails.imageFile.map((_, i) => (
+                                        <button
+                                            key={i}
+                                            type="button"
+                                            onClick={() => setActiveSlide(i)}
+                                            style={{
+                                                width: i === activeSlide ? 20 : 8,
+                                                height: 8,
+                                                borderRadius: 99,
+                                                background: i === activeSlide ? "#198754" : "#ccc",
+                                                border: "none",
+                                                padding: 0,
+                                                transition: "all 0.2s ease",
+                                                cursor: "pointer"
+                                            }}
+                                        />
+                                    ))}
+                                </div>
+                            )}
+                            
                         </div>
 
 
@@ -397,14 +458,21 @@ const ProductDetails = () =>{
                                             <div className="d-flex align-items-center gap-2 mb-2">
                                                 <span className="small text-muted fw-semibold">Available Stock</span>
                                             </div>
-                                            <div className="fw-bold text-warning fs-5" 
-                                            >
-                                                <span className="small text-capitalize text-muted ms-1">
-                                                { productDetails.stocks > 1 ? productDetails.stocks + " bundles ": productDetails.stocks === 1 ? productDetails.stocks + " bundle " : "out of stock"}
+                                            <div className="fw-bold text-warning fs-5">
+                                                <span className="small text-capitalize text-muted ">
+                                                    {productDetails.stocks > 0
+                                                        ? `${productDetails.stocks} ${productDetails.stocks === 1 ? "stock" : "stocks"} (${productDetails.unit === "kg" ? "kg" : "bundles"})`
+                                                        : "out of stock"
+                                                    }
                                                 </span>
                                             </div>
-                                            <span className="small text-muted">{`1 bundle = ${productDetails.kg}/kg`}</span>
-
+                                            
+                                            <p className="m-0 text-muted" style={{ fontSize: "12px" }}>
+                                                {productDetails.unit === "kg"
+                                                    ? `1 stock = ${productDetails.kg}kg`
+                                                    : "1 stock = 1 bundle"
+                                                }
+                                            </p>
                                         </div>
                                     </div>
                                 </ div>
@@ -423,7 +491,9 @@ const ProductDetails = () =>{
                                         }
                                         
                                         ${role === "user" && productDetails.stocks <= 0 && "opacity-75"}`}
-                                        onClick={()=>handleButtons(productDetails.prodId, productDetails._id, productDetails.name, productDetails.disc, productDetails.price, productDetails.imageFile, productDetails.seller, productDetails)}
+
+                                        onClick={()=>handleButtons(productDetails.prodId, productDetails._id, productDetails.name, productDetails.disc, productDetails.price, productDetails.imageFile?.[0]?.url, productDetails.seller, productDetails)}
+
                                         disabled={role === "user" ? productDetails.stocks <= 0 : false}
                                         >
                                         {role === "user" ? (
@@ -435,7 +505,6 @@ const ProductDetails = () =>{
                                                 )}
                                             </div>
                                         ) : (
-                                            // ✅ Fix: Show different icons based on status
                                             role === "admin" && productDetails.statusApprove === "pending" 
                                                 ? <i className="fa fa-check"></i>       
                                                 : <i className="fa fa-pen"></i>  
@@ -491,7 +560,7 @@ const ProductDetails = () =>{
                                                         prodName: productDetails.name,
                                                         prodDisc: productDetails.disc,
                                                         prodPrice: productDetails.price,
-                                                        imageFile: productDetails.imageFile,
+                                                        imageFile: productDetails.imageFile?.[0]?.url,
                                                         seller: productDetails.seller,
                                                         quantity: 1,
                                                     }]

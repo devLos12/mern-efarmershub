@@ -4,19 +4,13 @@ import ActivityLog from "../../models/activityLogs.js";
 import Admin from "../../models/admin.js";
 import cloudinary from "../../config/cloudinary.js";
 
-
 // Memory storage - direct to Cloudinary
 const storage = multer.memoryStorage();
 export const update = multer({ storage: storage });
 
-
-
 export const updateCrops = async (req, res) => {
     try {
-        const { id, name, category, disc, image, kg, lifeSpan, productType } = req.body;
-        
-
-
+        const { id, name, category, disc, kg, lifeSpan, productType, unit } = req.body;
 
         // Convert to numbers para mag-match yung comparison
         const price = Number(req.body.price);
@@ -24,50 +18,50 @@ export const updateCrops = async (req, res) => {
 
         // Get old product data
         const oldProduct = await Product.findById(id);
-        
+
         if (!oldProduct) {
             return res.status(404).json({ message: "Product not found" });
         }
 
-        let imageFile = image;
-        let newCloudinaryId = null;
-        let oldCloudinaryId = oldProduct.cloudinaryId;
         let imageUpdated = false;
 
-        
-        // Handle Cloudinary upload if may bagong image - using base64
-        if (req.file) {
-            try {
-                const base64 = req.file.buffer.toString('base64');
-                const dataURI = `data:${req.file.mimetype};base64,${base64}`;
-                
-                const result = await cloudinary.uploader.upload(dataURI, {
-                    folder: 'products'
-                });
+        // Parse existing images from frontend
+        const existingImages = req.body.existingImages
+            ? JSON.parse(req.body.existingImages)
+            : [];
 
-                imageFile = result.secure_url;
-                newCloudinaryId = result.public_id;
-                imageUpdated = true;
-            } catch (uploadError) {
-                throw new Error(`Image upload failed: ${uploadError.message}`);
-            }
-        }
+        // Upload new files to Cloudinary
+        const newUploads = await Promise.all(
+            (req.files || []).map(async (file) => {
+                const base64 = file.buffer.toString("base64");
+                const dataURI = `data:${file.mimetype};base64,${base64}`;
+                const result = await cloudinary.uploader.upload(dataURI, { folder: "products" });
+                return { url: result.secure_url, cloudinaryId: result.public_id };
+            })
+        );
+
+        // Merge existing + new
+        const finalImages = [...existingImages, ...newUploads];
+        if (newUploads.length > 0) imageUpdated = true;
 
         const shouldReset = lifeSpan === "reset";
         const effectiveLifeSpan = shouldReset ? oldProduct.lifeSpan : Number(lifeSpan);
-        
 
         const updateData = {
             name,
             price,
             stocks,
             totalStocks: stocks,
-            kg,
+            unit,
             category,
             disc,
-            imageFile,
             productType,
+            imageFile: finalImages,
         };
+        
+        if (unit === "kg" && kg) {
+            updateData.kg = parseFloat(kg);
+        }
 
 
         if (lifeSpan) {
@@ -77,36 +71,25 @@ export const updateCrops = async (req, res) => {
             updateData.expiryDate = new Date(Date.now() + Number(lifeSpan) * 24 * 60 * 60 * 1000);
         }
 
-
-        if (newCloudinaryId) {
-            updateData.cloudinaryId = newCloudinaryId;
-        }
-
         // Update product
         await Product.findByIdAndUpdate(id, updateData);
 
-        // Update totalStocks if needed
-        // if (stocks > oldProduct.totalStocks) {
-        //     await Product.findByIdAndUpdate(id, { totalStocks: stocks });
-        // }
-
         // Activity Logging for Admin
         if (req.account?.role === "admin") {
-            const ipAddress = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || 
+            const ipAddress = req.headers['x-forwarded-for']?.split(',')[0]?.trim() ||
                               req.ip || req.connection?.remoteAddress;
             const userAgent = req.get('user-agent');
 
             const admin = await Admin.findOne({ _id: req.account.id });
 
-            // Log each specific change
             if (oldProduct.name !== name) {
                 await ActivityLog.create({
                     performedBy: admin._id,
                     adminType: admin.adminType,
                     action: 'UPDATE PRODUCT',
                     description: `Updated product name from "${oldProduct.name}" to "${name}"`,
-                    ipAddress: ipAddress,
-                    userAgent: userAgent,
+                    ipAddress,
+                    userAgent,
                     status: 'success'
                 });
             }
@@ -117,8 +100,8 @@ export const updateCrops = async (req, res) => {
                     adminType: admin.adminType,
                     action: 'UPDATE PRODUCT',
                     description: `Updated product price from ₱${oldProduct.price} to ₱${price}`,
-                    ipAddress: ipAddress,
-                    userAgent: userAgent,
+                    ipAddress,
+                    userAgent,
                     status: 'success'
                 });
             }
@@ -129,8 +112,8 @@ export const updateCrops = async (req, res) => {
                     adminType: admin.adminType,
                     action: 'UPDATE PRODUCT',
                     description: `Updated product stocks from ${oldProduct.stocks} to ${stocks}`,
-                    ipAddress: ipAddress,
-                    userAgent: userAgent,
+                    ipAddress,
+                    userAgent,
                     status: 'success'
                 });
             }
@@ -141,8 +124,8 @@ export const updateCrops = async (req, res) => {
                     adminType: admin.adminType,
                     action: 'UPDATE PRODUCT',
                     description: `Updated product category from "${oldProduct.category}" to "${category}"`,
-                    ipAddress: ipAddress,
-                    userAgent: userAgent,
+                    ipAddress,
+                    userAgent,
                     status: 'success'
                 });
             }
@@ -153,19 +136,18 @@ export const updateCrops = async (req, res) => {
                     adminType: admin.adminType,
                     action: 'UPDATE PRODUCT',
                     description: `Updated product image for "${name}"`,
-                    ipAddress: ipAddress,
-                    userAgent: userAgent,
+                    ipAddress,
+                    userAgent,
                     status: 'success'
                 });
             }
-
 
             if (oldProduct.lifeSpan !== effectiveLifeSpan || shouldReset) {
                 await ActivityLog.create({
                     performedBy: admin._id,
                     adminType: admin.adminType,
                     action: 'UPDATE PRODUCT',
-                    description: shouldReset 
+                    description: shouldReset
                         ? `Reset expiry date of "${name}" using existing lifeSpan (${effectiveLifeSpan} days)`
                         : `Updated product lifeSpan from ${oldProduct.lifeSpan} to ${effectiveLifeSpan} days`,
                     ipAddress,
@@ -174,28 +156,31 @@ export const updateCrops = async (req, res) => {
                 });
             }
 
-
             // If walang changes at all
-            if (oldProduct.name === name && oldProduct.price === price && 
+            if (oldProduct.name === name && oldProduct.price === price &&
                 oldProduct.stocks === stocks && oldProduct.category === category && !imageUpdated) {
                 await ActivityLog.create({
                     performedBy: admin._id,
                     adminType: admin.adminType,
                     action: 'UPDATE PRODUCT',
                     description: `Updated product "${name}" (no changes detected)`,
-                    ipAddress: ipAddress,
-                    userAgent: userAgent,
+                    ipAddress,
+                    userAgent,
                     status: 'success'
                 });
             }
         }
 
-        // Delete old Cloudinary image AFTER successful update
-        if (oldCloudinaryId && newCloudinaryId) {
-            cloudinary.uploader.destroy(oldCloudinaryId).catch(err => 
-                console.error('Failed to delete old Cloudinary image:', err)
+        // Delete removed images from Cloudinary (non-blocking)
+        const removedImages = oldProduct.imageFile.filter(
+            (old) => !existingImages.some((ex) => ex.cloudinaryId === old.cloudinaryId)
+        );
+
+        removedImages.forEach((img) => {
+            cloudinary.uploader.destroy(img.cloudinaryId).catch((err) =>
+                console.error("Failed to delete old Cloudinary image:", err)
             );
-        } 
+        });
 
         io.emit('product:updated');
         res.status(200).json({ message: `Product successfully updated.` });
@@ -205,7 +190,7 @@ export const updateCrops = async (req, res) => {
         if (req.account?.role === "admin") {
             try {
                 const admin = await Admin.findOne({ _id: req.account.id });
-                const ipAddress = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || 
+                const ipAddress = req.headers['x-forwarded-for']?.split(',')[0]?.trim() ||
                                   req.ip || req.connection?.remoteAddress;
                 const userAgent = req.get('user-agent');
 
@@ -214,8 +199,8 @@ export const updateCrops = async (req, res) => {
                     adminType: admin.adminType,
                     action: 'UPDATE PRODUCT',
                     description: `Failed to update product: ${error.message}`,
-                    ipAddress: ipAddress,
-                    userAgent: userAgent,
+                    ipAddress,
+                    userAgent,
                     status: 'failed'
                 });
             } catch (logError) {

@@ -112,7 +112,7 @@ const OfflineFarmerPaymentTransactions = () => {
                         <p>Total Records: ${filteredTransactions.length}</p>
                         <p style="margin-top: 10px; border-top: 1px solid #ddd; padding-top: 10px;">
                             <strong>Gross Total: ₱${formatCurrency(payoutGross)}</strong><br/>
-                            Tax (5%): ₱${formatCurrency(payoutTax)}<br/>
+                            Platform Fee (5%): ₱${formatCurrency(payoutTax)}<br/>
                             <span style="color: #198754; font-weight: bold;">Net Total (Payout): ₱${formatCurrency(payoutNet)}</span>
                         </p>
                     </div>
@@ -138,7 +138,7 @@ const OfflineFarmerPaymentTransactions = () => {
                 <p style="margin: 5px 0; color: #666;">Total Records: ${filteredTransactions.length}</p>
                 <p style="margin: 10px 0; padding: 10px 0; border-top: 1px solid #ddd; color: #666;">
                     <strong>Gross Total: ₱${formatCurrency(payoutGross)}</strong><br/>
-                    Tax (5%): ₱${formatCurrency(payoutTax)}<br/>
+                    Platform Fee (5%): ₱${formatCurrency(payoutTax)}<br/>
                     <span style="color: #198754; font-weight: bold;">Net Total (Payout): ₱${formatCurrency(payoutNet)}</span>
                 </p>
             </div>
@@ -188,9 +188,6 @@ const OfflineFarmerPaymentTransactions = () => {
                     </div>
                 
                 </div>
-
-
-
 
 
 
@@ -288,7 +285,7 @@ const OfflineFarmerPaymentTransactions = () => {
                                 Gross amount: ₱{payoutGross?.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                             </p>
                             <p className="m-0 fw-bold text-dark">
-                                Tax amount: ₱{payoutTax?.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                Platform fee: ₱{payoutTax?.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                             </p>
                             <p className="m-0 fw-bold text-dark">
                                 Net amount: ₱{payoutNet?.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}

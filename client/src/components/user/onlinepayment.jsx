@@ -177,7 +177,12 @@ const OnlinePayment = () => {
             } else {
                 // ✅ Valid — i-store ang compressed version (mas maliit = mas mabilis ang checkout upload)
                 setValidationResult({ isValid: true, reason: result.reason });
-                setCheckoutForm((prev) => ({ ...prev, [name]: compressed }));
+                setCheckoutForm((prev) => ({ 
+                    ...prev, 
+                    [name]: compressed,
+                    text: result.referenceNo ? `${result.referenceNo}` : prev.text
+                }));
+
             }
         } catch (error) {
             // Kung mag-error ang AI (network issue etc.), i-allow na lang
@@ -189,11 +194,13 @@ const OnlinePayment = () => {
         }
     };
 
+
+
     const handleFileRemove = () => {
         setImgPreview(null);
         setValidationResult(null);
         setCompressing(false);
-        setCheckoutForm((prev) => ({ ...prev, image: "" }));
+        setCheckoutForm((prev) => ({ ...prev, image: "", text: '' }));
         if (fileUploadRef.current) fileUploadRef.current.value = null;
     };
 
@@ -390,20 +397,19 @@ const OnlinePayment = () => {
                     />
 
                     {/* Notes */}
-                    <div>
-                        <label className="form-label fw-semibold mb-2" style={{ fontSize: "12px" }}>
-                            <i className="fa-solid fa-note-sticky me-1"></i>
-                            Additional Notes (Optional)
-                        </label>
-                        <textarea
-                            className="form-control border bg-light shadow-sm"
-                            style={{ resize: "none", fontSize: "13px" }}
-                            name="text"
-                            onChange={handleTextChange}
-                            placeholder="Leave a note here..."
-                            rows="4"
-                        />
-                    </div>
+                    <label className="form-label fw-semibold mb-2" style={{ fontSize: "12px" }}>
+                        <i className="fa-solid fa-hashtag me-1"></i>
+                        Reference Number
+                    </label>
+                    <textarea
+                        className="form-control border bg-light shadow-sm"
+                        style={{ resize: "none", fontSize: "13px", cursor: "default" }}
+                        name="text"
+                        value={checkoutForm.text || ''}
+                        placeholder="Auto-filled after uploading receipt..."
+                        rows="2"
+                        readOnly
+                    />
                 </div>
             </div>
 

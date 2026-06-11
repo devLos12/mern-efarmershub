@@ -136,12 +136,11 @@ const Checkout = () =>{
     
     useLayoutEffect(() => {
 
-        if(!billingAddress?.firstname || !billingAddress?.lastname || !billingAddress?.email || !billingAddress?.contact || !billingAddress?.province || !billingAddress?.city || !billingAddress?.barangay || !billingAddress?.detailAddress || !billingAddress?.zipCode ) {
-
+        if(!billingAddress?.firstname || !billingAddress?.lastname || !billingAddress?.email || !billingAddress?.contact || !billingAddress?.province || !billingAddress?.city || !billingAddress?.barangay || !billingAddress?.purok || !billingAddress?.detailAddress || !billingAddress?.zipCode) {
             setIsComplete(false);
         } else {
             setIsComplete(true);
-        }   
+        }
 
     },[billingAddress]);
 
@@ -168,8 +167,15 @@ const Checkout = () =>{
 
     // Shipping fee calculation
     const shippingFeeVar = useMemo(() => {
-        return checkoutForm.orderMethod === "delivery" ? shippingFee.amount : 0;
-    }, [checkoutForm.orderMethod, shippingFee.amount]);
+        if (checkoutForm.orderMethod !== "delivery") return 0;
+        
+        const baseFee = shippingFee.amount;
+        const userPurok = parseInt(billingAddress?.purok);
+        const match = shippingFee.surcharges?.find(s => s.purok === String(billingAddress?.purok));
+        const surcharge = match?.additionalFee || 0;
+
+        return baseFee + surcharge;
+    }, [checkoutForm.orderMethod, shippingFee, billingAddress?.purok]);
 
     // Final total with shipping
     const finalTotal = useMemo(() => {
@@ -250,11 +256,11 @@ const Checkout = () =>{
                 setCheckoutForm((prev) => ({
                 ...prev, 
                 payment: undefined,
-                orderMethod: undefined
+                orderMethod: undefined,
+                text: "",
+                image: ""
             }));
             }, 1500);
-            
-
             
 
 
@@ -394,7 +400,7 @@ const Checkout = () =>{
                                         {[
                                             {data : billingAddress.contact},
                                             {data : billingAddress.email},
-                                            {data : `${billingAddress.detailAddress}, ${billingAddress.barangay}, ${billingAddress.city}, ${billingAddress.province}, ${billingAddress.zipCode}`},
+                                            {data : `Purok ${billingAddress.purok}, ${billingAddress.detailAddress}, ${billingAddress.barangay}, ${billingAddress.city}, ${billingAddress.province}, ${billingAddress.zipCode}`},
                                         ].map((info, i) => (
                                             <p key={i} className={`m-0 mt-1 text-muted small
                                             ${i === 1 ? "text-normal " : "text-capitalize "}`}
@@ -531,7 +537,7 @@ const Checkout = () =>{
                                     {/* Total Payment */}
                                     <div className="mt-2 pt-2 border-top d-flex justify-content-between align-items-center">
                                         <p className="m-0 text-capitalize fs-5 fw-bold">total payment:</p>
-                                        <p className="m-0 text-capitalize fs-5 fw-bold text-danger">
+                                        <p className="m-0 text-capitalize fs-5 fw-bold ">
                                             ₱{finalTotal.toLocaleString('en-PH')}.00
                                         </p>
                                     </div>

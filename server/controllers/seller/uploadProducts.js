@@ -16,7 +16,7 @@ export const uploadProducts = async(req, res) => {
 
         const seller = await Seller.findOne({ _id: id });
 
-        const { name, price, category, productType, stocks, kg, lifeSpan, disc } = req.body;
+        const { name, price, category, productType, stocks, unit, kg, lifeSpan, disc } = req.body;
 
         
         // Check duplicate name FIRST (before upload)
@@ -32,13 +32,22 @@ export const uploadProducts = async(req, res) => {
         }
         
         // Direct upload to Cloudinary using base64
-        const base64 = req.file.buffer.toString('base64');
-        const dataURI = `data:${req.file.mimetype};base64,${base64}`;
+        // Validate files
+        if (!req.files || req.files.length === 0) {
+            return res.status(400).json({ message: "At least 1 image is required." });
+        }
+
+        // Upload all to Cloudinary
+        const uploadedImages = await Promise.all(
+            req.files.map(async (file) => {
+                const base64 = file.buffer.toString("base64");
+                const dataURI = `data:${file.mimetype};base64,${base64}`;
+                const result = await cloudinary.uploader.upload(dataURI, { folder: "products" });
+                return { url: result.secure_url, cloudinaryId: result.public_id };
+            })
+        );
         
-        const result = await cloudinary.uploader.upload(dataURI, {
-            folder: 'products'
-        });
-        
+
         // Generate sequential product ID
         const lastProduct = await Product.findOne().sort({ createdAt: -1 });
         
@@ -58,11 +67,11 @@ export const uploadProducts = async(req, res) => {
             productType,
             stocks, 
             totalStocks: stocks,
+            unit,
             kg, 
             lifeSpan, 
             disc, 
-            imageFile: result.secure_url, // Cloudinary URL
-            cloudinaryId: result.public_id, // Para sa pag-delete later
+            imageFile: uploadedImages, 
             seller: {
                 imageFile: seller.imageFile,
                 id: seller._id, 

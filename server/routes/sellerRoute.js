@@ -8,7 +8,7 @@ import { displayOrders, deleteOrder, archiveSellerOrder, getArchivedSellerOrders
 import getOrderDetails from "../controllers/seller/orderDetails.js";
 import getProductDetails from "../controllers/seller/productDetails.js";
 import { getMessages, sendMessage, getChatId, sendImage } from "../controllers/messages.js";
-import { inboxChats, markAsRead, deleteChat } from "../controllers/chats.js";
+import { inboxChats, markAsRead, deleteChat, archiveChat, archivedChats, unarchiveChat } from "../controllers/chats.js";
 import { updateCrops, update } from "../controllers/seller/updateCrops.js";
 import { UpdateProfile, updateProfile } from "../controllers/seller/updateProfile.js";
 import { getSellerTransaction, sellerDeletePayment, sellerDeletePayout } from "../controllers/seller/transaction.js";
@@ -24,8 +24,11 @@ const sellerRouter = express.Router();
 
 sellerRouter.get("/getSellerInfo", authMiddleware, getInfo);
 sellerRouter.patch("/sellerUpdateProfile", authMiddleware, updateProfile.single("image"), UpdateProfile)
-sellerRouter.post('/uploadCrops', authMiddleware, upload.single("image"), uploadProducts);
-sellerRouter.put('/updateCrops', authMiddleware, update.single("image"), updateCrops);
+
+sellerRouter.post('/uploadCrops', authMiddleware, upload.array("imageFile", 3), uploadProducts);
+sellerRouter.put('/updateCrops', authMiddleware, update.array("imageFile", 3), updateCrops);
+
+
 sellerRouter.get("/getSellerProduct/:id", getProducts);
 sellerRouter.get("/getSellerProductDetails/:id", getProductDetails);
 sellerRouter.delete("/removeSellerCrops/:id", removeProducts);
@@ -53,6 +56,13 @@ sellerRouter.get('/getSellerTransactions', authMiddleware, getSellerTransaction)
 sellerRouter.delete('/sellerDeletePayment', authMiddleware, sellerDeletePayment);
 sellerRouter.patch("/sellerDeletePayout", authMiddleware, sellerDeletePayout);
 sellerRouter.patch('/sellerChangePassword', authMiddleware, changePassword);
+
+
+sellerRouter.patch("/archiveChatSeller/:id", authMiddleware, archiveChat);
+sellerRouter.get("/archivedChatsSeller", authMiddleware, archivedChats);
+sellerRouter.patch("/unarchiveChatSeller/:id", authMiddleware, unarchiveChat);
+
+
 sellerRouter.get("/logoutSeller", Logout);
 
 

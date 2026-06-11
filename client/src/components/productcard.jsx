@@ -76,7 +76,7 @@ const ProductCard = ({ products })=>{
                         <div className="rounded-2 overflow-hidden position-relative"
                         style={{aspectRatio: '4/3'}}
                         >
-                            <img src={data.imageFile} 
+                            <img src={data.imageFile?.[0]?.url} 
                             alt={data.imageFile} 
                             className="img-fluid w-100 h-100"
                             style={{ 
@@ -131,30 +131,41 @@ const ProductCard = ({ products })=>{
                                 <p className="m-0 text-muted fw-bold small">{`${data.totalRatings}`}</p>
                             </div>
 
-                            <div className="mt-3 d-flex align-items-center justify-content-between ">
-                                <p className="m-0 text-capitalize small text-muted " >price:</p>
+                           <div className="mt-3 d-flex align-items-center justify-content-between">
+                                <p className="m-0 text-capitalize small text-muted">price:</p>
                                 <div className="d-flex align-items-center gap-1">
                                     <p className="m-0 text-capitalize fw-bold text-success small">
                                         ₱{data.price.toLocaleString('en-PH', 
-                                        { minimumFractionDigits: 2, maximumFractionDigits: 2 }
-                                        )}</p> 
+                                        { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                        <span className="text-muted fw-normal" style={{ fontSize: "10px", marginLeft: "2px" }}>
+                                            /{data.unit === "kg" ? `${data.kg} kg` : "1 bundle"}
+                                        </span>
+                                    </p> 
                                 </div>
-                            </div>  
-                            <div className="d-flex aling-items-center justify-content-between">
-                                <p className="m-0 text-capitalize small text-muted" >stocks:</p>
-                                <p className="m-0 text-capitalize fw-bold small ">{
-                                    data.stocks > 1 ? data.stocks + " bundles "
-                                    : data.stocks === 1 ? data.stocks + " bundle " : "out of stock"}
+                            </div>   
+                            
+                            {/* Stocks display based on unit */}
+                            <div className="d-flex align-items-center justify-content-between ">
+                                <p className="m-0 text-capitalize small text-muted">stocks:</p>
+
+                                <p className="m-0 text-capitalize fw-bold small">
+                                    {data.stocks > 0
+                                        ? `${data.stocks} ${data.stocks === 1 ? "stock" : "stocks"} (${data.unit === "kg" ? "kg" : "bundles"})`
+                                        : "out of stock"
+                                    }
                                 </p>
                             </div>
-                            <div className="text-end mt-1">
-                                <p className="m-0 text-muted" style={{fontSize: "10px"}}>
-                                    1 bundle = {data.kg || 2}kg
-                                </p>
-                            </div>
+
+                            <p className="m-0 text-muted text-end my-2 text-capitalize" style={{ fontSize: "12px" }}>
+                                {data.unit === "kg"
+                                    ? `1 stock = ${data.kg}kg`
+                                    : "1 stock = 1 bundle"
+                                }
+                            </p>
+                            
                         </div>
 
-                        <ProductButton 
+                        <ProductButton
                         role={role} 
                         data={data} 
                         FontSize={FontSize} 
@@ -259,4 +270,4 @@ const ProductButton = ({role, data, FontSize, updateStatus, deleteProduct, updat
             </div>
         )
     }
-}   
+}

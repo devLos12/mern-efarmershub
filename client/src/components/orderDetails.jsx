@@ -2634,8 +2634,8 @@ const OrderDetails = () => {
                                                 {orderData.proofOfPayment.textMessage && orderData.proofOfPayment.textMessage !== "n/a" && (
                                                     <div className="mt-3 p-2 bg-light rounded">
                                                         <p className="m-0 text-muted small fw-semibold mb-1" style={{fontSize: "11px"}}>
-                                                            <i className="fa-solid fa-note-sticky me-1"></i>
-                                                            Additional Notes:
+                                                            <i className="fa-solid fa-hashtag me-1"></i>
+                                                            Reference Number:
                                                         </p>
                                                         <p className="m-0 small" style={{fontSize: "12px"}}>
                                                             {orderData?.proofOfPayment?.textMessage === 'undefined' ? " " : orderData?.proofOfPayment?.textMessage}
@@ -2688,7 +2688,7 @@ const OrderDetails = () => {
                                     { label: "Method of order", value: orderData.orderMethod },
                                     { label: "Mode of payment", value: orderData.paymentType },
                                     { label: "Payment status", value: orderData.paymentStatus },
-                                    { label: "Payment ref", value: orderData.refNo },
+                                    { label: "Transaction ID", value: orderData.refNo },
                                     { label: "Total payment", value: `₱${orderData.totalPrice.toLocaleString("en-PH")}.00` },
                                 ].map((data, i) => (
                                     <div key={i} className={`d-flex align-items-center justify-content-between 

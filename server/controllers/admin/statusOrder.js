@@ -392,7 +392,7 @@ const getPHTime = () => ({
 
 
 
-const createTransaction = async(orderId, items, payment, userId, firstname, lastname, email, totalPrice, refNo, proofOfPayment) => {
+const createTransaction = async(orderId, items, payment, userId, firstname, lastname, email, totalPrice, refNo, proofOfPayment, referenceNo) => {
     const paidTime = getPHTime();
 
     // GROUP items by seller
@@ -465,6 +465,7 @@ const createTransaction = async(orderId, items, payment, userId, firstname, last
         paidAt: paidTime,
         refNo: refNo,
         imageFile: proofOfPayment,
+        referenceNo: referenceNo || null
     });
 };
 
@@ -651,6 +652,8 @@ export const statusOrder = async(req, res) => {
                         order.totalPrice, 
                         order.refNo,
                         order.proofOfPayment.image,
+                        order.proofOfPayment.textMessage || null,
+                        
                     );
                     
                     try {

@@ -19,7 +19,7 @@ import getOrderDetails from "../controllers/user/orderDetails.js";
 import getProductDetails from "../controllers/user/productDetails.js";
 import getBillingAddress from "../controllers/user/getBillingAddress.js";
 import { uploadImgReview,  productReview } from "../controllers/user/productReview.js";
-import { inboxChats, markAsRead, deleteChat} from "../controllers/chats.js";
+import { inboxChats, markAsRead, deleteChat, archiveChat, archivedChats, unarchiveChat} from "../controllers/chats.js";
 import { getMessages, sendMessage, sendImage, getChatId} from "../controllers/messages.js";
 import { UpdateProfile, updateProfile } from "../controllers/user/updateProfile.js";
 import { displayAnnouncement } from "../controllers/user/annoucement.js";
@@ -69,6 +69,11 @@ userRouter.patch('/userChangePassword', authMiddleware, changePassword);
 userRouter.post('/cancelOrder/:id', authMiddleware, uploadRefundFile.single("qrCode"), cancelOrder);
 userRouter.post("/requestReplacement", authMiddleware, replacementImagesUpload,  requestReplacement);
 userRouter.get("/trackReplacement/:orderId/:itemId", authMiddleware, trackReplacementProduct);
+
+userRouter.patch("/archiveChatUser/:id", authMiddleware, archiveChat);
+userRouter.get("/archivedChatsUser",   authMiddleware,   archivedChats);
+userRouter.patch("/unarchiveChatUser/:id",   authMiddleware, unarchiveChat);
+
 
 userRouter.get('/logoutUser', Logout); 
 

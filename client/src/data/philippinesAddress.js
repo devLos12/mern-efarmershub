@@ -2981,7 +2981,7 @@ export default {
         "zipCode": "4114",
         "barangays": [
           "Langkaan I",
-          "Langkaan II"
+          // "Langkaan II"
         ]
       }
     }

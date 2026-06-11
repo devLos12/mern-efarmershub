@@ -112,8 +112,9 @@ const AddAnnouncement = () => {
 
     const handleChange = (e) => {
         const { name, value } = e.target;
+        if( name === 'description' && value.length > 500) return
         setFormData(prev => ({ ...prev, [name]: value }));
-    };
+    };  
 
     const handleDateBlur = (e) => {
         const { name, value } = e.target;
@@ -423,16 +424,6 @@ const AddAnnouncement = () => {
                             </div>
 
 
-                            
-
-
-
-
-
-
-
-
-
                         ) : (
                             <label
                                 htmlFor="inputBannerFile"
@@ -592,6 +583,13 @@ const AddAnnouncement = () => {
                             required
                             style={{ resize: "none", borderColor: "#d1e7d1", borderRadius: 8 }}
                         />
+
+                        <div className="d-flex justify-content-end mt-1">
+                            <small className={`${(formData.description?.length || 0) >= 500 ? "text-danger" : "text-muted"}`} style={{ fontSize: "0.72rem" }}>
+                                {formData.description?.length || 0}/500
+                            </small>
+                        </div>
+
                     </div>
                 </div>
 

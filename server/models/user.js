@@ -21,6 +21,7 @@ const userSchema = new mongoose.Schema({
         province:       { type: String },
         city:           { type: String },
         barangay:       { type: String },
+        purok:          { type: String },
         detailAddress:  { type: String },
         zipCode:        { type: String }
     },

@@ -29,6 +29,14 @@ const InboxChat = () =>{
     const seller = useContext(sellerContext)
 
 
+
+    const [activeTab, setActiveTab] = useState("inbox"); // "inbox" | "archived"
+    const [archivedList, setArchivedList] = useState([]);
+    const [archivedLoading, setArchivedLoading] = useState(false);
+
+    const [searchQuery, setSearchQuery] = useState("");
+
+
     const context = role === "admin" ? admin : role === "seller" ? seller : null;
     const setTextHeader = context?.setTextHeader ?? (() => {});
     const location = useLocation();
@@ -69,6 +77,35 @@ const InboxChat = () =>{
 
 
 
+    const fetchArchived = () => {
+        setArchivedLoading(true);
+
+        let endpoint = '';
+        if(role === "admin") endpoint = "archivedChatsAdmin";
+        else if(role === "seller") endpoint = "archivedChatsSeller";
+        else endpoint = "archivedChatsUser";
+
+        fetch(`${import.meta.env.VITE_API_URL}/api/${endpoint}`, {
+            credentials: "include"
+        })
+        .then(async (res) => {
+            const data = await res.json();
+            if(!res.ok) throw new Error(data.message);
+            return data;
+        })
+        .then((data) => {
+            setArchivedList(data);
+        })
+        .catch((err) => {
+            console.log("Error:", err.message);
+            setArchivedList([]);
+        })
+        .finally(() => setArchivedLoading(false));
+    };
+
+
+
+
 
     const formatTime = (date) => {
         const messageDate = new Date(date);
@@ -87,7 +124,32 @@ const InboxChat = () =>{
     const colors = ["#007bff", "#28a745", "#ffc107", "#dc3545", "#6f42c1", "#20c997"];
     const randomColor = useMemo(() => colors[Math.floor(Math.random() * colors.length)], []);
 
-    
+
+
+
+
+    const filteredInbox = inboxList.filter((data) => {
+        const receiver = data.participants.find((p) => p.role.toLowerCase() !== role);
+        const displayName = receiver?.accountId?.firstname
+            ? `${receiver.accountId.firstname} ${receiver.accountId.lastname}`
+            : receiver.role;
+
+        return displayName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            data.lastMessage.toLowerCase().includes(searchQuery.toLowerCase());
+    });
+
+    const filteredArchived = archivedList.filter((data) => {
+        const receiver = data.participants.find((p) => p.role.toLowerCase() !== role);
+        const displayName = receiver?.accountId?.firstname
+            ? `${receiver.accountId.firstname} ${receiver.accountId.lastname}`
+            : receiver.role;
+
+        return displayName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            data.lastMessage.toLowerCase().includes(searchQuery.toLowerCase());
+    });
+
+
+
 
 
     if(inboxLoading) return <p>
@@ -100,6 +162,8 @@ const InboxChat = () =>{
             </div>
         </div>
     </p>
+
+
 
 
 
@@ -129,187 +193,393 @@ const InboxChat = () =>{
                             </div>
                         </div>
                     </div>
-                    <div className="col-12 mt-2 ">
+
+                    <div className="col-12 mt-2">
                     
-                    {inboxList.length > 0 ? (
-                        inboxList.map((data, i) => {
-                            const sender = data.participants.find((p) => p.role.toLowerCase() === role)
-                            const receiver = data.participants.find((p) => p.role.toLowerCase() !== role);
-                            const displayName = receiver?.accountId?.firstname 
-                            ? `${receiver.accountId.firstname} ${receiver.accountId.lastname}`
-                            : receiver.role;
-                            
-                            const isMenuOpen = openMenuId === data._id;
+                        <div className="mt-2 position-relative">
+                            <input
+                                type="text"
+                                className="form-control form-control-sm ps-4 rounded-3"
+                                placeholder="Search conversations..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                            />
+                            <i className="fa fa-search position-absolute text-muted"
+                            style={{ left: "12px", top: "50%", transform: "translateY(-50%)", fontSize: "12px" }}></i>
+                            {searchQuery && (
+                                <i className="fa fa-times position-absolute text-muted"
+                                style={{ right: "12px", top: "50%", transform: "translateY(-50%)", cursor: "pointer", fontSize: "12px" }}
+                                onClick={() => setSearchQuery("")}></i>
+                            )}
+                        </div>
 
-                            return (
-                                <div key={i} className={`row g-0 mt-3 rounded-4
-                                    ${data.unreadCount[role]  > 0 ? "bg" : "bg-hover"}
-                                `} 
-                                style={{cursor: "pointer"}}
-                                onClick={(e)=> {
-                                    e.stopPropagation();
 
+                        <div className="d-flex gap-2 mt-2 ">
+                            <button 
+                                className={`btn btn-sm ${activeTab === "inbox" ? "btn-success" : "btn-outline-success"}`}
+                                onClick={() => {
+                                    setActiveTab("inbox")
+                                    setSearchQuery("");
+                                }}
+
+                            >
+                                Inbox
+                            </button>
+                            <button 
+                                className={`btn btn-sm ${activeTab === "archived" ? "btn-warning" : "btn-outline-warning"}`}
+                                onClick={() => {
+                                    setActiveTab("archived");
+                                    setSearchQuery("");
+                                    fetchArchived();
+
+                                }}
+                            >
+                                <i className="fa fa-archive me-1"></i>
+                                Archived
+                            </button>
+                        </div>
+                    </div>
+
+
+                    <div className="col-12 mt-2 ">
+                        {activeTab === "inbox" ? (
+
+                            filteredInbox.length > 0 ? (
+                                filteredInbox.map((data, i) => {
+                                    const sender = data.participants.find((p) => p.role.toLowerCase() === role)
+                                    const receiver = data.participants.find((p) => p.role.toLowerCase() !== role);
+                                    const displayName = receiver?.accountId?.firstname 
+                                    ? `${receiver.accountId.firstname} ${receiver.accountId.lastname}`
+                                    : receiver.role;
                                     
-                                    let endPoint;
-                                    if(role === "admin"){
-                                        endPoint = "updateMarkAsReadFromAdmin";
-                                    } else if (role === "seller") {
-                                        endPoint = "updateMarkAsReadFromSeller";
-                                    } else {
-                                        endPoint = "updateMarkAsReadFromUser";
-                                    }
-                                    
-                                    fetch(`${import.meta.env.VITE_API_URL}/api/${endPoint}/${data._id}`, {
-                                        method : "PATCH",
-                                        credentials : "include"
-                                    })
-                                    .then(async(res) => {
-                                        const data = await res.json();
-                                        if(!res.ok) throw new Error(data.message);
-                                        return data;
-                                    })
-                                    .then((data) => {
-                                        console.log(data.message);
-                                    })
-                                    .catch((err) => console.log("Error:", err.message));
+                                    const isMenuOpen = openMenuId === data._id;
 
-                                    navigate(`/${role}/messages`, { state :  { 
-                                        title: 'messages',
-                                        source : receiver.role,
-                                        chatId : data._id,
-                                        senderId : sender.accountId._id,
-                                        credentials : { 
-                                            id : receiver.accountId._id,
-                                            name : displayName,
-                                            email: receiver.accountId.email,
-                                            role : receiver.role
-                                        }
-                                    }})
-                                }}>
-                                    <div className={`d-flex align-items-center justify-content-between rounded-pill p-2 position-relative 
-                                    `}
-                                    >
-                                        <div className="d-flex align-items-center">
-                                            <div className=" rounded-circle d-flex align-items-center justify-content-center text-uppercase fs-3 text-white" 
-                                            style={{width:"40px", height:"40px", backgroundColor : randomColor}}>
-                                                <p className="m-0">{displayName.charAt(0)}</p>
-                                            </div>
+                                    return (
+                                        <div key={i} className={`row g-0 mt-3 rounded-4
+                                            ${data.unreadCount[role]  > 0 ? "bg" : "bg-hover"}
+                                        `} 
+                                        style={{cursor: "pointer"}}
+                                        onClick={(e)=> {
+                                            e.stopPropagation();
 
-                                            <div className="d-flex flex-column ms-2 ms-md-3 ">     
+                                            
+                                            let endPoint;
+                                            if(role === "admin"){
+                                                endPoint = "updateMarkAsReadFromAdmin";
+                                            } else if (role === "seller") {
+                                                endPoint = "updateMarkAsReadFromSeller";
+                                            } else {
+                                                endPoint = "updateMarkAsReadFromUser";
+                                            }
+                                            
+                                            fetch(`${import.meta.env.VITE_API_URL}/api/${endPoint}/${data._id}`, {
+                                                method : "PATCH",
+                                                credentials : "include"
+                                            })
+                                            .then(async(res) => {
+                                                const data = await res.json();
+                                                if(!res.ok) throw new Error(data.message);
+                                                return data;
+                                            })
+                                            .then((data) => {
+                                                console.log(data.message);
+                                            })
+                                            .catch((err) => console.log("Error:", err.message));
+
+                                            navigate(`/${role}/messages`, { state :  { 
+                                                title: 'messages',
+                                                source : receiver.role,
+                                                chatId : data._id,
+                                                senderId : sender.accountId._id,
+                                                credentials : { 
+                                                    id : receiver.accountId._id,
+                                                    name : displayName,
+                                                    email: receiver.accountId.email,
+                                                    role : receiver.role
+                                                }
+                                            }})
+                                        }}>
+                                            <div className={`d-flex align-items-center justify-content-between rounded-pill p-2 position-relative 
+                                            `}
+                                            >
                                                 <div className="d-flex align-items-center">
-                                                    <p className="m-0 text-capitalize fw-bold 
-                                                    ">{displayName}</p>
-                                                    <p className="m-0 ms-2 small text-capitalize">
-                                                        {`(${receiver.role === "Seller" ? 
-                                                            "farmer" : receiver.role === "User" ? 
-                                                            "buyer" : receiver.role
-                                                        })`}
-                                                    </p>
-                                                </div>
+                                                    <div className=" rounded-circle d-flex align-items-center justify-content-center text-uppercase fs-3 text-white" 
+                                                    style={{width:"40px", height:"40px", backgroundColor : randomColor}}>
+                                                        <p className="m-0">{displayName.charAt(0)}</p>
+                                                    </div>
 
-                                                <div className={`d-flex align-items-center 
-                                                    ${data.unreadCount[role] === 0 || data.unreadCount[role] === undefined ? "opacity-75" : "fw-bold"}`}>
-                                                    <div className="d-flex align-items-center">
-                                                        {data.unreadCount[role] > 1 ? (
-                                                        <p className="m-0 small">{`${data.unreadCount[role] > 5
-                                                        ? "5+   " : data.unreadCount[role]} new messages`}</p>
-                                                        ) : (
-                                                            <div className={`d-flex align-items-center`}>
-                                                                {sender.accountId._id === data.lastSender && (
-                                                                    <p className="m-0 text-capitalize me-2 small">you: </p>
-                                                                )}
-                                                                <p className="m-0 small">
-                                                                    {data.lastMessage.length > 20 
-                                                                    ? data.lastMessage.slice(0, 11) + "..."
-                                                                    : data.lastMessage}
-                                                                </p>
-                                                            </div>
-                                                        )}
-                                                        
+                                                    <div className="d-flex flex-column ms-2 ms-md-3 ">     
                                                         <div className="d-flex align-items-center">
-                                                            <div className="fa fa-circle mx-2" style={{fontSize : "3px"}}></div>
-                                                            <p className="m-0 small">{formatTime(data.updatedAt)}</p>
+                                                            <p className="m-0 text-capitalize fw-bold 
+                                                            ">{displayName}</p>
+                                                            <p className="m-0 ms-2 small text-capitalize">
+                                                                {`(${receiver.role === "Seller" ? 
+                                                                    "farmer" : receiver.role === "User" ? 
+                                                                    "buyer" : receiver.role
+                                                                })`}
+                                                            </p>
+                                                        </div>
+
+                                                        <div className={`d-flex align-items-center 
+                                                            ${data.unreadCount[role] === 0 || data.unreadCount[role] === undefined ? "opacity-75" : "fw-bold"}`}>
+                                                            <div className="d-flex align-items-center">
+                                                                {data.unreadCount[role] > 1 ? (
+                                                                <p className="m-0 small">{`${data.unreadCount[role] > 5
+                                                                ? "5+   " : data.unreadCount[role]} new messages`}</p>
+                                                                ) : (
+                                                                    <div className={`d-flex align-items-center`}>
+                                                                        {sender.accountId._id === data.lastSender && (
+                                                                            <p className="m-0 text-capitalize me-2 small">you: </p>
+                                                                        )}
+                                                                        <p className="m-0 small">
+                                                                            {data.lastMessage.length > 20 
+                                                                            ? data.lastMessage.slice(0, 11) + "..."
+                                                                            : data.lastMessage}
+                                                                        </p>
+                                                                    </div>
+                                                                )}
+                                                                
+                                                                <div className="d-flex align-items-center">
+                                                                    <div className="fa fa-circle mx-2" style={{fontSize : "3px"}}></div>
+                                                                    <p className="m-0 small">{formatTime(data.updatedAt)}</p>
+                                                                </div>
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>
-                                            </div>
-                                        </div>
 
 
-                                        <div
-                                        ref={(el) => (buttonRefs.current[data._id] = el )}
-                                        className="fa-solid  fa-ellipsis fs-5 text-end  bg-light  rounded-circle d-flex align-items-center justify-content-center border small" 
-                                        style={{cursor : "pointer", width : "36px", height : "36px" }} 
-                                        onClick={(e)=>{
-                                            e.stopPropagation();
-
-                                            setOpenMenuId(isMenuOpen ? null : data._id)
-                                        }}></div>
-
-                                        {isMenuOpen && (
-                                            <div 
-                                            ref={(el) => (menuRefs.current[data._id] = el)} 
-                                            className="col-5 mt-5 me-2 position-absolute top-0 end-0 rounded p-2 z-1 bg-white " 
-                                            style={{
-                                                boxShadow: "0px 2px 10px rgba(0, 0, 0, 0.25)",
-                                                cursor: "default"
-                                            }}
-                                            onClick={(e) => e.stopPropagation()}
-                                            >
-                                                <p className="m-0 small fw-bold text-capitalize p-2 rounded bg-hover d-flex align-items-center gap-1 text-danger"
-                                                style={{cursor: "pointer"}} 
-                                                onClick={(e)=> {
-                                                    e.stopPropagation();
-
-                                                    let roleParamsDelete = '';
-
-                                                    if(role === "admin"){
-                                                        roleParamsDelete = "deleteChatAdmin";
-                                                    } else if (role === "seller") {
-                                                        roleParamsDelete = "deleteChatSeller";
-                                                    } else {
-                                                        roleParamsDelete = "deleteChatUser";
-                                                    }
-
-
-                                                    setInboxList((chats) => 
-                                                        chats.filter((chat) => chat._id !== data._id)
-                                                    );
-
-                                                    fetch(`${import.meta.env.VITE_API_URL}/api/${roleParamsDelete}/${data._id}`, {
-                                                        method : "PATCH",
-                                                        credentials : "include"
-                                                    })
-                                                    .then((res) => res.json())
-                                                    .then((data) => {
-                                                        console.log(data.message);
-                                                    })
-                                                    .catch((err) => console.log("Error: ", err.message))
-
-                                                    setOpenMenuId(null);
-                                                }}>
-                                                    <i className="bx bx-trash"></i>
-                                                    delete</p>
-                                                {/* <p className="m-0 small  fw-bold text-capitalize p-2 rounded bg-hover "
-                                                style={{cursor: "pointer"}}
+                                                <div
+                                                ref={(el) => (buttonRefs.current[data._id] = el )}
+                                                className="fa-solid  fa-ellipsis fs-5 text-end  bg-light  rounded-circle d-flex align-items-center justify-content-center border small" 
+                                                style={{cursor : "pointer", width : "36px", height : "36px" }} 
                                                 onClick={(e)=>{
                                                     e.stopPropagation();
-                                                    alert("later ka na mag edit");
-                                                    setOpenMenuId(null);
-                                                }}>edit</p> */}
-                                            </div>
-                                        )}
-                                    </div>  
+
+                                                    setOpenMenuId(isMenuOpen ? null : data._id)
+                                                }}></div>
+
+                                                {isMenuOpen && (
+                                                    <div 
+                                                    ref={(el) => (menuRefs.current[data._id] = el)} 
+                                                    className="col-4 mt-5 me-2 position-absolute top-0 end-0 rounded p-2 z-1 bg-white " 
+                                                    style={{
+                                                        boxShadow: "0px 2px 10px rgba(0, 0, 0, 0.25)",
+                                                        cursor: "default"
+                                                    }}
+                                                    onClick={(e) => e.stopPropagation()}
+                                                    >
+                                                        {/* <p className="m-0 small fw-bold text-capitalize p-2 rounded bg-hover d-flex align-items-center gap-1 text-danger"
+                                                        style={{cursor: "pointer"}} 
+                                                        onClick={(e)=> {
+                                                            e.stopPropagation();
+
+                                                            let roleParamsDelete = '';
+
+                                                            if(role === "admin"){
+                                                                roleParamsDelete = "deleteChatAdmin";
+                                                            } else if (role === "seller") {
+                                                                roleParamsDelete = "deleteChatSeller";
+                                                            } else {
+                                                                roleParamsDelete = "deleteChatUser";
+                                                            }
+
+
+                                                            setInboxList((chats) => 
+                                                                chats.filter((chat) => chat._id !== data._id)
+                                                            );
+
+                                                            fetch(`${import.meta.env.VITE_API_URL}/api/${roleParamsDelete}/${data._id}`, {
+                                                                method : "PATCH",
+                                                                credentials : "include"
+                                                            })
+                                                            .then((res) => res.json())
+                                                            .then((data) => {
+                                                                console.log(data.message);
+                                                            })
+                                                            .catch((err) => console.log("Error: ", err.message))
+
+                                                            setOpenMenuId(null);
+                                                        }}>
+                                                            <i className="bx bx-trash"></i>
+                                                            delete
+                                                        </p> */}
+
+                                                        <span className="m-0 small text-capitalize p-2 rounded bg-hover d-flex align-items-center gap-1 text-warning"
+                                                        style={{ cursor: "pointer" }}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+
+                                                            let archiveEndpoint = '';
+                                                            if(role === "admin"){
+                                                                archiveEndpoint = "archiveChatAdmin";
+                                                            } else if (role === "seller") {
+                                                                archiveEndpoint = "archiveChatSeller";
+                                                            } else {
+                                                                archiveEndpoint = "archiveChatUser";
+                                                            }
+
+                                                            setInboxList((chats) => 
+                                                                chats.filter((chat) => chat._id !== data._id)
+                                                            );
+
+                                                            fetch(`${import.meta.env.VITE_API_URL}/api/${archiveEndpoint}/${data._id}`, {
+                                                                method : "PATCH",
+                                                                credentials : "include"
+                                                            })
+                                                            .then((res) => res.json())
+                                                            .then((data) => { console.log(data.message); })
+                                                            .catch((err) => console.log("Error: ", err.message));
+
+                                                            setOpenMenuId(null);
+                                                        }}          
+                                                        >
+
+
+
+
+
+
+                                                            <i className="fa fa-archive"></i>
+                                                            archive
+                                                        </span>
+
+                                                    </div>
+                                                )}
+                                            </div>  
+                                        </div>
+                                    )
+                                })
+                            ) : (
+                                <div  className="row mt-3 g-0 bg rounded p-5">
+                                    <div className="col-12 p-5 h-100">
+                                        <p className="m-0 text-center text-capitalize opacity-75 ">{inboxError || "no messages"}</p>
+                                    </div>
                                 </div>
                             )
-                        })
-                    ) : (
-                        <div  className="row mt-3 g-0 bg rounded p-5">
-                            <div className="col-12 p-5 h-100">
-                                <p className="m-0 text-center text-capitalize opacity-75 ">{inboxError || "no messages"}</p>
-                            </div>
-                        </div>
-                    )}                    
+                        ):(
+                            archivedLoading ? (
+                                <div className="d-flex justify-content-center mt-5">
+                                    <div className="spinner-border text-warning " role="status">
+                                        <span className="visually-hidden">Loading...</span>
+                                    </div>
+                                </div>
+                            ) : (
+
+                            filteredArchived.length > 0 ? (
+                                    filteredArchived.map((data, i) => {
+                                        const sender = data.participants.find((p) => p.role.toLowerCase() === role);
+                                        const receiver = data.participants.find((p) => p.role.toLowerCase() !== role);
+                                        const displayName = receiver?.accountId?.firstname
+                                            ? `${receiver.accountId.firstname} ${receiver.accountId.lastname}`
+                                            : receiver.role;
+
+                                        const isMenuOpen = openMenuId === data._id;
+
+                                        return (
+                                            <div key={i} className="row g-0 mt-3 rounded-4 bg-hover"
+                                            style={{ cursor: "pointer" }}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                // same navigate logic mo
+                                                navigate(`/${role}/messages`, { state: {
+                                                    title: 'messages',
+                                                    source: receiver.role,
+                                                    chatId: data._id,
+                                                    senderId: sender.accountId._id,
+                                                    credentials: {
+                                                        id: receiver.accountId._id,
+                                                        name: displayName,
+                                                        email: receiver.accountId.email,
+                                                        role: receiver.role
+                                                    }
+                                                }});
+                                            }}>
+                                                <div className="d-flex align-items-center justify-content-between rounded-pill p-2 position-relative">
+                                                    <div className="d-flex align-items-center">
+                                                        <div className="rounded-circle d-flex align-items-center justify-content-center text-uppercase fs-3 text-white"
+                                                        style={{ width: "40px", height: "40px", backgroundColor: randomColor }}>
+                                                            <p className="m-0">{displayName.charAt(0)}</p>
+                                                        </div>
+                                                        <div className="d-flex flex-column ms-2 ms-md-3">
+                                                            <div className="d-flex align-items-center">
+                                                                <p className="m-0 text-capitalize fw-bold">{displayName}</p>
+                                                                <p className="m-0 ms-2 small text-capitalize">
+                                                                    {`(${receiver.role === "Seller" ? "farmer" : receiver.role === "User" ? "buyer" : receiver.role})`}
+                                                                </p>
+                                                            </div>
+                                                            <div className="d-flex align-items-center opacity-75">
+                                                                <p className="m-0 small">
+                                                                    {data.lastMessage.length > 20
+                                                                        ? data.lastMessage.slice(0, 11) + "..."
+                                                                        : data.lastMessage}
+                                                                </p>
+                                                                <div className="fa fa-circle mx-2" style={{ fontSize: "3px" }}></div>
+                                                                <p className="m-0 small">{formatTime(data.updatedAt)}</p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Ellipsis menu */}
+                                                    <div
+                                                    ref={(el) => (buttonRefs.current[data._id] = el)}
+                                                    className="fa-solid fa-ellipsis fs-5 text-end bg-light rounded-circle d-flex align-items-center justify-content-center border small"
+                                                    style={{ cursor: "pointer", width: "36px", height: "36px" }}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setOpenMenuId(isMenuOpen ? null : data._id);
+                                                    }}></div>
+
+                                                    {isMenuOpen && (
+                                                        <div
+                                                        ref={(el) => (menuRefs.current[data._id] = el)}
+                                                        className="col-4 mt-5 me-2 position-absolute top-0 end-0 rounded p-2 z-1 bg-white"
+                                                        style={{ boxShadow: "0px 2px 10px rgba(0,0,0,0.25)", cursor: "default" }}
+                                                        onClick={(e) => e.stopPropagation()}
+                                                        >
+                                                            <span className="m-0 small text-capitalize p-2 rounded bg-hover d-flex align-items-center gap-1 text-success"
+                                                            style={{ cursor: "pointer" }}
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+
+                                                                let unarchiveEndpoint = '';
+                                                                if(role === "admin") unarchiveEndpoint = "unarchiveChatAdmin";
+                                                                else if(role === "seller") unarchiveEndpoint = "unarchiveChatSeller";
+                                                                else unarchiveEndpoint = "unarchiveChatUser";
+
+                                                                // optimistic update
+                                                                setArchivedList((chats) =>
+                                                                    chats.filter((chat) => chat._id !== data._id)
+                                                                );
+
+                                                                fetch(`${import.meta.env.VITE_API_URL}/api/${unarchiveEndpoint}/${data._id}`, {
+                                                                    method: "PATCH",
+                                                                    credentials: "include"
+                                                                })
+                                                                .then((res) => res.json())
+                                                                .then((data) => console.log(data.message))
+                                                                .catch((err) => console.log("Error:", err.message));
+
+                                                                setOpenMenuId(null);
+                                                            }}>
+                                                                <i className="fa fa-inbox"></i>
+                                                                unarchive
+                                                            </span>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        );
+                                    })
+                                ) : (
+                                    <div className="row mt-3 g-0 bg rounded p-5">
+                                        <div className="col-12 p-5 h-100">
+                                            <p className="m-0 text-center text-capitalize opacity-75">no archived chats</p>
+                                        </div>
+                                    </div>
+                                )
+                            )
+                        )}
                     </div>
                 </div>
             </div>

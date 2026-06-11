@@ -572,7 +572,7 @@ const ActivityLog = () => {
                                                 <td className="p-3 small text-center">
                                                     <span className={`bg-${getAdminTypeBadge(log.adminType)} bg-opacity-10 text-${getAdminTypeBadge(log.adminType)} fw-bold small text-capitalize`}
                                                         style={{ padding: "4px 12px", borderRadius: "4px", display: "inline-block" }}>
-                                                        {log.adminType}
+                                                        {`${log.adminType} admin`}
                                                     </span>
                                                 </td>
                                                 <td className="p-3 small text-capitalize">

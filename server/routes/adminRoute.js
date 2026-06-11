@@ -13,7 +13,7 @@ import { adminGetNotification, getNotification, readNotification, deleteNotifica
 import getOrderDetails from "../controllers/admin/orderDetails.js";
 import getProductsDetails from "../controllers/admin/productDetails.js";
 import { getChatId, getMessages, sendImage, sendMessage } from "../controllers/messages.js";
-import { inboxChats, markAsRead, deleteChat } from "../controllers/chats.js";
+import { inboxChats, markAsRead, deleteChat, archiveChat, archivedChats, unarchiveChat } from "../controllers/chats.js";
 import getRiders from "../controllers/admin/getAvailableRider.js";
 import AdminInfo from "../controllers/admin/adminInfo.js";
 import { updateCrops, update } from "../controllers/admin/updateCrops.js";
@@ -147,7 +147,7 @@ adminRouter.delete("/deleteRemittances", authMiddleware, deleteRemittances);
 
 
 // Sa adminRouter
-adminRouter.post('/offline-farmer/upload', authMiddleware, uploadOfflineFarmer.single("image"), adminUploadOfflineFarmerProduct);
+adminRouter.post('/offline-farmer/upload', authMiddleware, uploadOfflineFarmer.array("imageFile"), adminUploadOfflineFarmerProduct);
 adminRouter.get('/offline-farmers/search', authMiddleware, searchOfflineFarmers);
 adminRouter.get('/offline-farmer/payment-transactions', authMiddleware, getOfflineFarmerPaymentTransactions);
 adminRouter.get('/seller/payment-transactions', authMiddleware, getSellerPaymentTransactions);
@@ -160,6 +160,13 @@ adminRouter.patch('/adminChangePassword', authMiddleware, changePassword);
 adminRouter.get('/adminGetNotification', authMiddleware, adminGetNotification);
 adminRouter.patch('/adminReadNotif/:id', authMiddleware, readNotification);
 adminRouter.patch('/adminDeleteNotif/:id', authMiddleware, deleteNotification);
+
+
+adminRouter.patch("/archiveChatAdmin/:id", authMiddleware, archiveChat);
+adminRouter.get("/archivedChatsAdmin", authMiddleware, archivedChats);
+adminRouter.patch("/unarchiveChatAdmin/:id", authMiddleware,  unarchiveChat);
+
+
 
 
 adminRouter.get("/logoutAdmin", authMiddleware, Logout);

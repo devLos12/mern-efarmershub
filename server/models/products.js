@@ -38,11 +38,21 @@ const productSchema = new mongoose.Schema({
         'grains', 
         'legumes'
     ]},
+    unit: {
+        type: String,
+        enum: ['bundle', 'kg'],
+        required: true,
+        default: 'bundle'
+    },
     stocks: { type: Number, required: true },
     totalStocks: { type: Number, required: true },
-    kg: { type: Number, required: true },
+    kg: { type: Number, required: false },
     disc: { type: String, required: true },
-    imageFile: { type: String },
+
+    imageFile: [{ 
+        url: { type: String, required: true },
+        cloudinaryId: { type: String, required: true }
+    }],
     
     lifeSpan: { type: Number, required: true },
     expiryDate: { type: Date },
@@ -78,7 +88,6 @@ const productSchema = new mongoose.Schema({
     averageRating: { type: Number, default: 0 },
 
     createdAt: { type: Date, default: Date.now },
-    cloudinaryId: String,
 });
 
 // ✅ pre-save hook — auto compute expiryDate on new product

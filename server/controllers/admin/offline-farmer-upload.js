@@ -26,13 +26,13 @@ export const adminUploadOfflineFarmerProduct = async (req, res) => {
             suffix,
             contact,
             isNewFarmer,
-
             // Product fields
             name,
             price,
             category,
             productType,
             stocks,
+            unit,
             kg,
             lifeSpan,
             disc,
@@ -111,18 +111,24 @@ export const adminUploadOfflineFarmerProduct = async (req, res) => {
             });
         }
 
+        // ─── STEP 3: Validate and upload images to Cloudinary ───
+        if (!req.files || req.files.length === 0) {
+            return res.status(400).json({ message: "At least 1 image is required." });
+        }
+
+        // Upload all to Cloudinary
+        const uploadedImages = await Promise.all(
+            req.files.map(async (file) => {
+                const base64 = file.buffer.toString("base64");
+                const dataURI = `data:${file.mimetype};base64,${base64}`;
+                const result = await cloudinary.uploader.upload(dataURI, { folder: "products" });
+                return { url: result.secure_url, cloudinaryId: result.public_id };
+            })
+        );
+
         
-        // ─── STEP 3: Upload image to Cloudinary ───
-        const base64 = req.file.buffer.toString("base64");
-        const dataURI = `data:${req.file.mimetype};base64,${base64}`;
-
-        const result = await cloudinary.uploader.upload(dataURI, {
-            folder: "products",
-        });
-
         // ─── STEP 4: Generate sequential prodId (same logic as original) ───
         const lastProduct = await Product.findOne().sort({ createdAt: -1 });
-
 
         let newProdId = "PID0001";
         if (lastProduct && lastProduct.prodId) {
@@ -131,10 +137,8 @@ export const adminUploadOfflineFarmerProduct = async (req, res) => {
             newProdId = "PID" + nextNumber.toString().padStart(4, "0");
         }
         
-        
         // ─── STEP 5: Create Product ───
         const newProduct = new Product({
-
             prodId: newProdId,
             name,
             price,
@@ -142,11 +146,11 @@ export const adminUploadOfflineFarmerProduct = async (req, res) => {
             productType,
             stocks,
             totalStocks: stocks,
+            unit,
             kg,
             lifeSpan,
             disc,
-            imageFile: result.secure_url,
-            cloudinaryId: result.public_id,
+            imageFile: uploadedImages,
 
             seller: {
                 id: farmer._id,

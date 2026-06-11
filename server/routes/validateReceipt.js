@@ -100,6 +100,40 @@ router.post("/validate-receipt", upload.single("image"), async (req, res) => {
       // Fallback: standalone long numeric string (10+ digits)
       /\b\d{10,}\b/.test(normalizedText);
 
+
+
+
+    // ── STEP 6B: EXTRACT REFERENCE NUMBER ────────────────────────
+    let extractedRefNo = null;
+
+    // GCash: "Ref No. 1234567890123"
+    const gcashRefMatch = normalizedText.match(/ref\.?\s?no\.?\s*(\d{10,})/i);
+    if (gcashRefMatch) extractedRefNo = gcashRefMatch[1];
+
+    // Maya: "Reference ID 21D0 73AA 96DA"
+    if (!extractedRefNo) {
+      const mayaRefMatch = normalizedText.match(/reference\s?id[\s:]*([A-Z0-9]{4}(?:\s[A-Z0-9]{4}){1,})/i);
+      
+      if (mayaRefMatch) {
+        extractedRefNo = mayaRefMatch[1]
+          .replace(/\s*(maya|get\s*help).*/gi, '')
+          .trim()
+          .toUpperCase();
+      }
+    }
+
+    // Fallback: standalone 10+ digit number
+    if (!extractedRefNo) {
+      const fallbackMatch = normalizedText.match(/\b(\d{10,})\b/);
+      if (fallbackMatch) extractedRefNo = fallbackMatch[1];
+    }
+
+
+
+
+
+
+
     // ── STEP 7: DATE CHECK ───────────────────────────────────────
     const hasDate =
       /\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\w*\.?\s+\d{1,2},?\s+\d{4}/i.test(normalizedText) ||
@@ -118,15 +152,20 @@ router.post("/validate-receipt", upload.single("image"), async (req, res) => {
       score >= 4 ? "high" :
       score === 3 ? "medium" : "low";
 
+    console.log(extractedRefNo);
+
+
     return res.status(200).json({
       success: true,
       isValid,
       confidence,
       detectedApp,
+      referenceNo: extractedRefNo,
       reason: isValid
         ? `Valid ${detectedApp} receipt.`
         : `Invalid ${detectedApp} receipt. Missing ${!hasAmount ? "amount" : ""}${!hasAmount && !hasRefNo ? " and " : ""}${!hasRefNo ? "reference number" : ""}.`
     });
+
 
   } catch (error) {
     console.error("Receipt validation error:", error);

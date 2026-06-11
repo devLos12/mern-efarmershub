@@ -50,7 +50,12 @@ const adminPaymentTransactionSchema = new mongoose.Schema({
     imageFile: {
         type: String,
         requried: false
-    }
+    },
+    referenceNo: {
+        type: String,
+        required: false
+    },
+        
 
 })
 

@@ -20,7 +20,8 @@ const Address = () => {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
-    
+  
+  
 
   useEffect(() => {
     fetch(`${import.meta.env.VITE_API_URL}/api/getCookieId`, {
@@ -37,12 +38,28 @@ const Address = () => {
         setLoading(false);
         setText(data.message);
         setUserId(data.id);
+
+
+          if (data.prefill) {
+            // contact is stored as 09XXXXXXXXX, strip the leading 0 for display
+            const contact = data.prefill.contact?.startsWith('0')
+              ? data.prefill.contact.substring(1)
+              : data.prefill.contact || '';
+
+            setForm({
+              ...data.prefill,
+              contact,
+            });
+          }
+
+
       })
       .catch(err => {
         setLoading(false);
         console.log("Error: ", err.message);
       });
   }, []);
+
 
 
   // Format phone number with spaces for display
@@ -96,6 +113,9 @@ const Address = () => {
       setSubmitting(false);
     }
   };
+
+
+
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -152,6 +172,8 @@ const Address = () => {
       return;
     }
 
+
+
     // Handle city selection
     if (name === 'city') {
       const zipCode = philippineLocations[form.province]?.cities[value]?.zipCode || '';
@@ -173,6 +195,10 @@ const Address = () => {
   const cities = form.province ? Object.keys(philippineLocations[form.province]?.cities || {}) : [];
   const barangays = (form.province && form.city) ?
     philippineLocations[form.province]?.cities[form.city]?.barangays || [] : [];
+
+
+
+
 
   if (loading) return <p></p>
 
@@ -210,12 +236,12 @@ const Address = () => {
                   {/* Firstname */}
                   <div className="px-2 mt-2 col">
                     <label className="text-capitalize mt-2" style={{ fontSize: "14px" }}
-                      htmlFor="firstname"> firstname:</label>
+                      htmlFor="firstname"> first name:<span className="text-danger ms-1">*</span> </label>
                     <input className="w-100 mt-2 py-2 form-control bg-warning bg-opacity-10"
                       style={{ fontSize: "14px", outline: "none" }}
                       name="firstname"
                       type="text"
-                      placeholder="firstname"
+                      placeholder="first name"
                       value={form.firstname || ''}
                       onChange={handleChange}
                       required />
@@ -224,12 +250,12 @@ const Address = () => {
                   {/* Lastname */}
                   <div className="px-2 mt-2 col">
                     <label className="text-capitalize mt-2" style={{ fontSize: "14px" }}
-                      htmlFor="lastname"> lastname:</label>
+                      htmlFor="lastname"> last name:<span className="text-danger ms-1">*</span></label>
                     <input className="w-100 mt-2 py-2 form-control bg-warning bg-opacity-10"
                       style={{ fontSize: "14px", outline: "none" }}
                       name="lastname"
                       type="text"
-                      placeholder="lastname"
+                      placeholder="last name"
                       value={form.lastname || ''}
                       onChange={handleChange}
                       required />
@@ -238,7 +264,7 @@ const Address = () => {
                   {/* Email */}
                   <div className="px-2 mt-2 col-12">
                     <label className="text-capitalize mt-2" style={{ fontSize: "14px" }}
-                      htmlFor="email"> email:</label>
+                      htmlFor="email"> email:<span className="text-danger ms-1">*</span></label>
                     <input className="w-100 mt-2 py-2 form-control bg-warning bg-opacity-10"
                       style={{ fontSize: "14px", outline: "none" }}
                       name="email"
@@ -252,7 +278,7 @@ const Address = () => {
                   {/* Contact - UPDATED WITH +63 PREFIX */}
                   <div className="px-2 mt-2 col-12">
                     <label className="text-capitalize mt-2" style={{ fontSize: "14px" }}
-                      htmlFor="contact"> contact:</label>
+                      htmlFor="contact"> contact:<span className="text-danger ms-1">*</span></label>
                     <div className="input-group mt-2">
                       <span className="input-group-text bg-warning bg-opacity-10" style={{ fontSize: "14px" }}>
                         +63
@@ -280,7 +306,7 @@ const Address = () => {
                   {/* Province */}
                   <div className="col-12 mt-2 px-2">
                     <label className="text-capitalize mt-2" style={{ fontSize: "14px" }}
-                      htmlFor="province"> province: </label>
+                      htmlFor="province"> province:<span className="text-danger ms-1">*</span></label>
                     <select name="province" className="mt-2 w-100 form-select bg-warning bg-opacity-10"
                       style={{ fontSize: "14px" }}
                       onChange={handleChange}
@@ -298,7 +324,7 @@ const Address = () => {
                   {/* City */}
                   <div className="col-12 mt-2 px-2">
                     <label className="text-capitalize mt-2" style={{ fontSize: "14px" }}
-                      htmlFor="city"> city: </label>
+                      htmlFor="city"> city:<span className="text-danger ms-1">*</span></label>
                     <select name="city" className="mt-2 w-100 form-select bg-warning bg-opacity-10"
                       style={{ fontSize: "14px" }}
                       onChange={handleChange}
@@ -317,7 +343,7 @@ const Address = () => {
                   {/* Barangay */}
                   <div className="col-12 mt-2 px-2">
                     <label className="text-capitalize mt-2" style={{ fontSize: "14px" }}
-                      htmlFor="barangay"> barangay: </label>
+                      htmlFor="barangay"> barangay:<span className="text-danger ms-1">*</span></label>
                     <select name="barangay" className="mt-2 w-100 form-select bg-warning bg-opacity-10"
                       style={{ fontSize: "14px" }}
                       onChange={handleChange}
@@ -333,10 +359,27 @@ const Address = () => {
                     </select>
                   </div>
 
+                  {/* Purok */}
+                  <div className="col-12 mt-2 px-2">
+                      <label className="text-capitalize mt-2" style={{ fontSize: "14px" }}
+                          htmlFor="purok"> purok:<span className="text-danger ms-1">*</span></label>
+                      <select name="purok" className="mt-2 w-100 form-select bg-warning bg-opacity-10"
+                          style={{ fontSize: "14px" }}
+                          onChange={handleChange}
+                          value={form.purok || ''}
+                          required
+                          disabled={!form.barangay}>
+                          <option value="">Select Purok</option>
+                          {[1, 2, 3, 4, 5, 6].map((num) => (
+                              <option key={num} value={String(num)}>Purok {num}</option>
+                          ))}
+                      </select>
+                  </div>
+
                   {/* Zip Code */}
                   <div className="col-12 mt-2 px-2">
                     <label className="text-capitalize mt-2" style={{ fontSize: "14px" }}
-                      htmlFor="zipCode"> zip code: </label>
+                      htmlFor="zipCode"> zip code:<span className="text-danger ms-1">*</span></label>
                     <input className="w-100 mt-2 py-2 form-control bg-warning bg-opacity-10"
                       style={{ fontSize: "14px", outline: "none" }}
                       name="zipCode"
@@ -352,7 +395,7 @@ const Address = () => {
                   {/* Detail Address */}
                   <div className="col-12 px-2 mt-2">
                     <label className="text-capitalize mt-2" style={{ fontSize: "14px" }}
-                      htmlFor="detailAddress"> blk/lot/street: </label>
+                      htmlFor="detailAddress"> blk/lot/street:<span className="text-danger ms-1">*</span></label>
                     <textarea className="w-100 mt-2 form-control bg-warning bg-opacity-10"
                       style={{ fontSize: "14px", outline: "none", resize: "none" }}
                       name="detailAddress"

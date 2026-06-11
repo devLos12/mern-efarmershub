@@ -1090,10 +1090,10 @@ const SalesReport = () => {
                                             
                                             <td className="align-middle small">
                                                 <div className="d-flex align-items-center gap-2">
-                                                    {sale.productId?.imageFile ? (
+                                                    {sale.productId?.imageFile?.[0]?.url ? (
                                                         <img
-                                                            src={sale.productId.imageFile}
-                                                            alt={sale.productId.name}
+                                                            src={sale.productId.imageFile?.[0]?.url}
+                                                            alt={sale.productId.name?.[0]?.url}
                                                             className="rounded"
                                                             style={{ width: "40px", height: "40px", objectFit: "cover" }}
                                                         />

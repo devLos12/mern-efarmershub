@@ -906,7 +906,7 @@ const Transactions = () => {
                                     <span className="fw-bold">₱{selectedTransaction.totalAmount.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                 </div>
                                 <div className="d-flex justify-content-between mb-2">
-                                    <span className="text-muted">Tax Amount:</span>
+                                    <span className="text-muted">Platform Fee:</span>
                                     <div className="text-end">
                                         <span className="text-danger d-block">- ₱{(selectedTransaction?.taxAmount ?? 0).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                         <span className="small text-muted">({taxPercentage}%)</span>
@@ -1241,7 +1241,7 @@ const Transactions = () => {
                                             <tr>
                                                 {/* ─────── ADMIN - FARMER WITH DEVICE ─────── */}
                                                 {role === "admin" && source === "payout/seller" &&
-                                                    ["#", "Payout No.", "Farmer Name", "Total Orders", "Gross Amount", "Tax Amount (5%)", "Net Amount", "E-Wallet", "Status", "Date Payout", "Actions"]
+                                                    ["#", "Payout No.", "Farmer Name", "Total Orders", "Gross Amount", "Platform Fee (5%)", "Net Amount", "E-Wallet", "Status", "Date Payout", "Actions"]
                                                         .map((col, i) => (
                                                             <th key={i} className="text-uppercase small text-success">{col}</th>
                                                         ))
@@ -1249,7 +1249,7 @@ const Transactions = () => {
 
                                                 {/* ─────── ADMIN - RIDER ─────── */}
                                                 {role === "admin" && source === "payout/rider" &&
-                                                    ["#", "Payout No.", "Rider Name", "Total Delivery", "Gross Amount", "Tax Amount (5%)", "Net Amount", "E-Wallet", "Status", "Date Payout", "Actions"]
+                                                    ["#", "Payout No.", "Rider Name", "Total Delivery", "Gross Amount", "Platform Fee (5%)", "Net Amount", "E-Wallet", "Status", "Date Payout", "Actions"]
                                                         .map((col, i) => (
                                                             <th key={i} className="text-uppercase small text-success">{col}</th>
                                                         ))
@@ -1257,23 +1257,29 @@ const Transactions = () => {
 
                                                 {/* ─────── ADMIN - FARMER NO DEVICE ─────── */}
                                                 {role === "admin" && source === "payout/offlineFarmer" &&
-                                                    ["#", "Payout No.", "Farmer Name", "Total Orders", "Gross Amount", "Tax Amount (5%)", "Net Amount", "Status", "Date Payout", "Actions"]
+                                                    ["#", "Payout No.", "Farmer Name", "Total Orders", "Gross Amount", "Platform Fee (5%)", "Net Amount", "Status", "Date Payout", "Actions"]
                                                         .map((col, i) => (
                                                             <th key={i} className="text-uppercase small text-success">{col}</th>
                                                         ))
                                                 }
+
 
                                                 {/* ─────── SELLER - PAYOUT ─────── */}
                                                 {role === "seller" && source === "payout" &&
-                                                    ["#", "Payout No.", "Farmer Name", "Total Orders", "Gross Amount", "Tax Amount (5%)", "Net Amount", "E-Wallet", "Status", "Date Payout", "Actions"]
+                                                    ["#", "Payout No.", "Farmer Name", "Total Orders", "Gross Amount", "Platform Fee (5%)", "Net Amount", "E-Wallet", "Status", "Date Payout", "Actions"]
                                                         .map((col, i) => (
                                                             <th key={i} className="text-uppercase small text-success">{col}</th>
                                                         ))
                                                 }
 
+
+
+
+
+
                                                 {/* ─────── PAYMENT - ADMIN ─────── */}
                                                 {source === "payment" && role === "admin" &&
-                                                    ["#", "Reference ID", "Account Name", "Total Amount", "Payment Method", "Status", "Date Paid", "Payment Receipt", "Type"]
+                                                    ["#", "Transaction ID", "Account Name", "Total Amount", "Payment Method", "Status", "Date Paid", "Payment Receipt", "RefNo", "Type"]
                                                         .map((col, i) => (
                                                             <th key={i} className="text-uppercase small text-success">{col}</th>
                                                         ))
@@ -1281,7 +1287,7 @@ const Transactions = () => {
 
                                                 {/* ─────── PAYMENT - SELLER ─────── */}
                                                 {source === "payment" && role === "seller" &&
-                                                    ["#", "Reference ID", "Account Name", "Total Amount", "Payment Method", "Status", "Date Paid", "Type"]
+                                                    ["#", "Transaction ID", "Account Name", "Total Amount", "Payment Method", "Status", "Date Paid", "Type"]
                                                         .map((col, i) => (
                                                             <th key={i} className="text-uppercase small text-success">{col}</th>
                                                         ))
@@ -1430,6 +1436,9 @@ const Transactions = () => {
                                                                     </div>
                                                                 )}
                                                             </td>
+                                                            <td className="align-middle small text-capitalize">{
+                                                            data.referenceNo ? `Ref No. ${data.referenceNo}` : '-'
+                                                            }</td>
                                                             <td className="align-middle small text-capitalize">{data.type}</td>
                                                         </>
                                                     )}

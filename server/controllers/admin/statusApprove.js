@@ -32,7 +32,7 @@ const statusApprove = async(req, res) => {
             message : `your product #${product?.prodId} has been ${newStatus}`,
             meta : { 
                 prodId,  
-                imageFile: product.imageFile
+                imageFile: product.imageFile?.[0]?.url || null
             },
             type : "statusApprove",
             link : "productdetails"
