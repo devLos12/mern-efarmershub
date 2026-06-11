@@ -556,6 +556,7 @@ const ProductDetails = () =>{
                                                 navigate("/user/checkout", { state : { 
                                                     source : "buy", 
                                                     products: [{
+                                                        pid: productDetails.prodId,
                                                         prodId: productDetails._id,
                                                         prodName: productDetails.name,
                                                         prodDisc: productDetails.disc,

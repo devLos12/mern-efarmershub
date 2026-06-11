@@ -21,7 +21,12 @@ const Checkout = () =>{
             setShowToast, 
     } = useContext(appContext);
 
-    const {viewQr, setOpenCart, cart, setCart, setCartBadge} = useContext(userContext);
+    const {viewQr, setOpenCart, cart, setCart, setCartBadge, 
+
+        setProductTrigger,
+        setTrigger,
+
+    } = useContext(userContext);
     const [enableSubmit,  setEnableSubmit] = useState(false);
     const {checkoutForm, setCheckoutForm} = useContext(userContext);
     const [billingAddress, setBillingAddress] = useState({
@@ -248,10 +253,16 @@ const Checkout = () =>{
                 setOpenCart((prev) => !prev);
             }
 
+            
+            setProductTrigger(prev => !prev);
+            setTrigger(prev => !prev);
+            
             showNotification(data.message, 'success');
+
             // Navigate after short delay
             setTimeout(() => {
                 navigate(-1);
+                
 
                 setCheckoutForm((prev) => ({
                 ...prev, 
@@ -282,7 +293,6 @@ const Checkout = () =>{
         setCart([]);
         
 
-
         try{
             const res = await fetch(`${import.meta.env.VITE_API_URL}/api/placeOrderclearCart`, {
                 method : "DELETE",
@@ -292,7 +302,6 @@ const Checkout = () =>{
                 throw new Error("Response is not ok!");
             }
             const data = await res.json();
-            console.log(data.message);
         }catch(error){
             console.log(error.message);
             setCart(setPrevCart);

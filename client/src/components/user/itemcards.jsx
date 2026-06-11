@@ -16,7 +16,7 @@ const ItemCards = ({ products }) => {
     const [pendingCartItems, setPendingCartItems] = useState([]);
     const { bestSellers, setBestSellers } = useContext(appContext);
     
-
+    
     
     const addToCart = async(pid, prodId, prodName, prodDisc, prodPrice, imageFile, seller)=> {
 

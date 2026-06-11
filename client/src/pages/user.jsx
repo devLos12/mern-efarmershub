@@ -120,7 +120,7 @@ const User = ({setUserAuth}) => {
       })
   },[trigger, triggerProduct]);
 
-
+  
 
   //api call for orders
   useEffect(()=>{
