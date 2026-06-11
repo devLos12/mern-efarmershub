@@ -215,7 +215,7 @@ const Checkout = () =>{
     const handleForm = async(e)=>{
         e.preventDefault();
 
-
+        
         setSubmitting(true); // Start loading
 
         const sendData = new FormData();
@@ -400,7 +400,7 @@ const Checkout = () =>{
                                         {[
                                             {data : billingAddress.contact},
                                             {data : billingAddress.email},
-                                            {data : `Purok ${billingAddress.purok}, ${billingAddress.detailAddress}, ${billingAddress.barangay}, ${billingAddress.city}, ${billingAddress.province}, ${billingAddress.zipCode}`},
+                                            {data : `${billingAddress.detailAddress}, Purok ${billingAddress.purok}, ${billingAddress.barangay}, ${billingAddress.city}, ${billingAddress.province}, ${billingAddress.zipCode}`},
                                         ].map((info, i) => (
                                             <p key={i} className={`m-0 mt-1 text-muted small
                                             ${i === 1 ? "text-normal " : "text-capitalize "}`}

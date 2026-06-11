@@ -130,7 +130,7 @@ export const checkOut = async(req, res) => {
         const billingAddress = JSON.parse(req.body.billingAddress);
         const items = JSON.parse(req.body.items);
 
-        const {firstname, lastname, contact, email, province, city, barangay, detailAddress, zipCode} = 
+        const {firstname, lastname, contact, email, province, city, barangay, purok, detailAddress, zipCode} = 
         billingAddress;
 
 
@@ -209,7 +209,7 @@ export const checkOut = async(req, res) => {
                 lastname, 
                 email, 
                 contact, 
-                address: `${province}, ${city}, ${barangay}, ${detailAddress}, ${zipCode}`,
+                address: `${province}, ${city}, ${barangay}, Purok ${purok}, ${detailAddress}, ${zipCode}`,
                 shippingFee,
                 totalPrice: finalTotal, 
                 orderMethod,
@@ -261,7 +261,7 @@ export const checkOut = async(req, res) => {
                 lastname, 
                 email, 
                 contact, 
-                address: `${province}, ${city}, ${barangay}, ${detailAddress}, ${zipCode}`,
+                address: `${province}, ${city}, ${barangay}, Purok ${purok}, ${detailAddress}, ${zipCode}`,
                 shippingFee,
                 totalPrice: finalTotal, 
                 orderMethod,
